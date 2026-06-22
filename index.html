@@ -187,6 +187,8 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
+
 (function(){
 "use strict";
 
@@ -216,9 +218,9 @@ var KEYS = {
   actions:'mcu_actions_v1', resultats:'mcu_resultats_audits_v1',
   releves:'mcu_releves_produits_v1', checklist:'mcu_checklist_v1',
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
-  accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1'
+  accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[]};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[]};
 var RENDERERS = {};
 var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['actions',"Plan d'actions"],['planning','Planning échéances'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
@@ -368,6 +370,22 @@ function globalConformityScore(){
   if(!parts.length) return {score:null, detail:[]};
   return {score: Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length), detail:detail};
 }
+async function recordScoreSnapshot(gs){
+  if(gs.score===null) return;
+  var today = todayStr();
+  var existing = DATA.scoreHistory.find(function(s){ return s.date===today; });
+  if(existing){ existing.score = gs.score; existing.detail = gs.detail; }
+  else { DATA.scoreHistory.push({date:today, score:gs.score, detail:gs.detail}); }
+  if(DATA.scoreHistory.length>730) DATA.scoreHistory = DATA.scoreHistory.slice(-730);
+  await save('scoreHistory');
+}
+function previousMonthScore(){
+  var d = new Date(); d.setDate(1); d.setMonth(d.getMonth()-1);
+  var key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  var vals = DATA.scoreHistory.filter(function(s){ return s.date.slice(0,7)===key; }).map(function(s){return s.score;});
+  if(!vals.length) return null;
+  return Math.round(vals.reduce(function(a,b){return a+b;},0)/vals.length);
+}
 function metroOverall(lines){
   var items = DATA.metro.filter(function(e){ return !lines || lines.indexOf(e.ligne)>=0; });
   if(!items.length) return {level:'neutral', label:'Aucune donnée', late:0, warn:0, worstItem:null, worstLabel:null};
@@ -423,6 +441,11 @@ function latestResultByLine(ligne){
   var items = DATA.resultats.filter(function(r){ return r.ligne===ligne; });
   if(!items.length) return null;
   return items.slice().sort(function(a,b){ return monthIndex(b.mois)-monthIndex(a.mois); })[0];
+}
+function latestPerfResultByLine(ligne){
+  var items = DATA.planning.filter(function(p){ return p.ligne===ligne && p.type==='perf' && p.resultatPct!==undefined && p.resultatPct!==null && p.resultatPct!==''; });
+  if(!items.length) return null;
+  return items.slice().sort(function(a,b){ return (b.echeance||'').localeCompare(a.echeance||''); })[0];
 }
 // ---------- scoring audits propreté (seuils IATF : 85% attention, 50% danger) ----------
 var SCORE_ATTENTION = 85, SCORE_DANGER = 50;
@@ -1156,7 +1179,7 @@ function render(){
   });
   var fn = RENDERERS[currentTab] || RENDERERS.dashboard;
   view.innerHTML = fn();
-  if(currentTab==='dashboard'){ renderTrendChart(); }
+  if(currentTab==='dashboard'){ renderTrendChart(); renderRadarChart(); renderActionsStatusChart(); renderScoreHistoryChart(); }
   if(currentTab==='planning'){ applyPlanningFilter(); }
   if(currentTab==='proprete'){
     if(propreteSub==='resultats') renderResultatsCharts();
@@ -1167,14 +1190,27 @@ function render(){
 RENDERERS.dashboard = function(){
   var html = '';
   var gs = globalConformityScore();
+  recordScoreSnapshot(gs);
   if(gs.score!==null){
-    var glvl = gs.score>=90?'ok':gs.score>=75?'warn':'danger';
+    var glvl = scoreLevel(gs.score);
+    var prevScore = previousMonthScore();
+    var deltaHtml = '';
+    if(prevScore!==null){
+      var delta = gs.score - prevScore;
+      var darrow = delta>0?'▲':delta<0?'▼':'—';
+      var dcolor = delta>0?'var(--ok)':delta<0?'var(--danger)':'var(--text-faint)';
+      deltaHtml = '<div class="tiny" style="margin-top:4px; color:'+dcolor+'; font-weight:600;">'+darrow+' '+(delta>0?'+':'')+delta+' pt vs mois dernier ('+prevScore+'%)</div>';
+    } else {
+      deltaHtml = '<div class="tiny" style="margin-top:4px; color:var(--text-faint);">Pas encore de comparaison disponible (historique en cours de constitution)</div>';
+    }
     html += '<div class="section card" style="margin-bottom:18px;"><div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">'+
-      '<div><div class="eyebrow">Score de conformité — secteur MCU</div><div class="score-big" style="color:var(--'+glvl+'); margin:4px 0;">'+gs.score+'%</div></div>'+
+      '<div><div class="eyebrow">Score de conformité — secteur MCU</div><div class="score-big" style="color:var(--'+glvl+'); margin:4px 0;">'+gs.score+'%</div>'+deltaHtml+'</div>'+
       '<div style="display:flex; gap:18px; flex-wrap:wrap;">'+gs.detail.map(function(d){
-        var dlvl = d.val>=90?'ok':d.val>=75?'warn':'danger';
+        var dlvl = scoreLevel(d.val);
         return '<div><div class="tiny">'+esc(d.label)+'</div><div style="font-family:var(--mono); font-weight:700; color:var(--'+dlvl+');">'+d.val+'%</div></div>';
-      }).join('')+'</div></div></div>';
+      }).join('')+'</div></div>'+
+      '<p class="tiny" style="margin-top:10px; color:var(--text-faint);">Seuils : ≥85% conforme, 50–85% attention, &lt;50% en danger — identiques aux audits propreté.</p>'+
+      '</div>';
   }
   html += '<div class="section"><div class="grid grid-4">';
   PLAN_TYPES.forEach(function(t){
@@ -1219,6 +1255,13 @@ RENDERERS.dashboard = function(){
   }).join('');
   html += '<div class="statcard"><div class="eyebrow">Propreté — derniers résultats</div><div class="linebadges">'+proprLines+'</div></div>';
 
+  var perfLines = LINES.map(function(l){
+    var p = latestPerfResultByLine(l);
+    if(!p) return '<div class="linebadge">'+l+' <span class="tiny">Aucune donnée</span></div>';
+    return '<div class="linebadge">'+l+' '+badge(scoreLevel(p.resultatPct), p.resultatPct+'% ('+fmtDate(p.echeance)+')')+'</div>';
+  }).join('');
+  html += '<div class="statcard"><div class="eyebrow">Audits de perf — derniers résultats</div><div class="linebadges">'+perfLines+'</div></div>';
+
   var openActions = DATA.actions.filter(isActionOpen);
   var lateActions = DATA.actions.filter(isActionLate);
   var alevel = lateActions.length? 'danger' : (openActions.length? 'warn':'ok');
@@ -1230,6 +1273,12 @@ RENDERERS.dashboard = function(){
     '<button class="btn primary" data-action="print-dashboard">Exporter le tableau de bord en PDF</button></div>';
   html += '<div id="digest-box"></div>';
   html += '<div class="section card"><div class="eyebrow" style="margin-bottom:8px;">Tendance globale — 12 derniers mois</div><div class="chart-box"><canvas id="chart-trend"></canvas></div></div>';
+
+  html += '<div class="grid grid-2" style="margin-bottom:18px;">'+
+    '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">Comparatif des lignes</div><div class="chart-box"><canvas id="chart-radar"></canvas></div></div>'+
+    '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">Plan d\'actions par statut</div><div class="chart-box"><canvas id="chart-actions-status"></canvas></div></div>'+
+  '</div>';
+  html += '<div class="section card" style="margin-bottom:18px;"><div class="eyebrow" style="margin-bottom:8px;">Évolution du score de conformité global</div><div class="chart-box"><canvas id="chart-score-history"></canvas></div></div>';
   html += '<div class="section"><h2>Alertes</h2><div id="alerts-section">'+renderAlertsSection()+'</div></div>';
   return html;
 };
@@ -1261,11 +1310,12 @@ RENDERERS.planning = function(){
     field('date','echeance','Date échéance') +
     field('date','realisation','Date de réalisation (si fait)', null, true) +
     field('text','responsable','Responsable') +
+    field('number','resultatPct','Résultat (%) — pour audits de perf', null, true) +
     '<div class="actions-row"><button type="button" class="btn" data-cancel-form="planning">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'+
   '</form>';
 
-  html += '<div class="table-wrap"><table><thead><tr><th>Statut</th><th>Ligne</th><th>Type</th><th>Mois</th><th>Échéance</th><th>Réalisation</th><th>Responsable</th><th></th></tr></thead><tbody id="planning-rows">';
-  html += rows.map(planningRow).join('') || '<tr><td colspan="8"><div class="empty">Aucune échéance</div></td></tr>';
+  html += '<div class="table-wrap"><table><thead><tr><th>Statut</th><th>Ligne</th><th>Type</th><th>Mois</th><th>Échéance</th><th>Réalisation</th><th>Résultat</th><th>Responsable</th><th></th></tr></thead><tbody id="planning-rows">';
+  html += rows.map(planningRow).join('') || '<tr><td colspan="9"><div class="empty">Aucune échéance</div></td></tr>';
   html += '</tbody></table></div></div>';
   return html;
 };
@@ -1281,13 +1331,15 @@ function planningRow(p){
       '<td><input type="text" id="planning-edit-mois" value="'+esc(val(p.mois,''))+'" style="width:90px;"></td>'+
       '<td><input type="date" id="planning-edit-echeance" value="'+esc(p.echeance||'')+'" style="width:140px;"></td>'+
       '<td class="num">'+fmtDate(p.realisation)+'</td>'+
+      '<td><input type="number" id="planning-edit-resultat" value="'+esc(val(p.resultatPct,''))+'" style="width:70px;" placeholder="%"></td>'+
       '<td><input type="text" id="planning-edit-resp" value="'+esc(val(p.responsable,''))+'" style="width:110px;"></td>'+
       '<td><button class="btn small primary" data-action="save-planning-edit" data-id="'+p.id+'">Valider</button> '+
       '<button class="btn small" data-action="cancel-planning-edit">Annuler</button></td></tr>';
   }
+  var resultCell = (p.resultatPct!==undefined && p.resultatPct!==null && p.resultatPct!=='') ? badge(scoreLevel(p.resultatPct), p.resultatPct+'%') : '—';
   return '<tr data-row-ligne="'+p.ligne+'" data-row-type="'+p.type+'" data-row-mois="'+(p.echeance?p.echeance.slice(0,7):'')+'">'+
     '<td>'+badge(s.level,s.label)+'</td><td>'+esc(p.ligne)+'</td><td>'+esc(typeLabel)+'</td><td>'+esc(val(p.mois))+'</td>'+
-    '<td class="num">'+fmtDate(p.echeance)+'</td><td class="num">'+fmtDate(p.realisation)+'</td><td>'+esc(val(p.responsable))+'</td>'+
+    '<td class="num">'+fmtDate(p.echeance)+'</td><td class="num">'+fmtDate(p.realisation)+'</td><td>'+resultCell+'</td><td>'+esc(val(p.responsable))+'</td>'+
     '<td>'+(p.realisation? '' : '<button class="btn small" data-action="mark-done" data-module="planning" data-id="'+p.id+'">Marquer réalisé</button>')+
     ' <button class="btn small" data-action="edit-planning" data-id="'+p.id+'">Modifier</button>'+
     ' <button class="btn small danger-outline" data-action="delete" data-module="planning" data-id="'+p.id+'">Suppr.</button></td></tr>';
@@ -1912,6 +1964,74 @@ function renderTrendChart(){
     });
   }catch(err){ console.error('chart error', err); }
 }
+
+var chartRadar=null;
+function renderRadarChart(){
+  if(typeof Chart==='undefined') return;
+  var ctx = document.getElementById('chart-radar');
+  if(!ctx) return;
+  if(chartRadar){ chartRadar.destroy(); chartRadar=null; }
+  try{
+    var lineColors = {MCU1:'#1F5C5C', MCU2:'#2E7D4F', MCU3:'#B8730A'};
+    var curYear = Number(todayStr().slice(0,4));
+    var datasets = LINES.map(function(l){
+      var propr = latestResultByLine(l); var propVal = propr? propr.resultatPct : 0;
+      var metroItems = DATA.metro.filter(function(e){ return e.ligne===l; });
+      var metroVal = metroItems.length? (1 - metroItems.filter(function(e){return metroStatus(e).level==='danger';}).length/metroItems.length)*100 : 0;
+      var perf = latestPerfResultByLine(l); var perfVal = perf? perf.resultatPct : 0;
+      var contamItems = DATA.contamination.filter(function(c){ return c.ligne===l && c.annee===curYear && (c.statut==='ok'||c.statut==='nc'); });
+      var contamVal = contamItems.length? contamItems.filter(function(c){return c.statut==='ok';}).length/contamItems.length*100 : 0;
+      return {label:l, data:[Math.round(propVal), Math.round(metroVal), Math.round(perfVal), Math.round(contamVal)],
+        borderColor:lineColors[l], backgroundColor:lineColors[l]+'33', borderWidth:2, pointRadius:3};
+    });
+    chartRadar = new Chart(ctx, {
+      type:'radar',
+      data:{labels:['Propreté','Métrologie à jour','Audits de perf','Contamination conforme'], datasets:datasets},
+      options:{responsive:true, maintainAspectRatio:false, scales:{r:{min:0, max:100, ticks:{stepSize:25}}}}
+    });
+  }catch(err){ console.error('chart error', err); }
+}
+
+var chartActionsStatus=null;
+function renderActionsStatusChart(){
+  if(typeof Chart==='undefined') return;
+  var ctx = document.getElementById('chart-actions-status');
+  if(!ctx) return;
+  if(chartActionsStatus){ chartActionsStatus.destroy(); chartActionsStatus=null; }
+  try{
+    var counts = ACTION_STATUSES.map(function(s){ return DATA.actions.filter(function(a){return a.statut===s[0];}).length; });
+    var colors = ['#9C978A','#3B6FA0','#2E7D4F','#1F5C5C','#B23B2E','#6E6A60'];
+    chartActionsStatus = new Chart(ctx, {
+      type:'bar',
+      data:{labels:ACTION_STATUSES.map(function(s){return s[1];}), datasets:[{label:'Actions', data:counts,
+        backgroundColor:colors, borderRadius:5}]},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true, ticks:{stepSize:1}}, x:{ticks:{font:{size:10}}}}}
+    });
+  }catch(err){ console.error('chart error', err); }
+}
+
+var chartScoreHistory=null;
+function renderScoreHistoryChart(){
+  if(typeof Chart==='undefined') return;
+  var ctx = document.getElementById('chart-score-history');
+  if(!ctx) return;
+  if(chartScoreHistory){ chartScoreHistory.destroy(); chartScoreHistory=null; }
+  try{
+    var hist = DATA.scoreHistory.slice().sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(-180);
+    chartScoreHistory = new Chart(ctx, {
+      type:'line',
+      data:{labels:hist.map(function(h){ return fmtDate(h.date); }),
+        datasets:[
+          {label:'Score global', data:hist.map(function(h){return h.score;}), borderColor:'#1F5C5C', backgroundColor:'#1F5C5C22', borderWidth:2, pointRadius:2, tension:0.2},
+          {label:'Seuil attention (85%)', data:hist.map(function(){return 85;}), borderColor:'#E0922A99', borderDash:[6,3], borderWidth:1, pointRadius:0},
+          {label:'Seuil danger (50%)', data:hist.map(function(){return 50;}), borderColor:'#D6483A99', borderDash:[6,3], borderWidth:1, pointRadius:0}
+        ]},
+      options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+        scales:{y:{min:0, max:100, ticks:{callback:function(v){return v+'%';}}}, x:{ticks:{maxTicksLimit:10}}}}
+    });
+  }catch(err){ console.error('chart error', err); }
+}
 function showExport(module){
   var text = module==='metro' ? buildMetroExport() : buildProprExport();
   var target = document.getElementById(module==='metro' ? 'metro-export' : 'proprete-export');
@@ -1987,6 +2107,7 @@ async function handleFormSubmit(form){
   }
   if(mod==='ateq'){ entry.nbDefauts = parseInt(entry.nbDefauts||0,10); entry.nb2nd = parseInt(entry.nb2nd||0,10); }
   if(mod==='resultats'){ entry.resultatPct = parseFloat(entry.resultatPct||0); }
+  if(mod==='planning'){ entry.resultatPct = (entry.resultatPct!==undefined && entry.resultatPct!=='') ? parseFloat(entry.resultatPct) : null; }
   if(mod==='releves'){ entry.massePolluante = parseFloat(entry.massePolluante||0); }
   if(mod==='vidange'){ entry.intervalle = parseInt(entry.intervalle||VIDANGE_INTERVALLE,10); }
   if(mod==='actions'){ entry.dateCreation = todayStr(); }
@@ -2068,6 +2189,8 @@ app.addEventListener('click', async function(e){
       pitem.mois = document.getElementById('planning-edit-mois').value;
       pitem.echeance = newEch;
       pitem.responsable = document.getElementById('planning-edit-resp').value;
+      var rEl = document.getElementById('planning-edit-resultat');
+      pitem.resultatPct = (rEl && rEl.value!=='') ? parseFloat(rEl.value) : null;
       await save('planning');
       logChange('Planning', 'Modification', pitem.ligne+' — '+pitem.type, beforeP+' → '+pitem.ligne+' / '+pitem.type+' / '+fmtDate(pitem.echeance));
     }
@@ -2264,6 +2387,8 @@ async function init(){
 init();
 
 })();
+
+
 
 
 
