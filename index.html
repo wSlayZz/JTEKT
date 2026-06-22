@@ -202,7 +202,11 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 var supabaseClient = null;
 if(SUPABASE_URL !== 'VOTRE_URL_SUPABASE' && SUPABASE_ANON_KEY !== 'VOTRE_CLE_ANON_SUPABASE' &&
    window.supabase && typeof window.supabase.createClient === 'function'){
-  try{ supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+  try{
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession:false, autoRefreshToken:false, detectSessionInUrl:false }
+    });
+  }
   catch(e){ console.error('Supabase init error', e); }
 }
 
@@ -2179,6 +2183,16 @@ async function init(){
 init();
 
 })();
-/script>
+
+
+
+
+
+
+
+
+
+
+</script>
 </body>
 </html>
