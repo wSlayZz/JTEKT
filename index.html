@@ -191,6 +191,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -1524,8 +1525,63 @@ RENDERERS.ateq = function(){
   '</div>';
 
   html += '<div class="section"><h2>Synthèse mensuelle</h2>'+renderAteqMonthlyTable()+'</div>';
+  html += renderAteqActionPlan();
   return html;
 };
+
+var ateqActionFormOpen = false;
+function renderAteqActionPlan(){
+  var items = DATA.actions.filter(function(a){ return a.origine==='ATEQ' && isActionOpen(a); })
+    .sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
+  var html = '<div class="section card" style="margin-bottom:18px;">';
+  html += '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:10px;">'+
+    '<div><div class="eyebrow">Plan de réaction — actions correctives immédiates</div>'+
+    '<p class="tiny" style="margin-top:4px;">En cas de pic de défauts ou de crise qualité, déclenchez ici une action corrective immédiate (confinement, tri, alerte...). Elle apparaît aussi dans l\'onglet Plan d\'actions.</p></div>'+
+    '<button class="btn primary" data-action="new-ateq-action">+ Déclencher une action corrective</button></div>';
+  if(ateqActionFormOpen) html += ateqActionForm();
+  if(!items.length){
+    html += '<div class="empty">Aucune action corrective ATEQ en cours.</div>';
+  } else {
+    html += '<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Description</th><th>Statut</th><th>Échéance</th><th>Délai</th><th>Responsable</th></tr></thead><tbody>';
+    html += items.map(function(a){
+      var statusLabel = (ACTION_STATUSES.filter(function(s){return s[0]===a.statut;})[0]||['',a.statut])[1];
+      var dl = a.echeance ? daysLabel(a.echeance) : null;
+      var lvl = isActionLate(a)?'danger':(a.statut==='planifiee'?'warn':'ok');
+      return '<tr><td>'+esc(val(a.ligne,'—'))+'</td><td>'+esc(a.description)+'</td><td>'+badge(lvl, statusLabel)+'</td>'+
+        '<td class="num">'+(a.echeance?fmtDate(a.echeance):'—')+'</td>'+
+        '<td>'+(dl? '<span class="delay-pill delay-'+(dl.d<0?'late':dl.d<=3?'soon':'ok')+'">'+dl.text+'</span>' : '—')+'</td>'+
+        '<td>'+esc(val(a.responsable,'—'))+'</td></tr>';
+    }).join('');
+    html += '</tbody></table></div>';
+  }
+  html += '</div>';
+  return html;
+}
+function ateqActionForm(){
+  return '<div class="card" style="max-width:520px; margin-bottom:14px;">'+
+    '<div style="display:flex; flex-direction:column; gap:10px;">'+
+    '<label class="field">Ligne<select id="aa-ligne">'+['MCU1','MCU2'].map(function(l){return '<option value="'+l+'">'+l+'</option>';}).join('')+'</select></label>'+
+    '<label class="field">Description de l\'action corrective<textarea id="aa-description" rows="2" placeholder="Ex. : confinement et tri des pièces produites depuis 06h, alerte responsable ligne..."></textarea></label>'+
+    '<label class="field">Responsable<input type="text" id="aa-responsable"></label>'+
+    '<label class="field">Échéance<input type="date" id="aa-echeance" value="'+todayStr()+'"></label>'+
+    '</div><div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="cancel-ateq-action">Annuler</button><button class="btn primary" data-action="save-ateq-action">Enregistrer l\'action</button></div></div>';
+}
+async function handleSaveAteqAction(){
+  var description = document.getElementById('aa-description').value.trim();
+  if(!description){ alert('Merci de décrire l\'action corrective.'); return; }
+  var entry = {
+    id: uid('act'), origine:'ATEQ', description:description,
+    ligne: document.getElementById('aa-ligne').value,
+    responsable: document.getElementById('aa-responsable').value,
+    echeance: document.getElementById('aa-echeance').value || null,
+    statut:'planifiee', dateCreation: todayStr()
+  };
+  DATA.actions.push(entry);
+  await save('actions');
+  logChange('ATEQ', 'Action corrective déclenchée', entry.description, entry.ligne);
+  ateqActionFormOpen = false;
+  render();
+}
 
 function renderAteqMonthlyTable(){
   var rows = ateqMonthlySummary(6);
@@ -1793,7 +1849,7 @@ function handleLogout(){
 var POLL_INTERVAL_MS = 10000;
 var pollTimer = null;
 function isUserMidEdit(){
-  if(auditWizard || metroEditingId || planningEditingId || contamDirectFormOpen || accountFormState || roleFormState) return true;
+  if(auditWizard || metroEditingId || planningEditingId || contamDirectFormOpen || accountFormState || roleFormState || ateqActionFormOpen) return true;
   var openForms = document.querySelectorAll('form[id^="form-"]');
   for(var i=0;i<openForms.length;i++){ if(openForms[i].style.display!=='none') return true; }
   return false;
@@ -2277,6 +2333,10 @@ app.addEventListener('click', async function(e){
     return;
   }
 
+  if(e.target.closest('[data-action="new-ateq-action"]')){ ateqActionFormOpen = true; render(); return; }
+  if(e.target.closest('[data-action="cancel-ateq-action"]')){ ateqActionFormOpen = false; render(); return; }
+  if(e.target.closest('[data-action="save-ateq-action"]')){ await handleSaveAteqAction(); return; }
+
   if(e.target.closest('[data-action="logout"]')){ handleLogout(); return; }
   if(e.target.closest('[data-action="new-account"]')){ handleNewAccount(); return; }
   var editAccBtn = e.target.closest('[data-action="edit-account"]');
@@ -2421,6 +2481,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
