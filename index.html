@@ -189,6 +189,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -1179,7 +1180,11 @@ function render(){
   });
   var fn = RENDERERS[currentTab] || RENDERERS.dashboard;
   view.innerHTML = fn();
-  if(currentTab==='dashboard'){ renderTrendChart(); renderRadarChart(); renderActionsStatusChart(); renderScoreHistoryChart(); }
+  if(currentTab==='dashboard'){
+    lastChartRefresh = Date.now();
+    renderTrendChart();
+    renderScoreHistoryChart();
+  }
   if(currentTab==='planning'){ applyPlanningFilter(); }
   if(currentTab==='proprete'){
     if(propreteSub==='resultats') renderResultatsCharts();
@@ -1261,12 +1266,28 @@ RENDERERS.dashboard = function(){
     return '<div class="linebadge">'+l+' '+badge(scoreLevel(p.resultatPct), p.resultatPct+'% ('+fmtDate(p.echeance)+')')+'</div>';
   }).join('');
   html += '<div class="statcard"><div class="eyebrow">Audits de perf — derniers résultats</div><div class="linebadges">'+perfLines+'</div></div>';
+  html += '</div></div>';
 
   var openActions = DATA.actions.filter(isActionOpen);
-  var lateActions = DATA.actions.filter(isActionLate);
+  var lateActions = DATA.actions.filter(isActionLate).sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
   var alevel = lateActions.length? 'danger' : (openActions.length? 'warn':'ok');
-  html += '<div class="statcard s-'+alevel+'"><div class="eyebrow">Plan d\'actions</div><div class="val">'+openActions.length+' ouvertes</div><div class="tiny">'+lateActions.length+' en retard</div></div>';
-  html += '</div></div>';
+  html += '<div class="section card s-'+alevel+'" style="margin-bottom:18px;">'+
+    '<div style="display:flex; align-items:baseline; gap:14px; margin-bottom:10px;"><div class="eyebrow">Plan d\'actions — actions prioritaires (en retard)</div>'+
+    '<span class="tiny">'+openActions.length+' ouvertes au total · '+lateActions.length+' en retard</span></div>';
+  if(!lateActions.length){
+    html += '<div class="empty">Aucune action en retard.</div>';
+  } else {
+    html += '<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Description</th><th>Origine</th><th>Échéance</th><th>Délai</th><th>Responsable</th></tr></thead><tbody>';
+    html += lateActions.map(function(a){
+      var dl = daysLabel(a.echeance);
+      return '<tr><td>'+esc(val(a.ligne,'—'))+'</td><td>'+esc(a.description)+'</td><td class="tiny">'+esc(val(a.origine,'—'))+'</td>'+
+        '<td class="num">'+(a.echeance?fmtDate(a.echeance):'—')+'</td>'+
+        '<td>'+(dl? '<span class="delay-pill delay-late">'+dl.text+'</span>' : '—')+'</td>'+
+        '<td>'+esc(val(a.responsable,'—'))+'</td></tr>';
+    }).join('');
+    html += '</tbody></table></div>';
+  }
+  html += '</div>';
 
   html += '<div class="section dash-actions-noprint" style="display:flex; gap:8px; justify-content:flex-end; margin-bottom:4px;">'+
     '<button class="btn" data-action="weekly-digest">Générer le résumé hebdomadaire</button>'+
@@ -1274,10 +1295,6 @@ RENDERERS.dashboard = function(){
   html += '<div id="digest-box"></div>';
   html += '<div class="section card"><div class="eyebrow" style="margin-bottom:8px;">Tendance globale — 12 derniers mois</div><div class="chart-box"><canvas id="chart-trend"></canvas></div></div>';
 
-  html += '<div class="grid grid-2" style="margin-bottom:18px;">'+
-    '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">Comparatif des lignes</div><div class="chart-box"><canvas id="chart-radar"></canvas></div></div>'+
-    '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">Plan d\'actions par statut</div><div class="chart-box"><canvas id="chart-actions-status"></canvas></div></div>'+
-  '</div>';
   html += '<div class="section card" style="margin-bottom:18px;"><div class="eyebrow" style="margin-bottom:8px;">Évolution du score de conformité global</div><div class="chart-box"><canvas id="chart-score-history"></canvas></div></div>';
   html += '<div class="section"><h2>Alertes</h2><div id="alerts-section">'+renderAlertsSection()+'</div></div>';
   return html;
@@ -1721,6 +1738,8 @@ function isUserMidEdit(){
   for(var i=0;i<openForms.length;i++){ if(openForms[i].style.display!=='none') return true; }
   return false;
 }
+var lastChartRefresh = 0;
+var CHART_REFRESH_MS = 60000;
 async function pollForUpdates(){
   if(STORAGE_MODE!=='supabase' || !currentUser || isUserMidEdit()) return;
   try{
@@ -1734,6 +1753,7 @@ async function pollForUpdates(){
       }
     }
     if(changed && !isUserMidEdit()){
+      if(currentTab==='dashboard' && (Date.now()-lastChartRefresh) < CHART_REFRESH_MS) return;
       renderNav();
       renderUserbox();
       render();
@@ -1961,52 +1981,6 @@ function renderTrendChart(){
           y:{type:'linear', position:'left', min:0, max:100, title:{display:true,text:'Score propreté (%)'}},
           y1:{type:'linear', position:'right', beginAtZero:true, grid:{drawOnChartArea:false}, title:{display:true,text:'Défauts ATEQ'}}
         }}
-    });
-  }catch(err){ console.error('chart error', err); }
-}
-
-var chartRadar=null;
-function renderRadarChart(){
-  if(typeof Chart==='undefined') return;
-  var ctx = document.getElementById('chart-radar');
-  if(!ctx) return;
-  if(chartRadar){ chartRadar.destroy(); chartRadar=null; }
-  try{
-    var lineColors = {MCU1:'#1F5C5C', MCU2:'#2E7D4F', MCU3:'#B8730A'};
-    var curYear = Number(todayStr().slice(0,4));
-    var datasets = LINES.map(function(l){
-      var propr = latestResultByLine(l); var propVal = propr? propr.resultatPct : 0;
-      var metroItems = DATA.metro.filter(function(e){ return e.ligne===l; });
-      var metroVal = metroItems.length? (1 - metroItems.filter(function(e){return metroStatus(e).level==='danger';}).length/metroItems.length)*100 : 0;
-      var perf = latestPerfResultByLine(l); var perfVal = perf? perf.resultatPct : 0;
-      var contamItems = DATA.contamination.filter(function(c){ return c.ligne===l && c.annee===curYear && (c.statut==='ok'||c.statut==='nc'); });
-      var contamVal = contamItems.length? contamItems.filter(function(c){return c.statut==='ok';}).length/contamItems.length*100 : 0;
-      return {label:l, data:[Math.round(propVal), Math.round(metroVal), Math.round(perfVal), Math.round(contamVal)],
-        borderColor:lineColors[l], backgroundColor:lineColors[l]+'33', borderWidth:2, pointRadius:3};
-    });
-    chartRadar = new Chart(ctx, {
-      type:'radar',
-      data:{labels:['Propreté','Métrologie à jour','Audits de perf','Contamination conforme'], datasets:datasets},
-      options:{responsive:true, maintainAspectRatio:false, scales:{r:{min:0, max:100, ticks:{stepSize:25}}}}
-    });
-  }catch(err){ console.error('chart error', err); }
-}
-
-var chartActionsStatus=null;
-function renderActionsStatusChart(){
-  if(typeof Chart==='undefined') return;
-  var ctx = document.getElementById('chart-actions-status');
-  if(!ctx) return;
-  if(chartActionsStatus){ chartActionsStatus.destroy(); chartActionsStatus=null; }
-  try{
-    var counts = ACTION_STATUSES.map(function(s){ return DATA.actions.filter(function(a){return a.statut===s[0];}).length; });
-    var colors = ['#9C978A','#3B6FA0','#2E7D4F','#1F5C5C','#B23B2E','#6E6A60'];
-    chartActionsStatus = new Chart(ctx, {
-      type:'bar',
-      data:{labels:ACTION_STATUSES.map(function(s){return s[1];}), datasets:[{label:'Actions', data:counts,
-        backgroundColor:colors, borderRadius:5}]},
-      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-        scales:{y:{beginAtZero:true, ticks:{stepSize:1}}, x:{ticks:{font:{size:10}}}}}
     });
   }catch(err){ console.error('chart error', err); }
 }
@@ -2387,6 +2361,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
