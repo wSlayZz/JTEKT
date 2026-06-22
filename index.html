@@ -190,6 +190,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -1186,6 +1187,7 @@ function render(){
     renderScoreHistoryChart();
   }
   if(currentTab==='planning'){ applyPlanningFilter(); }
+  if(currentTab==='ateq'){ renderAteqCharts(); }
   if(currentTab==='proprete'){
     if(propreteSub==='resultats') renderResultatsCharts();
     else if(propreteSub==='contamination') renderContaminationCharts();
@@ -1441,17 +1443,34 @@ function monthTotal(ligne, yyyymm){
   return DATA.ateq.filter(function(a){ return a.ligne===ligne && a.date.slice(0,7)===yyyymm; })
     .reduce(function(s,a){ return s+(a.nbDefauts||0); }, 0);
 }
-function weeklyTotals(ligne, numWeeks){
+function weeklySeries(ligne, numWeeks){
   var result = [];
   for(var w=numWeeks-1; w>=0; w--){
     var days = getWeekDates(-w);
-    var total = days.reduce(function(s,d){
+    var total=0, nb2nd=0;
+    days.forEach(function(d){
       var e = DATA.ateq.find(function(a){return a.date===d && a.ligne===ligne;});
-      return s + (e? (e.nbDefauts||0) : 0);
-    }, 0);
-    result.push({label: fmtDateShort(days[0]), total:total});
+      if(e){ total += (e.nbDefauts||0); nb2nd += (e.nb2nd||0); }
+    });
+    result.push({label: fmtDateShort(days[0]), total:total, nb2nd:nb2nd, taux: total>0? Math.round(nb2nd/total*100) : null});
   }
   return result;
+}
+function ateqMonthlySummary(numMonths){
+  var rows = [];
+  for(var m=numMonths-1; m>=0; m--){
+    var yyyymm = currentYYYYMM(-m);
+    var label = MONTHS_FR[Number(yyyymm.slice(5,7))-1];
+    label = label.charAt(0).toUpperCase()+label.slice(1)+' '+yyyymm.slice(0,4);
+    ['MCU1','MCU2'].forEach(function(l){
+      var items = DATA.ateq.filter(function(a){ return a.ligne===l && a.date.slice(0,7)===yyyymm; });
+      if(!items.length) return;
+      var total = items.reduce(function(s,a){return s+(a.nbDefauts||0);},0);
+      var nb2nd = items.reduce(function(s,a){return s+(a.nb2nd||0);},0);
+      rows.push({label:label, ligne:l, total:total, nb2nd:nb2nd, taux: total>0? Math.round(nb2nd/total*100):0, jours:items.length});
+    });
+  }
+  return rows.reverse();
 }
 function svgBarChart(items, color){
   var width = 320, height = 110;
@@ -1486,19 +1505,71 @@ RENDERERS.ateq = function(){
     var totalCur = monthTotal(l, curM), totalPrev = monthTotal(l, prevM);
     var dayOfMonth = Number(todayStr().split('-')[2]);
     var avg = (totalCur/Math.max(1,dayOfMonth)).toFixed(1);
+    var monthItems = DATA.ateq.filter(function(a){ return a.ligne===l && a.date.slice(0,7)===curM; });
+    var nb2ndCur = monthItems.reduce(function(s,a){return s+(a.nb2nd||0);},0);
+    var tauxCur = totalCur>0? Math.round(nb2ndCur/totalCur*100) : 0;
     html += '<div class="card"><div class="eyebrow">'+l+' — mois en cours</div>'+
       '<div style="display:flex; align-items:baseline; gap:10px; margin:8px 0;"><div class="val" style="font-size:26px;">'+totalCur+'</div><div class="tiny">défauts cumulés</div></div>'+
-      '<div class="tiny" style="margin-bottom:6px;">Moyenne : '+avg+' / jour</div>'+
+      '<div class="tiny" style="margin-bottom:4px;">Moyenne : '+avg+' / jour · Taux 2nd passage : <b style="color:var(--'+(tauxCur>20?'danger':tauxCur>10?'warn':'ok')+');">'+tauxCur+'%</b></div>'+
       trendBadge(totalCur, totalPrev)+
-      '<div style="margin-top:14px;">'+svgBarChart(weeklyTotals(l,8), l==='MCU1'?'#1F5C5C':'#B8730A')+'</div>'+
+      '<div style="margin-top:14px;">'+svgBarChart(weeklySeries(l,8), l==='MCU1'?'#1F5C5C':'#B8730A')+'</div>'+
       '<div class="tiny" style="text-align:center;">Total par semaine (8 dernières semaines)</div>'+
       '</div>';
   });
   html += '</div></div>';
 
-  html += '<div class="section"><h2>Historique des saisies</h2>'+renderAteqHistory()+'</div>';
+  html += '<div class="grid grid-2" style="margin-bottom:18px;">'+
+    '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">Comparatif hebdomadaire MCU1 vs MCU2 — 12 semaines</div><div class="chart-box"><canvas id="chart-ateq-compare"></canvas></div></div>'+
+    '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">Taux de 2nd passage — tendance</div><div class="chart-box"><canvas id="chart-ateq-2nd"></canvas></div></div>'+
+  '</div>';
+
+  html += '<div class="section"><h2>Synthèse mensuelle</h2>'+renderAteqMonthlyTable()+'</div>';
   return html;
 };
+
+function renderAteqMonthlyTable(){
+  var rows = ateqMonthlySummary(6);
+  if(!rows.length) return '<div class="empty">Aucune saisie sur les 6 derniers mois.</div>';
+  var html = '<div class="table-wrap"><table><thead><tr><th>Mois</th><th>Ligne</th><th>Total défauts</th><th>Total 2nd passage</th><th>Taux 2nd passage</th><th>Jours saisis</th></tr></thead><tbody>';
+  html += rows.map(function(r){
+    var lvl = r.taux>20?'danger':r.taux>10?'warn':'ok';
+    return '<tr><td>'+esc(r.label)+'</td><td>'+esc(r.ligne)+'</td><td class="num">'+r.total+'</td><td class="num">'+r.nb2nd+'</td><td>'+badge(lvl, r.taux+'%')+'</td><td class="num">'+r.jours+'</td></tr>';
+  }).join('');
+  html += '</tbody></table></div>';
+  return html;
+}
+
+var chartAteqCompare=null, chartAteq2nd=null;
+function renderAteqCharts(){
+  if(typeof Chart==='undefined') return;
+  try{
+    var s1 = weeklySeries('MCU1',12), s2 = weeklySeries('MCU2',12);
+    var ctx1 = document.getElementById('chart-ateq-compare');
+    if(ctx1){
+      if(chartAteqCompare){ chartAteqCompare.destroy(); chartAteqCompare=null; }
+      chartAteqCompare = new Chart(ctx1, {
+        type:'line',
+        data:{labels:s1.map(function(s){return s.label;}), datasets:[
+          {label:'MCU1', data:s1.map(function(s){return s.total;}), borderColor:'#1F5C5C', backgroundColor:'#1F5C5C22', borderWidth:2, pointRadius:3, tension:0.2},
+          {label:'MCU2', data:s2.map(function(s){return s.total;}), borderColor:'#B8730A', backgroundColor:'#B8730A22', borderWidth:2, pointRadius:3, tension:0.2}
+        ]},
+        options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false}, scales:{y:{beginAtZero:true, title:{display:true,text:'Défauts / semaine'}}}}
+      });
+    }
+    var ctx2 = document.getElementById('chart-ateq-2nd');
+    if(ctx2){
+      if(chartAteq2nd){ chartAteq2nd.destroy(); chartAteq2nd=null; }
+      chartAteq2nd = new Chart(ctx2, {
+        type:'line',
+        data:{labels:s1.map(function(s){return s.label;}), datasets:[
+          {label:'MCU1 — taux 2nd passage (%)', data:s1.map(function(s){return s.taux;}), borderColor:'#1F5C5C', backgroundColor:'transparent', borderWidth:2, pointRadius:3, spanGaps:true},
+          {label:'MCU2 — taux 2nd passage (%)', data:s2.map(function(s){return s.taux;}), borderColor:'#B8730A', backgroundColor:'transparent', borderWidth:2, pointRadius:3, spanGaps:true}
+        ]},
+        options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false}, scales:{y:{min:0, max:100, ticks:{callback:function(v){return v+'%';}}}}}
+      });
+    }
+  }catch(err){ console.error('chart error', err); }
+}
 
 function renderAteqWeekGrid(){
   var days = getWeekDates(ateqWeekOffset);
@@ -1526,17 +1597,6 @@ function renderAteqWeekGrid(){
   return html;
 }
 
-function renderAteqHistory(){
-  var rows = DATA.ateq.slice().sort(function(a,b){ return b.date.localeCompare(a.date); }).slice(0,60);
-  var html = '<div class="table-wrap"><table><thead><tr><th>Date</th><th>Ligne</th><th>Défauts</th><th>2nd passage</th><th></th></tr></thead><tbody id="ateq-rows">';
-  html += rows.map(ateqRow).join('') || '<tr><td colspan="5"><div class="empty">Aucune saisie</div></td></tr>';
-  html += '</tbody></table></div><div class="tiny" style="margin-top:8px;">Affichage des 60 dernières saisies (corrections/suppressions ponctuelles).</div>';
-  return html;
-}
-function ateqRow(a){
-  return '<tr><td class="num">'+fmtDate(a.date)+'</td><td>'+esc(a.ligne)+'</td><td class="num">'+esc(a.nbDefauts)+'</td><td class="num">'+esc(a.nb2nd||0)+'</td>'+
-    '<td><button class="btn small danger-outline" data-action="delete" data-module="ateq" data-id="'+a.id+'">Suppr.</button></td></tr>';
-}
 var MODULES = ['Métrologie','Planning','ATEQ','Actions'];
 var alertFilterLigne = '';
 var alertFilterModule = '';
@@ -2361,6 +2421,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
