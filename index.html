@@ -186,6 +186,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -338,6 +339,34 @@ function metroStatus(e){
   if(d<0) return {level:'danger', label:'En retard'};
   if(d<=30) return {level:'warn', label:'À prévoir'};
   return {level:'ok', label:'À jour'};
+}
+function globalConformityScore(){
+  var parts = [];
+  var detail = [];
+  var proprVals = LINES.map(latestResultByLine).filter(Boolean).map(function(r){return r.resultatPct;});
+  if(proprVals.length){
+    var p = proprVals.reduce(function(a,b){return a+b;},0)/proprVals.length;
+    parts.push(p); detail.push({label:'Propreté', val:Math.round(p)});
+  }
+  if(DATA.metro.length){
+    var lateCount = DATA.metro.filter(function(e){ return metroStatus(e).level==='danger'; }).length;
+    var m = (1 - lateCount/DATA.metro.length)*100;
+    parts.push(m); detail.push({label:'Métrologie à jour', val:Math.round(m)});
+  }
+  var contamYear = DATA.contamination.filter(function(c){ return c.annee===Number(todayStr().slice(0,4)) && (c.statut==='ok'||c.statut==='nc'); });
+  if(contamYear.length){
+    var okCount = contamYear.filter(function(c){return c.statut==='ok';}).length;
+    var c = okCount/contamYear.length*100;
+    parts.push(c); detail.push({label:'Contamination conforme', val:Math.round(c)});
+  }
+  var relevantActions = DATA.actions.filter(function(a){ return a.statut!=='abandonnee'; });
+  if(relevantActions.length){
+    var lateA = relevantActions.filter(isActionLate).length;
+    var ac = (1-lateA/relevantActions.length)*100;
+    parts.push(ac); detail.push({label:"Actions dans les temps", val:Math.round(ac)});
+  }
+  if(!parts.length) return {score:null, detail:[]};
+  return {score: Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length), detail:detail};
 }
 function metroOverall(lines){
   var items = DATA.metro.filter(function(e){ return !lines || lines.indexOf(e.ligne)>=0; });
@@ -1137,6 +1166,16 @@ function render(){
 
 RENDERERS.dashboard = function(){
   var html = '';
+  var gs = globalConformityScore();
+  if(gs.score!==null){
+    var glvl = gs.score>=90?'ok':gs.score>=75?'warn':'danger';
+    html += '<div class="section card" style="margin-bottom:18px;"><div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">'+
+      '<div><div class="eyebrow">Score de conformité — secteur MCU</div><div class="score-big" style="color:var(--'+glvl+'); margin:4px 0;">'+gs.score+'%</div></div>'+
+      '<div style="display:flex; gap:18px; flex-wrap:wrap;">'+gs.detail.map(function(d){
+        var dlvl = d.val>=90?'ok':d.val>=75?'warn':'danger';
+        return '<div><div class="tiny">'+esc(d.label)+'</div><div style="font-family:var(--mono); font-weight:700; color:var(--'+dlvl+');">'+d.val+'%</div></div>';
+      }).join('')+'</div></div></div>';
+  }
   html += '<div class="section"><div class="grid grid-4">';
   PLAN_TYPES.forEach(function(t){
     var lineBadges = LINES.map(function(l){
@@ -1211,8 +1250,8 @@ RENDERERS.planning = function(){
     var label = MONTHS_FR[Number(k.slice(5,7))-1]; label = label.charAt(0).toUpperCase()+label.slice(1)+' '+k.slice(0,4);
     return '<option value="'+k+'"'+(k===planningMoisFilter?' selected':'')+'>'+label+(k===curMonthKey?' (mois en cours)':'')+'</option>';
   }).join('')+'</select>';
-  html += '<select id="flt-planning-type"><option value="">Tous les types</option>'+PLAN_TYPES.map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join('')+'</select>';
-  html += '<select id="flt-planning-ligne"><option value="">Toutes les lignes</option>'+LINES.map(function(l){return '<option value="'+l+'">'+l+'</option>';}).join('')+'</select>';
+  html += '<select id="flt-planning-type"><option value="">Tous les types</option>'+PLAN_TYPES.map(function(t){return '<option value="'+t[0]+'"'+(t[0]===planningTypeFilter?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select>';
+  html += '<select id="flt-planning-ligne"><option value="">Toutes les lignes</option>'+LINES.map(function(l){return '<option value="'+l+'"'+(l===planningLigneFilter?' selected':'')+'>'+l+'</option>';}).join('')+'</select>';
   html += '</div><button class="btn primary" data-toggle-form="planning">+ Ajouter une échéance</button></div>';
 
   html += '<form class="entryform" id="form-planning" style="display:none">'+
@@ -1433,6 +1472,8 @@ var MODULES = ['Métrologie','Planning','ATEQ','Actions'];
 var alertFilterLigne = '';
 var alertFilterModule = '';
 var planningMoisFilter;
+var planningTypeFilter = '';
+var planningLigneFilter = '';
 
 function computeAlerts(){
   var alerts = [];
@@ -1610,11 +1651,49 @@ async function handleLogin(){
   renderNav();
   renderUserbox();
   render();
+  startPolling();
 }
 function handleLogout(){
   clearSession();
   currentUser = null;
+  stopPolling();
   renderLoginOverlay();
+}
+
+// ---------- SYNCHRONISATION PÉRIODIQUE (Supabase) ----------
+var POLL_INTERVAL_MS = 10000;
+var pollTimer = null;
+function isUserMidEdit(){
+  if(auditWizard || metroEditingId || planningEditingId || contamDirectFormOpen || accountFormState || roleFormState) return true;
+  var openForms = document.querySelectorAll('form[id^="form-"]');
+  for(var i=0;i<openForms.length;i++){ if(openForms[i].style.display!=='none') return true; }
+  return false;
+}
+async function pollForUpdates(){
+  if(STORAGE_MODE!=='supabase' || !currentUser || isUserMidEdit()) return;
+  try{
+    var changed = false;
+    for(var k in KEYS){
+      var res = await backendGet(KEYS[k]);
+      var newVal = res ? JSON.parse(res.value) : (Array.isArray(DATA[k]) ? [] : DATA[k]);
+      if(res && JSON.stringify(newVal) !== JSON.stringify(DATA[k])){
+        DATA[k] = newVal;
+        changed = true;
+      }
+    }
+    if(changed && !isUserMidEdit()){
+      renderNav();
+      renderUserbox();
+      render();
+    }
+  }catch(e){ console.error('poll error', e); }
+}
+function startPolling(){
+  stopPolling();
+  pollTimer = setInterval(pollForUpdates, POLL_INTERVAL_MS);
+}
+function stopPolling(){
+  if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
 }
 
 // ---------- GESTION DES COMPTES & PROFILS (admin uniquement) ----------
@@ -2103,7 +2182,8 @@ app.addEventListener('change', async function(e){
   if(e.target.id==='results-year'){ resultsYear = Number(e.target.value); render(); return; }
   if(e.target.id==='cd-ligne'){ contamDirectState.ligne = e.target.value; contamDirectState.ref = refsForLigne(e.target.value)[0]; render(); return; }
   if(e.target.id==='cd-ref'){ contamDirectState.ref = e.target.value; render(); return; }
-  if(e.target.id==='flt-planning-type' || e.target.id==='flt-planning-ligne'){ applyPlanningFilter(); return; }
+  if(e.target.id==='flt-planning-type'){ planningTypeFilter = e.target.value; applyPlanningFilter(); return; }
+  if(e.target.id==='flt-planning-ligne'){ planningLigneFilter = e.target.value; applyPlanningFilter(); return; }
   if(e.target.id==='flt-planning-mois'){ planningMoisFilter = e.target.value; applyPlanningFilter(); return; }
   if(e.target.id==='flt-metro-ligne'){ applyMetroFilter(); return; }
   if(e.target.id==='flt-alert-ligne'){ alertFilterLigne = e.target.value; applyAlertFilters(); return; }
@@ -2173,6 +2253,7 @@ async function init(){
       renderNav();
       renderUserbox();
       render();
+      startPolling();
     } else {
       renderLoginOverlay();
     }
@@ -2183,6 +2264,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
