@@ -192,6 +192,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -221,9 +222,9 @@ var KEYS = {
   actions:'mcu_actions_v1', resultats:'mcu_resultats_audits_v1',
   releves:'mcu_releves_produits_v1', checklist:'mcu_checklist_v1',
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
-  accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1'
+  accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[]};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[]};
 var RENDERERS = {};
 var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['actions',"Plan d'actions"],['planning','Planning échéances'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
@@ -564,10 +565,12 @@ RENDERERS.proprete = function(){
     (allowedAudit? '<button data-sub="grille" class="'+(propreteSub==='grille'?'active':'')+'">Grille d\'audit</button>' : '')+
     '<button data-sub="resultats" class="'+(propreteSub==='resultats'?'active':'')+'">Résultats audits (%)</button>'+
     '<button data-sub="contamination" class="'+(propreteSub==='contamination'?'active':'')+'">Contamination</button>'+
+    '<button data-sub="particules" class="'+(propreteSub==='particules'?'active':'')+'">Relevés particules</button>'+
     '<button data-sub="vidange" class="'+(propreteSub==='vidange'?'active':'')+'">MCU0 · Vidange</button>'+
   '</div>';
   if(propreteSub==='grille' && allowedAudit) html += renderProprGrilleTab();
   else if(propreteSub==='contamination') html += proprContamination();
+  else if(propreteSub==='particules') html += proprParticules();
   else if(propreteSub==='vidange') html += proprVidange();
   else html += proprResultats();
   html += '</div>';
@@ -706,17 +709,10 @@ async function handleSaveAudit(){
   var record = {id:uid('paud'), ligne:w.ligne, date:w.date, auditeur:w.auditeur, service:w.service, score:sc.score, ok:sc.ok, ng:sc.ng, items:itemsArr};
   DATA.propAudits.push(record);
   await save('propAudits');
-
-  // upsert dans Résultats audits (%) pour le mois correspondant
-  if(sc.score!==null){
-    var moisLabel = MONTHS_FR[Number(w.date.split('-')[1])-1];
-    var annee = Number(w.date.split('-')[0]);
-    moisLabel = moisLabel.charAt(0).toUpperCase()+moisLabel.slice(1);
-    var existing = DATA.resultats.find(function(r){ return r.ligne===w.ligne && r.mois===moisLabel && (r.annee===annee || r.annee===undefined); });
-    if(existing){ existing.resultatPct = sc.score; existing.annee = annee; }
-    else { DATA.resultats.push({id:uid('ra'), ligne:w.ligne, mois:moisLabel, resultatPct:sc.score, annee:annee}); }
-    await save('resultats');
-  }
+  var annee = Number(w.date.split('-')[0]);
+  var moisLabel = MONTHS_FR[Number(w.date.split('-')[1])-1];
+  moisLabel = moisLabel.charAt(0).toUpperCase()+moisLabel.slice(1);
+  await recomputeResultatMois(w.ligne, moisLabel, annee);
 
   // pousser les NC dans le plan d'actions unifié
   var created = 0;
@@ -738,6 +734,36 @@ async function handleSaveAudit(){
   alert('Audit enregistré'+(sc.score!==null? ' — score '+sc.score+'%.':' (aucun critère renseigné).')+' '+created+' non-conformité(s) ajoutée(s) au plan d\'actions.');
   render();
 }
+async function recomputeResultatMois(ligne, moisLabel, annee){
+  var audits = DATA.propAudits.filter(function(a){
+    if(a.ligne!==ligne || a.score===null || a.score===undefined) return false;
+    var d = a.date.split('-');
+    var aMois = MONTHS_FR[Number(d[1])-1]; aMois = aMois.charAt(0).toUpperCase()+aMois.slice(1);
+    return aMois===moisLabel && Number(d[0])===annee;
+  });
+  var existing = DATA.resultats.find(function(r){ return r.ligne===ligne && r.mois===moisLabel && (r.annee===annee || r.annee===undefined); });
+  if(!audits.length){
+    if(existing){ DATA.resultats = DATA.resultats.filter(function(r){ return r!==existing; }); await save('resultats'); }
+    return;
+  }
+  var avg = Math.round(audits.reduce(function(s,a){return s+a.score;},0)/audits.length);
+  if(existing){ existing.resultatPct = avg; existing.annee = annee; }
+  else { DATA.resultats.push({id:uid('ra'), ligne:ligne, mois:moisLabel, resultatPct:avg, annee:annee}); }
+  await save('resultats');
+}
+async function handleDeleteAudit(id){
+  var a = DATA.propAudits.find(function(x){ return x.id===id; });
+  if(!a) return;
+  if(!confirm('Supprimer cet audit propreté ? Le résultat du mois sera recalculé sur la base des audits restants.')) return;
+  DATA.propAudits = DATA.propAudits.filter(function(x){ return x.id!==id; });
+  await save('propAudits');
+  var d = a.date.split('-');
+  var moisLabel = MONTHS_FR[Number(d[1])-1]; moisLabel = moisLabel.charAt(0).toUpperCase()+moisLabel.slice(1);
+  await recomputeResultatMois(a.ligne, moisLabel, Number(d[0]));
+  logChange('Propreté', 'Suppression audit', a.ligne+' — '+fmtDate(a.date));
+  openAuditDetailId = null;
+  render();
+}
 function renderAuditDetailModal(){
   var a = DATA.propAudits.find(function(x){ return x.id===openAuditDetailId; });
   if(!a) return '';
@@ -754,7 +780,7 @@ function renderAuditDetailModal(){
   } else {
     html += '<div class="empty">Aucune non-conformité sur cet audit.</div>';
   }
-  html += '<div class="actions-row" style="margin-top:16px;"><button class="btn primary" data-action="close-audit-detail">Fermer</button></div>';
+  html += '<div class="actions-row" style="margin-top:16px;"><button class="btn danger-outline" data-action="delete-audit" data-id="'+a.id+'">Supprimer cet audit</button><button class="btn primary" data-action="close-audit-detail">Fermer</button></div>';
   html += '</div></div>';
   return html;
 }
@@ -1033,6 +1059,79 @@ function addDays(dateStr, n){
   d.setDate(d.getDate()+n);
   return fmtISOLocal(d);
 }
+
+// ---------- RELEVÉS PARTICULES (postes à risque) ----------
+var PARTICULE_LINES = ['MCU1','MCU2'];
+var PARTICULE_POSTES = ['OP1060','OP1070'];
+var particuleFormOpen = false;
+function proprParticules(){
+  var html = '<p class="tiny" style="margin-bottom:12px;">Postes à risque suivis : OP1060 et OP1070 sur MCU1 et MCU2. Principe : une pastille est apposée pendant une semaine sur le poste, puis le nombre de particules est compté pour suivre la tendance.</p>';
+  html += '<div class="toolbar"><div></div><button class="btn primary" data-action="new-particule">+ Ajouter un relevé</button></div>';
+  if(particuleFormOpen) html += particuleForm();
+
+  html += '<div class="grid grid-2" style="margin-bottom:18px;">';
+  PARTICULE_LINES.forEach(function(l){
+    html += '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">'+l+' — évolution OP1060 / OP1070</div><div class="chart-box"><canvas id="chart-particules-'+l+'"></canvas></div></div>';
+  });
+  html += '</div>';
+
+  var rows = DATA.particules.slice().sort(function(a,b){ return (b.dateReleve||'').localeCompare(a.dateReleve||''); });
+  html += '<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Poste</th><th>Début pastille</th><th>Relevé</th><th>Nb particules</th><th>Commentaire</th><th></th></tr></thead><tbody>';
+  html += rows.map(function(p){
+    return '<tr><td>'+esc(p.ligne)+'</td><td>'+esc(p.poste)+'</td><td class="num">'+fmtDate(p.dateDebut)+'</td><td class="num">'+fmtDate(p.dateReleve)+'</td>'+
+      '<td class="num" style="font-weight:700;">'+esc(p.nbParticules)+'</td><td class="tiny">'+esc(val(p.comment,''))+'</td>'+
+      '<td><button class="btn small danger-outline" data-action="delete" data-module="particules" data-id="'+p.id+'">Suppr.</button></td></tr>';
+  }).join('') || '<tr><td colspan="7"><div class="empty">Aucun relevé</div></td></tr>';
+  html += '</tbody></table></div>';
+  return html;
+}
+function particuleForm(){
+  return '<div class="card" style="max-width:520px; margin-bottom:16px;"><div class="entryform cols2">'+
+    '<label class="field">Ligne<select id="pf-ligne">'+PARTICULE_LINES.map(function(l){return '<option value="'+l+'">'+l+'</option>';}).join('')+'</select></label>'+
+    '<label class="field">Poste<select id="pf-poste">'+PARTICULE_POSTES.map(function(p){return '<option value="'+p+'">'+p+'</option>';}).join('')+'</select></label>'+
+    '<label class="field">Début pastille<input type="date" id="pf-debut"></label>'+
+    '<label class="field">Date du relevé<input type="date" id="pf-releve" value="'+todayStr()+'"></label>'+
+    '<label class="field">Nombre de particules<input type="number" id="pf-nb" min="0"></label>'+
+    '<label class="field">Commentaire (optionnel)<input type="text" id="pf-comment"></label>'+
+    '</div><div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="cancel-particule">Annuler</button><button class="btn primary" data-action="save-particule">Enregistrer</button></div></div>';
+}
+async function handleSaveParticule(){
+  var nbEl = document.getElementById('pf-nb');
+  if(nbEl.value===''){ alert('Merci de renseigner le nombre de particules.'); return; }
+  var entry = {
+    id: uid('part'), ligne: document.getElementById('pf-ligne').value, poste: document.getElementById('pf-poste').value,
+    dateDebut: document.getElementById('pf-debut').value || null, dateReleve: document.getElementById('pf-releve').value || todayStr(),
+    nbParticules: parseInt(nbEl.value,10), comment: document.getElementById('pf-comment').value
+  };
+  DATA.particules.push(entry);
+  await save('particules');
+  logChange('Propreté', 'Relevé particules', entry.ligne+' · '+entry.poste+' — '+entry.nbParticules);
+  particuleFormOpen = false;
+  render();
+}
+var chartParticules = {};
+function renderParticulesCharts(){
+  if(typeof Chart==='undefined') return;
+  PARTICULE_LINES.forEach(function(l){
+    var ctx = document.getElementById('chart-particules-'+l);
+    if(!ctx) return;
+    if(chartParticules[l]){ chartParticules[l].destroy(); chartParticules[l]=null; }
+    try{
+      var items = DATA.particules.filter(function(p){ return p.ligne===l; }).sort(function(a,b){ return (a.dateReleve||'').localeCompare(b.dateReleve||''); });
+      var labels = items.map(function(p){ return fmtDate(p.dateReleve); });
+      var datasets = PARTICULE_POSTES.map(function(poste, i){
+        return {label:poste, data:items.map(function(p){ return p.poste===poste? p.nbParticules : null; }),
+          borderColor: i===0? '#1F5C5C':'#B8730A', backgroundColor:'transparent', borderWidth:2, pointRadius:3, spanGaps:true};
+      });
+      chartParticules[l] = new Chart(ctx, {
+        type:'line',
+        data:{labels:labels, datasets:datasets},
+        options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false}, scales:{y:{beginAtZero:true, title:{display:true,text:'Nb particules'}}}}
+      });
+    }catch(err){ console.error('chart error', err); }
+  });
+}
+
 function proprVidange(){
   var html = '<p class="tiny" style="margin-bottom:12px;">Suivi des vidanges MCU0 — intervalle standard : '+VIDANGE_INTERVALLE+' jours.</p>';
   html += '<div class="toolbar"><div></div><button class="btn primary" data-toggle-form="vidange">+ Ajouter un équipement</button></div>';
@@ -1176,6 +1275,7 @@ function handleExportFullJson(){
 var LINES = ['MCU1','MCU2','MCU3'];
 var PLAN_TYPES = [['perf','Audits de perf'],['metro','Suivi métrologie'],['proprete','Audit propreté'],['labo','Relevés laboratoire']];
 
+var lastGlobalScore = null;
 function render(){
   Array.prototype.forEach.call(app.querySelectorAll('#tabs button'), function(b){
     b.classList.toggle('active', b.dataset.tab===currentTab);
@@ -1186,18 +1286,21 @@ function render(){
     lastChartRefresh = Date.now();
     renderTrendChart();
     renderScoreHistoryChart();
+    renderGlobalGauge(lastGlobalScore);
   }
   if(currentTab==='planning'){ applyPlanningFilter(); }
   if(currentTab==='ateq'){ renderAteqCharts(); }
   if(currentTab==='proprete'){
     if(propreteSub==='resultats') renderResultatsCharts();
     else if(propreteSub==='contamination') renderContaminationCharts();
+    else if(propreteSub==='particules') renderParticulesCharts();
   }
 }
 
 RENDERERS.dashboard = function(){
   var html = '';
   var gs = globalConformityScore();
+  lastGlobalScore = gs.score;
   recordScoreSnapshot(gs);
   if(gs.score!==null){
     var glvl = scoreLevel(gs.score);
@@ -1211,13 +1314,20 @@ RENDERERS.dashboard = function(){
     } else {
       deltaHtml = '<div class="tiny" style="margin-top:4px; color:var(--text-faint);">Pas encore de comparaison disponible (historique en cours de constitution)</div>';
     }
-    html += '<div class="section card" style="margin-bottom:18px;"><div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">'+
-      '<div><div class="eyebrow">Score de conformité — secteur MCU</div><div class="score-big" style="color:var(--'+glvl+'); margin:4px 0;">'+gs.score+'%</div>'+deltaHtml+'</div>'+
-      '<div style="display:flex; gap:18px; flex-wrap:wrap;">'+gs.detail.map(function(d){
+    html += '<div class="section card" style="margin-bottom:18px;">'+
+      '<div class="eyebrow" style="text-align:center; margin-bottom:14px;">Score de conformité — secteur MCU</div>'+
+      '<div style="display:flex; justify-content:center;">'+
+        '<div style="position:relative; width:200px; height:200px;"><canvas id="chart-global-gauge"></canvas>'+
+        '<div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">'+
+          '<div style="font-family:var(--mono); font-weight:700; font-size:42px; color:var(--'+glvl+');">'+gs.score+'%</div>'+
+        '</div></div>'+
+      '</div>'+
+      '<div style="text-align:center; margin:6px 0 20px;">'+deltaHtml+'</div>'+
+      '<div style="display:flex; gap:28px; flex-wrap:wrap; justify-content:center;">'+gs.detail.map(function(d){
         var dlvl = scoreLevel(d.val);
-        return '<div><div class="tiny">'+esc(d.label)+'</div><div style="font-family:var(--mono); font-weight:700; color:var(--'+dlvl+');">'+d.val+'%</div></div>';
-      }).join('')+'</div></div>'+
-      '<p class="tiny" style="margin-top:10px; color:var(--text-faint);">Seuils : ≥85% conforme, 50–85% attention, &lt;50% en danger — identiques aux audits propreté.</p>'+
+        return '<div style="text-align:center; min-width:120px;"><div class="tiny" style="margin-bottom:4px;">'+esc(d.label)+'</div><div style="font-family:var(--mono); font-weight:700; font-size:24px; color:var(--'+dlvl+');">'+d.val+'%</div></div>';
+      }).join('')+'</div>'+
+      '<p class="tiny" style="margin-top:16px; text-align:center; color:var(--text-faint);">Seuils : ≥85% conforme, 50–85% attention, &lt;50% en danger — identiques aux audits propreté.</p>'+
       '</div>';
   }
   html += '<div class="section"><div class="grid grid-4">';
@@ -1273,23 +1383,28 @@ RENDERERS.dashboard = function(){
 
   var openActions = DATA.actions.filter(isActionOpen);
   var lateActions = DATA.actions.filter(isActionLate).sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
+  var upcomingActions = DATA.actions.filter(function(a){
+    return isActionOpen(a) && !isActionLate(a) && a.echeance && daysBetween(todayStr(), a.echeance)<=alertHorizon;
+  }).sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
   var alevel = lateActions.length? 'danger' : (openActions.length? 'warn':'ok');
   html += '<div class="section card s-'+alevel+'" style="margin-bottom:18px;">'+
-    '<div style="display:flex; align-items:baseline; gap:14px; margin-bottom:10px;"><div class="eyebrow">Plan d\'actions — actions prioritaires (en retard)</div>'+
-    '<span class="tiny">'+openActions.length+' ouvertes au total · '+lateActions.length+' en retard</span></div>';
-  if(!lateActions.length){
-    html += '<div class="empty">Aucune action en retard.</div>';
-  } else {
-    html += '<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Description</th><th>Origine</th><th>Échéance</th><th>Délai</th><th>Responsable</th></tr></thead><tbody>';
-    html += lateActions.map(function(a){
+    '<div style="display:flex; align-items:baseline; gap:14px; margin-bottom:10px; flex-wrap:wrap;"><div class="eyebrow">Plan d\'actions — échéances</div>'+
+    '<span class="tiny">'+openActions.length+' ouvertes au total · '+lateActions.length+' en retard · '+upcomingActions.length+' à venir sous '+alertHorizon+'j</span></div>';
+  function actionsTable(items, lvl){
+    var html2 = '<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Description</th><th>Origine</th><th>Échéance</th><th>Délai</th><th>Responsable</th></tr></thead><tbody>';
+    html2 += items.map(function(a){
       var dl = daysLabel(a.echeance);
       return '<tr><td>'+esc(val(a.ligne,'—'))+'</td><td>'+esc(a.description)+'</td><td class="tiny">'+esc(val(a.origine,'—'))+'</td>'+
         '<td class="num">'+(a.echeance?fmtDate(a.echeance):'—')+'</td>'+
-        '<td>'+(dl? '<span class="delay-pill delay-late">'+dl.text+'</span>' : '—')+'</td>'+
+        '<td>'+(dl? '<span class="delay-pill delay-'+lvl+'">'+dl.text+'</span>' : '—')+'</td>'+
         '<td>'+esc(val(a.responsable,'—'))+'</td></tr>';
     }).join('');
-    html += '</tbody></table></div>';
+    return html2+'</tbody></table></div>';
   }
+  html += '<div class="alert-group-title alert-group-danger">En retard ('+lateActions.length+')</div>';
+  html += lateActions.length? actionsTable(lateActions,'late') : '<div class="empty">Aucune action en retard.</div>';
+  html += '<div class="alert-group-title alert-group-warn" style="margin-top:14px;">À venir ('+upcomingActions.length+')</div>';
+  html += upcomingActions.length? actionsTable(upcomingActions,'soon') : '<div class="empty">Aucune action à venir sous '+alertHorizon+' jours.</div>';
   html += '</div>';
 
   html += '<div class="section dash-actions-noprint" style="display:flex; gap:8px; justify-content:flex-end; margin-bottom:4px;">'+
@@ -1760,7 +1875,7 @@ function applyAlertFilters(){
 // ---------- AUTHENTIFICATION & COMPTES ----------
 // ---------- HISTORIQUE DES MODIFICATIONS ----------
 var MODULE_LABELS = {metro:'Métrologie', planning:'Planning', ateq:'Défauts ATEQ', actions:"Plan d'actions",
-  resultats:'Résultats propreté', releves:'Relevés produits', contamination:'Contamination', vidange:'Vidange',
+  resultats:'Résultats propreté', releves:'Relevés produits', contamination:'Contamination', vidange:'Vidange', particules:'Relevés particules',
   accounts:'Comptes', roles:'Profils'};
 function logChange(module, action, summary, detail){
   DATA.changelog.unshift({id:uid('log'), date:new Date().toISOString(), user: currentUser? currentUser.displayName : '?', module:module, action:action, summary:summary, detail:detail||''});
@@ -1849,7 +1964,7 @@ function handleLogout(){
 var POLL_INTERVAL_MS = 10000;
 var pollTimer = null;
 function isUserMidEdit(){
-  if(auditWizard || metroEditingId || planningEditingId || contamDirectFormOpen || accountFormState || roleFormState || ateqActionFormOpen) return true;
+  if(auditWizard || metroEditingId || planningEditingId || contamDirectFormOpen || accountFormState || roleFormState || ateqActionFormOpen || particuleFormOpen) return true;
   var openForms = document.querySelectorAll('form[id^="form-"]');
   for(var i=0;i<openForms.length;i++){ if(openForms[i].style.display!=='none') return true; }
   return false;
@@ -2063,6 +2178,22 @@ function handleWeeklyDigest(){
   });
 }
 function handlePrintDashboard(){ window.print(); }
+var chartGlobalGauge=null;
+function renderGlobalGauge(score){
+  if(typeof Chart==='undefined') return;
+  var ctx = document.getElementById('chart-global-gauge');
+  if(!ctx || score===null) return;
+  if(chartGlobalGauge){ chartGlobalGauge.destroy(); chartGlobalGauge=null; }
+  try{
+    var lvl = scoreLevel(score);
+    var colorVar = lvl==='ok'?'#2E7D4F':lvl==='warn'?'#B8730A':'#B23B2E';
+    chartGlobalGauge = new Chart(ctx, {
+      type:'doughnut',
+      data:{datasets:[{data:[score, 100-score], backgroundColor:[colorVar,'#E7E4DC'], borderWidth:0}]},
+      options:{responsive:true, maintainAspectRatio:false, cutout:'78%', plugins:{tooltip:{enabled:false}, legend:{display:false}}, animation:{duration:400}}
+    });
+  }catch(err){ console.error('chart error', err); }
+}
 var chartTrend=null;
 function renderTrendChart(){
   if(typeof Chart==='undefined') return;
@@ -2178,6 +2309,7 @@ function describeEntry(mod, item){
   if(mod==='actions') return item.description;
   if(mod==='vidange') return item.equipement;
   if(mod==='contamination') return item.ligne+' · '+item.ref;
+  if(mod==='particules') return item.ligne+' · '+item.poste+' — '+item.nbParticules+' particules';
   return item.id;
 }
 
@@ -2204,6 +2336,7 @@ async function handleFormSubmit(form){
   DATA[mod].push(entry);
   await save(mod);
   logChange(MODULE_LABELS[mod]||mod, 'Création', describeEntry(mod, entry));
+  if(mod==='planning' && entry.echeance){ planningMoisFilter = entry.echeance.slice(0,7); }
   form.reset();
   form.style.display = 'none';
   render();
@@ -2333,6 +2466,10 @@ app.addEventListener('click', async function(e){
     return;
   }
 
+  if(e.target.closest('[data-action="new-particule"]')){ particuleFormOpen = true; render(); return; }
+  if(e.target.closest('[data-action="cancel-particule"]')){ particuleFormOpen = false; render(); return; }
+  if(e.target.closest('[data-action="save-particule"]')){ await handleSaveParticule(); return; }
+
   if(e.target.closest('[data-action="new-ateq-action"]')){ ateqActionFormOpen = true; render(); return; }
   if(e.target.closest('[data-action="cancel-ateq-action"]')){ ateqActionFormOpen = false; render(); return; }
   if(e.target.closest('[data-action="save-ateq-action"]')){ await handleSaveAteqAction(); return; }
@@ -2368,6 +2505,8 @@ app.addEventListener('click', async function(e){
   var viewAuditBtn = e.target.closest('[data-action="view-audit"]');
   if(viewAuditBtn){ openAuditDetailId = viewAuditBtn.dataset.id; render(); return; }
   if(e.target.closest('[data-action="close-audit-detail"]')){ openAuditDetailId = null; render(); return; }
+  var delAuditBtn = e.target.closest('[data-action="delete-audit"]');
+  if(delAuditBtn){ await handleDeleteAudit(delAuditBtn.dataset.id); return; }
 
   var alertRow = e.target.closest('.alert-row');
   if(alertRow){
@@ -2481,22 +2620,6 @@ async function init(){
 init();
 
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </script>
 </body>
 </html>
