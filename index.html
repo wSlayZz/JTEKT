@@ -193,6 +193,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -824,25 +825,53 @@ function proprResultats(){
     '<div class="card"><div class="eyebrow">Comparatif du mois en cours</div><div class="chart-box"><canvas id="chart-proprete-comp"></canvas></div></div>'+
   '</div>';
 
-  html += '<div class="eyebrow" style="margin-bottom:8px;">Tableau annuel</div>';
-  html += '<div class="table-wrap"><table class="annual-table"><thead><tr><th>Mois</th>'+LINES.map(function(l){return '<th>'+l+'</th>';}).join('')+'</tr></thead><tbody>';
-  MONTHS_FR.forEach(function(mRaw){
-    var m = mRaw.charAt(0).toUpperCase()+mRaw.slice(1);
-    html += '<tr><td>'+m+'</td>';
+  html += '<div class="eyebrow" style="margin-bottom:8px;">Tableau hebdomadaire — '+resultsYear+'</div>';
+  html += '<p class="tiny" style="margin-bottom:10px;">Chaque audit réalisé apparaît dans la semaine (ISO) où il a eu lieu. Cliquez sur une cellule pour voir le détail.</p>';
+  html += '<div class="table-wrap" style="max-height:560px; overflow-y:auto;"><table class="annual-table"><thead><tr><th>Semaine</th>'+LINES.map(function(l){return '<th>'+l+'</th>';}).join('')+'</tr></thead><tbody>';
+  var totalWeeks = isoWeeksInYear(resultsYear);
+  for(var w=1; w<=totalWeeks; w++){
+    var wk = isoWeekMondayDate(resultsYear, w);
+    html += '<tr><td class="tiny">S'+w+' <span style="color:var(--text-faint);">('+fmtDateShort(wk)+')</span></td>';
     LINES.forEach(function(l){
-      var r = rs.find(function(x){ return x.ligne===l && x.mois===m; });
-      if(!r || r.resultatPct===null || r.resultatPct===undefined){ html += '<td class="c-empty">—</td>'; }
-      else {
-        var auditRecord = DATA.propAudits.find(function(a){ return a.ligne===l && a.score===r.resultatPct && MONTHS_FR[Number(a.date.split('-')[1])-1]===mRaw; });
-        html += '<td class="score-cell '+scoreCellClass(r.resultatPct)+'"'+(auditRecord?' data-action="view-audit" data-id="'+auditRecord.id+'"':'')+'>'+r.resultatPct+'%</td>';
-      }
+      var auditsThisWeek = DATA.propAudits.filter(function(a){
+        if(a.ligne!==l || a.score===null || a.score===undefined) return false;
+        var info = isoWeekInfo(a.date);
+        return info.year===resultsYear && info.week===w;
+      });
+      if(!auditsThisWeek.length){ html += '<td class="c-empty">—</td>'; return; }
+      var avgScore = Math.round(auditsThisWeek.reduce(function(s,a){return s+a.score;},0)/auditsThisWeek.length);
+      var linkId = auditsThisWeek[0].id;
+      var label = auditsThisWeek.length>1 ? avgScore+'% ('+auditsThisWeek.length+')' : avgScore+'%';
+      html += '<td class="score-cell '+scoreCellClass(avgScore)+'" data-action="view-audit" data-id="'+linkId+'" title="'+auditsThisWeek.length+' audit(s) cette semaine">'+label+'</td>';
     });
     html += '</tr>';
-  });
+  }
   html += '</tbody></table></div>';
   return html;
 }
 
+function isoWeekInfo(dateStr){
+  var d = new Date(dateStr+'T00:00:00');
+  var dayNr = (d.getDay()+6)%7;
+  d.setDate(d.getDate()-dayNr+3);
+  var firstThursday = d.getTime();
+  var jan4 = new Date(d.getFullYear(),0,4);
+  var jan4Day = (jan4.getDay()+6)%7;
+  jan4.setDate(jan4.getDate()-jan4Day+3);
+  var week = 1+Math.round((firstThursday-jan4.getTime())/(7*24*3600*1000));
+  return {year:d.getFullYear(), week:week};
+}
+function isoWeeksInYear(year){
+  var p = function(y){ var d=new Date(y,0,1); var dow=d.getDay(); return dow===4 || (dow===3 && (y%4===0 && (y%100!==0||y%400===0))); };
+  return p(year)? 53 : 52;
+}
+function isoWeekMondayDate(year, week){
+  var jan4 = new Date(year,0,4);
+  var jan4Day = (jan4.getDay()+6)%7;
+  var monday1 = new Date(jan4.getTime()); monday1.setDate(jan4.getDate()-jan4Day);
+  var target = new Date(monday1.getTime()); target.setDate(monday1.getDate()+(week-1)*7);
+  return fmtISOLocal(target);
+}
 var chartProprEvol=null, chartProprComp=null;
 function renderResultatsCharts(){
   if(typeof Chart==='undefined') return;
@@ -2336,7 +2365,10 @@ async function handleFormSubmit(form){
   DATA[mod].push(entry);
   await save(mod);
   logChange(MODULE_LABELS[mod]||mod, 'Création', describeEntry(mod, entry));
-  if(mod==='planning' && entry.echeance){ planningMoisFilter = entry.echeance.slice(0,7); }
+  if(mod==='planning' && entry.echeance){
+    planningMoisFilter = entry.echeance.slice(0,7);
+    alert('Échéance ajoutée : '+entry.ligne+' — '+(PLAN_TYPES.filter(function(t){return t[0]===entry.type;})[0]||['',entry.type])[1]+' le '+fmtDate(entry.echeance)+'.');
+  }
   form.reset();
   form.style.display = 'none';
   render();
