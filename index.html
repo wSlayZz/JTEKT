@@ -194,6 +194,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -786,9 +787,37 @@ function renderAuditDetailModal(){
   return html;
 }
 
-// ===== RESULTATS AUDITS (%) — tableau annuel + graphiques =====
+// ===== RESULTATS AUDITS (%) — navigation par mois + récap annuel + graphiques =====
+function monthRecapValue(ligne, monthIdx, year){
+  var moisLabel = MONTHS_FR[monthIdx].charAt(0).toUpperCase()+MONTHS_FR[monthIdx].slice(1);
+  var audits = DATA.propAudits.filter(function(a){
+    if(a.ligne!==ligne || a.score===null || a.score===undefined) return false;
+    var d = a.date.split('-');
+    return Number(d[0])===year && Number(d[1])-1===monthIdx;
+  });
+  if(audits.length){
+    return {val: Math.round(audits.reduce(function(s,a){return s+a.score;},0)/audits.length), source:'audits', n:audits.length};
+  }
+  var legacy = DATA.resultats.find(function(r){ return r.ligne===ligne && r.mois===moisLabel && (r.annee===year || r.annee===undefined); });
+  if(legacy && legacy.resultatPct!==null && legacy.resultatPct!==undefined){
+    return {val:legacy.resultatPct, source:'historique', n:1};
+  }
+  return null;
+}
+function weeksOfMonth(year, monthIdx){
+  var weeks = [];
+  var d = new Date(year, monthIdx, 1);
+  while(d.getMonth()===monthIdx){
+    var info = isoWeekInfo(fmtISOLocal(d));
+    if(!weeks.some(function(w){return w.year===info.year && w.week===info.week;})) weeks.push(info);
+    d.setDate(d.getDate()+1);
+  }
+  return weeks;
+}
+var resultsMonthView;
 function proprResultats(){
   var years = [resultsYear-1, resultsYear, resultsYear+1];
+  if(resultsMonthView===undefined) resultsMonthView = Number(todayStr().split('-')[1])-1;
   var html = '<div class="toolbar"><div class="left"><label class="field" style="flex-direction:row; align-items:center; gap:8px;">Année<select id="results-year">'+years.map(function(y){return '<option value="'+y+'"'+(y===resultsYear?' selected':'')+'>'+y+'</option>';}).join('')+'</select></label></div>'+
     '<div style="display:flex; gap:8px;"><button class="btn" data-action="export" data-module="proprete">Générer l\'export labo</button><button class="btn primary" data-toggle-form="resultats">+ Ajouter un résultat</button></div></div>';
   html += '<div id="proprete-export"></div>';
@@ -811,7 +840,6 @@ function proprResultats(){
     '<div class="statcard"><div class="eyebrow">Audits enregistrés</div><div class="val">'+scored.length+'</div></div>'+
   '</div>';
 
-  // alertes
   var alerts = scored.filter(function(r){ return r.resultatPct<SCORE_ATTENTION; }).sort(function(a,b){ return a.resultatPct-b.resultatPct; });
   if(alerts.length){
     html += '<div class="section"><div class="alertlist">'+alerts.map(function(r){
@@ -825,18 +853,38 @@ function proprResultats(){
     '<div class="card"><div class="eyebrow">Comparatif du mois en cours</div><div class="chart-box"><canvas id="chart-proprete-comp"></canvas></div></div>'+
   '</div>';
 
-  html += '<div class="eyebrow" style="margin-bottom:8px;">Tableau hebdomadaire — '+resultsYear+'</div>';
-  html += '<p class="tiny" style="margin-bottom:10px;">Chaque audit réalisé apparaît dans la semaine (ISO) où il a eu lieu. Cliquez sur une cellule pour voir le détail.</p>';
-  html += '<div class="table-wrap" style="max-height:560px; overflow-y:auto;"><table class="annual-table"><thead><tr><th>Semaine</th>'+LINES.map(function(l){return '<th>'+l+'</th>';}).join('')+'</tr></thead><tbody>';
-  var totalWeeks = isoWeeksInYear(resultsYear);
-  for(var w=1; w<=totalWeeks; w++){
-    var wk = isoWeekMondayDate(resultsYear, w);
-    html += '<tr><td class="tiny">S'+w+' <span style="color:var(--text-faint);">('+fmtDateShort(wk)+')</span></td>';
+  // Récapitulatif annuel (mois × ligne), combine audits + historique
+  html += '<div class="eyebrow" style="margin-bottom:8px;">Récapitulatif annuel — '+resultsYear+'</div>';
+  html += '<div class="table-wrap" style="margin-bottom:22px;"><table class="annual-table"><thead><tr><th>Mois</th>'+LINES.map(function(l){return '<th>'+l+'</th>';}).join('')+'</tr></thead><tbody>';
+  MONTHS_FR.forEach(function(mRaw, mIdx){
+    var mLabel = mRaw.charAt(0).toUpperCase()+mRaw.slice(1);
+    html += '<tr><td>'+(mIdx===resultsMonthView?'<b>'+mLabel+'</b>':mLabel)+'</td>';
+    LINES.forEach(function(l){
+      var r = monthRecapValue(l, mIdx, resultsYear);
+      if(!r){ html += '<td class="c-empty">—</td>'; return; }
+      var titre = r.source==='audits' ? (r.n>1? r.n+' audit(s)' : '1 audit') : 'donnée historique';
+      html += '<td class="score-cell '+scoreCellClass(r.val)+'" data-action="goto-month" data-month="'+mIdx+'" title="'+titre+'">'+r.val+'%</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+
+  // Détail du mois sélectionné, semaine par semaine
+  var curMonthLabel = MONTHS_FR[resultsMonthView].charAt(0).toUpperCase()+MONTHS_FR[resultsMonthView].slice(1);
+  html += '<div class="toolbar"><div class="left"><button class="btn small" data-action="month-prev">← Mois préc.</button>'+
+    '<b class="tiny" style="font-size:13px;">'+curMonthLabel+' '+resultsYear+'</b>'+
+    '<button class="btn small" data-action="month-next">Mois suiv. →</button></div></div>';
+  html += '<p class="tiny" style="margin-bottom:10px;">Détail semaine par semaine pour '+curMonthLabel+'. Cliquez sur une cellule pour voir l\'audit.</p>';
+  html += '<div class="table-wrap"><table class="annual-table"><thead><tr><th>Semaine</th>'+LINES.map(function(l){return '<th>'+l+'</th>';}).join('')+'</tr></thead><tbody>';
+  var weeks = weeksOfMonth(resultsYear, resultsMonthView);
+  weeks.forEach(function(info){
+    var wk = isoWeekMondayDate(info.year, info.week);
+    html += '<tr><td class="tiny">S'+info.week+' <span style="color:var(--text-faint);">('+fmtDateShort(wk)+')</span></td>';
     LINES.forEach(function(l){
       var auditsThisWeek = DATA.propAudits.filter(function(a){
         if(a.ligne!==l || a.score===null || a.score===undefined) return false;
-        var info = isoWeekInfo(a.date);
-        return info.year===resultsYear && info.week===w;
+        var ai = isoWeekInfo(a.date);
+        return ai.year===info.year && ai.week===info.week;
       });
       if(!auditsThisWeek.length){ html += '<td class="c-empty">—</td>'; return; }
       var avgScore = Math.round(auditsThisWeek.reduce(function(s,a){return s+a.score;},0)/auditsThisWeek.length);
@@ -845,7 +893,7 @@ function proprResultats(){
       html += '<td class="score-cell '+scoreCellClass(avgScore)+'" data-action="view-audit" data-id="'+linkId+'" title="'+auditsThisWeek.length+' audit(s) cette semaine">'+label+'</td>';
     });
     html += '</tr>';
-  }
+  });
   html += '</tbody></table></div>';
   return html;
 }
@@ -2539,6 +2587,10 @@ app.addEventListener('click', async function(e){
   if(e.target.closest('[data-action="close-audit-detail"]')){ openAuditDetailId = null; render(); return; }
   var delAuditBtn = e.target.closest('[data-action="delete-audit"]');
   if(delAuditBtn){ await handleDeleteAudit(delAuditBtn.dataset.id); return; }
+  if(e.target.closest('[data-action="month-prev"]')){ resultsMonthView = (resultsMonthView+11)%12; render(); return; }
+  if(e.target.closest('[data-action="month-next"]')){ resultsMonthView = (resultsMonthView+1)%12; render(); return; }
+  var gotoMonthBtn = e.target.closest('[data-action="goto-month"]');
+  if(gotoMonthBtn){ resultsMonthView = Number(gotoMonthBtn.dataset.month); render(); return; }
 
   var alertRow = e.target.closest('.alert-row');
   if(alertRow){
@@ -2652,6 +2704,25 @@ async function init(){
 init();
 
 })();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </script>
 </body>
 </html>
