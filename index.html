@@ -195,6 +195,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -489,16 +490,18 @@ function ateqStatusForLine(ligne){
 function actionStatusMeta(s){
   var map = {
     planifiee:{label:'Planifiée', level:'neutral'},
-    realisee:{label:'Réalisée', level:'warn'},
-    verifiee:{label:'Vérifiée', level:'warn'},
+    realisee:{label:'Réalisée', level:'ok'},
+    verifiee:{label:'Vérifiée', level:'ok'},
     perennisee:{label:'Pérennisée', level:'ok'},
-    non_prise_en_compte:{label:'Non prise en compte', level:'danger'},
+    non_prise_en_compte:{label:'Non prise en compte', level:'neutral'},
     abandonnee:{label:'Abandonnée', level:'neutral'}
   };
   return map[s] || {label:s, level:'neutral'};
 }
-function isActionOpen(a){ return a.statut!=='perennisee' && a.statut!=='abandonnee'; }
-function isActionLate(a){ return isActionOpen(a) && a.echeance && daysBetween(todayStr(), a.echeance)<0; }
+var ACTION_DONE_STATUTS = ['realisee','verifiee','perennisee','non_prise_en_compte','abandonnee'];
+function isActionOpen(a){ return a.statut!=='perennisee' && a.statut!=='abandonnee' && a.statut!=='non_prise_en_compte'; }
+function isActionDone(a){ return ACTION_DONE_STATUTS.indexOf(a.statut)>=0; }
+function isActionLate(a){ return isActionOpen(a) && !isActionDone(a) && a.echeance && daysBetween(todayStr(), a.echeance)<0; }
 
 function badge(level, label){
   return '<span class="badge b-'+level+'"><span class="dot"></span>'+esc(label)+'</span>';
@@ -1255,7 +1258,8 @@ function actionRow(a){
   var late = isActionLate(a);
   var meta = actionStatusMeta(a.statut);
   var level = late ? 'danger' : meta.level;
-  return '<tr><td>'+badge(level, late? 'En retard' : meta.label)+'</td><td>'+esc(a.description)+'</td><td>'+esc(val(a.origine,''))+'</td><td>'+esc(val(a.ligne,''))+'</td><td>'+esc(val(a.responsable,''))+'</td>'+
+  var label = late ? 'En retard' : meta.label;
+  return '<tr><td>'+badge(level, label)+'</td><td>'+esc(a.description)+'</td><td>'+esc(val(a.origine,''))+'</td><td>'+esc(val(a.ligne,''))+'</td><td>'+esc(val(a.responsable,''))+'</td>'+
     '<td class="num">'+fmtDate(a.echeance)+'</td>'+
     '<td><select data-action="change-status" data-id="'+a.id+'">'+ACTION_STATUSES.map(function(s){return '<option value="'+s[0]+'"'+(s[0]===a.statut?' selected':'')+'>'+s[1]+'</option>';}).join('')+'</select> '+
     '<button class="btn small danger-outline" data-action="delete" data-module="actions" data-id="'+a.id+'">Suppr.</button></td></tr>';
@@ -2704,6 +2708,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
