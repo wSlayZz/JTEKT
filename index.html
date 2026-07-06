@@ -201,6 +201,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -987,6 +988,9 @@ function renderResultatsCharts(){
 // ===== RELEVES PRODUITS — contamination avec seuils =====
 var openContamDetailId = null;
 var contamDirectFormOpen = false;
+var contamCollecteFormOpen = false;
+var contamCollecteState = {ligne:'MCU1', ref:'141P'};
+var contamAnalyseEditId = null;
 var contamDirectState = {ligne:'MCU0', ref:'Bague'};
 var CONTAM_COMBOS = (function(){
   var arr = [];
@@ -995,6 +999,12 @@ var CONTAM_COMBOS = (function(){
 })();
 function contamLevelForStatut(s){ return s==='nc'?'danger':s==='collected'?'warn':s==='noprod'?'neutral':s==='ok'?'ok':'neutral'; }
 function contamStatutLabel(s){ return {ok:'Conforme', nc:'Non conforme', collected:'En attente d\'analyse', noprod:'Pas de prod'}[s] || '—'; }
+function pendingRetest(ligne, ref){
+  var curM = Number(todayStr().split('-')[1])-1, curY = Number(todayStr().split('-')[0]);
+  return DATA.contamination.find(function(c){
+    return c.ligne===ligne && c.ref===ref && c.mois===curM && c.annee===curY && c.statut==='nc' && !c.retested;
+  });
+}
 
 function proprContamination(){
   var years = [resultsYear-1, resultsYear, resultsYear+1];
@@ -1003,11 +1013,9 @@ function proprContamination(){
   var pending = rs.filter(function(c){ return c.statut==='collected'; }).length;
   var noprod = rs.filter(function(c){ return c.statut==='noprod'; }).length;
 
-  var html = '<div class="toolbar"><div class="left"><label class="field" style="flex-direction:row; align-items:center; gap:8px;">Année<select id="results-year">'+years.map(function(y){return '<option value="'+y+'"'+(y===resultsYear?' selected':'')+'>'+y+'</option>';}).join('')+'</select></label></div>'+
-    '<button class="btn primary" data-action="add-contam-direct">+ Ajouter un relevé</button></div>';
+  var html = '<div class="toolbar"><div class="left"><label class="field" style="flex-direction:row; align-items:center; gap:8px;">Année<select id="results-year">'+years.map(function(y){return '<option value="'+y+'"'+(y===resultsYear?' selected':'')+'>'+y+'</option>';}).join('')+'</select></label></div></div>';
 
-  if(contamDirectFormOpen) html += contamDirectForm();
-
+  // KPI
   html += '<div class="grid grid-4" style="margin-bottom:18px;">'+
     '<div class="statcard s-danger"><div class="eyebrow">Non conformes</div><div class="val">'+nc+'</div></div>'+
     '<div class="statcard s-warn"><div class="eyebrow">En attente d\'analyse</div><div class="val">'+pending+'</div></div>'+
@@ -1015,9 +1023,44 @@ function proprContamination(){
     '<div class="statcard"><div class="eyebrow">Relevés '+resultsYear+'</div><div class="val">'+rs.length+'</div></div>'+
   '</div>';
 
+  // ── SECTION 1 : COLLECTE ──────────────────────────────────────────
+  html += '<div class="card" style="margin-bottom:18px;">'+
+    '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;">'+
+      '<div><div class="eyebrow">1 — Déclarer une collecte (production)</div>'+
+        '<p class="tiny" style="margin-top:4px;">La production déclare qu\'un échantillon a été prélevé. Le labo le retrouvera dans la liste ci-dessous pour saisir les mesures.</p></div>'+
+      '<div style="display:flex; gap:8px;">'+
+        '<button class="btn" data-action="contam-noprod">Pas de prod ce mois</button>'+
+        '<button class="btn primary" data-action="new-collecte-contam">+ Déclarer une collecte</button>'+
+      '</div></div>';
+  if(contamCollecteFormOpen) html += contamCollecteForm();
+  html += '</div>';
+
+  // ── SECTION 2 : EN ATTENTE D'ANALYSE ────────────────────────────
+  var pendingItems = DATA.contamination.filter(function(c){ return c.statut==='collected'; })
+    .sort(function(a,b){ return (a.collecteDate||'').localeCompare(b.collecteDate||''); });
+  html += '<div class="card" style="margin-bottom:18px;">'+
+    '<div class="eyebrow" style="margin-bottom:10px;">2 — Saisir les mesures (laboratoire)</div>';
+  if(!pendingItems.length){
+    html += '<div class="empty">Aucun échantillon en attente. Les collectes déclarées apparaissent ici.</div>';
+  } else {
+    html += '<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Référence</th><th>Type</th><th>Collecté le</th><th>N° série</th><th></th></tr></thead><tbody>';
+    html += pendingItems.map(function(c){
+      if(contamAnalyseEditId === c.id) return analyseFormRow(c);
+      return '<tr><td>'+esc(c.ligne)+'</td><td>'+esc(c.ref)+'</td><td>'+
+        (c.isRetest? badge('danger','Contre-analyse') : badge('neutral','1er relevé'))+'</td>'+
+        '<td class="num">'+fmtDate(c.collecteDate)+'</td><td class="num tiny">'+esc(val(c.serie,'—'))+'</td>'+
+        '<td><button class="btn small primary" data-action="open-analyse-contam" data-id="'+c.id+'">Saisir mesures</button></td></tr>';
+    }).join('');
+    html += '</tbody></table></div>';
+  }
+  html += '</div>';
+
+  // ── SECTION 3 : TABLEAU ANNUEL + GRAPHIQUE ───────────────────────
   html += '<div class="card" style="margin-bottom:18px;"><div class="eyebrow">Évolution de la masse polluante par référence</div><div class="chart-box"><canvas id="chart-contamination"></canvas></div></div>';
 
-  html += '<div class="eyebrow" style="margin-bottom:8px;">Tableau annuel — '+resultsYear+'</div>';
+  html += '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;"><div class="eyebrow">Tableau annuel — '+resultsYear+'</div><button class="btn small" data-action="add-contam-direct">+ Saisie directe</button></div>';
+  if(contamDirectFormOpen) html += contamDirectForm();
+
   html += '<div class="table-wrap"><table class="annual-table"><thead><tr><th>Mois</th>'+CONTAM_COMBOS.map(function(c){return '<th>'+c.ligne+' · '+c.ref+'</th>';}).join('')+'</tr></thead><tbody>';
   MONTHS_FR.forEach(function(mRaw, mIdx){
     var m = mRaw.charAt(0).toUpperCase()+mRaw.slice(1);
@@ -1036,56 +1079,101 @@ function proprContamination(){
 
   var legacy = DATA.releves.filter(function(r){ return r.produit==='144P'||r.produit==='143X'; });
   if(legacy.length){
-    html += '<p class="tiny" style="margin-top:14px;">'+legacy.length+' relevé(s) historique(s) importé(s) avant la migration vers ce module n\'ont pas pu être rattachés à une ligne précise (144P et 143X existent à la fois sur MCU1 et MCU2) — non affichés dans le tableau ci-dessus.</p>';
+    html += '<p class="tiny" style="margin-top:14px;">'+legacy.length+' relevé(s) historique(s) non rattachés à une ligne précise (144P et 143X existent sur MCU1 et MCU2).</p>';
   }
   return html;
 }
 
-function contamDirectForm(){
-  var s = contamDirectState;
+function contamCollecteForm(){
+  var s = contamCollecteState;
   var refs = refsForLigne(s.ligne);
   if(refs.indexOf(s.ref)<0) s.ref = refs[0];
-  var crit = REF_CRITERIA[s.ref]||[];
+  var retest = pendingRetest(s.ligne, s.ref);
   var today = new Date();
-  var html = '<div class="card" style="margin-bottom:18px; max-width:560px;"><div class="eyebrow" style="margin-bottom:10px;">Nouveau relevé</div>';
-  html += '<div class="entryform cols2">';
-  html += '<label class="field">Ligne<select id="cd-ligne">'+CONTAM_LINES.map(function(l){return '<option value="'+l+'"'+(l===s.ligne?' selected':'')+'>'+l+'</option>';}).join('')+'</select></label>';
-  html += '<label class="field">Référence<select id="cd-ref">'+refs.map(function(r){return '<option value="'+r+'"'+(r===s.ref?' selected':'')+'>'+r+'</option>';}).join('')+'</select></label>';
-  html += '<label class="field">Mois<select id="cd-mois">'+MONTHS_FR.map(function(m,i){return '<option value="'+i+'"'+(i===today.getMonth()?' selected':'')+'>'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>';}).join('')+'</select></label>';
-  html += '<label class="field">Année<input type="number" id="cd-annee" value="'+today.getFullYear()+'"></label>';
-  html += '</div>';
-  html += '<label style="display:flex; align-items:center; gap:8px; margin:12px 0; font-size:13px;"><input type="checkbox" id="cd-noprod"> Pas de production ce mois</label>';
-  html += '<div id="cd-criteria" class="entryform cols2">'+crit.map(function(c){
-    return '<label class="field">'+esc(c.label)+' (seuil '+c.seuil+(c.unit?' '+c.unit:'')+')<input type="number" step="0.01" id="cdf-'+c.id+'"></label>';
-  }).join('')+'</div>';
-  html += '<div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="cancel-contam-direct">Annuler</button><button class="btn primary" data-action="save-contam-direct">Enregistrer</button></div></div>';
+  var html = '<div class="card" style="margin-bottom:14px; max-width:480px; background:var(--accent-bg);">'+
+    '<div class="entryform cols2">'+
+    '<label class="field">Ligne<select id="cc-ligne">'+CONTAM_LINES.map(function(l){return '<option value="'+l+'"'+(l===s.ligne?' selected':'')+'>'+l+'</option>';}).join('')+'</select></label>'+
+    '<label class="field">Référence<select id="cc-ref">'+refs.map(function(r){return '<option value="'+r+'"'+(r===s.ref?' selected':'')+'>'+r+'</option>';}).join('')+'</select></label>'+
+    '<label class="field">N° série / repère<input type="text" id="cc-serie" placeholder="Saisie manuelle"></label>'+
+    '<label class="field">Commentaire<input type="text" id="cc-comment"></label>'+
+    '</div>';
+  if(retest) html += '<div class="tiny" style="margin:8px 0; color:var(--danger); font-weight:700;">⚠ Contre-analyse requise — résultat précédent non conforme non encore re-testé.</div>';
+  html += '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="cancel-collecte-contam">Annuler</button><button class="btn primary" data-action="save-collecte-contam">Confirmer la collecte</button></div></div>';
   return html;
 }
-async function handleSaveContamDirect(){
-  var ligne = document.getElementById('cd-ligne').value;
-  var ref = document.getElementById('cd-ref').value;
-  var mois = Number(document.getElementById('cd-mois').value);
-  var annee = Number(document.getElementById('cd-annee').value);
-  var noprod = document.getElementById('cd-noprod').checked;
-  var record = {id:uid('contam'), ligne:ligne, ref:ref, mois:mois, annee:annee, isRetest:false, serie:null, collecteDate:todayStr(), rapport:null, comment:''};
-  if(noprod){
-    record.statut = 'noprod'; record.values = {};
-  } else {
-    var crit = REF_CRITERIA[ref]||[];
-    var values = {};
-    crit.forEach(function(c){ var el = document.getElementById('cdf-'+c.id); if(el && el.value!=='') values[c.id] = parseFloat(el.value); });
-    record.values = values;
-    record.statut = contamConformite(ref, values);
-  }
-  var existing = DATA.contamination.find(function(c){ return c.ligne===ligne && c.ref===ref && c.mois===mois && c.annee===annee; });
-  if(existing){ Object.assign(existing, record, {id:existing.id}); }
-  else { DATA.contamination.push(record); }
+async function handleSaveCollecteContam(){
+  var ligne = document.getElementById('cc-ligne').value;
+  var ref = document.getElementById('cc-ref').value;
+  var serie = document.getElementById('cc-serie').value;
+  var comment = document.getElementById('cc-comment').value;
+  var today = new Date();
+  var retest = pendingRetest(ligne, ref);
+  if(retest) retest.retested = true;
+  DATA.contamination.push({
+    id:uid('contam'), ligne:ligne, ref:ref, mois:today.getMonth(), annee:today.getFullYear(),
+    statut:'collected', isRetest:!!retest, values:{}, serie:serie||null,
+    collecteDate:todayStr(), rapport:null, comment:comment
+  });
   await save('contamination');
-  if(record.statut==='nc'){
-    DATA.actions.push({id:uid('act'), origine:'Propreté', description:'Contre-analyse à réaliser — '+ligne+' · '+ref+' (résultat non conforme)', ligne:ligne, responsable:'', echeance:null, statut:'planifiee', dateCreation:todayStr()});
-    await save('actions');
+  contamCollecteFormOpen = false;
+  render();
+}
+async function handleContamNoProd(){
+  var ligne = document.getElementById('cc-ligne')? document.getElementById('cc-ligne').value : 'MCU1';
+  var ref   = document.getElementById('cc-ref')?   document.getElementById('cc-ref').value   : 'Bague';
+  // Si formulaire fermé, afficher brièvement le formulaire pour choisir
+  if(!contamCollecteFormOpen){
+    contamCollecteFormOpen = true;
+    render();
+    return;
   }
-  contamDirectFormOpen = false;
+  ligne = document.getElementById('cc-ligne').value;
+  ref   = document.getElementById('cc-ref').value;
+  var today = new Date();
+  DATA.contamination.push({
+    id:uid('contam'), ligne:ligne, ref:ref, mois:today.getMonth(), annee:today.getFullYear(),
+    statut:'noprod', isRetest:false, values:{}, serie:null, collecteDate:todayStr(), rapport:null, comment:'Pas de production'
+  });
+  await save('contamination');
+  contamCollecteFormOpen = false;
+  render();
+}
+
+function analyseFormRow(c){
+  var crit = REF_CRITERIA[c.ref]||[];
+  var row = '<tr style="background:var(--accent-bg);">'+
+    '<td colspan="6"><div style="padding:8px 0;">'+
+    badge(c.isRetest?'danger':'neutral', c.isRetest?'Contre-analyse':'1er relevé')+' '+esc(c.ligne)+' · '+esc(c.ref)+
+    ' — collecté le '+fmtDate(c.collecteDate)+(c.serie?' · n° '+esc(c.serie):'')+'</div>'+
+    '<div class="entryform cols2" style="margin-top:8px;">';
+  crit.forEach(function(cr){
+    row += '<label class="field">'+esc(cr.label)+' <span class="tiny">(seuil '+cr.seuil+(cr.unit?' '+cr.unit:'')+')</span>'+
+      '<input type="number" step="0.01" id="af-'+c.id+'-'+cr.id+'"></label>';
+  });
+  row += '</div><div class="actions-row" style="margin-top:10px;">'+
+    '<button class="btn" data-action="cancel-analyse-contam">Annuler</button>'+
+    '<button class="btn primary" data-action="save-analyse-contam" data-id="'+c.id+'">Enregistrer les mesures</button>'+
+    '</div></td></tr>';
+  return row;
+}
+async function handleSaveAnalyseContam(id){
+  var rec = DATA.contamination.find(function(c){ return c.id===id; });
+  if(!rec) return;
+  var crit = REF_CRITERIA[rec.ref]||[];
+  var values = {};
+  crit.forEach(function(cr){
+    var el = document.getElementById('af-'+id+'-'+cr.id);
+    if(el && el.value!=='') values[cr.id] = parseFloat(el.value);
+  });
+  rec.values = values;
+  rec.statut = contamConformite(rec.ref, values);
+  await save('contamination');
+  if(rec.statut==='nc'){
+    DATA.actions.push({id:uid('act'), origine:'Propreté', description:'Contre-analyse à réaliser — '+rec.ligne+' · '+rec.ref+' (résultat NC)', ligne:rec.ligne, responsable:'', echeance:null, statut:'planifiee', dateCreation:todayStr()});
+    await save('actions');
+    alert('Résultat NON CONFORME. Une action corrective a été créée dans le plan d\'actions.');
+  }
+  contamAnalyseEditId = null;
   render();
 }
 var chartContam=null;
@@ -2194,7 +2282,7 @@ function handleLogout(){
 var POLL_INTERVAL_MS = 10000;
 var pollTimer = null;
 function isUserMidEdit(){
-  if(auditWizard || metroEditingId || planningEditingId || contamDirectFormOpen || accountFormState || roleFormState || ateqActionFormOpen || particuleCampagneFormOpen || particuleDTEditId || particuleResultatEditId) return true;
+  if(auditWizard || metroEditingId || planningEditingId || contamDirectFormOpen || contamCollecteFormOpen || contamAnalyseEditId || accountFormState || roleFormState || ateqActionFormOpen || particuleCampagneFormOpen || particuleDTEditId || particuleResultatEditId) return true;
   var openForms = document.querySelectorAll('form[id^="form-"]');
   for(var i=0;i<openForms.length;i++){ if(openForms[i].style.display!=='none') return true; }
   return false;
@@ -2683,7 +2771,16 @@ app.addEventListener('click', async function(e){
   if(exportCsvBtn){ handleExportCsv(exportCsvBtn.dataset.module); return; }
   if(e.target.closest('[data-action="export-full-json"]')){ handleExportFullJson(); return; }
 
-  if(e.target.closest('[data-action="add-contam-direct"]')){ contamDirectFormOpen = true; render(); return; }
+  if(e.target.closest('[data-action="new-collecte-contam"]')){ contamCollecteFormOpen = true; render(); return; }
+  if(e.target.closest('[data-action="cancel-collecte-contam"]')){ contamCollecteFormOpen = false; render(); return; }
+  if(e.target.closest('[data-action="save-collecte-contam"]')){ await handleSaveCollecteContam(); return; }
+  if(e.target.closest('[data-action="contam-noprod"]')){ await handleContamNoProd(); return; }
+  var openAnalyseBtn = e.target.closest('[data-action="open-analyse-contam"]');
+  if(openAnalyseBtn){ contamAnalyseEditId = openAnalyseBtn.dataset.id; render(); return; }
+  if(e.target.closest('[data-action="cancel-analyse-contam"]')){ contamAnalyseEditId = null; render(); return; }
+  var saveAnalyseBtn = e.target.closest('[data-action="save-analyse-contam"]');
+  if(saveAnalyseBtn){ await handleSaveAnalyseContam(saveAnalyseBtn.dataset.id); return; }
+  if(e.target.closest('[data-action="add-contam-direct"]')){ contamDirectFormOpen = !contamDirectFormOpen; render(); return; }
   if(e.target.closest('[data-action="cancel-contam-direct"]')){ contamDirectFormOpen = false; render(); return; }
   if(e.target.closest('[data-action="save-contam-direct"]')){ await handleSaveContamDirect(); return; }
 
@@ -2785,6 +2882,8 @@ app.addEventListener('change', async function(e){
     return;
   }
   if(e.target.id==='results-year'){ resultsYear = Number(e.target.value); render(); return; }
+  if(e.target.id==='cc-ligne'){ contamCollecteState.ligne = e.target.value; contamCollecteState.ref = refsForLigne(e.target.value)[0]; render(); return; }
+  if(e.target.id==='cc-ref'){ contamCollecteState.ref = e.target.value; render(); return; }
   if(e.target.id==='cd-ligne'){ contamDirectState.ligne = e.target.value; contamDirectState.ref = refsForLigne(e.target.value)[0]; render(); return; }
   if(e.target.id==='cd-ref'){ contamDirectState.ref = e.target.value; render(); return; }
   if(e.target.id==='flt-planning-type'){ planningTypeFilter = e.target.value; applyPlanningFilter(); return; }
@@ -2869,6 +2968,29 @@ async function init(){
 init();
 
 })();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 </script>
