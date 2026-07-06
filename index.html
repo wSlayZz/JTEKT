@@ -199,6 +199,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -1153,55 +1154,183 @@ function addDays(dateStr, n){
   return fmtISOLocal(d);
 }
 
-// ---------- RELEVÉS PARTICULES (postes à risque) ----------
+// ---------- RELEVÉS PARTICULES — campagnes hebdomadaires ----------
 var PARTICULE_LINES = ['MCU1','MCU2'];
 var PARTICULE_POSTES = ['OP1060','OP1070'];
-var particuleFormOpen = false;
-function proprParticules(){
-  var html = '<p class="tiny" style="margin-bottom:12px;">Postes à risque suivis : OP1060 et OP1070 sur MCU1 et MCU2. Principe : une pastille est apposée pendant une semaine sur le poste, puis le nombre de particules est compté pour suivre la tendance.</p>';
-  html += '<div class="toolbar"><div></div><button class="btn primary" data-action="new-particule">+ Ajouter un relevé</button></div>';
-  if(particuleFormOpen) html += particuleForm();
+var PARTICULE_STATUTS = {
+  en_pose:    {label:'En pose',       level:'neutral', color:'#6E6A60'},
+  en_analyse: {label:'En analyse',    level:'warn',    color:'#B8730A'},
+  resultat:   {label:'Résultat reçu', level:'ok',      color:'#2E7D4F'}
+};
+var particuleCampagneFormOpen = false;   // formulaire nouvelle semaine
+var particuleDTEditId = null;            // campagne en cours de saisie DT
+var particuleResultatEditId = null;      // campagne en cours de saisie résultat
 
-  html += '<div class="grid grid-2" style="margin-bottom:18px;">';
+function proprParticules(){
+  // Graphiques
+  var html = '<div class="grid grid-2" style="margin-bottom:18px;">';
   PARTICULE_LINES.forEach(function(l){
-    html += '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">'+l+' — évolution OP1060 / OP1070</div><div class="chart-box"><canvas id="chart-particules-'+l+'"></canvas></div></div>';
+    html += '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">'+l+' — tendance par poste</div><div class="chart-box"><canvas id="chart-particules-'+l+'"></canvas></div></div>';
   });
   html += '</div>';
 
-  var rows = DATA.particules.slice().sort(function(a,b){ return (b.dateReleve||'').localeCompare(a.dateReleve||''); });
-  html += '<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Poste</th><th>Début pastille</th><th>Relevé</th><th>Nb particules</th><th>Commentaire</th><th></th></tr></thead><tbody>';
-  html += rows.map(function(p){
-    return '<tr><td>'+esc(p.ligne)+'</td><td>'+esc(p.poste)+'</td><td class="num">'+fmtDate(p.dateDebut)+'</td><td class="num">'+fmtDate(p.dateReleve)+'</td>'+
-      '<td class="num" style="font-weight:700;">'+esc(p.nbParticules)+'</td><td class="tiny">'+esc(val(p.comment,''))+'</td>'+
-      '<td><button class="btn small danger-outline" data-action="delete" data-module="particules" data-id="'+p.id+'">Suppr.</button></td></tr>';
-  }).join('') || '<tr><td colspan="7"><div class="empty">Aucun relevé</div></td></tr>';
-  html += '</tbody></table></div>';
+  // KPI
+  var enPose = DATA.particules.filter(function(p){ return p.statut==='en_pose'; }).length;
+  var enAnalyse = DATA.particules.filter(function(p){ return p.statut==='en_analyse'; }).length;
+  html += '<div class="grid grid-4" style="margin-bottom:18px;">'+
+    '<div class="statcard"><div class="eyebrow">En pose actuellement</div><div class="val">'+enPose+'</div></div>'+
+    '<div class="statcard s-warn"><div class="eyebrow">En analyse au labo</div><div class="val">'+enAnalyse+'</div></div>'+
+    '<div class="statcard"><div class="eyebrow">Campagnes terminées</div><div class="val">'+DATA.particules.filter(function(p){return p.statut==='resultat';}).length+'</div></div>'+
+    '<div class="statcard"><div class="eyebrow">Total campagnes</div><div class="val">'+DATA.particules.length+'</div></div>'+
+  '</div>';
+
+  // Bouton nouvelle semaine
+  html += '<div class="toolbar"><div class="eyebrow">Suivi des campagnes</div>'+
+    '<button class="btn primary" data-action="new-campagne">+ Nouvelle semaine (poser les pastilles)</button></div>';
+  if(particuleCampagneFormOpen) html += campagneForm();
+
+  // Tableau des campagnes, regroupées par semaine (datePose)
+  var campagnes = DATA.particules.slice().sort(function(a,b){
+    return (b.datePose||'').localeCompare(a.datePose||'') || a.ligne.localeCompare(b.ligne) || a.poste.localeCompare(b.poste);
+  });
+
+  var semaines = [];
+  campagnes.forEach(function(p){
+    var k = p.datePose||'?';
+    if(!semaines.find(function(s){return s.key===k;})) semaines.push({key:k, items:[]});
+    semaines.find(function(s){return s.key===k;}).items.push(p);
+  });
+
+  if(!semaines.length){
+    html += '<div class="empty">Aucune campagne. Cliquez sur "+ Nouvelle semaine" pour commencer.</div>';
+    return html;
+  }
+
+  semaines.forEach(function(sem){
+    var info = isoWeekInfo(sem.key!=='?'?sem.key:todayStr());
+    html += '<div class="card" style="margin-bottom:14px;">'+
+      '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;">'+
+        '<div class="eyebrow">Semaine '+info.week+' — posées le '+fmtDate(sem.key)+'</div>'+
+        (sem.items.every(function(p){return p.statut==='en_pose';}) ?
+          '<button class="btn small primary" data-action="retrait-semaine" data-pose="'+sem.key+'">↑ Envoyer au labo (retrait + DT)</button>' : '')+
+      '</div>';
+    html += '<table style="width:100%; font-size:13px; border-collapse:collapse;"><thead><tr>'+
+      '<th style="text-align:left; padding:4px 8px;">Ligne</th>'+
+      '<th style="text-align:left; padding:4px 8px;">Poste</th>'+
+      '<th style="text-align:left; padding:4px 8px;">Statut</th>'+
+      '<th style="text-align:left; padding:4px 8px;">Retrait</th>'+
+      '<th style="text-align:left; padding:4px 8px;">N° DT</th>'+
+      '<th style="text-align:right; padding:4px 8px;">Particules</th>'+
+      '<th style="text-align:left; padding:4px 8px;">Actions</th>'+
+      '</tr></thead><tbody>';
+    sem.items.forEach(function(p){
+      var st = PARTICULE_STATUTS[p.statut]||PARTICULE_STATUTS.en_pose;
+      var statBadge = '<span class="badge b-'+st.level+'"><span class="dot"></span>'+st.label+'</span>';
+      var actionCell = '';
+      if(p.statut==='en_analyse' && particuleDTEditId===p.id){
+        actionCell = '<div style="display:flex; gap:6px; align-items:center;">'+
+          '<input type="text" id="dt-numero-'+p.id+'" placeholder="N° DT" value="'+esc(p.numeroDT||'')+'" style="width:110px; font-size:12px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:var(--radius-sm);">'+
+          '<button class="btn small primary" data-action="save-dt" data-id="'+p.id+'">OK</button>'+
+          '<button class="btn small" data-action="cancel-dt">✕</button></div>';
+      } else if(p.statut==='en_analyse' && particuleResultatEditId===p.id){
+        actionCell = '<div style="display:flex; gap:6px; align-items:center;">'+
+          '<input type="number" id="res-nb-'+p.id+'" placeholder="Nb particules" min="0" style="width:120px; font-size:12px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:var(--radius-sm);">'+
+          '<button class="btn small primary" data-action="save-resultat" data-id="'+p.id+'">OK</button>'+
+          '<button class="btn small" data-action="cancel-resultat">✕</button></div>';
+      } else {
+        if(p.statut==='en_analyse'){
+          actionCell = '<button class="btn small" data-action="edit-dt" data-id="'+p.id+'">Saisir DT</button> '+
+                       '<button class="btn small primary" data-action="saisir-resultat" data-id="'+p.id+'">Saisir résultat</button>';
+        } else if(p.statut==='resultat'){
+          actionCell = '<span class="tiny">'+esc(val(p.comment,''))+'</span>';
+        }
+      }
+      html += '<tr style="border-top:1px solid var(--border);">'+
+        '<td style="padding:6px 8px;">'+esc(p.ligne)+'</td>'+
+        '<td style="padding:6px 8px;"><b>'+esc(p.poste)+'</b></td>'+
+        '<td style="padding:6px 8px;">'+statBadge+'</td>'+
+        '<td style="padding:6px 8px; font-size:12px;">'+fmtDate(p.dateRetrait||'')+'</td>'+
+        '<td style="padding:6px 8px; font-size:12px; font-family:var(--mono);">'+esc(p.numeroDT||'—')+'</td>'+
+        '<td style="padding:6px 8px; text-align:right; font-family:var(--mono); font-weight:700;">'+(p.nbParticules!==null&&p.nbParticules!==undefined?p.nbParticules:'—')+'</td>'+
+        '<td style="padding:6px 8px;">'+actionCell+
+          ' <button class="btn small danger-outline" data-action="delete" data-module="particules" data-id="'+p.id+'">Suppr.</button>'+
+        '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+  });
   return html;
 }
-function particuleForm(){
-  return '<div class="card" style="max-width:520px; margin-bottom:16px;"><div class="entryform cols2">'+
-    '<label class="field">Ligne<select id="pf-ligne">'+PARTICULE_LINES.map(function(l){return '<option value="'+l+'">'+l+'</option>';}).join('')+'</select></label>'+
-    '<label class="field">Poste<select id="pf-poste">'+PARTICULE_POSTES.map(function(p){return '<option value="'+p+'">'+p+'</option>';}).join('')+'</select></label>'+
-    '<label class="field">Début pastille<input type="date" id="pf-debut"></label>'+
-    '<label class="field">Date du relevé<input type="date" id="pf-releve" value="'+todayStr()+'"></label>'+
-    '<label class="field">Nombre de particules<input type="number" id="pf-nb" min="0"></label>'+
-    '<label class="field">Commentaire (optionnel)<input type="text" id="pf-comment"></label>'+
-    '</div><div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="cancel-particule">Annuler</button><button class="btn primary" data-action="save-particule">Enregistrer</button></div></div>';
+
+function campagneForm(){
+  var nextFriday = isoWeekMondayDate(
+    isoWeekInfo(todayStr()).year,
+    isoWeekInfo(todayStr()).week
+  );
+  // Find Friday of current week (monday + 4)
+  var d = new Date(nextFriday+'T00:00:00');
+  var dayOfWeek = d.getDay();
+  var daysToFriday = dayOfWeek===5 ? 0 : (5-dayOfWeek+7)%7;
+  d.setDate(d.getDate()-3+daysToFriday); // approx friday
+  var fridayStr = fmtISOLocal(d);
+
+  return '<div class="card" style="max-width:480px; margin-bottom:16px;">'+
+    '<div class="eyebrow" style="margin-bottom:10px;">Nouvelle semaine de relevé</div>'+
+    '<p class="tiny" style="margin-bottom:12px;">Crée automatiquement 4 campagnes "En pose" (MCU1+MCU2 × OP1060+OP1070). Chaque vendredi, vous renseignerez le numéro de DT et le résultat labo.</p>'+
+    '<div class="entryform cols2">'+
+    '<label class="field">Date de pose (vendredi)<input type="date" id="camp-pose" value="'+fridayStr+'"></label>'+
+    '<label class="field">Commentaire (optionnel)<input type="text" id="camp-comment" placeholder="Ex. nettoyage avant pose..."></label>'+
+    '</div><div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="cancel-campagne">Annuler</button><button class="btn primary" data-action="save-campagne">Créer les 4 campagnes</button></div></div>';
 }
-async function handleSaveParticule(){
-  var nbEl = document.getElementById('pf-nb');
-  if(nbEl.value===''){ alert('Merci de renseigner le nombre de particules.'); return; }
-  var entry = {
-    id: uid('part'), ligne: document.getElementById('pf-ligne').value, poste: document.getElementById('pf-poste').value,
-    dateDebut: document.getElementById('pf-debut').value || null, dateReleve: document.getElementById('pf-releve').value || todayStr(),
-    nbParticules: parseInt(nbEl.value,10), comment: document.getElementById('pf-comment').value
-  };
-  DATA.particules.push(entry);
+
+async function handleSaveCampagne(){
+  var pose = document.getElementById('camp-pose').value || todayStr();
+  var comment = document.getElementById('camp-comment').value;
+  PARTICULE_LINES.forEach(function(l){
+    PARTICULE_POSTES.forEach(function(poste){
+      DATA.particules.push({
+        id:uid('part'), ligne:l, poste:poste, datePose:pose,
+        dateRetrait:null, numeroDT:null, statut:'en_pose',
+        nbParticules:null, comment:comment
+      });
+    });
+  });
   await save('particules');
-  logChange('Propreté', 'Relevé particules', entry.ligne+' · '+entry.poste+' — '+entry.nbParticules);
-  particuleFormOpen = false;
+  logChange('Propreté', 'Nouvelle campagne particules', 'Posée le '+fmtDate(pose));
+  particuleCampagneFormOpen = false;
   render();
 }
+async function handleRetraitSemaine(datePose){
+  var dateRetrait = todayStr();
+  var toUpdate = DATA.particules.filter(function(p){ return p.datePose===datePose && p.statut==='en_pose'; });
+  if(!toUpdate.length) return;
+  if(!confirm('Marquer les '+toUpdate.length+' pastilles du '+fmtDate(datePose)+' comme retirées et envoyées au labo ?')) return;
+  toUpdate.forEach(function(p){ p.statut='en_analyse'; p.dateRetrait=dateRetrait; });
+  await save('particules');
+  logChange('Propreté', 'Retrait pastilles', datePose+' → '+toUpdate.length+' en analyse');
+  render();
+}
+async function handleSaveDT(id){
+  var el = document.getElementById('dt-numero-'+id);
+  var num = el? el.value.trim() : '';
+  var p = DATA.particules.find(function(x){ return x.id===id; });
+  if(p){ p.numeroDT = num; await save('particules'); }
+  particuleDTEditId = null;
+  render();
+}
+async function handleSaveResultat(id){
+  var el = document.getElementById('res-nb-'+id);
+  if(!el || el.value===''){ alert('Merci de renseigner le nombre de particules.'); return; }
+  var p = DATA.particules.find(function(x){ return x.id===id; });
+  if(p){
+    p.nbParticules = parseInt(el.value, 10);
+    p.statut = 'resultat';
+    await save('particules');
+    logChange('Propreté', 'Résultat particules', p.ligne+' · '+p.poste+' — '+p.nbParticules);
+  }
+  particuleResultatEditId = null;
+  render();
+}
+
 var chartParticules = {};
 function renderParticulesCharts(){
   if(typeof Chart==='undefined') return;
@@ -1210,16 +1339,18 @@ function renderParticulesCharts(){
     if(!ctx) return;
     if(chartParticules[l]){ chartParticules[l].destroy(); chartParticules[l]=null; }
     try{
-      var items = DATA.particules.filter(function(p){ return p.ligne===l; }).sort(function(a,b){ return (a.dateReleve||'').localeCompare(b.dateReleve||''); });
-      var labels = items.map(function(p){ return fmtDate(p.dateReleve); });
+      var items = DATA.particules.filter(function(p){ return p.ligne===l && p.statut==='resultat' && p.nbParticules!==null; })
+        .sort(function(a,b){ return (a.datePose||'').localeCompare(b.datePose||''); });
+      if(!items.length){ return; }
+      var weeks = items.map(function(p){ return 'S'+isoWeekInfo(p.datePose||p.dateRetrait||todayStr()).week; });
       var datasets = PARTICULE_POSTES.map(function(poste, i){
         return {label:poste, data:items.map(function(p){ return p.poste===poste? p.nbParticules : null; }),
-          borderColor: i===0? '#1F5C5C':'#B8730A', backgroundColor:'transparent', borderWidth:2, pointRadius:3, spanGaps:true};
+          borderColor: i===0? '#1F5C5C':'#B8730A', backgroundColor:'transparent', borderWidth:2, pointRadius:4, spanGaps:true};
       });
       chartParticules[l] = new Chart(ctx, {
-        type:'line',
-        data:{labels:labels, datasets:datasets},
-        options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false}, scales:{y:{beginAtZero:true, title:{display:true,text:'Nb particules'}}}}
+        type:'line', data:{labels:weeks, datasets:datasets},
+        options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+          scales:{y:{beginAtZero:true, title:{display:true,text:'Nb particules'}}}}
       });
     }catch(err){ console.error('chart error', err); }
   });
@@ -2062,7 +2193,7 @@ function handleLogout(){
 var POLL_INTERVAL_MS = 10000;
 var pollTimer = null;
 function isUserMidEdit(){
-  if(auditWizard || metroEditingId || planningEditingId || contamDirectFormOpen || accountFormState || roleFormState || ateqActionFormOpen || particuleFormOpen) return true;
+  if(auditWizard || metroEditingId || planningEditingId || contamDirectFormOpen || accountFormState || roleFormState || ateqActionFormOpen || particuleCampagneFormOpen || particuleDTEditId || particuleResultatEditId) return true;
   var openForms = document.querySelectorAll('form[id^="form-"]');
   for(var i=0;i<openForms.length;i++){ if(openForms[i].style.display!=='none') return true; }
   return false;
@@ -2567,9 +2698,21 @@ app.addEventListener('click', async function(e){
     return;
   }
 
-  if(e.target.closest('[data-action="new-particule"]')){ particuleFormOpen = true; render(); return; }
-  if(e.target.closest('[data-action="cancel-particule"]')){ particuleFormOpen = false; render(); return; }
-  if(e.target.closest('[data-action="save-particule"]')){ await handleSaveParticule(); return; }
+  if(e.target.closest('[data-action="new-campagne"]')){ particuleCampagneFormOpen = true; render(); return; }
+  if(e.target.closest('[data-action="cancel-campagne"]')){ particuleCampagneFormOpen = false; render(); return; }
+  if(e.target.closest('[data-action="save-campagne"]')){ await handleSaveCampagne(); return; }
+  var retraitBtn = e.target.closest('[data-action="retrait-semaine"]');
+  if(retraitBtn){ await handleRetraitSemaine(retraitBtn.dataset.pose); return; }
+  var editDTBtn = e.target.closest('[data-action="edit-dt"]');
+  if(editDTBtn){ particuleDTEditId = editDTBtn.dataset.id; particuleResultatEditId = null; render(); return; }
+  if(e.target.closest('[data-action="cancel-dt"]')){ particuleDTEditId = null; render(); return; }
+  var saveDTBtn = e.target.closest('[data-action="save-dt"]');
+  if(saveDTBtn){ await handleSaveDT(saveDTBtn.dataset.id); return; }
+  var saisiresBtn = e.target.closest('[data-action="saisir-resultat"]');
+  if(saisiresBtn){ particuleResultatEditId = saisiresBtn.dataset.id; particuleDTEditId = null; render(); return; }
+  if(e.target.closest('[data-action="cancel-resultat"]')){ particuleResultatEditId = null; render(); return; }
+  var saveResBtn = e.target.closest('[data-action="save-resultat"]');
+  if(saveResBtn){ await handleSaveResultat(saveResBtn.dataset.id); return; }
 
   if(e.target.closest('[data-action="new-ateq-action"]')){ ateqActionFormOpen = true; render(); return; }
   if(e.target.closest('[data-action="cancel-ateq-action"]')){ ateqActionFormOpen = false; render(); return; }
@@ -2725,6 +2868,28 @@ async function init(){
 init();
 
 })();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 </script>
 </body>
