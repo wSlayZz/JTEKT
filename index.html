@@ -198,6 +198,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -1755,7 +1756,8 @@ function renderAteqActionPlan(){
     html += '<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Description</th><th>Statut</th><th>Échéance</th><th>Délai</th><th>Responsable</th></tr></thead><tbody>';
     html += items.map(function(a){
       var statusLabel = (ACTION_STATUSES.filter(function(s){return s[0]===a.statut;})[0]||['',a.statut])[1];
-      var dl = a.echeance ? daysLabel(a.echeance) : null;
+      var done = isActionDone(a);
+      var dl = (!done && a.echeance) ? daysLabel(a.echeance) : null;
       var lvl = isActionLate(a)?'danger':(a.statut==='planifiee'?'warn':'ok');
       return '<tr><td>'+esc(val(a.ligne,'—'))+'</td><td>'+esc(a.description)+'</td><td>'+badge(lvl, statusLabel)+'</td>'+
         '<td class="num">'+(a.echeance?fmtDate(a.echeance):'—')+'</td>'+
@@ -2723,6 +2725,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
