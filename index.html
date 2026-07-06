@@ -200,6 +200,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -1611,7 +1612,7 @@ RENDERERS.dashboard = function(){
   var openActions = DATA.actions.filter(isActionOpen);
   var lateActions = DATA.actions.filter(isActionLate).sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
   var upcomingActions = DATA.actions.filter(function(a){
-    return isActionOpen(a) && !isActionLate(a) && a.echeance && daysBetween(todayStr(), a.echeance)<=alertHorizon;
+    return isActionOpen(a) && !isActionDone(a) && !isActionLate(a) && a.echeance && daysBetween(todayStr(), a.echeance)<=alertHorizon;
   }).sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
   var alevel = lateActions.length? 'danger' : (openActions.length? 'warn':'ok');
   html += '<div class="section card s-'+alevel+'" style="margin-bottom:18px;">'+
@@ -1873,7 +1874,7 @@ RENDERERS.ateq = function(){
 
 var ateqActionFormOpen = false;
 function renderAteqActionPlan(){
-  var items = DATA.actions.filter(function(a){ return a.origine==='ATEQ' && isActionOpen(a); })
+  var items = DATA.actions.filter(function(a){ return a.origine==='ATEQ' && isActionOpen(a) && !isActionDone(a); })
     .sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
   var html = '<div class="section card" style="margin-bottom:18px;">';
   html += '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:10px;">'+
@@ -2868,27 +2869,6 @@ async function init(){
 init();
 
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 </script>
