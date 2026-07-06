@@ -202,6 +202,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -1023,10 +1024,37 @@ function proprContamination(){
     '<div class="statcard"><div class="eyebrow">Relevés '+resultsYear+'</div><div class="val">'+rs.length+'</div></div>'+
   '</div>';
 
-  // ── SECTION 1 : COLLECTE ──────────────────────────────────────────
+  // ── SECTION 1 : CONTRE-ANALYSES REQUISES (prioritaire si existantes) ──
+  var pendingRetests = DATA.contamination.filter(function(c){
+    return c.statut==='nc' && !c.retested;
+  });
+  if(pendingRetests.length){
+    html += '<div class="card" style="margin-bottom:18px; border:2px solid var(--danger);">'+
+      '<div class="eyebrow" style="color:var(--danger); margin-bottom:8px;">⚠ Contre-analyses requises ('+pendingRetests.length+')</div>'+
+      '<p class="tiny" style="margin-bottom:10px;">Ces références ont eu un résultat non conforme et n\'ont pas encore été re-testées. Cliquez sur "Déclencher la contre-analyse" pour créer la collecte.</p>'+
+      '<table style="width:100%; font-size:13px; border-collapse:collapse;"><thead><tr>'+
+        '<th style="text-align:left; padding:4px 8px;">Ligne</th>'+
+        '<th style="text-align:left; padding:4px 8px;">Référence</th>'+
+        '<th style="text-align:left; padding:4px 8px;">Mois du NC</th>'+
+        '<th style="text-align:left; padding:4px 8px;"></th>'+
+      '</tr></thead><tbody>';
+    pendingRetests.forEach(function(c){
+      var moisLabel = MONTHS_FR[c.mois].charAt(0).toUpperCase()+MONTHS_FR[c.mois].slice(1)+' '+c.annee;
+      html += '<tr style="border-top:1px solid var(--danger-bg);">'+
+        '<td style="padding:6px 8px;">'+esc(c.ligne)+'</td>'+
+        '<td style="padding:6px 8px; font-weight:700;">'+esc(c.ref)+'</td>'+
+        '<td style="padding:6px 8px; font-size:12px;">'+moisLabel+'</td>'+
+        '<td style="padding:6px 8px;">'+
+          '<button class="btn small danger-outline" data-action="trigger-retest" data-id="'+c.id+'" data-ligne="'+c.ligne+'" data-ref="'+c.ref+'">Déclencher la contre-analyse</button>'+
+        '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+  }
+
+  // ── SECTION 2 : COLLECTE ──────────────────────────────────────────
   html += '<div class="card" style="margin-bottom:18px;">'+
     '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;">'+
-      '<div><div class="eyebrow">1 — Déclarer une collecte (production)</div>'+
+      '<div><div class="eyebrow">'+(pendingRetests.length?'2':'1')+' — Déclarer une collecte (production)</div>'+
         '<p class="tiny" style="margin-top:4px;">La production déclare qu\'un échantillon a été prélevé. Le labo le retrouvera dans la liste ci-dessous pour saisir les mesures.</p></div>'+
       '<div style="display:flex; gap:8px;">'+
         '<button class="btn" data-action="contam-noprod">Pas de prod ce mois</button>'+
@@ -1035,11 +1063,11 @@ function proprContamination(){
   if(contamCollecteFormOpen) html += contamCollecteForm();
   html += '</div>';
 
-  // ── SECTION 2 : EN ATTENTE D'ANALYSE ────────────────────────────
+  // ── SECTION 3 : EN ATTENTE D'ANALYSE ────────────────────────────
+  html += '<div class="card" style="margin-bottom:18px;">'+
+    '<div class="eyebrow" style="margin-bottom:10px;">'+(pendingRetests.length?'3':'2')+' — Saisir les mesures (laboratoire)</div>';
   var pendingItems = DATA.contamination.filter(function(c){ return c.statut==='collected'; })
     .sort(function(a,b){ return (a.collecteDate||'').localeCompare(b.collecteDate||''); });
-  html += '<div class="card" style="margin-bottom:18px;">'+
-    '<div class="eyebrow" style="margin-bottom:10px;">2 — Saisir les mesures (laboratoire)</div>';
   if(!pendingItems.length){
     html += '<div class="empty">Aucun échantillon en attente. Les collectes déclarées apparaissent ici.</div>';
   } else {
@@ -1156,6 +1184,37 @@ function analyseFormRow(c){
     '</div></td></tr>';
   return row;
 }
+async function handleDeleteContam(id){
+  var c = DATA.contamination.find(function(x){ return x.id===id; });
+  if(!c) return;
+  var moisLabel = MONTHS_FR[c.mois].charAt(0).toUpperCase()+MONTHS_FR[c.mois].slice(1);
+  if(!confirm('Supprimer ce relevé ('+c.ligne+' · '+c.ref+' — '+moisLabel+' '+c.annee+') ?')) return;
+  // Si c'est un NC avec retest marqué, annuler le flag retested sur l'original
+  if(c.isRetest){
+    var original = DATA.contamination.find(function(x){
+      return x.ligne===c.ligne && x.ref===c.ref && x.mois===c.mois && x.annee===c.annee && x.statut==='nc' && x.retested;
+    });
+    if(original){ original.retested = false; }
+  }
+  DATA.contamination = DATA.contamination.filter(function(x){ return x.id!==id; });
+  await save('contamination');
+  logChange('Contamination', 'Suppression', c.ligne+' · '+c.ref+' — '+moisLabel+' '+c.annee);
+  openContamDetailId = null;
+  render();
+}
+function handleTriggerRetest(id, ligne, ref){
+  // Pré-remplir le formulaire de collecte avec la ligne/ref du NC
+  contamCollecteState.ligne = ligne;
+  contamCollecteState.ref = ref;
+  contamCollecteFormOpen = true;
+  openContamDetailId = null;
+  render();
+  // Scroll vers la section collecte
+  setTimeout(function(){
+    var el = document.getElementById('cc-ligne');
+    if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+  }, 100);
+}
 async function handleSaveAnalyseContam(id){
   var rec = DATA.contamination.find(function(c){ return c.id===id; });
   if(!rec) return;
@@ -1169,9 +1228,18 @@ async function handleSaveAnalyseContam(id){
   rec.statut = contamConformite(rec.ref, values);
   await save('contamination');
   if(rec.statut==='nc'){
-    DATA.actions.push({id:uid('act'), origine:'Propreté', description:'Contre-analyse à réaliser — '+rec.ligne+' · '+rec.ref+' (résultat NC)', ligne:rec.ligne, responsable:'', echeance:null, statut:'planifiee', dateCreation:todayStr()});
+    var msg, description;
+    if(rec.isRetest){
+      // 2ème NC consécutif → escalade
+      description = '🚨 ESCALADE — Contre-analyse également NC : '+rec.ligne+' · '+rec.ref+'. Blocage production recommandé.';
+      msg = '⚠️ CONTRE-ANALYSE NON CONFORME — résultat NC deux fois consécutives ('+rec.ligne+' · '+rec.ref+').\n\nAction d\'escalade créée dans le plan d\'actions.';
+    } else {
+      description = 'Contre-analyse à réaliser — '+rec.ligne+' · '+rec.ref+' (résultat NC)';
+      msg = 'Résultat NON CONFORME. Une contre-analyse est requise.\nUne action corrective a été créée dans le plan d\'actions.';
+    }
+    DATA.actions.push({id:uid('act'), origine:'Propreté', description:description, ligne:rec.ligne, responsable:'', echeance:null, statut:'planifiee', dateCreation:todayStr()});
     await save('actions');
-    alert('Résultat NON CONFORME. Une action corrective a été créée dans le plan d\'actions.');
+    alert(msg);
   }
   contamAnalyseEditId = null;
   render();
@@ -1222,7 +1290,13 @@ function renderContamDetailModal(){
   }
   html += '<div class="tiny" style="margin-top:10px;">'+(c.serie?'N° série : '+esc(c.serie)+' · ':'')+(c.collecteDate?'Collecté le '+fmtDate(c.collecteDate):'')+'</div>';
   if(c.comment) html += '<div class="tiny" style="margin-top:4px;">Note : '+esc(c.comment)+'</div>';
-  html += '<div class="actions-row" style="margin-top:16px;"><button class="btn primary" data-action="close-contam-detail">Fermer</button></div>';
+  if(c.statut==='nc' && !c.retested){
+    html += '<div style="margin-top:12px; padding:10px; background:var(--danger-bg); border-radius:var(--radius-sm); font-size:12.5px; color:var(--danger);">⚠ Contre-analyse requise — aucun re-test enregistré pour ce résultat.</div>';
+  }
+  html += '<div class="actions-row" style="margin-top:16px;">'+
+    '<button class="btn danger-outline" data-action="delete-contam" data-id="'+c.id+'">Supprimer ce relevé</button>'+
+    (c.statut==='nc' && !c.retested ? '<button class="btn" data-action="trigger-retest" data-id="'+c.id+'" data-ligne="'+c.ligne+'" data-ref="'+c.ref+'">Déclencher la contre-analyse</button>' : '')+
+    '<button class="btn primary" data-action="close-contam-detail">Fermer</button></div>';
   html += '</div></div>';
   return html;
 }
@@ -2785,6 +2859,10 @@ app.addEventListener('click', async function(e){
   if(e.target.closest('[data-action="save-contam-direct"]')){ await handleSaveContamDirect(); return; }
 
   if(e.target.classList && e.target.classList.contains('modal-overlay')){ openAuditDetailId = null; openContamDetailId = null; render(); return; }
+  var delContamBtn = e.target.closest('[data-action="delete-contam"]');
+  if(delContamBtn){ await handleDeleteContam(delContamBtn.dataset.id); return; }
+  var triggerRetestBtn = e.target.closest('[data-action="trigger-retest"]');
+  if(triggerRetestBtn){ handleTriggerRetest(triggerRetestBtn.dataset.id, triggerRetestBtn.dataset.ligne, triggerRetestBtn.dataset.ref); return; }
   var viewContamBtn = e.target.closest('[data-action="view-contam"]');
   if(viewContamBtn){ openContamDetailId = viewContamBtn.dataset.id; render(); return; }
   if(e.target.closest('[data-action="close-contam-detail"]')){ openContamDetailId = null; render(); return; }
@@ -2968,6 +3046,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
