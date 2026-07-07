@@ -203,6 +203,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -990,7 +991,16 @@ function renderResultatsCharts(){
 var openContamDetailId = null;
 var contamDirectFormOpen = false;
 var contamCollecteFormOpen = false;
-var contamCollecteState = {ligne:'MCU1', ref:'141P'};
+var contamCollecteState = {ligne:'MCU1', ref:'141P', originalNcId:null, originalMois:null, originalAnnee:null};
+
+function retestDeadline(c){
+  // Deadline = 15 du mois suivant le NC
+  var d = new Date(c.annee, c.mois+1, 15);
+  return fmtISOLocal(d);
+}
+function retestExpired(c){
+  return todayStr() > retestDeadline(c);
+}
 var contamAnalyseEditId = null;
 var contamDirectState = {ligne:'MCU0', ref:'Bague'};
 var CONTAM_COMBOS = (function(){
@@ -1000,6 +1010,20 @@ var CONTAM_COMBOS = (function(){
 })();
 function contamLevelForStatut(s){ return s==='nc'?'danger':s==='collected'?'warn':s==='noprod'?'neutral':s==='ok'?'ok':'neutral'; }
 function contamStatutLabel(s){ return {ok:'Conforme', nc:'Non conforme', collected:'En attente d\'analyse', noprod:'Pas de prod'}[s] || '—'; }
+
+function retestDeadline(c){
+  // Deadline = 15 du mois suivant le NC
+  var m = c.mois + 1, y = c.annee;
+  if(m > 11){ m = 0; y++; }
+  return y + '-' + String(m+1).padStart(2,'0') + '-15';
+}
+function retestExpired(c){
+  return todayStr() > retestDeadline(c);
+}
+
+var contamHistPage = 0;
+var CONTAM_HIST_PER_PAGE = 10;
+
 function pendingRetest(ligne, ref){
   var curM = Number(todayStr().split('-')[1])-1, curY = Number(todayStr().split('-')[0]);
   return DATA.contamination.find(function(c){
@@ -1031,21 +1055,28 @@ function proprContamination(){
   if(pendingRetests.length){
     html += '<div class="card" style="margin-bottom:18px; border:2px solid var(--danger);">'+
       '<div class="eyebrow" style="color:var(--danger); margin-bottom:8px;">⚠ Contre-analyses requises ('+pendingRetests.length+')</div>'+
-      '<p class="tiny" style="margin-bottom:10px;">Ces références ont eu un résultat non conforme et n\'ont pas encore été re-testées. Cliquez sur "Déclencher la contre-analyse" pour créer la collecte.</p>'+
+      '<p class="tiny" style="margin-bottom:10px;">Délai : jusqu\'au 15 du mois suivant le résultat NC. Au-delà, vous pouvez clore sans re-test.</p>'+
       '<table style="width:100%; font-size:13px; border-collapse:collapse;"><thead><tr>'+
         '<th style="text-align:left; padding:4px 8px;">Ligne</th>'+
         '<th style="text-align:left; padding:4px 8px;">Référence</th>'+
         '<th style="text-align:left; padding:4px 8px;">Mois du NC</th>'+
+        '<th style="text-align:left; padding:4px 8px;">Deadline</th>'+
         '<th style="text-align:left; padding:4px 8px;"></th>'+
       '</tr></thead><tbody>';
     pendingRetests.forEach(function(c){
       var moisLabel = MONTHS_FR[c.mois].charAt(0).toUpperCase()+MONTHS_FR[c.mois].slice(1)+' '+c.annee;
+      var deadline = retestDeadline(c);
+      var expired = retestExpired(c);
       html += '<tr style="border-top:1px solid var(--danger-bg);">'+
         '<td style="padding:6px 8px;">'+esc(c.ligne)+'</td>'+
         '<td style="padding:6px 8px; font-weight:700;">'+esc(c.ref)+'</td>'+
         '<td style="padding:6px 8px; font-size:12px;">'+moisLabel+'</td>'+
-        '<td style="padding:6px 8px;">'+
-          '<button class="btn small danger-outline" data-action="trigger-retest" data-id="'+c.id+'" data-ligne="'+c.ligne+'" data-ref="'+c.ref+'">Déclencher la contre-analyse</button>'+
+        '<td style="padding:6px 8px; font-size:12px; color:'+(expired?'var(--text-faint)':'var(--danger)')+';">'+
+          fmtDate(deadline)+(expired?' <span class="tiny">(expiré)</span>':' <span class="tiny">('+daysBetween(todayStr(),deadline)+' j)</span>')+
+        '</td>'+
+        '<td style="padding:6px 8px; display:flex; gap:6px; flex-wrap:wrap;">'+
+          (expired ? '' : '<button class="btn small primary" data-action="trigger-retest" data-id="'+c.id+'" data-ligne="'+c.ligne+'" data-ref="'+c.ref+'" data-mois="'+c.mois+'" data-annee="'+c.annee+'">Déclencher la contre-analyse</button>')+
+          '<button class="btn small danger-outline" data-action="dismiss-retest" data-id="'+c.id+'">Clore sans re-test</button>'+
         '</td></tr>';
     });
     html += '</tbody></table></div>';
@@ -1109,6 +1140,48 @@ function proprContamination(){
   if(legacy.length){
     html += '<p class="tiny" style="margin-top:14px;">'+legacy.length+' relevé(s) historique(s) non rattachés à une ligne précise (144P et 143X existent sur MCU1 et MCU2).</p>';
   }
+
+  // ── TABLEAU PAGINÉ DES RÉSULTATS ───────────────────────────────────
+  var allResults = DATA.contamination.filter(function(c){ return c.statut==='ok'||c.statut==='nc'; })
+    .sort(function(a,b){
+      var da = a.annee*100+a.mois, db = b.annee*100+b.mois;
+      return db!==da? db-da : (a.ligne+a.ref).localeCompare(b.ligne+b.ref);
+    });
+  var totalPages = Math.max(1, Math.ceil(allResults.length / CONTAM_HIST_PER_PAGE));
+  if(contamHistPage >= totalPages) contamHistPage = totalPages-1;
+  var pageItems = allResults.slice(contamHistPage*CONTAM_HIST_PER_PAGE, (contamHistPage+1)*CONTAM_HIST_PER_PAGE);
+
+  html += '<div class="eyebrow" style="margin-top:24px; margin-bottom:8px;">Historique des résultats</div>';
+  html += '<div class="table-wrap"><table><thead><tr>'+
+    '<th>Ligne</th><th>Référence</th><th>Mois</th><th>Type</th><th>Masse principale</th><th>Statut</th><th>Collecté le</th><th></th>'+
+    '</tr></thead><tbody>';
+  if(!pageItems.length){
+    html += '<tr><td colspan="8"><div class="empty">Aucun résultat enregistré.</div></td></tr>';
+  } else {
+    pageItems.forEach(function(c){
+      var moisLabel = MONTHS_FR[c.mois].charAt(0).toUpperCase()+MONTHS_FR[c.mois].slice(1)+' '+c.annee;
+      var masse = c.values && c.values.masse!==undefined ? c.values.masse : (c.values && c.values.masse_a!==undefined ? c.values.masse_a : null);
+      var col = CONTAM_COMBOS.find(function(x){ return x.ligne===c.ligne && x.ref===c.ref; });
+      var seuil = col ? (c.ref==='162R'?2:3) : 3;
+      var over = masse!==null && masse!==undefined && masse>seuil;
+      html += '<tr><td>'+esc(c.ligne)+'</td><td>'+esc(c.ref)+'</td><td>'+moisLabel+'</td>'+
+        '<td>'+(c.isRetest? badge('danger','Contre-analyse') : badge('neutral','1er relevé'))+'</td>'+
+        '<td style="font-family:var(--mono); color:'+(over?'var(--danger)':'inherit')+'; font-weight:700;">'+(masse!==null&&masse!==undefined? masse+'<span class="tiny"> mg</span>':'—')+'</td>'+
+        '<td>'+badge(contamLevelForStatut(c.statut), contamStatutLabel(c.statut))+'</td>'+
+        '<td class="num tiny">'+fmtDate(c.collecteDate)+'</td>'+
+        '<td><button class="btn small" data-action="view-contam" data-id="'+c.id+'">Détail</button></td></tr>';
+    });
+  }
+  html += '</tbody></table></div>';
+
+  if(totalPages > 1){
+    html += '<div style="display:flex; align-items:center; gap:10px; margin-top:10px; justify-content:flex-end;">'+
+      '<button class="btn small" data-action="contam-hist-prev" '+(contamHistPage===0?'disabled':'')+'>← Préc.</button>'+
+      '<span class="tiny">Page '+(contamHistPage+1)+' / '+totalPages+'</span>'+
+      '<button class="btn small" data-action="contam-hist-next" '+(contamHistPage>=totalPages-1?'disabled':'')+'>Suiv. →</button>'+
+    '</div>';
+  }
+
   return html;
 }
 
@@ -1135,14 +1208,31 @@ async function handleSaveCollecteContam(){
   var serie = document.getElementById('cc-serie').value;
   var comment = document.getElementById('cc-comment').value;
   var today = new Date();
-  var retest = pendingRetest(ligne, ref);
-  if(retest) retest.retested = true;
+  var s = contamCollecteState;
+  var isRetest = s.originalNcId !== null && s.originalNcId !== undefined;
+  var mois, annee;
+  if(isRetest){
+    // Utiliser le mois/année du NC original, pas le mois courant
+    mois = s.originalMois;
+    annee = s.originalAnnee;
+    var originalNc = DATA.contamination.find(function(c){ return c.id===s.originalNcId; });
+    if(originalNc) originalNc.retested = true;
+  } else {
+    mois = today.getMonth();
+    annee = today.getFullYear();
+    var retest = pendingRetest(ligne, ref);
+    if(retest){ retest.retested = true; isRetest = true; mois = retest.mois; annee = retest.annee; }
+  }
   DATA.contamination.push({
-    id:uid('contam'), ligne:ligne, ref:ref, mois:today.getMonth(), annee:today.getFullYear(),
-    statut:'collected', isRetest:!!retest, values:{}, serie:serie||null,
+    id:uid('contam'), ligne:ligne, ref:ref, mois:mois, annee:annee,
+    statut:'collected', isRetest:isRetest, values:{}, serie:serie||null,
     collecteDate:todayStr(), rapport:null, comment:comment
   });
   await save('contamination');
+  // Réinitialiser l'état
+  contamCollecteState.originalNcId = null;
+  contamCollecteState.originalMois = null;
+  contamCollecteState.originalAnnee = null;
   contamCollecteFormOpen = false;
   render();
 }
@@ -1202,14 +1292,26 @@ async function handleDeleteContam(id){
   openContamDetailId = null;
   render();
 }
-function handleTriggerRetest(id, ligne, ref){
-  // Pré-remplir le formulaire de collecte avec la ligne/ref du NC
+async function handleDismissRetest(id){
+  var c = DATA.contamination.find(function(x){ return x.id===id; });
+  if(!c) return;
+  var moisLabel = MONTHS_FR[c.mois].charAt(0).toUpperCase()+MONTHS_FR[c.mois].slice(1)+' '+c.annee;
+  if(!confirm('Clore la contre-analyse de '+c.ligne+' · '+c.ref+' ('+moisLabel+') sans re-test ?\n\nCela indique que ce résultat NC ne sera pas re-testé (délai dépassé, décision qualité, etc.).')) return;
+  c.retested = true;
+  c.dismissedAt = todayStr();
+  await save('contamination');
+  logChange('Contamination', 'Contre-analyse close sans re-test', c.ligne+' · '+c.ref+' — '+moisLabel);
+  render();
+}
+function handleTriggerRetest(id, ligne, ref, mois, annee){
   contamCollecteState.ligne = ligne;
   contamCollecteState.ref = ref;
+  contamCollecteState.originalNcId = id;
+  contamCollecteState.originalMois = Number(mois);
+  contamCollecteState.originalAnnee = Number(annee);
   contamCollecteFormOpen = true;
   openContamDetailId = null;
   render();
-  // Scroll vers la section collecte
   setTimeout(function(){
     var el = document.getElementById('cc-ligne');
     if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
@@ -2861,8 +2963,12 @@ app.addEventListener('click', async function(e){
   if(e.target.classList && e.target.classList.contains('modal-overlay')){ openAuditDetailId = null; openContamDetailId = null; render(); return; }
   var delContamBtn = e.target.closest('[data-action="delete-contam"]');
   if(delContamBtn){ await handleDeleteContam(delContamBtn.dataset.id); return; }
+  var dismissRetestBtn = e.target.closest('[data-action="dismiss-retest"]');
+  if(dismissRetestBtn){ await handleDismissRetest(dismissRetestBtn.dataset.id); return; }
   var triggerRetestBtn = e.target.closest('[data-action="trigger-retest"]');
-  if(triggerRetestBtn){ handleTriggerRetest(triggerRetestBtn.dataset.id, triggerRetestBtn.dataset.ligne, triggerRetestBtn.dataset.ref); return; }
+  if(triggerRetestBtn){ handleTriggerRetest(triggerRetestBtn.dataset.id, triggerRetestBtn.dataset.ligne, triggerRetestBtn.dataset.ref, triggerRetestBtn.dataset.mois, triggerRetestBtn.dataset.annee); return; }
+  if(e.target.closest('[data-action="contam-hist-prev"]')){ contamHistPage = Math.max(0, contamHistPage-1); render(); return; }
+  if(e.target.closest('[data-action="contam-hist-next"]')){ contamHistPage++; render(); return; }
   var viewContamBtn = e.target.closest('[data-action="view-contam"]');
   if(viewContamBtn){ openContamDetailId = viewContamBtn.dataset.id; render(); return; }
   if(e.target.closest('[data-action="close-contam-detail"]')){ openContamDetailId = null; render(); return; }
@@ -3046,6 +3152,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
