@@ -206,6 +206,8 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
+
 (function(){
 "use strict";
 
@@ -1254,6 +1256,28 @@ async function handleSaveCollecteContam(){
     collecteDate:todayStr(), rapport:null, comment:comment
   });
   await save('contamination');
+
+  // Marquer automatiquement l'échéance planning "labo" correspondante comme réalisée
+  // Si aucune échéance n'existe, en créer une marquée directement réalisée
+  if(!isRetest){
+    var echeance = planningCurrentEntry('labo', ligne, ref);
+    if(echeance && !echeance.realisation){
+      echeance.realisation = todayStr();
+      await save('planning');
+      logChange('Planning', 'Réalisation auto (collecte)', ligne+' · '+ref);
+    } else if(!echeance){
+      var today2 = todayStr();
+      var moisLabel = MONTHS_FR[mois].charAt(0).toUpperCase()+MONTHS_FR[mois].slice(1);
+      DATA.planning.push({
+        id:uid('plan'), ligne:ligne, ref:ref, type:'labo',
+        mois:moisLabel, echeance:today2, realisation:today2,
+        responsable:'', resultatPct:null
+      });
+      await save('planning');
+      logChange('Planning', 'Échéance créée automatiquement (collecte)', ligne+' · '+ref+' — '+moisLabel);
+    }
+  }
+
   // Réinitialiser l'état
   contamCollecteState.originalNcId = null;
   contamCollecteState.originalMois = null;
@@ -3274,33 +3298,6 @@ async function init(){
 init();
 
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 </script>
