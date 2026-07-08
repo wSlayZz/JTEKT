@@ -205,6 +205,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -448,8 +449,12 @@ function planningOverall(types, lines){
 }
 // Renvoie l'échéance la plus pertinente "en ce moment" pour un type+ligne donné :
 // la plus en retard si non réalisée, sinon la plus proche à venir, sinon la dernière réalisée.
-function planningCurrentEntry(type, ligne){
-  var items = DATA.planning.filter(function(p){ return p.type===type && p.ligne===ligne; });
+function planningCurrentEntry(type, ligne, ref){
+  var items = DATA.planning.filter(function(p){
+    if(p.type!==type || p.ligne!==ligne) return false;
+    if(ref!==undefined && ref!==null) return (p.ref||null)===(ref||null);
+    return true;
+  });
   if(!items.length) return null;
   var today = todayStr();
   var overdue = items.filter(function(p){ return !p.realisation && p.echeance && p.echeance<=today; })
@@ -1860,16 +1865,34 @@ RENDERERS.dashboard = function(){
   }
   html += '<div class="section"><div class="grid grid-4">';
   PLAN_TYPES.forEach(function(t){
-    var lineBadges = LINES.map(function(l){
-      var cur = planningCurrentEntry(t[0], l);
-      var s = cur ? planningStatus(cur) : {level:'neutral', label:'Aucune donnée'};
-      var dl = cur && cur.echeance ? daysLabel(cur.echeance) : null;
-      var dateInfo = cur && cur.echeance ? fmtDate(cur.echeance)+(dl?' · '+dl.text:'') : '';
-      return '<div class="linebadge" style="flex-direction:column; align-items:flex-start; gap:2px;">'+
-        '<div style="display:flex; align-items:center; gap:6px; width:100%; justify-content:space-between;"><b>'+l+'</b>'+badge(s.level, s.label)+'</div>'+
-        (dateInfo? '<span class="tiny">'+esc(dateInfo)+'</span>' : '')+
-        '</div>';
-    }).join('');
+    var lineBadges;
+    if(t[0]==='labo'){
+      // Pour les relevés labo : une ligne par combo ligne×ref
+      lineBadges = CONTAM_COMBOS.map(function(c){
+        var cur = planningCurrentEntry('labo', c.ligne, c.ref);
+        var s = cur ? planningStatus(cur) : {level:'neutral', label:'Aucune donnée'};
+        var dl = cur && cur.echeance ? daysLabel(cur.echeance) : null;
+        var dateInfo = cur && cur.echeance ? fmtDate(cur.echeance)+(dl?' · '+dl.text:'') : '';
+        return '<div class="linebadge" style="flex-direction:column; align-items:flex-start; gap:2px;">'+
+          '<div style="display:flex; align-items:center; gap:6px; width:100%; justify-content:space-between;">'+
+            '<b>'+c.ligne+' <span style="color:var(--text-faint); font-weight:400;">'+c.ref+'</span></b>'+
+            badge(s.level, s.label)+
+          '</div>'+
+          (dateInfo? '<span class="tiny">'+esc(dateInfo)+'</span>' : '')+
+          '</div>';
+      }).join('');
+    } else {
+      lineBadges = LINES.map(function(l){
+        var cur = planningCurrentEntry(t[0], l);
+        var s = cur ? planningStatus(cur) : {level:'neutral', label:'Aucune donnée'};
+        var dl = cur && cur.echeance ? daysLabel(cur.echeance) : null;
+        var dateInfo = cur && cur.echeance ? fmtDate(cur.echeance)+(dl?' · '+dl.text:'') : '';
+        return '<div class="linebadge" style="flex-direction:column; align-items:flex-start; gap:2px;">'+
+          '<div style="display:flex; align-items:center; gap:6px; width:100%; justify-content:space-between;"><b>'+l+'</b>'+badge(s.level, s.label)+'</div>'+
+          (dateInfo? '<span class="tiny">'+esc(dateInfo)+'</span>' : '')+
+          '</div>';
+      }).join('');
+    }
     html += '<div class="statcard"><div class="eyebrow">'+esc(t[1])+'</div><div class="linebadges">'+lineBadges+'</div></div>';
   });
   html += '</div></div>';
@@ -1971,6 +1994,10 @@ RENDERERS.planning = function(){
   html += '<form class="entryform" id="form-planning" style="display:none">'+
     field('select','ligne','Ligne', LINES.map(function(l){return [l,l];})) +
     field('select','type','Type', PLAN_TYPES) +
+    '<div id="planning-ref-wrap" style="display:none;">'+
+      '<label class="field">Référence (pour relevés labo)<select name="ref" id="planning-form-ref">'+
+        CONTAM_COMBOS.map(function(c){return '<option value="'+c.ligne+'|'+c.ref+'">'+c.ligne+' · '+c.ref+'</option>';}).join('')+
+      '</select></label></div>' +
     field('text','mois','Mois (libellé)') +
     field('date','echeance','Date échéance') +
     field('date','realisation','Date de réalisation (si fait)', null, true) +
@@ -1988,6 +2015,7 @@ var planningEditingId = null;
 function planningRow(p){
   var s = planningStatus(p);
   var typeLabel = (PLAN_TYPES.filter(function(t){return t[0]===p.type;})[0]||['',p.type])[1];
+  var ligneLabel = p.ref ? esc(p.ligne)+' · <span style="color:var(--text-faint)">'+esc(p.ref)+'</span>' : esc(p.ligne);
   if(p.id===planningEditingId){
     return '<tr data-row-ligne="'+p.ligne+'" data-row-type="'+p.type+'" data-row-mois="'+(p.echeance?p.echeance.slice(0,7):'')+'" style="background:#FBFAF7;">'+
       '<td>'+badge(s.level,s.label)+'</td>'+
@@ -2003,7 +2031,7 @@ function planningRow(p){
   }
   var resultCell = (p.resultatPct!==undefined && p.resultatPct!==null && p.resultatPct!=='') ? badge(scoreLevel(p.resultatPct), p.resultatPct+'%') : '—';
   return '<tr data-row-ligne="'+p.ligne+'" data-row-type="'+p.type+'" data-row-mois="'+(p.echeance?p.echeance.slice(0,7):'')+'">'+
-    '<td>'+badge(s.level,s.label)+'</td><td>'+esc(p.ligne)+'</td><td>'+esc(typeLabel)+'</td><td>'+esc(val(p.mois))+'</td>'+
+    '<td>'+badge(s.level,s.label)+'</td><td>'+ligneLabel+'</td><td>'+esc(typeLabel)+'</td><td>'+esc(val(p.mois))+'</td>'+
     '<td class="num">'+fmtDate(p.echeance)+'</td><td class="num">'+fmtDate(p.realisation)+'</td><td>'+resultCell+'</td><td>'+esc(val(p.responsable))+'</td>'+
     '<td>'+(p.realisation? '' : '<button class="btn small" data-action="mark-done" data-module="planning" data-id="'+p.id+'">Marquer réalisé</button>')+
     ' <button class="btn small" data-action="edit-planning" data-id="'+p.id+'">Modifier</button>'+
@@ -2862,6 +2890,15 @@ async function handleFormSubmit(form){
   if(mod==='ateq'){ entry.nbDefauts = parseInt(entry.nbDefauts||0,10); entry.nb2nd = parseInt(entry.nb2nd||0,10); }
   if(mod==='resultats'){ entry.resultatPct = parseFloat(entry.resultatPct||0); }
   if(mod==='planning'){ entry.resultatPct = (entry.resultatPct!==undefined && entry.resultatPct!=='') ? parseFloat(entry.resultatPct) : null; }
+  // Pour type=labo : lire la ref sélectionnée et forcer la ligne correspondante
+  if(mod==='planning' && entry.type==='labo'){
+    var refEl = document.getElementById('planning-form-ref');
+    if(refEl && refEl.value){
+      var parts = refEl.value.split('|');
+      entry.ligne = parts[0];
+      entry.ref = parts[1];
+    }
+  }
   if(mod==='releves'){ entry.massePolluante = parseFloat(entry.massePolluante||0); }
   if(mod==='vidange'){ entry.intervalle = parseInt(entry.intervalle||VIDANGE_INTERVALLE,10); }
   if(mod==='actions'){ entry.dateCreation = todayStr(); }
@@ -3138,6 +3175,26 @@ app.addEventListener('change', async function(e){
   if(e.target.id==='flt-planning-type'){ planningTypeFilter = e.target.value; applyPlanningFilter(); return; }
   if(e.target.id==='flt-planning-ligne'){ planningLigneFilter = e.target.value; applyPlanningFilter(); return; }
   if(e.target.id==='flt-planning-mois'){ planningMoisFilter = e.target.value; applyPlanningFilter(); return; }
+  // Afficher le champ ref quand type=labo dans le formulaire d'ajout
+  if(e.target.name==='type' && e.target.closest('#form-planning')){
+    var refWrap = document.getElementById('planning-ref-wrap');
+    if(refWrap) refWrap.style.display = e.target.value==='labo'? '' : 'none';
+    return;
+  }
+  // Mettre à jour les refs disponibles quand la ligne change (formulaire planning)
+  if(e.target.name==='ligne' && e.target.closest('#form-planning')){
+    var typeEl = e.target.form ? e.target.form.querySelector('[name=type]') : null;
+    var refWrap2 = document.getElementById('planning-ref-wrap');
+    if(refWrap2 && typeEl && typeEl.value==='labo'){
+      var ligne = e.target.value;
+      var refSel = document.getElementById('planning-form-ref');
+      if(refSel){
+        var opts = CONTAM_COMBOS.filter(function(c){ return !ligne || c.ligne===ligne; });
+        refSel.innerHTML = opts.map(function(c){return '<option value="'+c.ligne+'|'+c.ref+'">'+c.ligne+' · '+c.ref+'</option>';}).join('');
+      }
+    }
+    return;
+  }
   if(e.target.id==='flt-metro-ligne'){ applyMetroFilter(); return; }
   if(e.target.id==='flt-alert-ligne'){ alertFilterLigne = e.target.value; applyAlertFilters(); return; }
   if(e.target.id==='flt-alert-module'){ alertFilterModule = e.target.value; applyAlertFilters(); return; }
@@ -3217,6 +3274,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
