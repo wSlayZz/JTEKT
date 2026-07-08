@@ -209,6 +209,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -858,7 +859,7 @@ function proprResultats(){
     '<div class="actions-row"><button type="button" class="btn" data-cancel-form="resultats">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'+
   '</form>';
 
-  var rs = DATA.resultats.filter(function(r){ return r.annee===resultsYear || r.annee===undefined; });
+  var rs = DATA.resultats.filter(function(r){ return r.annee===resultsYear || (r.annee===undefined && resultsYear===Number(todayStr().slice(0,4))); });
   var scored = rs.filter(function(r){ return r.resultatPct!==null && r.resultatPct!==undefined; });
   var moy = scored.length ? Math.round(scored.reduce(function(s,r){return s+r.resultatPct;},0)/scored.length) : null;
   var danger = scored.filter(function(r){ return r.resultatPct<SCORE_DANGER; }).length;
@@ -870,11 +871,21 @@ function proprResultats(){
     '<div class="statcard"><div class="eyebrow">Audits enregistrés</div><div class="val">'+scored.length+'</div></div>'+
   '</div>';
 
-  var alerts = scored.filter(function(r){ return r.resultatPct<SCORE_ATTENTION; }).sort(function(a,b){ return a.resultatPct-b.resultatPct; });
+  var curMoisIdx = Number(todayStr().split('-')[1])-1;
+  var prevMoisIdx = curMoisIdx===0 ? 11 : curMoisIdx-1;
+  var recentMois = [
+    MONTHS_FR[prevMoisIdx].charAt(0).toUpperCase()+MONTHS_FR[prevMoisIdx].slice(1),
+    MONTHS_FR[curMoisIdx].charAt(0).toUpperCase()+MONTHS_FR[curMoisIdx].slice(1)
+  ];
+  var alerts = scored.filter(function(r){ return r.resultatPct<SCORE_ATTENTION && recentMois.indexOf(r.mois)>=0; })
+    .sort(function(a,b){ return a.resultatPct-b.resultatPct; });
   if(alerts.length){
     html += '<div class="section"><div class="alertlist">'+alerts.map(function(r){
       var lvl = scoreLevel(r.resultatPct);
-      return '<div class="alertitem"><div>'+badge(lvl,'')+'</div><div><div class="txt">'+esc(r.ligne)+' — '+esc(r.mois)+' : score '+r.resultatPct+'%</div><div class="meta">'+(lvl==='danger'?'Sous le seuil danger ('+SCORE_DANGER+'%)':'Sous le seuil attention ('+SCORE_ATTENTION+'%)')+'</div></div></div>';
+      return '<div class="alertitem"><div>'+badge(lvl,'')+'</div><div>'+
+        '<div class="txt">'+esc(r.ligne)+' — '+esc(r.mois)+' : score '+r.resultatPct+'%</div>'+
+        '<div class="meta">'+(lvl==='danger'?'Sous le seuil danger ('+SCORE_DANGER+'%)':'Sous le seuil attention ('+SCORE_ATTENTION+'%)')+' — <span class="tiny">2 derniers mois uniquement</span></div>'+
+        '</div></div>';
     }).join('')+'</div></div>';
   }
 
@@ -962,7 +973,7 @@ function renderResultatsCharts(){
   if(chartProprEvol){ chartProprEvol.destroy(); chartProprEvol=null; }
   if(chartProprComp){ chartProprComp.destroy(); chartProprComp=null; }
   var lineColors = {MCU1:'#1F5C5C', MCU2:'#2E7D4F', MCU3:'#B8730A'};
-  var rs = DATA.resultats.filter(function(r){ return r.annee===resultsYear || r.annee===undefined; });
+  var rs = DATA.resultats.filter(function(r){ return r.annee===resultsYear || (r.annee===undefined && resultsYear===Number(todayStr().slice(0,4))); });
   var lignes = LINES.filter(function(l){ return chartProprLigneFilter.indexOf(l)>=0; });
   try{
     var datasets = lignes.map(function(l){
@@ -3220,7 +3231,15 @@ app.addEventListener('change', async function(e){
     } else { entry[fld] = e.target.value; }
     return;
   }
-  if(e.target.id==='results-year'){ resultsYear = Number(e.target.value); render(); return; }
+  if(e.target.id==='results-year'){
+    resultsYear = Number(e.target.value);
+    // Réinitialiser la navigation mensuelle sur le mois en cours si on revient à l'année courante
+    // sinon aller sur décembre (le mois le plus récent pour les années passées)
+    var curYear = Number(todayStr().slice(0,4));
+    if(resultsYear===curYear) resultsMonthView = Number(todayStr().split('-')[1])-1;
+    else resultsMonthView = 11;
+    render(); return;
+  }
   if(e.target.id==='cc-ligne'){ contamCollecteState.ligne = e.target.value; contamCollecteState.ref = refsForLigne(e.target.value)[0]; render(); return; }
   if(e.target.id==='cc-ref'){ contamCollecteState.ref = e.target.value; render(); return; }
   if(e.target.id==='cd-ligne'){ contamDirectState.ligne = e.target.value; contamDirectState.ref = refsForLigne(e.target.value)[0]; render(); return; }
@@ -3327,6 +3346,35 @@ async function init(){
 init();
 
 })();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
