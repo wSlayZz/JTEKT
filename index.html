@@ -208,6 +208,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -1119,7 +1120,8 @@ function proprContamination(){
       return '<tr><td>'+esc(c.ligne)+'</td><td>'+esc(c.ref)+'</td><td>'+
         (c.isRetest? badge('danger','Contre-analyse') : badge('neutral','1er relevé'))+'</td>'+
         '<td class="num">'+fmtDate(c.collecteDate)+'</td><td class="num tiny">'+esc(val(c.serie,'—'))+'</td>'+
-        '<td><button class="btn small primary" data-action="open-analyse-contam" data-id="'+c.id+'">Saisir mesures</button></td></tr>';
+        '<td><button class="btn small primary" data-action="open-analyse-contam" data-id="'+c.id+'">Saisir mesures</button> '+
+        '<button class="btn small danger-outline" data-action="delete-collecte" data-id="'+c.id+'">Supprimer</button></td></tr>';
     }).join('');
     html += '</tbody></table></div>';
   }
@@ -1263,6 +1265,7 @@ async function handleSaveCollecteContam(){
     var echeance = planningCurrentEntry('labo', ligne, ref);
     if(echeance && !echeance.realisation){
       echeance.realisation = todayStr();
+      echeance.collecteId = uid('tmp'); // sera remplacé par l'id de la collecte après push
       await save('planning');
       logChange('Planning', 'Réalisation auto (collecte)', ligne+' · '+ref);
     } else if(!echeance){
@@ -1271,7 +1274,7 @@ async function handleSaveCollecteContam(){
       DATA.planning.push({
         id:uid('plan'), ligne:ligne, ref:ref, type:'labo',
         mois:moisLabel, echeance:today2, realisation:today2,
-        responsable:'', resultatPct:null
+        responsable:'', resultatPct:null, autoCreated:true
       });
       await save('planning');
       logChange('Planning', 'Échéance créée automatiquement (collecte)', ligne+' · '+ref+' — '+moisLabel);
@@ -1306,6 +1309,30 @@ async function handleContamNoProd(){
   render();
 }
 
+async function handleDeleteCollecte(id){
+  var c = DATA.contamination.find(function(x){ return x.id===id; });
+  if(!c) return;
+  if(!confirm('Supprimer cette collecte ('+c.ligne+' · '+c.ref+') ?\nL\'échéance planning associée sera remise en statut Planifié ou En retard.')) return;
+
+  // Retrouver l'échéance planning associée et annuler sa réalisation
+  var echeance = planningCurrentEntry('labo', c.ligne, c.ref);
+  if(echeance && echeance.realisation){
+    if(echeance.autoCreated){
+      // L'échéance avait été créée par la collecte → on la supprime entièrement
+      DATA.planning = DATA.planning.filter(function(p){ return p.id!==echeance.id; });
+    } else {
+      // L'échéance préexistait → on enlève juste la date de réalisation
+      delete echeance.realisation;
+    }
+    await save('planning');
+    logChange('Planning', 'Réalisation annulée (suppression collecte)', c.ligne+' · '+c.ref);
+  }
+
+  DATA.contamination = DATA.contamination.filter(function(x){ return x.id!==id; });
+  await save('contamination');
+  logChange('Contamination', 'Suppression collecte', c.ligne+' · '+c.ref+' — collecté le '+fmtDate(c.collecteDate));
+  render();
+}
 function analyseFormRow(c){
   var crit = REF_CRITERIA[c.ref]||[];
   var row = '<tr style="background:var(--accent-bg);">'+
@@ -3050,6 +3077,8 @@ app.addEventListener('click', async function(e){
   if(e.target.closest('[data-action="cancel-collecte-contam"]')){ contamCollecteFormOpen = false; render(); return; }
   if(e.target.closest('[data-action="save-collecte-contam"]')){ await handleSaveCollecteContam(); return; }
   if(e.target.closest('[data-action="contam-noprod"]')){ await handleContamNoProd(); return; }
+  var deleteCollecteBtn = e.target.closest('[data-action="delete-collecte"]');
+  if(deleteCollecteBtn){ await handleDeleteCollecte(deleteCollecteBtn.dataset.id); return; }
   var openAnalyseBtn = e.target.closest('[data-action="open-analyse-contam"]');
   if(openAnalyseBtn){ contamAnalyseEditId = openAnalyseBtn.dataset.id; render(); return; }
   if(e.target.closest('[data-action="cancel-analyse-contam"]')){ contamAnalyseEditId = null; render(); return; }
@@ -3298,6 +3327,8 @@ async function init(){
 init();
 
 })();
+
+
 
 
 </script>
