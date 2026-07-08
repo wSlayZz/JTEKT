@@ -204,6 +204,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -241,7 +242,7 @@ var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['metro
 var ADMIN_ROLE_ID = 'admin';
 var currentUser = null;
 var CONTAM_LINES = ['MCU0','MCU1','MCU2','MCU3'];
-var LINE_REFS = {MCU0:['Bague'], MCU1:['141P','143X','144P'], MCU2:['143X','144P','149X'], MCU3:['162R']};
+var LINE_REFS = {MCU0:['Bague'], MCU1:['141P','144P'], MCU2:['144P','149X'], MCU3:['162R']};
 var REF_CRITERIA = {
   'Bague':[{id:'masse',label:'Masse polluante',unit:'mg',seuil:3},{id:'p250_500',label:'Particules 250–500 µm',unit:'',seuil:205},{id:'p500_750',label:'Particules 500–750 µm',unit:'',seuil:9},{id:'p750',label:'Particules > 750 µm',unit:'',seuil:0}],
   '141P':[{id:'masse',label:'Masse polluante',unit:'mg',seuil:3},{id:'p250_500',label:'Particules 250–500 µm',unit:'',seuil:205},{id:'p500_750',label:'Particules 500–750 µm',unit:'',seuil:9},{id:'p750',label:'Particules > 750 µm',unit:'',seuil:0}],
@@ -870,8 +871,10 @@ function proprResultats(){
   }
 
   html += '<div class="grid grid-2" style="margin-bottom:18px;">'+
-    '<div class="card"><div class="eyebrow">Évolution du score par ligne — '+resultsYear+'</div><div class="chart-box"><canvas id="chart-proprete-evol"></canvas></div></div>'+
-    '<div class="card"><div class="eyebrow">Comparatif du mois en cours</div><div class="chart-box"><canvas id="chart-proprete-comp"></canvas></div></div>'+
+    '<div class="card"><div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; flex-wrap:wrap; gap:6px;"><div class="eyebrow">Évolution du score par ligne — '+resultsYear+'</div><div style="display:flex; gap:5px;">'+
+      LINES.map(function(l){return '<button class="btn small'+(chartProprLigneFilter.indexOf(l)>=0?' primary':'')+'" data-action="toggle-propr-ligne" data-val="'+l+'">'+l+'</button>';}).join('')+
+    '</div></div><div class="chart-box"><canvas id="chart-proprete-evol"></canvas></div></div>'+
+    '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">Comparatif du mois en cours</div><div class="chart-box"><canvas id="chart-proprete-comp"></canvas></div></div>'+
   '</div>';
 
   // Récapitulatif annuel (mois × ligne), combine audits + historique
@@ -942,6 +945,7 @@ function isoWeekMondayDate(year, week){
   return fmtISOLocal(target);
 }
 var chartProprEvol=null, chartProprComp=null;
+var chartProprLigneFilter = ['MCU1','MCU2','MCU3'];
 function renderResultatsCharts(){
   if(typeof Chart==='undefined') return;
   var ctxEvol = document.getElementById('chart-proprete-evol');
@@ -951,9 +955,9 @@ function renderResultatsCharts(){
   if(chartProprComp){ chartProprComp.destroy(); chartProprComp=null; }
   var lineColors = {MCU1:'#1F5C5C', MCU2:'#2E7D4F', MCU3:'#B8730A'};
   var rs = DATA.resultats.filter(function(r){ return r.annee===resultsYear || r.annee===undefined; });
-
+  var lignes = LINES.filter(function(l){ return chartProprLigneFilter.indexOf(l)>=0; });
   try{
-    var datasets = LINES.map(function(l){
+    var datasets = lignes.map(function(l){
       return {
         label:l,
         data: MONTHS_FR.map(function(mRaw){
@@ -975,10 +979,10 @@ function renderResultatsCharts(){
     });
     var curMonthIdx = Number(todayStr().split('-')[1])-1;
     var curMois = MONTHS_FR[curMonthIdx].charAt(0).toUpperCase()+MONTHS_FR[curMonthIdx].slice(1);
-    var scores = LINES.map(function(l){ var r = rs.find(function(x){return x.ligne===l && x.mois===curMois;}); return r? r.resultatPct : 0; });
+    var scores = lignes.map(function(l){ var r = rs.find(function(x){return x.ligne===l && x.mois===curMois;}); return r? r.resultatPct : 0; });
     chartProprComp = new Chart(ctxComp, {
       type:'bar',
-      data:{labels:LINES, datasets:[{label:'Score', data:scores,
+      data:{labels:lignes, datasets:[{label:'Score', data:scores,
         backgroundColor:scores.map(function(s){return s>=SCORE_ATTENTION?'#2E7D4F44':s>=SCORE_DANGER?'#B8730A44':'#B23B2E44';}),
         borderColor:scores.map(function(s){return s>=SCORE_ATTENTION?'#2E7D4F':s>=SCORE_DANGER?'#B8730A':'#B23B2E';}),
         borderWidth:1, borderRadius:5}]},
@@ -1115,7 +1119,23 @@ function proprContamination(){
   html += '</div>';
 
   // ── SECTION 3 : TABLEAU ANNUEL + GRAPHIQUE ───────────────────────
-  html += '<div class="card" style="margin-bottom:18px;"><div class="eyebrow">Évolution de la masse polluante par référence</div><div class="chart-box"><canvas id="chart-contamination"></canvas></div></div>';
+  // Filtres graphique contamination
+  var allRefs = []; CONTAM_COMBOS.forEach(function(c){ if(allRefs.indexOf(c.ref)<0) allRefs.push(c.ref); });
+  html += '<div class="card" style="margin-bottom:18px;">'+
+    '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; flex-wrap:wrap; gap:8px;">'+
+      '<div class="eyebrow">Évolution de la masse polluante</div>'+
+      '<div style="display:flex; gap:6px; flex-wrap:wrap;">'+
+        CONTAM_LINES.map(function(l){
+          var active = chartContamFilters.lignes.indexOf(l)>=0;
+          return '<button class="btn small'+(active?' primary':'')+'" data-action="toggle-contam-filter-ligne" data-val="'+l+'">'+l+'</button>';
+        }).join('')+
+        '<span style="color:var(--border); padding:0 2px;">|</span>'+
+        allRefs.map(function(r){
+          var active = !chartContamFilters.refs || chartContamFilters.refs.indexOf(r)>=0;
+          return '<button class="btn small'+(active?' primary':'')+'" data-action="toggle-contam-filter-ref" data-val="'+r+'">'+r+'</button>';
+        }).join('')+
+      '</div></div>'+
+    '<div class="chart-box"><canvas id="chart-contamination"></canvas></div></div>';
 
   html += '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;"><div class="eyebrow">Tableau annuel — '+resultsYear+'</div><button class="btn small" data-action="add-contam-direct">+ Saisie directe</button></div>';
   if(contamDirectFormOpen) html += contamDirectForm();
@@ -1268,7 +1288,10 @@ function analyseFormRow(c){
     row += '<label class="field">'+esc(cr.label)+' <span class="tiny">(seuil '+cr.seuil+(cr.unit?' '+cr.unit:'')+')</span>'+
       '<input type="number" step="0.01" id="af-'+c.id+'-'+cr.id+'"></label>';
   });
-  row += '</div><div class="actions-row" style="margin-top:10px;">'+
+  row += '</div>'+
+    '<label class="field" style="margin-top:8px; max-width:480px;">Lien / référence du rapport PDF'+
+    '<input type="text" id="af-'+c.id+'-rapport" placeholder="https://... ou chemin réseau (ex. \\\\serveur\\qualité\\rapport.pdf)"></label>'+
+    '<div class="actions-row" style="margin-top:10px;">'+
     '<button class="btn" data-action="cancel-analyse-contam">Annuler</button>'+
     '<button class="btn primary" data-action="save-analyse-contam" data-id="'+c.id+'">Enregistrer les mesures</button>'+
     '</div></td></tr>';
@@ -1328,6 +1351,8 @@ async function handleSaveAnalyseContam(id){
   });
   rec.values = values;
   rec.statut = contamConformite(rec.ref, values);
+  var rapportEl = document.getElementById('af-'+id+'-rapport');
+  if(rapportEl && rapportEl.value) rec.rapport = rapportEl.value;
   await save('contamination');
   if(rec.statut==='nc'){
     var msg, description;
@@ -1347,17 +1372,23 @@ async function handleSaveAnalyseContam(id){
   render();
 }
 var chartContam=null;
+var chartContamFilters = {lignes: ['MCU0','MCU1','MCU2','MCU3'], refs: null}; // null = toutes
 function renderContaminationCharts(){
   if(typeof Chart==='undefined') return;
   var ctx = document.getElementById('chart-contamination');
   if(!ctx) return;
   if(chartContam){ chartContam.destroy(); chartContam=null; }
   try{
-    var months = MONTHS_FR.map(function(m){return m.charAt(0).toUpperCase()+m.slice(1);});
+    var months = MONTHS_FR.map(function(m){return m.slice(0,3);});
     var palette = ['#1F5C5C','#2E7D4F','#B8730A','#B23B2E','#6E6A60','#7B4FA3','#3B6FA0','#A0527A'];
     var rs = DATA.contamination.filter(function(c){ return c.annee===resultsYear; });
-    var datasets = CONTAM_COMBOS.map(function(c,i){
-      return {label:c.ligne+' '+c.ref, data: MONTHS_FR.map(function(m,mi){
+    var combos = CONTAM_COMBOS.filter(function(c){
+      var lOk = !chartContamFilters.lignes.length || chartContamFilters.lignes.indexOf(c.ligne)>=0;
+      var rOk = !chartContamFilters.refs || !chartContamFilters.refs.length || chartContamFilters.refs.indexOf(c.ref)>=0;
+      return lOk && rOk;
+    });
+    var datasets = combos.map(function(c,i){
+      return {label:c.ligne+' '+c.ref, data:MONTHS_FR.map(function(m,mi){
           var rec = rs.find(function(x){return x.ligne===c.ligne && x.ref===c.ref && x.mois===mi;});
           if(!rec || rec.statut==='noprod' || rec.statut==='collected') return null;
           return rec.values.masse!==undefined? rec.values.masse : rec.values.masse_a;
@@ -1368,7 +1399,7 @@ function renderContaminationCharts(){
     datasets.push({label:'Seuil 162R (2 mg)', data:Array(12).fill(2), borderColor:'#B23B2E99', borderDash:[5,4], borderWidth:1, pointRadius:0});
     chartContam = new Chart(ctx, {
       type:'line',
-      data:{labels:months.map(function(m){return m.slice(0,3);}), datasets:datasets},
+      data:{labels:months, datasets:datasets},
       options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
         plugins:{legend:{labels:{font:{size:9.5}}}},
         scales:{y:{beginAtZero:true, title:{display:true, text:'mg'}}}}
@@ -1392,6 +1423,7 @@ function renderContamDetailModal(){
   }
   html += '<div class="tiny" style="margin-top:10px;">'+(c.serie?'N° série : '+esc(c.serie)+' · ':'')+(c.collecteDate?'Collecté le '+fmtDate(c.collecteDate):'')+'</div>';
   if(c.comment) html += '<div class="tiny" style="margin-top:4px;">Note : '+esc(c.comment)+'</div>';
+  if(c.rapport) html += '<div style="margin-top:8px;"><span class="tiny">Rapport : </span>'+(c.rapport.startsWith('http')||c.rapport.startsWith('\\\\')?'<a href="'+esc(c.rapport)+'" target="_blank" style="font-size:12px; color:var(--ok);">'+esc(c.rapport)+'</a>':'<span class="tiny">'+esc(c.rapport)+'</span>')+'</div>';
   if(c.statut==='nc' && !c.retested){
     html += '<div style="margin-top:12px; padding:10px; background:var(--danger-bg); border-radius:var(--radius-sm); font-size:12.5px; color:var(--danger);">⚠ Contre-analyse requise — aucun re-test enregistré pour ce résultat.</div>';
   }
@@ -1486,6 +1518,8 @@ function proprParticules(){
       '<th style="text-align:left; padding:4px 8px;">Retrait</th>'+
       '<th style="text-align:left; padding:4px 8px;">N° DT</th>'+
       '<th style="text-align:right; padding:4px 8px;">Particules</th>'+
+      '<th style="text-align:left; padding:4px 8px;">Rapport</th>'+
+      '<th style="text-align:right; padding:4px 8px;">Particules</th>'+
       '<th style="text-align:left; padding:4px 8px;">Actions</th>'+
       '</tr></thead><tbody>';
     sem.items.forEach(function(p){
@@ -1499,7 +1533,8 @@ function proprParticules(){
           '<button class="btn small" data-action="cancel-dt">✕</button></div>';
       } else if(p.statut==='en_analyse' && particuleResultatEditId===p.id){
         actionCell = '<div style="display:flex; gap:6px; align-items:center;">'+
-          '<input type="number" id="res-nb-'+p.id+'" placeholder="Nb particules" min="0" style="width:120px; font-size:12px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:var(--radius-sm);">'+
+          '<input type="number" id="res-nb-'+p.id+'" placeholder="Nb particules" min="0" style="width:130px; font-size:12px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:var(--radius-sm);">'+
+          '<input type="text" id="res-rapport-'+p.id+'" placeholder="Lien rapport (optionnel)" style="width:200px; font-size:12px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:var(--radius-sm);">'+
           '<button class="btn small primary" data-action="save-resultat" data-id="'+p.id+'">OK</button>'+
           '<button class="btn small" data-action="cancel-resultat">✕</button></div>';
       } else {
@@ -1517,6 +1552,7 @@ function proprParticules(){
         '<td style="padding:6px 8px; font-size:12px;">'+fmtDate(p.dateRetrait||'')+'</td>'+
         '<td style="padding:6px 8px; font-size:12px; font-family:var(--mono);">'+esc(p.numeroDT||'—')+'</td>'+
         '<td style="padding:6px 8px; text-align:right; font-family:var(--mono); font-weight:700;">'+(p.nbParticules!==null&&p.nbParticules!==undefined?p.nbParticules:'—')+'</td>'+
+        '<td style="padding:6px 8px; max-width:180px; font-size:11px;">'+(p.rapport?(p.rapport.startsWith('http')?'<a href="'+esc(p.rapport)+'" target="_blank" style="color:var(--ok);">Rapport ↗</a>':'<span class="tiny">'+esc(p.rapport)+'</span>'):'—')+'</td>'+
         '<td style="padding:6px 8px;">'+actionCell+
           ' <button class="btn small danger-outline" data-action="delete" data-module="particules" data-id="'+p.id+'">Suppr.</button>'+
         '</td></tr>';
@@ -1588,6 +1624,8 @@ async function handleSaveResultat(id){
   var p = DATA.particules.find(function(x){ return x.id===id; });
   if(p){
     p.nbParticules = parseInt(el.value, 10);
+    var rapEl = document.getElementById('res-rapport-'+id);
+    if(rapEl && rapEl.value) p.rapport = rapEl.value;
     p.statut = 'resultat';
     await save('particules');
     logChange('Propreté', 'Résultat particules', p.ligne+' · '+p.poste+' — '+p.nbParticules);
@@ -2980,6 +3018,33 @@ app.addEventListener('click', async function(e){
     return;
   }
 
+  // Filtres graphiques propreté
+  var toggleProprLigne = e.target.closest('[data-action="toggle-propr-ligne"]');
+  if(toggleProprLigne){
+    var v = toggleProprLigne.dataset.val;
+    var idx = chartProprLigneFilter.indexOf(v);
+    if(idx>=0 && chartProprLigneFilter.length>1) chartProprLigneFilter.splice(idx,1);
+    else if(idx<0) chartProprLigneFilter.push(v);
+    render(); return;
+  }
+  // Filtres graphique contamination
+  var toggleContamLigne = e.target.closest('[data-action="toggle-contam-filter-ligne"]');
+  if(toggleContamLigne){
+    var v2 = toggleContamLigne.dataset.val;
+    var idx2 = chartContamFilters.lignes.indexOf(v2);
+    if(idx2>=0 && chartContamFilters.lignes.length>1) chartContamFilters.lignes.splice(idx2,1);
+    else if(idx2<0) chartContamFilters.lignes.push(v2);
+    render(); return;
+  }
+  var toggleContamRef = e.target.closest('[data-action="toggle-contam-filter-ref"]');
+  if(toggleContamRef){
+    var v3 = toggleContamRef.dataset.val;
+    if(!chartContamFilters.refs) chartContamFilters.refs = CONTAM_COMBOS.map(function(c){return c.ref;}).filter(function(r,i,a){return a.indexOf(r)===i;});
+    var idx3 = chartContamFilters.refs.indexOf(v3);
+    if(idx3>=0 && chartContamFilters.refs.length>1) chartContamFilters.refs.splice(idx3,1);
+    else if(idx3<0) chartContamFilters.refs.push(v3);
+    render(); return;
+  }
   if(e.target.closest('[data-action="new-campagne"]')){ particuleCampagneFormOpen = true; render(); return; }
   if(e.target.closest('[data-action="cancel-campagne"]')){ particuleCampagneFormOpen = false; render(); return; }
   if(e.target.closest('[data-action="save-campagne"]')){ await handleSaveCampagne(); return; }
@@ -3152,6 +3217,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
