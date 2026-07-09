@@ -211,6 +211,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -2270,39 +2271,69 @@ RENDERERS.ateq = function(){
 };
 
 var ateqActionFormOpen = false;
+var ateqDetailActionId = null;
 function renderAteqActionPlan(){
   var items = DATA.actions.filter(function(a){ return a.origine==='ATEQ' && isActionOpen(a) && !isActionDone(a); })
-    .sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
+    .sort(function(a,b){ return (b.dateCrise||b.dateCreation||'').localeCompare(a.dateCrise||a.dateCreation||''); });
   var html = '<div class="section card" style="margin-bottom:18px;">';
   html += '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:10px;">'+
     '<div><div class="eyebrow">Plan de réaction — actions correctives immédiates</div>'+
-    '<p class="tiny" style="margin-top:4px;">En cas de pic de défauts ou de crise qualité, déclenchez ici une action corrective immédiate (confinement, tri, alerte...). Elle apparaît aussi dans l\'onglet Plan d\'actions.</p></div>'+
+    '<p class="tiny" style="margin-top:4px;">Les marqueurs ▼ sur le graphique indiquent les crises. Cliquez sur la description pour voir le détail.</p></div>'+
     '<button class="btn primary" data-action="new-ateq-action">+ Déclencher une action corrective</button></div>';
   if(ateqActionFormOpen) html += ateqActionForm();
   if(!items.length){
     html += '<div class="empty">Aucune action corrective ATEQ en cours.</div>';
   } else {
-    html += '<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Description</th><th>Statut</th><th>Échéance</th><th>Délai</th><th>Responsable</th></tr></thead><tbody>';
+    html += '<div class="table-wrap"><table><thead><tr><th>Date crise</th><th>Ligne</th><th>Description</th><th>Statut</th><th>Échéance</th><th>Délai</th><th>Responsable</th></tr></thead><tbody>';
     html += items.map(function(a){
       var statusLabel = (ACTION_STATUSES.filter(function(s){return s[0]===a.statut;})[0]||['',a.statut])[1];
       var done = isActionDone(a);
       var dl = (!done && a.echeance) ? daysLabel(a.echeance) : null;
       var lvl = isActionLate(a)?'danger':(a.statut==='planifiee'?'warn':'ok');
-      return '<tr><td>'+esc(val(a.ligne,'—'))+'</td><td>'+esc(a.description)+'</td><td>'+badge(lvl, statusLabel)+'</td>'+
+      var isOpen = ateqDetailActionId===a.id;
+      var e = a.dateCrise && a.ligne ? DATA.ateq.find(function(x){return x.date===a.dateCrise&&x.ligne===a.ligne;}) : null;
+      var criseTxt = a.dateCrise ? fmtDate(a.dateCrise) : '—';
+      if(e) criseTxt += ' <span class="tiny" style="color:var(--danger);">('+e.nbDefauts+'↑)</span>';
+      return '<tr style="'+(isOpen?'background:var(--accent-bg);':'')+'">'+
+        '<td style="font-size:12px; white-space:nowrap;">'+criseTxt+'</td>'+
+        '<td>'+esc(val(a.ligne,'—'))+'</td>'+
+        '<td style="cursor:pointer;" data-action="toggle-ateq-detail" data-id="'+a.id+'">'+
+          '<span style="color:var(--text-faint); margin-right:5px;">'+(isOpen?'▲':'▼')+'</span>'+esc(a.description)+
+        '</td>'+
+        '<td>'+badge(lvl, statusLabel)+'</td>'+
         '<td class="num">'+(a.echeance?fmtDate(a.echeance):'—')+'</td>'+
         '<td>'+(dl? '<span class="delay-pill delay-'+(dl.d<0?'late':dl.d<=3?'soon':'ok')+'">'+dl.text+'</span>' : '—')+'</td>'+
-        '<td>'+esc(val(a.responsable,'—'))+'</td></tr>';
+        '<td>'+esc(val(a.responsable,'—'))+'</td></tr>'+
+        (isOpen? '<tr><td colspan="7">'+ateqActionDetail(a)+'</td></tr>' : '');
     }).join('');
     html += '</tbody></table></div>';
   }
   html += '</div>';
   return html;
 }
+function ateqActionDetail(a){
+  var e = a.dateCrise && a.ligne ? DATA.ateq.find(function(x){return x.date===a.dateCrise&&x.ligne===a.ligne;}) : null;
+  var html = '<div style="padding:10px 14px; border-top:1px solid var(--border); font-size:12.5px;">';
+  html += '<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-bottom:8px;">';
+  html += '<div><div class="tiny">Date de crise</div><b>'+(a.dateCrise?fmtDate(a.dateCrise):'—')+'</b></div>';
+  if(e){
+    html += '<div><div class="tiny">Défauts ce jour</div><b style="color:var(--danger);">'+e.nbDefauts+'</b></div>';
+    var tauxJour = e.nbDefauts>0 ? Math.round((e.nb2nd||0)/e.nbDefauts*100) : 0;
+    html += '<div><div class="tiny">2nd passage</div><b>'+(e.nb2nd||0)+' ('+tauxJour+'%)</b></div>';
+  } else if(a.dateCrise){
+    html += '<div><div class="tiny">Données ce jour</div><span class="tiny">Aucune saisie ATEQ pour cette date</span></div>';
+  }
+  html += '<div><div class="tiny">Créée le</div><b>'+fmtDate(a.dateCreation)+'</b></div>';
+  html += '<div><div class="tiny">Responsable</div><b>'+esc(val(a.responsable,'—'))+'</b></div>';
+  html += '</div></div>';
+  return html;
+}
 function ateqActionForm(){
-  return '<div class="card" style="max-width:520px; margin-bottom:14px;">'+
-    '<div style="display:flex; flex-direction:column; gap:10px;">'+
+  return '<div class="card" style="max-width:560px; margin-bottom:14px;">'+
+    '<div class="entryform cols2">'+
     '<label class="field">Ligne<select id="aa-ligne">'+['MCU1','MCU2'].map(function(l){return '<option value="'+l+'">'+l+'</option>';}).join('')+'</select></label>'+
-    '<label class="field">Description de l\'action corrective<textarea id="aa-description" rows="2" placeholder="Ex. : confinement et tri des pièces produites depuis 06h, alerte responsable ligne..."></textarea></label>'+
+    '<label class="field">Date de la crise (jour du pic de défauts)<input type="date" id="aa-dateCrise" value="'+todayStr()+'"></label>'+
+    '<label class="field" style="grid-column:1/-1;">Description de l\'action corrective<textarea id="aa-description" rows="2" placeholder="Ex. : confinement et tri des pièces produites depuis 06h, alerte responsable ligne..."></textarea></label>'+
     '<label class="field">Responsable<input type="text" id="aa-responsable"></label>'+
     '<label class="field">Échéance<input type="date" id="aa-echeance" value="'+todayStr()+'"></label>'+
     '</div><div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="cancel-ateq-action">Annuler</button><button class="btn primary" data-action="save-ateq-action">Enregistrer l\'action</button></div></div>';
@@ -2315,6 +2346,7 @@ async function handleSaveAteqAction(){
     ligne: document.getElementById('aa-ligne').value,
     responsable: document.getElementById('aa-responsable').value,
     echeance: document.getElementById('aa-echeance').value || null,
+    dateCrise: document.getElementById('aa-dateCrise').value || todayStr(),
     statut:'planifiee', dateCreation: todayStr()
   };
   DATA.actions.push(entry);
@@ -2337,20 +2369,84 @@ function renderAteqMonthlyTable(){
 }
 
 var chartAteqCompare=null, chartAteq2nd=null;
+var ateqChartClickInfo = null; // {label, ligne, actions[]}
 function renderAteqCharts(){
   if(typeof Chart==='undefined') return;
   try{
     var s1 = weeklySeries('MCU1',12), s2 = weeklySeries('MCU2',12);
+    var labels = s1.map(function(s){return s.label;});
+    // Actions ATEQ avec dateCrise, converties en label de semaine
+    var ateqActions = DATA.actions.filter(function(a){ return a.origine==='ATEQ' && a.dateCrise; });
+    function actionMarkersForLigne(ligne, series){
+      return series.map(function(s, i){
+        var acts = ateqActions.filter(function(a){
+          return a.ligne===ligne && a.dateCrise && isoWeekInfo(a.dateCrise).week===isoWeekInfo(s.startDate||'2026-01-01').week;
+        });
+        return acts.length? series[i].total : null;
+      });
+    }
+    // Stocker les dates de début de semaine dans la série
+    s1.forEach(function(s,i){
+      var wk = isoWeekInfo(todayStr());
+      var d = new Date(todayStr()); d.setDate(d.getDate() - (11-i)*7);
+      s.startDate = fmtISOLocal(new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getDay()+6)%7));
+    });
+    s2.forEach(function(s,i){ s.startDate = s1[i].startDate; });
+    // Marker datasets : points rouges aux semaines avec une action corrective
+    function criseMarkersForLigne(ligne, series){
+      return series.map(function(s){
+        var weekNr = s.startDate? isoWeekInfo(s.startDate).week : -1;
+        var hasAction = ateqActions.some(function(a){
+          return a.ligne===ligne && a.dateCrise && isoWeekInfo(a.dateCrise).week===weekNr;
+        });
+        return hasAction? s.total : null;
+      });
+    }
+    // Stocker s1/s2 pour le click handler
+    window._ateqSeries = {s1:s1, s2:s2, ateqActions:ateqActions};
+
     var ctx1 = document.getElementById('chart-ateq-compare');
     if(ctx1){
       if(chartAteqCompare){ chartAteqCompare.destroy(); chartAteqCompare=null; }
       chartAteqCompare = new Chart(ctx1, {
-        type:'line',
-        data:{labels:s1.map(function(s){return s.label;}), datasets:[
-          {label:'MCU1', data:s1.map(function(s){return s.total;}), borderColor:'#1F5C5C', backgroundColor:'#1F5C5C22', borderWidth:2, pointRadius:3, tension:0.2},
-          {label:'MCU2', data:s2.map(function(s){return s.total;}), borderColor:'#B8730A', backgroundColor:'#B8730A22', borderWidth:2, pointRadius:3, tension:0.2}
+        type:'bar',
+        data:{labels:labels, datasets:[
+          {label:'MCU1 — défauts/sem.', data:s1.map(function(s){return s.total;}), backgroundColor:'#1F5C5C55', borderColor:'#1F5C5C', borderWidth:1.5, borderRadius:3, order:2},
+          {label:'MCU2 — défauts/sem.', data:s2.map(function(s){return s.total;}), backgroundColor:'#B8730A55', borderColor:'#B8730A', borderWidth:1.5, borderRadius:3, order:2},
+          {label:'Crises MCU1', data:criseMarkersForLigne('MCU1',s1), type:'scatter', pointStyle:'triangle', pointRadius:10, pointBackgroundColor:'#B23B2E', borderColor:'#B23B2E', order:1, showLine:false},
+          {label:'Crises MCU2', data:criseMarkersForLigne('MCU2',s2), type:'scatter', pointStyle:'triangle', pointRadius:10, pointBackgroundColor:'#E08020', borderColor:'#E08020', order:1, showLine:false}
         ]},
-        options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false}, scales:{y:{beginAtZero:true, title:{display:true,text:'Défauts / semaine'}}}}
+        options:{responsive:true, maintainAspectRatio:false,
+          interaction:{mode:'index',intersect:false},
+          plugins:{legend:{labels:{font:{size:11}}}, tooltip:{callbacks:{
+            afterBody:function(items){
+              var idx = items[0]&&items[0].dataIndex;
+              var s = window._ateqSeries;
+              if(!s) return [];
+              var weekNr = s.s1[idx]&&s.s1[idx].startDate? isoWeekInfo(s.s1[idx].startDate).week : -1;
+              var acts = s.ateqActions.filter(function(a){ return a.dateCrise && isoWeekInfo(a.dateCrise).week===weekNr; });
+              return acts.length? ['','▼ Actions correctives :',...acts.map(function(a){return ' '+a.ligne+': '+a.description.slice(0,40)+(a.description.length>40?'…':'');})] : [];
+            }
+          }}},
+          scales:{
+            y:{beginAtZero:true, title:{display:true,text:'Défauts / semaine'}, grid:{color:'#ddd5'}},
+            x:{grid:{display:false}}
+          },
+          onClick:function(evt, elements){
+            if(!elements.length) return;
+            var idx = elements[0].index;
+            var s = window._ateqSeries;
+            if(!s) return;
+            var weekNr = s.s1[idx]&&s.s1[idx].startDate? isoWeekInfo(s.s1[idx].startDate).week : -1;
+            var acts = s.ateqActions.filter(function(a){ return a.dateCrise && isoWeekInfo(a.dateCrise).week===weekNr; });
+            if(acts.length){
+              ateqDetailActionId = ateqDetailActionId===acts[0].id ? null : acts[0].id;
+              var planEl = document.querySelector('[data-action="new-ateq-action"]');
+              if(planEl) planEl.closest('.section.card').scrollIntoView({behavior:'smooth', block:'start'});
+              render();
+            }
+          }
+        }
       });
     }
     var ctx2 = document.getElementById('chart-ateq-2nd');
@@ -2358,11 +2454,15 @@ function renderAteqCharts(){
       if(chartAteq2nd){ chartAteq2nd.destroy(); chartAteq2nd=null; }
       chartAteq2nd = new Chart(ctx2, {
         type:'line',
-        data:{labels:s1.map(function(s){return s.label;}), datasets:[
-          {label:'MCU1 — taux 2nd passage (%)', data:s1.map(function(s){return s.taux;}), borderColor:'#1F5C5C', backgroundColor:'transparent', borderWidth:2, pointRadius:3, spanGaps:true},
-          {label:'MCU2 — taux 2nd passage (%)', data:s2.map(function(s){return s.taux;}), borderColor:'#B8730A', backgroundColor:'transparent', borderWidth:2, pointRadius:3, spanGaps:true}
+        data:{labels:labels, datasets:[
+          {label:'MCU1 — taux 2nd pass.', data:s1.map(function(s){return s.taux;}), borderColor:'#1F5C5C', backgroundColor:'#1F5C5C22', borderWidth:2, pointRadius:4, spanGaps:true, fill:true, tension:0.2},
+          {label:'MCU2 — taux 2nd pass.', data:s2.map(function(s){return s.taux;}), borderColor:'#B8730A', backgroundColor:'#B8730A22', borderWidth:2, pointRadius:4, spanGaps:true, fill:true, tension:0.2},
+          {label:'Seuil alerte (20%)', data:Array(12).fill(20), borderColor:'#B23B2E88', borderWidth:1.5, borderDash:[5,4], pointRadius:0}
         ]},
-        options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false}, scales:{y:{min:0, max:100, ticks:{callback:function(v){return v+'%';}}}}}
+        options:{responsive:true, maintainAspectRatio:false,
+          interaction:{mode:'index',intersect:false},
+          plugins:{legend:{labels:{font:{size:11}}}},
+          scales:{y:{min:0, title:{display:true,text:'Taux 2nd passage (%)'}, ticks:{callback:function(v){return v+'%';}}, grid:{color:'#ddd5'}}, x:{grid:{display:false}}}}
       });
     }
   }catch(err){ console.error('chart error', err); }
@@ -3226,6 +3326,8 @@ app.addEventListener('click', async function(e){
   if(e.target.closest('[data-action="new-ateq-action"]')){ ateqActionFormOpen = true; render(); return; }
   if(e.target.closest('[data-action="cancel-ateq-action"]')){ ateqActionFormOpen = false; render(); return; }
   if(e.target.closest('[data-action="save-ateq-action"]')){ await handleSaveAteqAction(); return; }
+  var toggleAteqDetail = e.target.closest('[data-action="toggle-ateq-detail"]');
+  if(toggleAteqDetail){ ateqDetailActionId = (ateqDetailActionId===toggleAteqDetail.dataset.id)?null:toggleAteqDetail.dataset.id; render(); return; }
 
   if(e.target.closest('[data-action="logout"]')){ handleLogout(); return; }
   var toggleRoleSub = e.target.closest('[data-action="toggle-role-sub"]');
@@ -3415,6 +3517,9 @@ async function init(){
 init();
 
 })();
+
+
+
 
 </script>
 </body>
