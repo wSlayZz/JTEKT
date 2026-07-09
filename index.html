@@ -210,6 +210,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -592,20 +593,24 @@ var resultsYear = Number(todayStr().slice(0,4));
 var openAuditDetailId = null;
 
 RENDERERS.proprete = function(){
-  var allowedAudit = canAudit();
+  var role = DATA.roles.find(function(r){ return r.id===(currentUser?currentUser.roleId:''); });
+  var isAdmin = currentUser && currentUser.roleId===ADMIN_ROLE_ID;
+  function hasSub(key){ return isAdmin || !role || role[key]; }
+  var allowedAudit = hasSub('canAudit');
   if(!allowedAudit && propreteSub==='grille') propreteSub = 'resultats';
   var html = '<div class="section"><div class="subtabs">'+
     (allowedAudit? '<button data-sub="grille" class="'+(propreteSub==='grille'?'active':'')+'">Grille d\'audit</button>' : '')+
-    '<button data-sub="resultats" class="'+(propreteSub==='resultats'?'active':'')+'">Résultats audits (%)</button>'+
-    '<button data-sub="contamination" class="'+(propreteSub==='contamination'?'active':'')+'">Contamination</button>'+
-    '<button data-sub="particules" class="'+(propreteSub==='particules'?'active':'')+'">Relevés particules</button>'+
-    '<button data-sub="vidange" class="'+(propreteSub==='vidange'?'active':'')+'">MCU0 · Vidange</button>'+
+    (hasSub('canViewResultats')? '<button data-sub="resultats" class="'+(propreteSub==='resultats'?'active':'')+'">Résultats audits (%)</button>' : '')+
+    (hasSub('canContamination')? '<button data-sub="contamination" class="'+(propreteSub==='contamination'?'active':'')+'">Contamination</button>' : '')+
+    (hasSub('canParticules')? '<button data-sub="particules" class="'+(propreteSub==='particules'?'active':'')+'">Relevés particules</button>' : '')+
+    (hasSub('canVidange')? '<button data-sub="vidange" class="'+(propreteSub==='vidange'?'active':'')+'">MCU0 · Vidange</button>' : '')+
   '</div>';
   if(propreteSub==='grille' && allowedAudit) html += renderProprGrilleTab();
-  else if(propreteSub==='contamination') html += proprContamination();
-  else if(propreteSub==='particules') html += proprParticules();
-  else if(propreteSub==='vidange') html += proprVidange();
-  else html += proprResultats();
+  else if(propreteSub==='contamination' && hasSub('canContamination')) html += proprContamination();
+  else if(propreteSub==='particules' && hasSub('canParticules')) html += proprParticules();
+  else if(propreteSub==='vidange' && hasSub('canVidange')) html += proprVidange();
+  else if(hasSub('canViewResultats')) html += proprResultats();
+  else html += '<div class="empty">Aucun accès à cet onglet.</div>';
   html += '</div>';
   if(openAuditDetailId) html += renderAuditDetailModal();
   if(openContamDetailId) html += renderContamDetailModal();
@@ -2510,6 +2515,13 @@ function fmtDateTime(iso){
   return d.toLocaleDateString('fr-FR')+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
 }
 
+var PROPRETE_SUBS = [
+  ['canAudit',         'Réaliser des audits'],
+  ['canViewResultats', 'Voir résultats (%)'],
+  ['canContamination', 'Contamination'],
+  ['canParticules',    'Relevés particules'],
+  ['canVidange',       'MCU0 Vidange']
+];
 function bootstrapAdmin(){
   var changed = false;
   if(!DATA.roles.length){
@@ -2536,6 +2548,12 @@ function canAudit(){
   if(currentUser.roleId===ADMIN_ROLE_ID) return true;
   var role = DATA.roles.find(function(r){ return r.id===currentUser.roleId; });
   return !!(role && role.canAudit);
+}
+function canSub(key){
+  if(!currentUser) return false;
+  if(currentUser.roleId===ADMIN_ROLE_ID) return true;
+  var role = DATA.roles.find(function(r){ return r.id===currentUser.roleId; });
+  return !role || !!role[key];
 }
 function renderNav(){
   var nav = document.getElementById('tabs');
@@ -2636,27 +2654,57 @@ RENDERERS.comptes = function(){
     var role = DATA.roles.find(function(r){ return r.id===a.roleId; });
     var canDelete = !(a.roleId===ADMIN_ROLE_ID && adminCount<=1);
     return '<tr><td>'+esc(a.displayName)+'</td><td>'+esc(a.username)+'</td><td>'+esc(role?role.name:'—')+'</td>'+
-      '<td><button class="btn small" data-action="edit-account" data-id="'+a.id+'">Modifier</button> '+
-      (canDelete? '<button class="btn small danger-outline" data-action="delete-account" data-id="'+a.id+'">Suppr.</button>' : '')+
+      '<td style="display:flex; gap:6px; flex-wrap:wrap;">'+
+        '<button class="btn small" data-action="edit-account" data-id="'+a.id+'">Modifier</button>'+
+        (canDelete? '<button class="btn small danger-outline" data-action="delete-account" data-id="'+a.id+'">Suppr.</button>' : '')+
       '</td></tr>';
   }).join('') || '<tr><td colspan="4"><div class="empty">Aucun compte</div></td></tr>';
   html += '</tbody></table></div>';
 
   html += '<h2 style="font-size:14px; margin:26px 0 10px;">Profils &amp; permissions</h2>';
-  html += '<p class="tiny" style="margin-bottom:10px;">Cochez les onglets visibles pour chaque profil. Le profil Administrateur a toujours accès à tout.</p>';
+  html += '<p class="tiny" style="margin-bottom:10px;">Cochez les onglets et les fonctions accessibles pour chaque profil. Le profil Administrateur a toujours accès à tout.</p>';
   html += '<div class="toolbar"><div></div><button class="btn primary" data-action="new-role">+ Ajouter un profil</button></div>';
   if(roleFormState) html += roleForm();
-  html += '<div class="table-wrap"><table class="perm-table"><thead><tr><th>Profil</th>'+ALL_TABS.map(function(t){return '<th>'+esc(t[1])+'</th>';}).join('')+'<th>Réaliser des audits</th><th></th></tr></thead><tbody>';
+
+  // Tableau élargi avec sous-permissions propreté
+  html += '<div class="table-wrap" style="overflow-x:auto;"><table class="perm-table"><thead>';
+  html += '<tr><th rowspan="2" style="min-width:130px;">Profil</th>';
+  html += ALL_TABS.filter(function(t){return t[0]!=='proprete';}).map(function(t){return '<th rowspan="2">'+esc(t[1])+'</th>';}).join('');
+  html += '<th colspan="'+PROPRETE_SUBS.length+'" style="text-align:center; border-bottom:2px solid var(--ok);">Propreté</th>';
+  html += '<th rowspan="2"></th></tr>';
+  html += '<tr>'+PROPRETE_SUBS.map(function(s){return '<th style="font-size:10px; color:var(--ok);">'+esc(s[1])+'</th>';}).join('')+'</tr>';
+  html += '</thead><tbody>';
   html += DATA.roles.map(function(r){
     if(r.id===ADMIN_ROLE_ID){
-      return '<tr><td>'+esc(r.name)+' <span class="role-protected">(accès complet)</span></td>'+ALL_TABS.map(function(){return '<td>✓</td>';}).join('')+'<td>✓</td><td></td></tr>';
+      var totalCols = ALL_TABS.filter(function(t){return t[0]!=='proprete';}).length + PROPRETE_SUBS.length;
+      return '<tr><td>'+esc(r.name)+' <span class="role-protected">(accès complet)</span></td>'+
+        Array(totalCols).fill('<td style="text-align:center;">✓</td>').join('')+'<td></td></tr>';
     }
     var inUse = DATA.accounts.some(function(a){ return a.roleId===r.id; });
-    return '<tr><td>'+esc(r.name)+'</td>'+ALL_TABS.map(function(t){
+    var row = '<tr>';
+    // Nom du profil + bouton renommer
+    row += '<td style="display:flex; align-items:center; gap:6px;">'+
+      (roleRenameId===r.id ?
+        '<input type="text" id="rename-role-input" value="'+esc(r.name)+'" style="width:110px; font-size:12px; padding:3px 6px; border:1px solid var(--border-strong); border-radius:var(--radius-sm);">'+
+        '<button class="btn small primary" data-action="save-role-rename" data-id="'+r.id+'">OK</button>'+
+        '<button class="btn small" data-action="cancel-role-rename">✕</button>' :
+        esc(r.name)+
+        '<button class="btn small" data-action="rename-role" data-id="'+r.id+'" title="Renommer">✎</button>'
+      )+'</td>';
+    // Onglets (hors propreté)
+    row += ALL_TABS.filter(function(t){return t[0]!=='proprete';}).map(function(t){
       var checked = r.tabs.indexOf(t[0])>=0;
-      return '<td><input type="checkbox" data-action="toggle-role-tab" data-role="'+r.id+'" data-tabkey="'+t[0]+'" '+(checked?'checked':'')+'></td>';
-    }).join('')+'<td><input type="checkbox" data-action="toggle-role-audit" data-role="'+r.id+'" '+(r.canAudit?'checked':'')+'></td>'+
-    '<td>'+(inUse? '' : '<button class="btn small danger-outline" data-action="delete-role" data-id="'+r.id+'">Suppr.</button>')+'</td></tr>';
+      return '<td style="text-align:center;"><input type="checkbox" data-action="toggle-role-tab" data-role="'+r.id+'" data-tabkey="'+t[0]+'" '+(checked?'checked':'')+'></td>';
+    }).join('');
+    // Sous-permissions propreté
+    row += PROPRETE_SUBS.map(function(s){
+      // canViewResultats : true par défaut si non défini
+      var def = (s[0]==='canAudit')? false : true;
+      var val = (r[s[0]]===undefined)? def : !!r[s[0]];
+      return '<td style="text-align:center;"><input type="checkbox" data-action="toggle-role-sub" data-role="'+r.id+'" data-sub="'+s[0]+'" '+(val?'checked':'')+'></td>';
+    }).join('');
+    row += '<td>'+(inUse? '' : '<button class="btn small danger-outline" data-action="delete-role" data-id="'+r.id+'">Suppr.</button>')+'</td></tr>';
+    return row;
   }).join('');
   html += '</tbody></table></div></div>';
   return html;
@@ -2743,11 +2791,24 @@ async function handleToggleRoleTab(roleId, tabKey, checked){
   await save('roles');
   if(currentUser && currentUser.roleId===roleId) renderNav();
 }
-async function handleToggleRoleAudit(roleId, checked){
+var roleRenameId = null;
+async function handleToggleRoleSub(roleId, subKey, checked){
   var role = DATA.roles.find(function(r){ return r.id===roleId; });
   if(!role || role.id===ADMIN_ROLE_ID) return;
-  role.canAudit = !!checked;
+  role[subKey] = !!checked;
   await save('roles');
+}
+async function handleSaveRoleRename(id){
+  var el = document.getElementById('rename-role-input');
+  if(!el) return;
+  var name = el.value.trim();
+  if(!name){ alert('Nom requis.'); return; }
+  var role = DATA.roles.find(function(r){ return r.id===id; });
+  if(role) role.name = name;
+  await save('roles');
+  logChange('Comptes', 'Profil renommé', name);
+  roleRenameId = null;
+  render();
 }
 
 // ---------- exports ----------
@@ -3167,6 +3228,14 @@ app.addEventListener('click', async function(e){
   if(e.target.closest('[data-action="save-ateq-action"]')){ await handleSaveAteqAction(); return; }
 
   if(e.target.closest('[data-action="logout"]')){ handleLogout(); return; }
+  var toggleRoleSub = e.target.closest('[data-action="toggle-role-sub"]');
+  if(toggleRoleSub){ await handleToggleRoleSub(toggleRoleSub.dataset.role, toggleRoleSub.dataset.sub, toggleRoleSub.checked); return; }
+  var renameRoleBtn = e.target.closest('[data-action="rename-role"]');
+  if(renameRoleBtn){ roleRenameId = renameRoleBtn.dataset.id; render(); return; }
+  if(e.target.closest('[data-action="cancel-role-rename"]')){ roleRenameId = null; render(); return; }
+  var saveRoleRenameBtn = e.target.closest('[data-action="save-role-rename"]');
+  if(saveRoleRenameBtn){ await handleSaveRoleRename(saveRoleRenameBtn.dataset.id); return; }
+
   if(e.target.closest('[data-action="new-account"]')){ handleNewAccount(); return; }
   var editAccBtn = e.target.closest('[data-action="edit-account"]');
   if(editAccBtn){ handleEditAccount(editAccBtn.dataset.id); return; }
@@ -3346,38 +3415,6 @@ async function init(){
 init();
 
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 </script>
 </body>
