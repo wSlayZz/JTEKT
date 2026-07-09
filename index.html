@@ -213,6 +213,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -2414,7 +2415,6 @@ function dailySeriesForPeriod(ligne, startISO, days){
 
 function renderAteqCharts(){
   if(typeof Chart==='undefined') return;
-  // Label de période
   var pd = ateqPeriodDates();
   var periodEl = document.getElementById('ateq-chart-period-label');
   if(periodEl) periodEl.textContent = fmtDate(pd.start)+' → '+fmtDate(pd.end);
@@ -2422,51 +2422,65 @@ function renderAteqCharts(){
     var s1 = dailySeriesForPeriod('MCU1', pd.start, pd.days);
     var s2 = dailySeriesForPeriod('MCU2', pd.start, pd.days);
     var labels = s1.map(function(s){return s.label;});
-    // Actions correctives avec dateCrise dans la période
-    var ateqActions = DATA.actions.filter(function(a){ return a.origine==='ATEQ' && a.dateCrise && a.dateCrise>=pd.start && a.dateCrise<=pd.end; });
-    // Marqueurs : null sauf aux jours de crise
-    function criseMarkers(serie, ligne){
+    var ateqActions = DATA.actions.filter(function(a){
+      return a.origine==='ATEQ' && a.dateCrise && a.dateCrise>=pd.start && a.dateCrise<=pd.end;
+    });
+    window._ateqDaily = {s1:s1, s2:s2, ateqActions:ateqActions};
+
+    function pointRadii(serie, ligne){
       return serie.map(function(s){
-        var hasAction = ateqActions.some(function(a){ return a.ligne===ligne && a.dateCrise===s.date; });
-        return hasAction ? Math.max(s.total, 0.5) : null; // 0.5 pour rester visible même si 0 défauts
+        return ateqActions.some(function(a){ return a.ligne===ligne && a.dateCrise===s.date; })? 10 : 2;
       });
     }
-    // Stocker pour le click handler
-    window._ateqDaily = {s1:s1, s2:s2, ateqActions:ateqActions};
+    function pointColors(serie, ligne, base, crisis){
+      return serie.map(function(s){
+        return ateqActions.some(function(a){ return a.ligne===ligne && a.dateCrise===s.date; })? crisis : base;
+      });
+    }
 
     var ctx1 = document.getElementById('chart-ateq-compare');
     if(ctx1){
       if(chartAteqCompare){ chartAteqCompare.destroy(); chartAteqCompare=null; }
       chartAteqCompare = new Chart(ctx1, {
-        type:'bar',
+        type:'line',
         data:{labels:labels, datasets:[
-          {label:'MCU1', data:s1.map(function(s){return s.total;}), backgroundColor:'#1F5C5C66', borderColor:'#1F5C5C', borderWidth:1, order:2},
-          {label:'MCU2', data:s2.map(function(s){return s.total;}), backgroundColor:'#B8730A66', borderColor:'#B8730A', borderWidth:1, order:2},
-          {type:'scatter', label:'Crise MCU1', data:criseMarkers(s1,'MCU1').map(function(v,i){return v!==null?{x:i,y:v}:null;}).filter(Boolean),
-            pointStyle:'triangle', pointRadius:10, pointBackgroundColor:'#B23B2E', borderColor:'#B23B2E', order:1},
-          {type:'scatter', label:'Crise MCU2', data:criseMarkers(s2,'MCU2').map(function(v,i){return v!==null?{x:i,y:v}:null;}).filter(Boolean),
-            pointStyle:'triangle', pointRadius:10, pointBackgroundColor:'#E07010', borderColor:'#E07010', order:1}
+          {label:'MCU1', data:s1.map(function(s){return s.total;}),
+            borderColor:'#1F5C5C', backgroundColor:'#1F5C5C18', borderWidth:2,
+            pointRadius:pointRadii(s1,'MCU1'),
+            pointBackgroundColor:pointColors(s1,'MCU1','#1F5C5C','#B23B2E'),
+            pointBorderColor:pointColors(s1,'MCU1','#1F5C5C','#B23B2E'),
+            pointBorderWidth:pointColors(s1,'MCU1',1,3),
+            fill:true, tension:0.2},
+          {label:'MCU2', data:s2.map(function(s){return s.total;}),
+            borderColor:'#B8730A', backgroundColor:'#B8730A18', borderWidth:2,
+            pointRadius:pointRadii(s2,'MCU2'),
+            pointBackgroundColor:pointColors(s2,'MCU2','#B8730A','#E05020'),
+            pointBorderColor:pointColors(s2,'MCU2','#B8730A','#E05020'),
+            pointBorderWidth:pointColors(s2,'MCU2',1,3),
+            fill:true, tension:0.2}
         ]},
         options:{responsive:true, maintainAspectRatio:false,
           interaction:{mode:'index',intersect:false},
-          plugins:{legend:{labels:{font:{size:10}, filter:function(item){ return !item.text.startsWith('Crise'); }}},
+          plugins:{legend:{labels:{font:{size:11}}},
             tooltip:{callbacks:{
               afterBody:function(items){
-                var idx = items[0]&&items[0].dataIndex;
-                if(idx===undefined||!window._ateqDaily) return [];
-                var date = window._ateqDaily.s1[idx]&&window._ateqDaily.s1[idx].date;
+                if(!items.length||!window._ateqDaily) return [];
+                var idx = items[0].dataIndex;
+                var date = window._ateqDaily.s1[idx].date;
                 var acts = window._ateqDaily.ateqActions.filter(function(a){ return a.dateCrise===date; });
-                return acts.length? ['','▼ Actions ce jour :', ...acts.map(function(a){ return '  '+a.ligne+' : '+a.description.slice(0,50)+(a.description.length>50?'…':''); })] : [];
+                if(!acts.length) return [];
+                return ['','▼ Action(s) corrective(s) :'].concat(acts.map(function(a){
+                  return '  '+a.ligne+' : '+a.description.slice(0,55)+(a.description.length>55?'…':'');
+                }));
               }
             }}},
-          scales:{y:{beginAtZero:true, title:{display:true,text:'Défauts'}, grid:{color:'#0001'}}, x:{grid:{display:false}, ticks:{maxTicksLimit:10, font:{size:10}}}},
+          scales:{y:{beginAtZero:true, title:{display:true,text:'Défauts'}, grid:{color:'#0001'}},
+            x:{grid:{display:false}, ticks:{maxTicksLimit:10, font:{size:10}}}},
           onClick:function(evt, elements){
-            var d = window._ateqDaily;
-            if(!d||!elements.length) return;
+            if(!elements.length||!window._ateqDaily) return;
             var idx = elements[0].index;
-            var date = d.s1[idx]&&d.s1[idx].date;
-            if(!date) return;
-            var acts = d.ateqActions.filter(function(a){ return a.dateCrise===date; });
+            var date = window._ateqDaily.s1[idx].date;
+            var acts = window._ateqDaily.ateqActions.filter(function(a){ return a.dateCrise===date; });
             if(!acts.length) return;
             ateqDetailActionId = (ateqDetailActionId===acts[0].id)?null:acts[0].id;
             render();
@@ -2481,14 +2495,18 @@ function renderAteqCharts(){
       chartAteq2nd = new Chart(ctx2, {
         type:'line',
         data:{labels:labels, datasets:[
-          {label:'MCU1 — 2nd passage %', data:s1.map(function(s){return s.taux;}), borderColor:'#1F5C5C', backgroundColor:'#1F5C5C22', borderWidth:2, pointRadius:2, spanGaps:true, fill:true, tension:0.25},
-          {label:'MCU2 — 2nd passage %', data:s2.map(function(s){return s.taux;}), borderColor:'#B8730A', backgroundColor:'#B8730A22', borderWidth:2, pointRadius:2, spanGaps:true, fill:true, tension:0.25},
-          {label:'Seuil alerte (20%)', data:Array(pd.days).fill(20), borderColor:'#B23B2E88', borderWidth:1.5, borderDash:[5,4], pointRadius:0}
+          {label:'MCU1 — 2nd %', data:s1.map(function(s){return s.taux;}),
+            borderColor:'#1F5C5C', backgroundColor:'#1F5C5C15', borderWidth:2, pointRadius:2, spanGaps:true, fill:true, tension:0.25},
+          {label:'MCU2 — 2nd %', data:s2.map(function(s){return s.taux;}),
+            borderColor:'#B8730A', backgroundColor:'#B8730A15', borderWidth:2, pointRadius:2, spanGaps:true, fill:true, tension:0.25},
+          {label:'Seuil 20%', data:Array(pd.days).fill(20),
+            borderColor:'#B23B2E88', borderWidth:1.5, borderDash:[5,4], pointRadius:0}
         ]},
         options:{responsive:true, maintainAspectRatio:false,
           interaction:{mode:'index',intersect:false},
           plugins:{legend:{labels:{font:{size:10}}}},
-          scales:{y:{min:0, title:{display:true,text:'% 2nd passage'}, ticks:{callback:function(v){return v+'%';}}}, x:{grid:{display:false}, ticks:{maxTicksLimit:10, font:{size:10}}}}}
+          scales:{y:{min:0, title:{display:true,text:'% 2nd passage'}, ticks:{callback:function(v){return v+'%';}}},
+            x:{grid:{display:false}, ticks:{maxTicksLimit:10, font:{size:10}}}}}
       });
     }
   }catch(err){ console.error('ateq chart error', err); }
@@ -3261,8 +3279,8 @@ app.addEventListener('click', async function(e){
     return;
   }
 
-  if(e.target.closest('[data-action="ateq-chart-prev"]')){ ateqChartOffset--; renderAteqCharts(); return; }
-  if(e.target.closest('[data-action="ateq-chart-next"]')){ ateqChartOffset = Math.min(0, ateqChartOffset+1); renderAteqCharts(); return; }
+  if(e.target.closest('[data-action="ateq-chart-prev"]')){ ateqChartOffset--; render(); return; }
+  if(e.target.closest('[data-action="ateq-chart-next"]')){ ateqChartOffset = Math.min(0, ateqChartOffset+1); render(); return; }
   if(e.target.closest('[data-action="ateq-week-next"]')){ ateqWeekOffset++; render(); return; }
   if(e.target.closest('[data-action="ateq-week-today"]')){ ateqWeekOffset=0; render(); return; }
   if(e.target.closest('[data-action="save-ateq-week"]')){ await handleSaveAteqWeek(); return; }
@@ -3543,6 +3561,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
