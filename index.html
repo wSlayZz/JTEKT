@@ -214,6 +214,7 @@ window.SEED = {"metro":[{"ligne":"MCU1","numMoyen":"D586092700","type":"141P","d
 
 
 
+
 (function(){
 "use strict";
 
@@ -2427,15 +2428,24 @@ function renderAteqCharts(){
     });
     window._ateqDaily = {s1:s1, s2:s2, ateqActions:ateqActions};
 
-    function pointRadii(serie, ligne){
-      return serie.map(function(s){
-        return ateqActions.some(function(a){ return a.ligne===ligne && a.dateCrise===s.date; })? 10 : 2;
-      });
-    }
-    function pointColors(serie, ligne, base, crisis){
-      return serie.map(function(s){
-        return ateqActions.some(function(a){ return a.ligne===ligne && a.dateCrise===s.date; })? crisis : base;
-      });
+    // Dataset triangle : null sauf aux jours de crise → s'aligne parfaitement sur l'axe catégoriel
+    function criseDataset(serie, ligne, color){
+      return {
+        label: 'Crise '+ligne,
+        data: serie.map(function(s){
+          return ateqActions.some(function(a){ return a.ligne===ligne && a.dateCrise===s.date; })
+            ? Math.max(s.total, 1) : null;
+        }),
+        type: 'line',
+        showLine: false,
+        spanGaps: false,
+        pointStyle: 'triangle',
+        pointRadius: 11,
+        pointHoverRadius: 13,
+        pointBackgroundColor: color,
+        pointBorderColor: color,
+        pointBorderWidth: 2
+      };
     }
 
     var ctx1 = document.getElementById('chart-ateq-compare');
@@ -2446,45 +2456,55 @@ function renderAteqCharts(){
         data:{labels:labels, datasets:[
           {label:'MCU1', data:s1.map(function(s){return s.total;}),
             borderColor:'#1F5C5C', backgroundColor:'#1F5C5C18', borderWidth:2,
-            pointRadius:pointRadii(s1,'MCU1'),
-            pointBackgroundColor:pointColors(s1,'MCU1','#1F5C5C','#B23B2E'),
-            pointBorderColor:pointColors(s1,'MCU1','#1F5C5C','#B23B2E'),
-            pointBorderWidth:pointColors(s1,'MCU1',1,3),
-            fill:true, tension:0.2},
+            pointRadius:2, pointHoverRadius:4, fill:true, tension:0.2, order:2},
           {label:'MCU2', data:s2.map(function(s){return s.total;}),
             borderColor:'#B8730A', backgroundColor:'#B8730A18', borderWidth:2,
-            pointRadius:pointRadii(s2,'MCU2'),
-            pointBackgroundColor:pointColors(s2,'MCU2','#B8730A','#E05020'),
-            pointBorderColor:pointColors(s2,'MCU2','#B8730A','#E05020'),
-            pointBorderWidth:pointColors(s2,'MCU2',1,3),
-            fill:true, tension:0.2}
+            pointRadius:2, pointHoverRadius:4, fill:true, tension:0.2, order:2},
+          Object.assign(criseDataset(s1,'MCU1','#B23B2E'), {order:1}),
+          Object.assign(criseDataset(s2,'MCU2','#E05020'), {order:1})
         ]},
         options:{responsive:true, maintainAspectRatio:false,
           interaction:{mode:'index',intersect:false},
-          plugins:{legend:{labels:{font:{size:11}}},
+          plugins:{
+            legend:{labels:{font:{size:11}, filter:function(item){ return !item.text.startsWith('Crise'); }}},
             tooltip:{callbacks:{
               afterBody:function(items){
                 if(!items.length||!window._ateqDaily) return [];
                 var idx = items[0].dataIndex;
-                var date = window._ateqDaily.s1[idx].date;
+                var serie = window._ateqDaily.s1;
+                if(idx<0||idx>=serie.length) return [];
+                var date = serie[idx].date;
                 var acts = window._ateqDaily.ateqActions.filter(function(a){ return a.dateCrise===date; });
                 if(!acts.length) return [];
                 return ['','▼ Action(s) corrective(s) :'].concat(acts.map(function(a){
                   return '  '+a.ligne+' : '+a.description.slice(0,55)+(a.description.length>55?'…':'');
                 }));
               }
-            }}},
-          scales:{y:{beginAtZero:true, title:{display:true,text:'Défauts'}, grid:{color:'#0001'}},
-            x:{grid:{display:false}, ticks:{maxTicksLimit:10, font:{size:10}}}},
+            }}
+          },
+          scales:{
+            y:{beginAtZero:true, title:{display:true,text:'Défauts'}, grid:{color:'#0001'}},
+            x:{grid:{display:false}, ticks:{maxTicksLimit:10, font:{size:10}}}
+          },
           onClick:function(evt, elements){
+            // Différer le render pour ne pas détruire le canvas pendant le handler Chart.js
             if(!elements.length||!window._ateqDaily) return;
+            var datasetIndex = elements[0].datasetIndex;
             var idx = elements[0].index;
-            var date = window._ateqDaily.s1[idx].date;
+            var serie = window._ateqDaily.s1;
+            if(idx<0||idx>=serie.length) return;
+            var date = serie[idx].date;
             var acts = window._ateqDaily.ateqActions.filter(function(a){ return a.dateCrise===date; });
             if(!acts.length) return;
-            ateqDetailActionId = (ateqDetailActionId===acts[0].id)?null:acts[0].id;
-            render();
-            setTimeout(function(){ var el=document.getElementById('ateq-action-plan-section'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); },100);
+            var targetId = acts[0].id;
+            setTimeout(function(){
+              ateqDetailActionId = (ateqDetailActionId===targetId)?null:targetId;
+              render();
+              setTimeout(function(){
+                var el=document.getElementById('ateq-action-plan-section');
+                if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+              },100);
+            },0);
           }
         }
       });
@@ -2496,17 +2516,22 @@ function renderAteqCharts(){
         type:'line',
         data:{labels:labels, datasets:[
           {label:'MCU1 — 2nd %', data:s1.map(function(s){return s.taux;}),
-            borderColor:'#1F5C5C', backgroundColor:'#1F5C5C15', borderWidth:2, pointRadius:2, spanGaps:true, fill:true, tension:0.25},
+            borderColor:'#1F5C5C', backgroundColor:'#1F5C5C15', borderWidth:2,
+            pointRadius:2, spanGaps:true, fill:true, tension:0.25},
           {label:'MCU2 — 2nd %', data:s2.map(function(s){return s.taux;}),
-            borderColor:'#B8730A', backgroundColor:'#B8730A15', borderWidth:2, pointRadius:2, spanGaps:true, fill:true, tension:0.25},
+            borderColor:'#B8730A', backgroundColor:'#B8730A15', borderWidth:2,
+            pointRadius:2, spanGaps:true, fill:true, tension:0.25},
           {label:'Seuil 20%', data:Array(pd.days).fill(20),
             borderColor:'#B23B2E88', borderWidth:1.5, borderDash:[5,4], pointRadius:0}
         ]},
         options:{responsive:true, maintainAspectRatio:false,
           interaction:{mode:'index',intersect:false},
           plugins:{legend:{labels:{font:{size:10}}}},
-          scales:{y:{min:0, title:{display:true,text:'% 2nd passage'}, ticks:{callback:function(v){return v+'%';}}},
-            x:{grid:{display:false}, ticks:{maxTicksLimit:10, font:{size:10}}}}}
+          scales:{
+            y:{min:0, title:{display:true,text:'% 2nd passage'}, ticks:{callback:function(v){return v+'%';}}},
+            x:{grid:{display:false}, ticks:{maxTicksLimit:10, font:{size:10}}}
+          }
+        }
       });
     }
   }catch(err){ console.error('ateq chart error', err); }
@@ -3561,42 +3586,6 @@ async function init(){
 init();
 
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 </script>
 </body>
