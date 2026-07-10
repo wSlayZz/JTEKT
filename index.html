@@ -3439,6 +3439,7 @@ app.addEventListener('click', async function(e){
 
   if(e.target.closest('[data-action="ateq-chart-prev"]')){ ateqChartOffset--; render(); return; }
   if(e.target.closest('[data-action="ateq-chart-next"]')){ ateqChartOffset = Math.min(0, ateqChartOffset+1); render(); return; }
+  if(e.target.closest('[data-action="ateq-week-prev"]')){ ateqWeekOffset--; render(); return; }
   if(e.target.closest('[data-action="ateq-week-next"]')){ ateqWeekOffset++; render(); return; }
   if(e.target.closest('[data-action="ateq-week-today"]')){ ateqWeekOffset=0; render(); return; }
   if(e.target.closest('[data-action="save-ateq-week"]')){ await handleSaveAteqWeek(); return; }
@@ -3734,43 +3735,6 @@ async function init(){
 init();
 
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 </script>
