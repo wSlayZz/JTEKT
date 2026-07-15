@@ -216,6 +216,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -246,13 +247,38 @@ var KEYS = {
   releves:'mcu_releves_produits_v1', checklist:'mcu_checklist_v1',
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
-  esd:'mcu_esd_v1'
+  esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[]};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[]};
 var RENDERERS = {};
-var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['archives','Archives']];
+var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['formations','Formations SREM'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
 var currentUser = null;
+
+// ============ SECTEURS ============
+var SECTEURS_DEFAULT = [
+  {id:'MCU', nom:'MCU', lignes:['MCU1','MCU2','MCU3'], tabs:['dashboard','proprete','metro','ateq','actions','planning','esd','archives']},
+  {id:'PV',  nom:'PV',  lignes:['PV01','PV02','PV03','PV04'], tabs:['dashboard','perf','metro','actions','planning','archives']},
+  {id:'CR',  nom:'CR',  lignes:['CR03','CR05','CR06','CR08','CR09','CR10'], tabs:['dashboard','perf','metro','actions','planning','archives']},
+  {id:'KA',  nom:'KA',  lignes:['KA03','KA04/05','KA06/07/09','KA14/15/16'], tabs:['dashboard','perf','metro','actions','planning','archives']},
+  {id:'TV',  nom:'TV',  lignes:['TV02'], tabs:['dashboard','perf','metro','actions','planning','archives']},
+  {id:'DA',  nom:'DA',  lignes:['DA03','DA06','DA08','DA10'], tabs:['dashboard','perf','metro','actions','planning','archives']},
+  {id:'VA',  nom:'VA',  lignes:['VA01','VA02','VA03','VA04'], tabs:['dashboard','perf','metro','actions','planning','archives']},
+  {id:'RA',  nom:'RA',  lignes:['RA01','RA02','RA03'], tabs:['dashboard','perf','metro','actions','planning','archives']},
+  {id:'RG',  nom:'RG',  lignes:['RG01','RG02','RG03'], tabs:['dashboard','perf','metro','actions','planning','archives']},
+  {id:'BC',  nom:'BC',  lignes:['BC01','BC02','BC05','BC06'], tabs:['dashboard','perf','metro','actions','planning','archives']}
+];
+var currentSecteur = 'MCU';
+function getSecteur(id){ return (DATA.secteurs||[]).find(function(s){return s.id===id;}) || SECTEURS_DEFAULT.find(function(s){return s.id===id;}); }
+function secteurLines(){ var s = getSecteur(currentSecteur); return s? s.lignes : ['MCU1','MCU2','MCU3']; }
+function secteurTabs(){ var s = getSecteur(currentSecteur); return s? s.tabs : []; }
+// Filtre par secteur : les enregistrements sans champ secteur appartiennent à MCU (données historiques)
+function bySecteur(arr){ return (arr||[]).filter(function(x){ return (x.secteur||'MCU')===currentSecteur; }); }
+function userSecteurs(){
+  if(!currentUser) return [];
+  if(currentUser.roleId===ADMIN_ROLE_ID || currentUser.allSecteurs) return (DATA.secteurs||SECTEURS_DEFAULT).map(function(s){return s.id;});
+  return currentUser.secteurs || ['MCU'];
+}
 var CONTAM_LINES = ['MCU0','MCU1','MCU2','MCU3'];
 var LINE_REFS = {MCU0:['Bague'], MCU1:['141P','144P'], MCU2:['144P','149X'], MCU3:['162R']};
 var REF_CRITERIA = {
@@ -385,9 +411,10 @@ function globalConformityScore(){
     var p = proprVals.reduce(function(a,b){return a+b;},0)/proprVals.length;
     parts.push(p); detail.push({label:'Propreté', val:Math.round(p)});
   }
-  if(DATA.metro.length){
-    var lateCount = DATA.metro.filter(function(e){ return metroStatus(e).level==='danger'; }).length;
-    var m = (1 - lateCount/DATA.metro.length)*100;
+  if(bySecteur(DATA.metro).length){
+    var metroSect = bySecteur(DATA.metro);
+    var lateCount = metroSect.filter(function(e){ return metroStatus(e).level==='danger'; }).length;
+    var m = metroSect.length? (1 - lateCount/metroSect.length)*100 : 100;
     parts.push(m); detail.push({label:'Métrologie à jour', val:Math.round(m)});
   }
   var contamYear = DATA.contamination.filter(function(c){ return c.annee===Number(todayStr().slice(0,4)) && (c.statut==='ok'||c.statut==='nc'); });
@@ -422,7 +449,7 @@ function previousMonthScore(){
   return Math.round(vals.reduce(function(a,b){return a+b;},0)/vals.length);
 }
 function metroOverall(lines){
-  var items = DATA.metro.filter(function(e){ return !lines || lines.indexOf(e.ligne)>=0; });
+  var items = bySecteur(DATA.metro).filter(function(e){ return !lines || lines.indexOf(e.ligne)>=0; });
   if(!items.length) return {level:'neutral', label:'Aucune donnée', late:0, urgent:0, warn:0, worstItem:null, worstLabel:null};
   var late=0, urgent=0, warn=0, worst='ok', worstItem=null, worstDays=Infinity;
   items.forEach(function(e){
@@ -461,7 +488,7 @@ function planningOverall(types, lines){
 // Renvoie l'échéance la plus pertinente "en ce moment" pour un type+ligne donné :
 // la plus en retard si non réalisée, sinon la plus proche à venir, sinon la dernière réalisée.
 function planningCurrentEntry(type, ligne, ref){
-  var items = DATA.planning.filter(function(p){
+  var items = bySecteur(DATA.planning).filter(function(p){
     if(p.type!==type || p.ligne!==ligne) return false;
     if(ref!==undefined && ref!==null) return (p.ref||null)===(ref||null);
     return true;
@@ -1442,7 +1469,7 @@ async function handleSaveAnalyseContam(id){
       description = 'Contre-analyse à réaliser — '+rec.ligne+' · '+rec.ref+' (résultat NC)';
       msg = 'Résultat NON CONFORME. Une contre-analyse est requise.\nUne action corrective a été créée dans le plan d\'actions.';
     }
-    DATA.actions.push({id:uid('act'), origine:'Propreté', description:description, ligne:rec.ligne, responsable:'', echeance:null, statut:'planifiee', dateCreation:todayStr()});
+    DATA.actions.push({id:uid('act'), origine:'Propreté', secteur:currentSecteur, description:description, ligne:rec.ligne, responsable:'', echeance:null, statut:'planifiee', dateCreation:todayStr()});
     await save('actions');
     alert(msg);
   }
@@ -1759,7 +1786,8 @@ function proprVidange(){
 
 var ACTION_STATUSES = [['planifiee','Planifiée'],['realisee','Réalisée'],['verifiee','Vérifiée'],['perennisee','Pérennisée'],['non_prise_en_compte','Non prise en compte'],['abandonnee','Abandonnée']];
 RENDERERS.actions = function(){
-  var rows = DATA.actions.slice().sort(function(a,b){
+  var ACTIONS_SECT = bySecteur(DATA.actions);
+  var rows = ACTIONS_SECT.slice().sort(function(a,b){
     var al = isActionLate(a)?0:1, bl = isActionLate(b)?0:1;
     if(al!==bl) return al-bl;
     return (a.echeance||'').localeCompare(b.echeance||'');
@@ -1768,7 +1796,7 @@ RENDERERS.actions = function(){
   html += '<form class="entryform" id="form-actions" style="display:none">'+
     field('text','description','Description de l\'action') +
     field('select','origine','Origine', [['ATEQ','ATEQ'],['Métrologie','Métrologie'],['Propreté','Propreté'],['Audit perf','Audit perf'],['Autre','Autre']]) +
-    field('select','ligne','Ligne', LINES.map(function(l){return [l,l];})) +
+    field('select','ligne','Ligne', secteurLines().map(function(l){return [l,l];})) +
     field('text','responsable','Responsable') +
     field('date','echeance','Échéance') +
     field('select','statut','Statut', ACTION_STATUSES) +
@@ -1921,6 +1949,229 @@ async function handleDeleteEsd(id){
   render();
 }
 
+
+// ---------- AUDITS DE PERF (secteurs hors MCU) ----------
+var perfFormOpen = false;
+var perfYear = Number(new Date().getFullYear());
+RENDERERS.perf = function(){
+  var lines = secteurLines();
+  var years = [perfYear-1, perfYear, perfYear+1];
+  var rs = bySecteur(DATA.perf).filter(function(r){ return r.annee===perfYear; });
+  var scored = rs.filter(function(r){ return r.resultatPct!==null && r.resultatPct!==undefined; });
+  var moy = scored.length ? Math.round(scored.reduce(function(s,r){return s+r.resultatPct;},0)/scored.length) : null;
+  var danger = scored.filter(function(r){ return r.resultatPct<SCORE_DANGER; }).length;
+  var attn = scored.filter(function(r){ return r.resultatPct>=SCORE_DANGER && r.resultatPct<SCORE_ATTENTION; }).length;
+
+  var html = '<div class="section">';
+  html += '<div class="toolbar"><div class="left"><label class="field" style="flex-direction:row; align-items:center; gap:8px;">Année<select id="perf-year">'+years.map(function(y){return '<option value="'+y+'"'+(y===perfYear?' selected':'')+'>'+y+'</option>';}).join('')+'</select></label></div>'+
+    '<button class="btn primary" data-action="new-perf">+ Saisir un audit de perf</button></div>';
+
+  if(perfFormOpen) html += perfForm();
+
+  html += '<div class="grid grid-4" style="margin-bottom:18px;">'+
+    '<div class="statcard"><div class="eyebrow">Score moyen '+perfYear+'</div><div class="val" style="color:var(--'+(moy===null?'text':scoreLevel(moy))+');">'+(moy!==null?moy+'%':'—')+'</div></div>'+
+    '<div class="statcard s-warn"><div class="eyebrow">En attention</div><div class="val">'+attn+'</div></div>'+
+    '<div class="statcard s-danger"><div class="eyebrow">En danger</div><div class="val">'+danger+'</div></div>'+
+    '<div class="statcard"><div class="eyebrow">Audits '+perfYear+'</div><div class="val">'+scored.length+'</div></div>'+
+  '</div>';
+
+  // Alertes 2 derniers mois
+  var curM = Number(todayStr().split('-')[1])-1;
+  var prevM = curM===0? 11 : curM-1;
+  var recentIdx = [prevM, curM];
+  var alerts = scored.filter(function(r){ return r.resultatPct<SCORE_ATTENTION && recentIdx.indexOf(r.mois)>=0; })
+    .sort(function(a,b){ return a.resultatPct-b.resultatPct; });
+  if(alerts.length){
+    html += '<div class="section"><div class="alertlist">'+alerts.map(function(r){
+      var lvl = scoreLevel(r.resultatPct);
+      var mLabel = MONTHS_FR[r.mois].charAt(0).toUpperCase()+MONTHS_FR[r.mois].slice(1);
+      return '<div class="alertitem"><div>'+badge(lvl,'')+'</div><div><div class="txt">'+esc(r.ligne)+' — '+mLabel+' : '+r.resultatPct+'%</div><div class="meta">'+(lvl==='danger'?'Sous le seuil danger':'Sous le seuil attention')+'</div></div></div>';
+    }).join('')+'</div></div>';
+  }
+
+  // Graphique évolution
+  html += '<div class="card" style="margin-bottom:18px;"><div class="eyebrow" style="margin-bottom:8px;">Évolution par ligne — '+perfYear+'</div><div class="chart-box"><canvas id="chart-perf-evol"></canvas></div></div>';
+
+  // Tableau annuel mois × lignes
+  html += '<div class="eyebrow" style="margin-bottom:8px;">Tableau annuel — '+perfYear+'</div>';
+  html += '<div class="table-wrap"><table class="annual-table"><thead><tr><th>Mois</th>'+lines.map(function(l){return '<th>'+esc(l)+'</th>';}).join('')+'</tr></thead><tbody>';
+  MONTHS_FR.forEach(function(mRaw, mIdx){
+    var mLabel = mRaw.charAt(0).toUpperCase()+mRaw.slice(1);
+    html += '<tr><td>'+mLabel+'</td>';
+    lines.forEach(function(l){
+      var r = rs.find(function(x){ return x.ligne===l && x.mois===mIdx; });
+      if(!r || r.resultatPct===null || r.resultatPct===undefined){ html += '<td class="c-empty">—</td>'; return; }
+      html += '<td class="score-cell '+scoreCellClass(r.resultatPct)+'" data-action="perf-delete-cell" data-id="'+r.id+'" title="Cliquer pour supprimer">'+r.resultatPct+'%</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  html += '<p class="tiny" style="margin-top:8px;">Cliquez sur une cellule pour supprimer le résultat correspondant.</p>';
+  html += '</div>';
+  return html;
+};
+function perfForm(){
+  var lines = secteurLines();
+  var today = new Date();
+  return '<div class="card" style="max-width:460px; margin-bottom:16px;">'+
+    '<div class="eyebrow" style="margin-bottom:10px;">Audit de perf — '+esc(currentSecteur)+'</div>'+
+    '<div class="entryform cols2">'+
+    '<label class="field">Ligne<select id="pf-ligne">'+lines.map(function(l){return '<option value="'+esc(l)+'">'+esc(l)+'</option>';}).join('')+'</select></label>'+
+    '<label class="field">Mois<select id="pf-mois">'+MONTHS_FR.map(function(m,i){return '<option value="'+i+'"'+(i===today.getMonth()?' selected':'')+'>'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>';}).join('')+'</select></label>'+
+    '<label class="field">Année<input type="number" id="pf-annee" value="'+perfYear+'"></label>'+
+    '<label class="field">Résultat (%)<input type="number" id="pf-pct" min="0" max="100" step="1"></label>'+
+    '</div>'+
+    '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="cancel-perf">Annuler</button><button class="btn primary" data-action="save-perf">Enregistrer</button></div></div>';
+}
+async function handleSavePerf(){
+  var pct = document.getElementById('pf-pct').value;
+  if(pct===''){ alert('Merci de saisir le résultat.'); return; }
+  var ligne = document.getElementById('pf-ligne').value;
+  var mois = Number(document.getElementById('pf-mois').value);
+  var annee = Number(document.getElementById('pf-annee').value);
+  var existing = bySecteur(DATA.perf).find(function(r){ return r.ligne===ligne && r.mois===mois && r.annee===annee; });
+  if(existing){
+    existing.resultatPct = parseFloat(pct);
+  } else {
+    DATA.perf.push({id:uid('perf'), secteur:currentSecteur, ligne:ligne, mois:mois, annee:annee, resultatPct:parseFloat(pct)});
+  }
+  await save('perf');
+  logChange('Audits perf', 'Saisie', currentSecteur+' · '+ligne+' — '+MONTHS_FR[mois]+' : '+pct+'%');
+  perfFormOpen = false;
+  render();
+}
+async function handleDeletePerfCell(id){
+  var r = DATA.perf.find(function(x){ return x.id===id; });
+  if(!r) return;
+  if(!confirm('Supprimer le résultat '+r.ligne+' — '+MONTHS_FR[r.mois]+' ('+r.resultatPct+'%) ?')) return;
+  DATA.perf = DATA.perf.filter(function(x){ return x.id!==id; });
+  await save('perf');
+  render();
+}
+var chartPerfEvol=null;
+function renderPerfChart(){
+  if(typeof Chart==='undefined') return;
+  var ctx = document.getElementById('chart-perf-evol');
+  if(!ctx) return;
+  if(chartPerfEvol){ chartPerfEvol.destroy(); chartPerfEvol=null; }
+  try{
+    var lines = secteurLines();
+    var rs = bySecteur(DATA.perf).filter(function(r){ return r.annee===perfYear; });
+    var palette = ['#1F5C5C','#2E7D4F','#B8730A','#B23B2E','#7B4FA3','#3B6FA0','#A0527A','#6E6A60'];
+    var datasets = lines.map(function(l,i){
+      return {label:l, data:MONTHS_FR.map(function(m,mi){
+          var r = rs.find(function(x){return x.ligne===l && x.mois===mi;});
+          return r? r.resultatPct : null;
+        }),
+        borderColor:palette[i%palette.length], backgroundColor:'transparent', borderWidth:2, pointRadius:4, spanGaps:false, tension:0.2};
+    });
+    datasets.push({label:'Attention ('+SCORE_ATTENTION+'%)', data:Array(12).fill(SCORE_ATTENTION), borderColor:'#B8730A88', borderWidth:1, borderDash:[6,3], pointRadius:0});
+    datasets.push({label:'Danger ('+SCORE_DANGER+'%)', data:Array(12).fill(SCORE_DANGER), borderColor:'#B23B2E88', borderWidth:1, borderDash:[6,3], pointRadius:0});
+    chartPerfEvol = new Chart(ctx, {
+      type:'line',
+      data:{labels:MONTHS_FR.map(function(m){return m.slice(0,3);}), datasets:datasets},
+      options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+        plugins:{legend:{labels:{font:{size:10}}}},
+        scales:{y:{min:0,max:100,ticks:{callback:function(v){return v+'%';}}}}}
+    });
+  }catch(err){ console.error('perf chart error', err); }
+}
+
+// ---------- FORMATIONS SREM (générique par secteur) ----------
+var formationFormOpen = false;
+var formationEditId = null;
+var formationSearch = '';
+function formationEcheance(p){
+  if(!p.dateFormation) return null;
+  var d = new Date(p.dateFormation+'T00:00:00');
+  d.setFullYear(d.getFullYear()+1);
+  return d.toISOString().slice(0,10);
+}
+RENDERERS.formations = function(){
+  var list = bySecteur(DATA.formations).slice().sort(function(a,b){ return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'}); });
+  var filtered = formationSearch ? list.filter(function(p){ return p.nom.toLowerCase().includes(formationSearch.toLowerCase()); }) : list;
+  function fStatus(p){
+    var ech = formationEcheance(p);
+    if(!ech) return {level:'neutral', label:'Sans date'};
+    var today = todayStr();
+    if(ech < today) return {level:'danger', label:'Expirée'};
+    if(ech.slice(0,7)===today.slice(0,7)) return {level:'urgent', label:'Expire ce mois'};
+    if(daysBetween(today, ech)<=60) return {level:'warn', label:'À renouveler'};
+    return {level:'ok', label:'À jour'};
+  }
+  var expired = list.filter(function(p){ return fStatus(p).level==='danger'; }).length;
+  var thisMonth = list.filter(function(p){ return fStatus(p).level==='urgent'; }).length;
+  var soon = list.filter(function(p){ return fStatus(p).level==='warn'; }).length;
+  var okC = list.filter(function(p){ return fStatus(p).level==='ok'; }).length;
+
+  var html = '<div class="section">';
+  html += '<div class="grid grid-4" style="margin-bottom:18px;">'+
+    '<div class="statcard s-danger"><div class="eyebrow">Expirées</div><div class="val">'+expired+'</div></div>'+
+    '<div class="statcard s-urgent"><div class="eyebrow">Expire ce mois</div><div class="val">'+thisMonth+'</div></div>'+
+    '<div class="statcard s-warn"><div class="eyebrow">À renouveler</div><div class="val">'+soon+'</div></div>'+
+    '<div class="statcard"><div class="eyebrow">À jour</div><div class="val">'+okC+'</div></div>'+
+  '</div>';
+  html += '<div class="toolbar"><div class="left"><input type="text" id="formation-search" placeholder="Rechercher…" value="'+esc(formationSearch)+'" style="width:220px;"></div>'+
+    '<button class="btn primary" data-action="new-formation">+ Ajouter une personne</button></div>';
+  if(formationFormOpen){
+    html += '<div class="card" style="max-width:460px; margin-bottom:16px;"><div class="entryform cols2">'+
+      '<label class="field" style="grid-column:1/-1;">Nom complet<input type="text" id="ff-nom"></label>'+
+      '<label class="field">Date de formation<input type="date" id="ff-date" value="'+todayStr()+'"></label>'+
+      '</div><div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="cancel-formation">Annuler</button><button class="btn primary" data-action="save-formation">Enregistrer</button></div></div>';
+  }
+  html += '<div class="table-wrap"><table><thead><tr><th>Nom</th><th>Dernière formation</th><th>Échéance</th><th>Statut</th><th></th></tr></thead><tbody>';
+  if(!filtered.length){
+    html += '<tr><td colspan="5"><div class="empty">Aucune personne.</div></td></tr>';
+  } else {
+    html += filtered.map(function(p){
+      if(formationEditId===p.id){
+        return '<tr style="background:var(--accent-bg);"><td><input type="text" id="formation-edit-nom" value="'+esc(p.nom)+'" style="width:200px;"></td>'+
+          '<td><input type="date" id="formation-edit-date" value="'+esc(p.dateFormation||'')+'" style="width:150px;"></td>'+
+          '<td class="tiny">auto</td><td></td>'+
+          '<td style="display:flex; gap:5px;"><button class="btn small primary" data-action="formation-save-edit" data-id="'+p.id+'">Valider</button><button class="btn small" data-action="formation-cancel-edit">Annuler</button></td></tr>';
+      }
+      var s = fStatus(p);
+      var ech = formationEcheance(p);
+      var dl = ech ? daysLabel(ech) : null;
+      return '<tr><td style="font-weight:600;">'+esc(p.nom)+'</td>'+
+        '<td class="num">'+(p.dateFormation?fmtDate(p.dateFormation):'—')+'</td>'+
+        '<td class="num" style="'+(s.level==='danger'?'color:var(--danger);font-weight:700;':'')+'">'+(ech?fmtDate(ech):'—')+(dl&&s.level!=='ok'?' <span class="tiny">('+dl.text+')</span>':'')+'</td>'+
+        '<td>'+badge(s.level, s.label)+'</td>'+
+        '<td style="display:flex; gap:5px; flex-wrap:wrap;"><button class="btn small primary" data-action="formation-edit" data-id="'+p.id+'">Renouveler / Modifier</button><button class="btn small danger-outline" data-action="formation-delete" data-id="'+p.id+'">Suppr.</button></td></tr>';
+    }).join('');
+  }
+  html += '</tbody></table></div></div>';
+  return html;
+};
+async function handleSaveFormation(){
+  var nom = document.getElementById('ff-nom').value.trim();
+  if(!nom){ alert('Merci de saisir un nom.'); return; }
+  DATA.formations.push({id:uid('form'), secteur:currentSecteur, nom:nom, dateFormation:document.getElementById('ff-date').value||null});
+  await save('formations');
+  logChange('Formations', 'Ajout', currentSecteur+' · '+nom);
+  formationFormOpen = false;
+  render();
+}
+async function handleSaveFormationEdit(id){
+  var p = DATA.formations.find(function(x){ return x.id===id; });
+  if(!p) return;
+  var nom = document.getElementById('formation-edit-nom').value.trim();
+  if(!nom){ alert('Nom requis.'); return; }
+  p.nom = nom;
+  p.dateFormation = document.getElementById('formation-edit-date').value||null;
+  await save('formations');
+  formationEditId = null;
+  render();
+}
+async function handleDeleteFormation(id){
+  var p = DATA.formations.find(function(x){ return x.id===id; });
+  if(!p) return;
+  if(!confirm('Supprimer '+p.nom+' ?')) return;
+  DATA.formations = DATA.formations.filter(function(x){ return x.id!==id; });
+  await save('formations');
+  render();
+}
+
 // ---------- ARCHIVES ----------
 function toCSV(rows, columns){
   var lines = [columns.map(function(c){return c[1];}).join(';')];
@@ -2019,7 +2270,7 @@ function render(){
   });
   var fn = RENDERERS[currentTab] || RENDERERS.dashboard;
   view.innerHTML = fn();
-  if(currentTab==='dashboard'){
+  if(currentTab==='dashboard' && currentSecteur==='MCU'){
     lastChartRefresh = Date.now();
     renderTrendChart();
     renderScoreHistoryChart();
@@ -2027,6 +2278,7 @@ function render(){
   }
   if(currentTab==='planning'){ applyPlanningFilter(); }
   if(currentTab==='ateq'){ renderAteqCharts(); }
+  if(currentTab==='perf'){ renderPerfChart(); }
   if(currentTab==='proprete'){
     if(propreteSub==='resultats') renderResultatsCharts();
     else if(propreteSub==='contamination') renderContaminationCharts();
@@ -2034,8 +2286,97 @@ function render(){
   }
 }
 
-RENDERERS.dashboard = function(){
+
+// Dashboard des secteurs hors MCU : perf + métro + actions + planning
+function renderSecteurDashboard(){
+  var sec = getSecteur(currentSecteur);
+  var lines = secteurLines();
   var html = '';
+  if(userSecteurs().length>1) html += renderMultiSecteurBanner();
+
+  var curM = Number(todayStr().split('-')[1])-1;
+  var curY = Number(todayStr().split('-')[0]);
+  var perfSect = bySecteur(DATA.perf).filter(function(r){ return r.annee===curY; });
+  var perfMonth = perfSect.filter(function(r){ return r.mois===curM && r.resultatPct!==null; });
+  var perfMoy = perfMonth.length ? Math.round(perfMonth.reduce(function(s,r){return s+r.resultatPct;},0)/perfMonth.length) : null;
+  var ms = metroOverall(lines);
+  var actionsSect = bySecteur(DATA.actions);
+  var late = actionsSect.filter(isActionLate).length;
+  var openA = actionsSect.filter(function(a){ return isActionOpen(a) && !isActionDone(a); }).length;
+
+  html += '<div class="section"><div class="grid grid-4">';
+  html += '<div class="statcard"><div class="eyebrow">Perf moyenne du mois</div><div class="val" style="color:var(--'+(perfMoy===null?'text':scoreLevel(perfMoy))+');">'+(perfMoy!==null?perfMoy+'%':'—')+'</div><div class="tiny">'+perfMonth.length+'/'+lines.length+' lignes auditées</div></div>';
+  html += '<div class="statcard s-'+ms.level+'"><div class="eyebrow">Métrologie</div><div class="tiny" style="margin-top:6px;">'+ms.late+' en retard · <b style="color:#C25A00;">'+(ms.urgent||0)+' expire ce mois</b> · '+ms.warn+' à prévoir</div></div>';
+  html += '<div class="statcard '+(late?'s-danger':'')+'"><div class="eyebrow">Actions en retard</div><div class="val">'+late+'</div></div>';
+  html += '<div class="statcard"><div class="eyebrow">Actions ouvertes</div><div class="val">'+openA+'</div></div>';
+  html += '</div></div>';
+
+  // Perf par ligne du mois en cours
+  html += '<div class="section card" style="margin-bottom:18px;"><div class="eyebrow" style="margin-bottom:10px;">Audits de perf — '+MONTHS_FR[curM].charAt(0).toUpperCase()+MONTHS_FR[curM].slice(1)+' '+curY+'</div>';
+  html += '<div class="linebadges">'+lines.map(function(l){
+    var r = perfMonth.find(function(x){ return x.ligne===l; });
+    var b = r ? badge(scoreLevel(r.resultatPct), r.resultatPct+'%') : badge('neutral','Non audité');
+    return '<div class="linebadge"><b>'+esc(l)+'</b> '+b+'</div>';
+  }).join('')+'</div></div>';
+
+  // Actions en retard
+  var lateActions = actionsSect.filter(isActionLate).sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
+  if(lateActions.length){
+    html += '<div class="section card" style="margin-bottom:18px;"><div class="eyebrow" style="color:var(--danger); margin-bottom:10px;">Actions en retard ('+lateActions.length+')</div>';
+    html += '<div class="table-wrap"><table><thead><tr><th>Description</th><th>Ligne</th><th>Échéance</th><th>Responsable</th></tr></thead><tbody>';
+    html += lateActions.slice(0,8).map(function(a){
+      return '<tr><td>'+esc(a.description)+'</td><td>'+esc(val(a.ligne,'—'))+'</td><td class="num" style="color:var(--danger);">'+fmtDate(a.echeance)+'</td><td>'+esc(val(a.responsable,'—'))+'</td></tr>';
+    }).join('');
+    html += '</tbody></table></div></div>';
+  }
+  return html;
+}
+
+// Bannière consolidée pour les utilisateurs multi-secteurs (responsable qualité)
+function renderMultiSecteurBanner(){
+  var us = userSecteurs();
+  var curY = Number(todayStr().split('-')[0]);
+  var curM = Number(todayStr().split('-')[1])-1;
+  var html = '<div class="section card" style="margin-bottom:18px; border:2px solid var(--ok);">';
+  html += '<div class="eyebrow" style="margin-bottom:10px;">Vue consolidée — tous vos secteurs</div>';
+  html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:10px;">';
+  us.forEach(function(sid){
+    var sec = getSecteur(sid);
+    if(!sec) return;
+    var score = null, label = '';
+    if(sid==='MCU'){
+      // Score propreté du mois
+      var rs = DATA.resultats.filter(function(r){ return (r.annee===curY || r.annee===undefined) && r.resultatPct!==null && r.resultatPct!==undefined; });
+      var moisLabel = MONTHS_FR[curM].charAt(0).toUpperCase()+MONTHS_FR[curM].slice(1);
+      var monthScores = rs.filter(function(r){ return r.mois===moisLabel; });
+      if(monthScores.length) score = Math.round(monthScores.reduce(function(s,r){return s+r.resultatPct;},0)/monthScores.length);
+      label = 'propreté';
+    } else {
+      var perfM = DATA.perf.filter(function(r){ return (r.secteur||'')===sid && r.annee===curY && r.mois===curM && r.resultatPct!==null; });
+      if(perfM.length) score = Math.round(perfM.reduce(function(s,r){return s+r.resultatPct;},0)/perfM.length);
+      label = 'perf';
+    }
+    var metroLate = DATA.metro.filter(function(e){ return (e.secteur||'MCU')===sid && e.echeance && e.echeance.slice(0,7) < todayStr().slice(0,7); }).length;
+    var actLate = DATA.actions.filter(function(a){ return (a.secteur||'MCU')===sid && isActionLate(a); }).length;
+    var lvl = score===null? 'neutral' : scoreLevel(score);
+    var isCur = sid===currentSecteur;
+    html += '<div style="padding:10px; border-radius:var(--radius-sm); border:1.5px solid '+(isCur?'var(--ok)':'var(--border)')+'; background:'+(isCur?'var(--ok-bg)':'var(--card)')+'; cursor:pointer;" data-action="switch-secteur" data-id="'+sid+'">'+
+      '<div style="font-weight:700; font-size:13px; margin-bottom:4px;">'+esc(sec.nom)+'</div>'+
+      '<div style="font-family:var(--mono); font-size:20px; font-weight:700; color:var(--'+lvl+');">'+(score!==null?score+'%':'—')+'</div>'+
+      '<div class="tiny">'+label+' du mois</div>'+
+      (metroLate||actLate? '<div class="tiny" style="color:var(--danger); margin-top:3px;">'+(metroLate?metroLate+' métro. retard':'')+(metroLate&&actLate?' · ':'')+(actLate?actLate+' act. retard':'')+'</div>' : '<div class="tiny" style="color:var(--ok); margin-top:3px;">RAS</div>')+
+    '</div>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+RENDERERS.dashboard = function(){
+  // Secteurs hors MCU : dashboard simplifié (perf + métro + actions + planning)
+  if(currentSecteur!=='MCU') return renderSecteurDashboard();
+  var html = '';
+  // Vue consolidée pour responsable qualité / admin (accès tous secteurs)
+  if(userSecteurs().length>1) html += renderMultiSecteurBanner();
   var gs = globalConformityScore();
   lastGlobalScore = gs.score;
   recordScoreSnapshot(gs);
@@ -2177,7 +2518,8 @@ RENDERERS.dashboard = function(){
 
 // ---------- PLANNING ----------
 RENDERERS.planning = function(){
-  var rows = DATA.planning.slice().sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
+  var PLANNING_SECT = bySecteur(DATA.planning);
+  var rows = PLANNING_SECT.slice().sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
   var curMonthKey = todayStr().slice(0,7);
   if(planningMoisFilter===undefined) planningMoisFilter = curMonthKey;
   var monthKeys = [];
@@ -2196,7 +2538,7 @@ RENDERERS.planning = function(){
   html += '</div><button class="btn primary" data-toggle-form="planning">+ Ajouter une échéance</button></div>';
 
   html += '<form class="entryform" id="form-planning" style="display:none">'+
-    field('select','ligne','Ligne', LINES.map(function(l){return [l,l];})) +
+    field('select','ligne','Ligne', secteurLines().map(function(l){return [l,l];})) +
     field('select','type','Type', PLAN_TYPES) +
     '<div id="planning-ref-wrap" style="display:none;">'+
       '<label class="field">Référence (pour relevés labo)<select name="ref" id="planning-form-ref">'+
@@ -2244,13 +2586,14 @@ function planningRow(p){
 
 // ---------- METROLOGIE ----------
 RENDERERS.metro = function(){
-  var rows = DATA.metro.slice().sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
+  var METRO_SECT = bySecteur(DATA.metro);
+  var rows = METRO_SECT.slice().sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
   var html = '<div class="section"><div class="toolbar"><div class="left">';
   html += '<select id="flt-metro-ligne"><option value="">Toutes les lignes</option>'+LINES.map(function(l){return '<option value="'+l+'">'+l+'</option>';}).join('')+'</select>';
   html += '</div><div style="display:flex; gap:8px;"><button class="btn" data-action="export" data-module="metro">Envoyer un mail de rappel</button><button class="btn primary" data-toggle-form="metro">+ Ajouter un instrument</button></div></div>';
 
   html += '<form class="entryform" id="form-metro" style="display:none">'+
-    field('select','ligne','Ligne', LINES.map(function(l){return [l,l];})) +
+    field('select','ligne','Ligne', secteurLines().map(function(l){return [l,l];})) +
     field('text','numMoyen','N° du moyen') +
     field('text','designation','Désignation / fonction contrôlée') +
     field('text','lieu','Lieu / poste') +
@@ -2490,7 +2833,7 @@ async function handleSaveAteqAction(){
   var description = document.getElementById('aa-description').value.trim();
   if(!description){ alert('Merci de décrire l\'action corrective.'); return; }
   var entry = {
-    id: uid('act'), origine:'ATEQ', description:description,
+    id: uid('act'), origine:'ATEQ', secteur:currentSecteur, description:description,
     ligne: document.getElementById('aa-ligne').value,
     responsable: document.getElementById('aa-responsable').value,
     echeance: document.getElementById('aa-echeance').value || null,
@@ -2830,7 +3173,20 @@ function bootstrapAdmin(){
     changed = true;
   }
   if(!DATA.accounts.length){
-    DATA.accounts.push({id:uid('acc'), username:'admin', password:'admin1234', displayName:'Administrateur', roleId:ADMIN_ROLE_ID});
+    DATA.accounts.push({id:uid('acc'), username:'admin', password:'admin1234', displayName:'Administrateur', roleId:ADMIN_ROLE_ID, allSecteurs:true, secteurs:[]});
+    changed = true;
+  }
+  // Migration multi-secteurs : comptes existants sans champ secteurs
+  DATA.accounts.forEach(function(a){
+    if(a.secteurs===undefined){
+      if(a.roleId===ADMIN_ROLE_ID){ a.allSecteurs = true; a.secteurs = []; }
+      else { a.allSecteurs = false; a.secteurs = ['MCU']; }
+      changed = true;
+    }
+  });
+  // Initialiser les secteurs si absents
+  if(!DATA.secteurs || !DATA.secteurs.length){
+    DATA.secteurs = JSON.parse(JSON.stringify(SECTEURS_DEFAULT));
     changed = true;
   }
   return changed;
@@ -2858,11 +3214,23 @@ function canSub(key){
 }
 function renderNav(){
   var nav = document.getElementById('tabs');
-  var allowedTabs = ALL_TABS.filter(function(t){ return tabAllowed(t[0]); });
-  var html = allowedTabs.map(function(t){ return '<button data-tab="'+t[0]+'">'+esc(t[1])+'</button>'; }).join('');
+  var sTabs = secteurTabs();
+  var allowedTabs = ALL_TABS.filter(function(t){ return sTabs.indexOf(t[0])>=0 && tabAllowed(t[0]); });
+  var html = '';
+  // Sélecteur de secteur si l'utilisateur a accès à plusieurs
+  var us = userSecteurs();
+  if(us.length>1){
+    html += '<select id="secteur-select" style="margin-right:10px; padding:6px 8px; font-weight:700; border:2px solid var(--ok); border-radius:var(--radius-sm); background:var(--ok-bg); color:var(--ok);">'+
+      us.map(function(sid){ var s = getSecteur(sid); return '<option value="'+sid+'"'+(sid===currentSecteur?' selected':'')+'>'+esc(s?s.nom:sid)+'</option>'; }).join('')+
+    '</select>';
+  } else if(us.length===1 && us[0]!==currentSecteur){
+    currentSecteur = us[0];
+  }
+  html += allowedTabs.map(function(t){ return '<button data-tab="'+t[0]+'">'+esc(t[1])+'</button>'; }).join('');
   if(currentUser && currentUser.roleId===ADMIN_ROLE_ID) html += '<button data-tab="comptes">Comptes</button>';
   nav.innerHTML = html;
-  if(currentTab!=='comptes' && !tabAllowed(currentTab)){ currentTab = allowedTabs.length? allowedTabs[0][0] : 'dashboard'; }
+  var validTabs = allowedTabs.map(function(t){return t[0];});
+  if(currentTab!=='comptes' && validTabs.indexOf(currentTab)<0){ currentTab = validTabs.length? validTabs[0] : 'dashboard'; }
 }
 function renderUserbox(){
   var box = document.getElementById('userbox');
@@ -2949,17 +3317,42 @@ RENDERERS.comptes = function(){
   html += '<h2 style="font-size:14px; margin-bottom:10px;">Comptes utilisateurs</h2>';
   html += '<div class="toolbar"><div></div><button class="btn primary" data-action="new-account">+ Ajouter un compte</button></div>';
   if(accountFormState) html += accountForm();
-  html += '<div class="table-wrap"><table><thead><tr><th>Nom</th><th>Identifiant</th><th>Profil</th><th></th></tr></thead><tbody>';
+  html += '<div class="table-wrap"><table><thead><tr><th>Nom</th><th>Identifiant</th><th>Profil</th><th>Secteurs</th><th></th></tr></thead><tbody>';
   var adminCount = DATA.accounts.filter(function(a){ return a.roleId===ADMIN_ROLE_ID; }).length;
   html += DATA.accounts.map(function(a){
     var role = DATA.roles.find(function(r){ return r.id===a.roleId; });
     var canDelete = !(a.roleId===ADMIN_ROLE_ID && adminCount<=1);
+    var sectLabel = a.allSecteurs ? '<b style="color:var(--ok);">Tous</b>' : esc((a.secteurs||['MCU']).join(', '));
     return '<tr><td>'+esc(a.displayName)+'</td><td>'+esc(a.username)+'</td><td>'+esc(role?role.name:'—')+'</td>'+
+      '<td class="tiny">'+sectLabel+'</td>'+
       '<td style="display:flex; gap:6px; flex-wrap:wrap;">'+
         '<button class="btn small" data-action="edit-account" data-id="'+a.id+'">Modifier</button>'+
         (canDelete? '<button class="btn small danger-outline" data-action="delete-account" data-id="'+a.id+'">Suppr.</button>' : '')+
       '</td></tr>';
-  }).join('') || '<tr><td colspan="4"><div class="empty">Aucun compte</div></td></tr>';
+  }).join('') || '<tr><td colspan="5"><div class="empty">Aucun compte</div></td></tr>';
+  html += '</tbody></table></div>';
+
+  // ===== SECTION SECTEURS =====
+  html += '<h2 style="font-size:14px; margin:26px 0 10px;">Secteurs</h2>';
+  html += '<p class="tiny" style="margin-bottom:10px;">Chaque secteur a ses propres lignes et ses propres onglets. Cochez les modules actifs pour chaque secteur.</p>';
+  html += '<div class="toolbar"><div></div><button class="btn primary" data-action="new-secteur">+ Ajouter un secteur</button></div>';
+  if(secteurFormState) html += secteurForm();
+  var allSecteursList = (DATA.secteurs && DATA.secteurs.length? DATA.secteurs : SECTEURS_DEFAULT);
+  var CONFIGURABLE_TABS = [['perf','Audits perf'],['proprete','Propreté'],['metro','Métrologie'],['ateq','ATEQ'],['actions','Actions'],['planning','Planning'],['esd','ESD'],['formations','SREM']];
+  html += '<div class="table-wrap" style="overflow-x:auto;"><table class="perm-table"><thead><tr><th style="min-width:80px;">Secteur</th><th style="min-width:180px;">Lignes</th>'+
+    CONFIGURABLE_TABS.map(function(t){return '<th style="font-size:10px;">'+t[1]+'</th>';}).join('')+'<th></th></tr></thead><tbody>';
+  html += allSecteursList.map(function(sec){
+    var row = '<tr><td style="font-weight:700;">'+esc(sec.nom)+'</td>';
+    row += '<td class="tiny" style="max-width:200px;">'+sec.lignes.map(esc).join(', ')+
+      ' <button class="btn small" data-action="edit-secteur-lignes" data-id="'+sec.id+'" title="Modifier les lignes">✎</button></td>';
+    row += CONFIGURABLE_TABS.map(function(t){
+      var checked = sec.tabs.indexOf(t[0])>=0;
+      return '<td style="text-align:center;"><input type="checkbox" data-action="toggle-secteur-tab" data-secteur="'+sec.id+'" data-tabkey="'+t[0]+'" '+(checked?'checked':'')+'></td>';
+    }).join('');
+    var inUse = DATA.accounts.some(function(a){ return (a.secteurs||[]).indexOf(sec.id)>=0; }) || sec.id==='MCU';
+    row += '<td>'+(inUse?'':'<button class="btn small danger-outline" data-action="delete-secteur" data-id="'+sec.id+'">Suppr.</button>')+'</td></tr>';
+    return row;
+  }).join('');
   html += '</tbody></table></div>';
 
   html += '<h2 style="font-size:14px; margin:26px 0 10px;">Profils &amp; permissions</h2>';
@@ -3012,12 +3405,23 @@ RENDERERS.comptes = function(){
 };
 function accountForm(){
   var s = accountFormState;
-  return '<div class="card" style="max-width:420px; margin-bottom:16px;"><div class="eyebrow" style="margin-bottom:10px;">'+(s.id?'Modifier le compte':'Nouveau compte')+'</div>'+
+  var allSect = (DATA.secteurs && DATA.secteurs.length? DATA.secteurs : SECTEURS_DEFAULT);
+  var accSecteurs = s.secteurs || ['MCU'];
+  var allChecked = !!s.allSecteurs;
+  return '<div class="card" style="max-width:480px; margin-bottom:16px;"><div class="eyebrow" style="margin-bottom:10px;">'+(s.id?'Modifier le compte':'Nouveau compte')+'</div>'+
     '<div style="display:flex; flex-direction:column; gap:10px;">'+
     '<label class="field">Nom affiché<input type="text" id="af2-displayName" value="'+esc(s.displayName)+'"></label>'+
     '<label class="field">Identifiant<input type="text" id="af2-username" value="'+esc(s.username)+'"></label>'+
     '<label class="field">Mot de passe'+(s.id?' (laisser vide pour ne pas changer)':'')+'<input type="password" id="af2-password"></label>'+
     '<label class="field">Profil<select id="af2-roleId">'+DATA.roles.map(function(r){return '<option value="'+r.id+'"'+(r.id===s.roleId?' selected':'')+'>'+esc(r.name)+'</option>';}).join('')+'</select></label>'+
+    '<div class="field"><span style="font-size:12px; color:var(--text-faint); font-weight:600;">Secteurs autorisés</span>'+
+    '<label style="display:flex; align-items:center; gap:6px; font-size:13px; margin-top:6px;"><input type="checkbox" id="af2-allSecteurs" '+(allChecked?'checked':'')+'> <b>Tous les secteurs</b> (responsable qualité)</label>'+
+    '<div id="af2-secteurs-list" style="display:'+(allChecked?'none':'grid')+'; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:8px;">'+
+      allSect.map(function(sec){
+        var checked = accSecteurs.indexOf(sec.id)>=0;
+        return '<label style="display:flex; align-items:center; gap:5px; font-size:12.5px;"><input type="checkbox" class="af2-secteur-chk" value="'+sec.id+'" '+(checked?'checked':'')+'> '+esc(sec.nom)+'</label>';
+      }).join('')+
+    '</div></div>'+
     '</div><div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="cancel-account">Annuler</button><button class="btn primary" data-action="save-account">Enregistrer</button></div></div>';
 }
 function roleForm(){
@@ -3026,11 +3430,11 @@ function roleForm(){
     '<label class="field">Nom du profil<input type="text" id="rf2-name" value="'+esc(s.name)+'"></label>'+
     '<div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="cancel-role">Annuler</button><button class="btn primary" data-action="save-role">Créer</button></div></div>';
 }
-function handleNewAccount(){ accountFormState = {id:null, displayName:'', username:'', roleId:(DATA.roles.find(function(r){return r.id!==ADMIN_ROLE_ID;})||DATA.roles[0]).id}; render(); }
+function handleNewAccount(){ accountFormState = {id:null, displayName:'', username:'', roleId:(DATA.roles.find(function(r){return r.id!==ADMIN_ROLE_ID;})||DATA.roles[0]).id, secteurs:['MCU'], allSecteurs:false}; render(); }
 function handleEditAccount(id){
   var a = DATA.accounts.find(function(x){ return x.id===id; });
   if(!a) return;
-  accountFormState = {id:a.id, displayName:a.displayName, username:a.username, roleId:a.roleId};
+  accountFormState = {id:a.id, displayName:a.displayName, username:a.username, roleId:a.roleId, secteurs:a.secteurs||['MCU'], allSecteurs:!!a.allSecteurs};
   render();
 }
 async function handleSaveAccount(){
@@ -3041,16 +3445,20 @@ async function handleSaveAccount(){
   if(!displayName || !username){ alert('Nom et identifiant requis.'); return; }
   var dup = DATA.accounts.find(function(a){ return a.username===username && a.id!==accountFormState.id; });
   if(dup){ alert('Cet identifiant est déjà utilisé.'); return; }
+  var allSecteurs = document.getElementById('af2-allSecteurs').checked;
+  var secteurs = allSecteurs ? [] : Array.prototype.map.call(document.querySelectorAll('.af2-secteur-chk:checked'), function(c){return c.value;});
+  if(!allSecteurs && !secteurs.length){ alert('Sélectionnez au moins un secteur.'); return; }
   if(accountFormState.id){
     var a = DATA.accounts.find(function(x){ return x.id===accountFormState.id; });
     a.displayName = displayName; a.username = username; a.roleId = roleId;
+    a.allSecteurs = allSecteurs; a.secteurs = secteurs;
     if(password) a.password = password;
     if(currentUser && currentUser.id===a.id) currentUser = a;
     await save('accounts');
     logChange('Comptes', 'Modification', displayName+' ('+username+')');
   } else {
     if(!password){ alert('Mot de passe requis.'); return; }
-    DATA.accounts.push({id:uid('acc'), displayName:displayName, username:username, password:password, roleId:roleId});
+    DATA.accounts.push({id:uid('acc'), displayName:displayName, username:username, password:password, roleId:roleId, allSecteurs:allSecteurs, secteurs:secteurs});
     await save('accounts');
     logChange('Comptes', 'Création', displayName+' ('+username+')');
   }
@@ -3092,6 +3500,64 @@ async function handleToggleRoleTab(roleId, tabKey, checked){
   await save('roles');
   if(currentUser && currentUser.roleId===roleId) renderNav();
 }
+
+var secteurFormState = null;
+function secteurForm(){
+  var s = secteurFormState;
+  return '<div class="card" style="max-width:460px; margin-bottom:16px;"><div class="eyebrow" style="margin-bottom:10px;">'+(s.id?'Modifier le secteur':'Nouveau secteur')+'</div>'+
+    '<div class="entryform cols2">'+
+    '<label class="field">Code (ex. MCU)<input type="text" id="sf-id" value="'+esc(s.id||'')+'" '+(s.id?'readonly style="background:var(--accent-bg);"':'')+'></label>'+
+    '<label class="field">Nom affiché<input type="text" id="sf-nom" value="'+esc(s.nom||'')+'"></label>'+
+    '<label class="field" style="grid-column:1/-1;">Lignes (séparées par des virgules)<input type="text" id="sf-lignes" value="'+esc((s.lignes||[]).join(', '))+'" placeholder="Ex. : PV01, PV02, PV03"></label>'+
+    '</div><div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="cancel-secteur">Annuler</button><button class="btn primary" data-action="save-secteur">Enregistrer</button></div></div>';
+}
+async function ensureSecteursData(){
+  if(!DATA.secteurs || !DATA.secteurs.length){
+    DATA.secteurs = JSON.parse(JSON.stringify(SECTEURS_DEFAULT));
+    await save('secteurs');
+  }
+}
+async function handleSaveSecteur(){
+  await ensureSecteursData();
+  var id = document.getElementById('sf-id').value.trim().toUpperCase();
+  var nom = document.getElementById('sf-nom').value.trim() || id;
+  var lignes = document.getElementById('sf-lignes').value.split(',').map(function(x){return x.trim();}).filter(Boolean);
+  if(!id){ alert('Code requis.'); return; }
+  if(!lignes.length){ alert('Au moins une ligne requise.'); return; }
+  var existing = DATA.secteurs.find(function(s){ return s.id===id; });
+  if(secteurFormState.id){
+    var sec = DATA.secteurs.find(function(s){ return s.id===secteurFormState.id; });
+    if(sec){ sec.nom = nom; sec.lignes = lignes; }
+  } else {
+    if(existing){ alert('Ce code de secteur existe déjà.'); return; }
+    DATA.secteurs.push({id:id, nom:nom, lignes:lignes, tabs:['dashboard','perf','metro','actions','planning','archives']});
+  }
+  await save('secteurs');
+  logChange('Secteurs', secteurFormState.id?'Modification':'Création', id);
+  secteurFormState = null;
+  renderNav(); render();
+}
+async function handleToggleSecteurTab(secteurId, tabKey, checked){
+  await ensureSecteursData();
+  var sec = DATA.secteurs.find(function(s){ return s.id===secteurId; });
+  if(!sec) return;
+  var idx = sec.tabs.indexOf(tabKey);
+  if(checked && idx<0) sec.tabs.push(tabKey);
+  if(!checked && idx>=0) sec.tabs.splice(idx,1);
+  await save('secteurs');
+  renderNav();
+}
+async function handleDeleteSecteur(id){
+  await ensureSecteursData();
+  var sec = DATA.secteurs.find(function(s){ return s.id===id; });
+  if(!sec) return;
+  if(!confirm('Supprimer le secteur '+sec.nom+' ? Les données associées ne seront plus visibles.')) return;
+  DATA.secteurs = DATA.secteurs.filter(function(s){ return s.id!==id; });
+  await save('secteurs');
+  logChange('Secteurs', 'Suppression', id);
+  renderNav(); render();
+}
+
 var roleRenameId = null;
 async function handleToggleRoleSub(roleId, subKey, checked){
   var role = DATA.roles.find(function(r){ return r.id===roleId; });
@@ -3532,6 +3998,23 @@ app.addEventListener('click', async function(e){
   var toggleAteqDetail = e.target.closest('[data-action="toggle-ateq-detail"]');
   if(toggleAteqDetail){ ateqDetailActionId = (ateqDetailActionId===toggleAteqDetail.dataset.id)?null:toggleAteqDetail.dataset.id; render(); return; }
 
+  // PERF
+  if(e.target.closest('[data-action="new-perf"]')){ perfFormOpen = true; render(); return; }
+  if(e.target.closest('[data-action="cancel-perf"]')){ perfFormOpen = false; render(); return; }
+  if(e.target.closest('[data-action="save-perf"]')){ await handleSavePerf(); return; }
+  var perfDelBtn = e.target.closest('[data-action="perf-delete-cell"]');
+  if(perfDelBtn){ await handleDeletePerfCell(perfDelBtn.dataset.id); return; }
+  // FORMATIONS SREM
+  if(e.target.closest('[data-action="new-formation"]')){ formationFormOpen = true; render(); return; }
+  if(e.target.closest('[data-action="cancel-formation"]')){ formationFormOpen = false; render(); return; }
+  if(e.target.closest('[data-action="save-formation"]')){ await handleSaveFormation(); return; }
+  var formEditBtn = e.target.closest('[data-action="formation-edit"]');
+  if(formEditBtn){ formationEditId = formEditBtn.dataset.id; render(); return; }
+  if(e.target.closest('[data-action="formation-cancel-edit"]')){ formationEditId = null; render(); return; }
+  var formSaveBtn = e.target.closest('[data-action="formation-save-edit"]');
+  if(formSaveBtn){ await handleSaveFormationEdit(formSaveBtn.dataset.id); return; }
+  var formDelBtn = e.target.closest('[data-action="formation-delete"]');
+  if(formDelBtn){ await handleDeleteFormation(formDelBtn.dataset.id); return; }
   // ESD
   if(e.target.closest('[data-action="new-esd"]')){ esdFormOpen = true; render(); return; }
   if(e.target.closest('[data-action="cancel-esd"]')){ esdFormOpen = false; render(); return; }
@@ -3553,6 +4036,17 @@ app.addEventListener('click', async function(e){
   var saveRoleRenameBtn = e.target.closest('[data-action="save-role-rename"]');
   if(saveRoleRenameBtn){ await handleSaveRoleRename(saveRoleRenameBtn.dataset.id); return; }
 
+  var switchSecteurBtn = e.target.closest('[data-action="switch-secteur"]');
+  if(switchSecteurBtn){ currentSecteur = switchSecteurBtn.dataset.id; renderNav(); render(); return; }
+  if(e.target.closest('[data-action="new-secteur"]')){ await ensureSecteursData(); secteurFormState = {id:null, nom:'', lignes:[]}; render(); return; }
+  if(e.target.closest('[data-action="cancel-secteur"]')){ secteurFormState = null; render(); return; }
+  if(e.target.closest('[data-action="save-secteur"]')){ await handleSaveSecteur(); return; }
+  var editSecteurBtn = e.target.closest('[data-action="edit-secteur-lignes"]');
+  if(editSecteurBtn){ await ensureSecteursData(); var sec = DATA.secteurs.find(function(s){return s.id===editSecteurBtn.dataset.id;}); if(sec){ secteurFormState = {id:sec.id, nom:sec.nom, lignes:sec.lignes.slice()}; render(); } return; }
+  var toggleSecteurTab = e.target.closest('[data-action="toggle-secteur-tab"]');
+  if(toggleSecteurTab){ await handleToggleSecteurTab(toggleSecteurTab.dataset.secteur, toggleSecteurTab.dataset.tabkey, toggleSecteurTab.checked); return; }
+  var delSecteurBtn = e.target.closest('[data-action="delete-secteur"]');
+  if(delSecteurBtn){ await handleDeleteSecteur(delSecteurBtn.dataset.id); return; }
   if(e.target.closest('[data-action="new-account"]')){ handleNewAccount(); return; }
   var editAccBtn = e.target.closest('[data-action="edit-account"]');
   if(editAccBtn){ handleEditAccount(editAccBtn.dataset.id); return; }
@@ -3630,6 +4124,13 @@ app.addEventListener('change', async function(e){
   if(e.target.id==='cc-ref'){ contamCollecteState.ref = e.target.value; render(); return; }
   if(e.target.id==='cd-ligne'){ contamDirectState.ligne = e.target.value; contamDirectState.ref = refsForLigne(e.target.value)[0]; render(); return; }
   if(e.target.id==='cd-ref'){ contamDirectState.ref = e.target.value; render(); return; }
+  if(e.target.id==='secteur-select'){ currentSecteur = e.target.value; renderNav(); render(); return; }
+  if(e.target.id==='perf-year'){ perfYear = Number(e.target.value); render(); return; }
+  if(e.target.id==='af2-allSecteurs'){
+    var lst = document.getElementById('af2-secteurs-list');
+    if(lst) lst.style.display = e.target.checked? 'none' : 'grid';
+    return;
+  }
   if(e.target.id==='esd-search'){ esdSearch = e.target.value; render(); return; }
   if(e.target.id==='flt-planning-ligne'){ planningLigneFilter = e.target.value; applyPlanningFilter(); return; }
   if(e.target.id==='flt-planning-mois'){ planningMoisFilter = e.target.value; applyPlanningFilter(); return; }
@@ -3709,6 +4210,7 @@ loginOverlayEl.addEventListener('keydown', async function(e){
 });
 app.addEventListener('input', function(e){
   if(e.target.id==='esd-search'){ esdSearch = e.target.value; render(); }
+  if(e.target.id==='formation-search'){ formationSearch = e.target.value; render(); }
 });
 
 async function init(){
@@ -3716,7 +4218,7 @@ async function init(){
     document.getElementById('todaylabel').textContent = 'Aujourd\'hui : ' + fmtDate(todayStr());
     await loadAll();
     var bootstrapped = bootstrapAdmin();
-    if(bootstrapped){ await save('roles'); await save('accounts'); }
+    if(bootstrapped){ await save('roles'); await save('accounts'); await save('secteurs'); }
     var sess = getSession();
     if(sess){ currentUser = DATA.accounts.find(function(a){ return a.id===sess.accountId; }) || null; }
     if(currentUser){
@@ -3735,6 +4237,44 @@ async function init(){
 init();
 
 })();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 </script>
