@@ -341,9 +341,11 @@ function backendSetLocal(key, value){
   try{ localStorage.setItem(key, value); }catch(e){ /* ignore quota errors */ }
   return Promise.resolve({key:key, value:value, shared:false});
 }
+var LOAD_DEGRADED = false; // vrai si le chargement initial a échoué → écriture interdite
 function backendGet(key){
   if(supabaseClient){
-    return supabaseGet(key).catch(function(e){ console.error('Supabase get error', e); return backendGetLocal(key); });
+    // NE PAS basculer en local sur erreur : propager pour que loadAll passe en mode dégradé
+    return supabaseGet(key);
   }
   if(window.storage && typeof window.storage.get === 'function'){
     STORAGE_MODE = 'claude';
@@ -352,8 +354,12 @@ function backendGet(key){
   return backendGetLocal(key);
 }
 function backendSet(key, value){
+  if(LOAD_DEGRADED){
+    // Chargement initial en échec : ne JAMAIS écraser les données serveur
+    return Promise.reject(new Error('Écriture bloquée : les données n\'ont pas pu être chargées depuis le serveur.'));
+  }
   if(supabaseClient){
-    return supabaseSet(key, value).catch(function(e){ console.error('Supabase set error', e); return backendSetLocal(key, value); });
+    return supabaseSet(key, value); // pas de fallback silencieux : une erreur d'écriture doit être visible
   }
   if(window.storage && typeof window.storage.set === 'function'){
     STORAGE_MODE = 'claude';
@@ -369,23 +375,43 @@ async function loadAll(){
     try{
       var r = await backendGet(KEYS[k]);
       if(r && r.value){ DATA[k] = JSON.parse(r.value); }
-      else { await seedKey(k); }
-    }catch(e){ console.error('load error', k, e); await seedKey(k); }
+      else {
+        // Clé réellement absente côté serveur (réponse propre) → seed légitime
+        await seedKey(k);
+      }
+    }catch(e){
+      // ERREUR de connexion : ne PAS seeder, ne PAS écraser — mode dégradé lecture seule
+      console.error('load error', k, e);
+      LOAD_DEGRADED = true;
+    }
   }
-  if(STORAGE_MODE==='local' && !storageWarned){
-    storageWarned = true;
-    console.warn('Stockage local utilisé (Supabase/Claude indisponible) — les données ne sont pas partagées avec l\'équipe.');
+  if(LOAD_DEGRADED){
+    try{
+      var banner = document.createElement('div');
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#B23B2E;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-weight:600;';
+      banner.textContent = '⚠ Connexion aux données impossible — affichage incomplet. NE SAISISSEZ RIEN. Rechargez la page (F5) une fois la connexion rétablie.';
+      document.body.appendChild(banner);
+    }catch(e){}
   }
 }
 async function seedKey(k){
+  if(LOAD_DEGRADED) return; // sécurité : jamais de seed en mode dégradé
   if(window.SEED && window.SEED[k] !== undefined){
     DATA[k] = window.SEED[k];
     await save(k);
   }
 }
+var saveErrorShown = false;
 async function save(k){
   try{ await backendSet(KEYS[k], JSON.stringify(DATA[k])); }
-  catch(e){ console.error('storage error', k, e); }
+  catch(e){
+    console.error('storage error', k, e);
+    if(!saveErrorShown){
+      saveErrorShown = true;
+      alert('⚠ ERREUR D\'ENREGISTREMENT\n\nVotre dernière modification n\'a PAS été sauvegardée sur le serveur ('+k+').\nVérifiez votre connexion puis réessayez.');
+      setTimeout(function(){ saveErrorShown = false; }, 10000);
+    }
+  }
 }
 
 // ---------- status helpers ----------
