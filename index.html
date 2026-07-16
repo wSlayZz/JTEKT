@@ -948,7 +948,7 @@ function proprResultats(){
       var lvl = scoreLevel(r.resultatPct);
       return '<div class="alertitem"><div>'+badge(lvl,'')+'</div><div>'+
         '<div class="txt">'+esc(r.ligne)+' — '+esc(r.mois)+' : score '+r.resultatPct+'%</div>'+
-        '<div class="meta">'+(lvl==='danger'?'Sous le seuil danger ('+SCORE_DANGER+'%)':'Sous le seuil attention ('+SCORE_ATTENTION+'%)')+' — <span class="tiny">2 derniers mois uniquement</span></div>'+
+        '<div class="meta">'+(lvl==='danger'?'Sous le seuil danger ('+SCORE_DANGER+'%)':'Sous le seuil attention ('+SCORE_ATTENTION+'%)')+' 
         '</div></div>';
     }).join('')+'</div></div>';
   }
@@ -2364,7 +2364,7 @@ function renderMultiSecteurBanner(){
   var curY = Number(todayStr().split('-')[0]);
   var curM = Number(todayStr().split('-')[1])-1;
   var html = '<div class="section card" style="margin-bottom:18px; border:2px solid var(--ok);">';
-  html += '<div class="eyebrow" style="margin-bottom:10px;">Vue consolidée — tous vos secteurs</div>';
+  html += '<div class="eyebrow" style="margin-bottom:10px;">Tous les secteurs</div>';
   html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:10px;">';
   us.forEach(function(sid){
     var sec = getSecteur(sid);
@@ -2431,7 +2431,7 @@ RENDERERS.dashboard = function(){
         var dlvl = scoreLevel(d.val);
         return '<div style="text-align:center; min-width:120px;"><div class="tiny" style="margin-bottom:4px;">'+esc(d.label)+'</div><div style="font-family:var(--mono); font-weight:700; font-size:24px; color:var(--'+dlvl+');">'+d.val+'%</div></div>';
       }).join('')+'</div>'+
-      '<p class="tiny" style="margin-top:16px; text-align:center; color:var(--text-faint);">Seuils : ≥85% conforme, 50–85% attention, &lt;50% en danger — identiques aux audits propreté.</p>'+
+      '<p class="tiny" style="margin-top:16px; text-align:center; color:var(--text-faint);">Seuils : ≥85% conforme, 50–85% attention, &lt;50% critique.</p>'+
       '</div>';
   }
   html += '<div class="section"><div class="grid grid-4">';
