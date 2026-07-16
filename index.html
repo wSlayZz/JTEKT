@@ -1811,14 +1811,30 @@ function proprVidange(){
 }
 
 var ACTION_STATUSES = [['planifiee','Planifiée'],['realisee','Réalisée'],['verifiee','Vérifiée'],['perennisee','Pérennisée'],['non_prise_en_compte','Non prise en compte'],['abandonnee','Abandonnée']];
+var actionsViewAll = false; // toggle vue globale multi-secteurs
 RENDERERS.actions = function(){
-  var ACTIONS_SECT = bySecteur(DATA.actions);
+  var multiSect = userSecteurs().length>1;
+  var ACTIONS_SECT;
+  if(multiSect && actionsViewAll){
+    var us = userSecteurs();
+    ACTIONS_SECT = DATA.actions.filter(function(a){ return us.indexOf(a.secteur||'MCU')>=0; });
+  } else {
+    ACTIONS_SECT = bySecteur(DATA.actions);
+  }
   var rows = ACTIONS_SECT.slice().sort(function(a,b){
     var al = isActionLate(a)?0:1, bl = isActionLate(b)?0:1;
     if(al!==bl) return al-bl;
     return (a.echeance||'').localeCompare(b.echeance||'');
   });
-  var html = '<div class="section"><div class="toolbar"><div></div><button class="btn primary" data-toggle-form="actions">+ Ajouter une action</button></div>';
+  var html = '<div class="section">';
+  if(multiSect){
+    html += '<div style="display:flex; gap:8px; margin-bottom:14px; align-items:center;">'+
+      '<button class="btn small'+(!actionsViewAll?' primary':'')+'" data-action="actions-view-secteur">Secteur '+esc(currentSecteur)+'</button>'+
+      '<button class="btn small'+(actionsViewAll?' primary':'')+'" data-action="actions-view-all">Tous mes secteurs</button>'+
+      (actionsViewAll?'<span class="tiny">Vue consolidée de tous vos secteurs</span>':'')+
+    '</div>';
+  }
+  html += '<div class="toolbar"><div></div><button class="btn primary" data-toggle-form="actions">+ Ajouter une action</button></div>';
   html += '<form class="entryform" id="form-actions" style="display:none">'+
     field('text','description','Description de l\'action') +
     field('select','origine','Origine', [['ATEQ','ATEQ'],['Métrologie','Métrologie'],['Propreté','Propreté'],['Audit perf','Audit perf'],['Autre','Autre']]) +
@@ -1838,7 +1854,11 @@ function actionRow(a){
   var meta = actionStatusMeta(a.statut);
   var level = late ? 'danger' : meta.level;
   var label = late ? 'En retard' : meta.label;
-  return '<tr><td>'+badge(level, label)+'</td><td>'+esc(a.description)+'</td><td>'+esc(val(a.origine,''))+'</td><td>'+esc(val(a.ligne,''))+'</td><td>'+esc(val(a.responsable,''))+'</td>'+
+  var ligneCell = esc(val(a.ligne,''));
+  if(actionsViewAll && userSecteurs().length>1){
+    ligneCell = '<b style="color:var(--ok);">'+esc(a.secteur||'MCU')+'</b>'+(a.ligne?' · '+esc(a.ligne):'');
+  }
+  return '<tr><td>'+badge(level, label)+'</td><td>'+esc(a.description)+'</td><td>'+esc(val(a.origine,''))+'</td><td>'+ligneCell+'</td><td>'+esc(val(a.responsable,''))+'</td>'+
     '<td class="num">'+fmtDate(a.echeance)+'</td>'+
     '<td><select data-action="change-status" data-id="'+a.id+'">'+ACTION_STATUSES.map(function(s){return '<option value="'+s[0]+'"'+(s[0]===a.statut?' selected':'')+'>'+s[1]+'</option>';}).join('')+'</select> '+
     '<button class="btn small danger-outline" data-action="delete" data-module="actions" data-id="'+a.id+'">Suppr.</button></td></tr>';
@@ -2302,6 +2322,9 @@ function render(){
     renderScoreHistoryChart();
     renderGlobalGauge(lastGlobalScore);
   }
+  if(currentTab==='dashboard' && currentSecteur!=='MCU'){
+    renderGlobalGauge(secteurGaugeScore);
+  }
   if(currentTab==='planning'){ applyPlanningFilter(); }
   if(currentTab==='ateq'){ renderAteqCharts(); }
   if(currentTab==='perf'){ renderPerfChart(); }
@@ -2314,6 +2337,7 @@ function render(){
 
 
 // Dashboard des secteurs hors MCU : perf + métro + actions + planning
+var secteurGaugeScore = null;
 function renderSecteurDashboard(){
   var sec = getSecteur(currentSecteur);
   var lines = secteurLines();
@@ -2329,6 +2353,39 @@ function renderSecteurDashboard(){
   var actionsSect = bySecteur(DATA.actions);
   var late = actionsSect.filter(isActionLate).length;
   var openA = actionsSect.filter(function(a){ return isActionOpen(a) && !isActionDone(a); }).length;
+
+  // ===== SCORE GLOBAL DU SECTEUR (jauge) =====
+  var parts = [], detail = [];
+  if(perfMoy!==null){ parts.push(perfMoy); detail.push({label:'Audits perf', val:perfMoy}); }
+  var metroSect2 = bySecteur(DATA.metro);
+  if(metroSect2.length){
+    var mLate = metroSect2.filter(function(e){ return metroStatus(e).level==='danger'; }).length;
+    var mScore = Math.round((1 - mLate/metroSect2.length)*100);
+    parts.push(mScore); detail.push({label:'Métrologie à jour', val:mScore});
+  }
+  var openOrDone = actionsSect.filter(function(a){ return isActionOpen(a); });
+  if(openOrDone.length){
+    var aScore = Math.round((1 - late/Math.max(openOrDone.length,1))*100);
+    parts.push(aScore); detail.push({label:'Actions dans les temps', val:aScore});
+  }
+  secteurGaugeScore = parts.length ? Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length) : null;
+
+  var glvl = secteurGaugeScore!==null ? scoreLevel(secteurGaugeScore) : 'neutral';
+  html += '<div class="section card" style="margin-bottom:18px;">'+
+    '<div class="eyebrow" style="text-align:center; margin-bottom:14px;">Score de conformité — secteur '+esc(sec?sec.nom:currentSecteur)+'</div>'+
+    '<div style="display:flex; justify-content:center;">'+
+      '<div style="position:relative; width:200px; height:200px;"><canvas id="chart-global-gauge"></canvas>'+
+      '<div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">'+
+        '<div style="font-family:var(--mono); font-weight:700; font-size:42px; color:var(--'+(secteurGaugeScore!==null?glvl:'text-faint')+');">'+(secteurGaugeScore!==null?secteurGaugeScore+'%':'—')+'</div>'+
+      '</div></div>'+
+    '</div>'+
+    (detail.length?
+      '<div style="display:flex; gap:28px; flex-wrap:wrap; justify-content:center; margin-top:16px;">'+detail.map(function(d){
+        var dlvl = scoreLevel(d.val);
+        return '<div style="text-align:center;"><div class="tiny">'+esc(d.label)+'</div><div style="font-family:var(--mono); font-weight:700; font-size:20px; color:var(--'+dlvl+');">'+d.val+'%</div></div>';
+      }).join('')+'</div>'
+      : '<p class="tiny" style="text-align:center; margin-top:12px;">Le score se calculera dès les premières saisies (audits perf, métrologie, actions).</p>')+
+  '</div>';
 
   html += '<div class="section"><div class="grid grid-4">';
   html += '<div class="statcard"><div class="eyebrow">Perf moyenne du mois</div><div class="val" style="color:var(--'+(perfMoy===null?'text':scoreLevel(perfMoy))+');">'+(perfMoy!==null?perfMoy+'%':'—')+'</div><div class="tiny">'+perfMonth.length+'/'+lines.length+' lignes auditées</div></div>';
@@ -2469,7 +2526,7 @@ RENDERERS.dashboard = function(){
   html += '</div></div>';
 
   html += '<div class="section"><div class="grid grid-4">';
-  var ms = metroOverall(LINES);
+  var ms = metroOverall(secteurLines());
   html += '<div class="statcard s-'+ms.level+'"><div class="eyebrow">Métrologie</div>'+
     '<div class="tiny" style="margin-bottom:4px;">'+
       ms.late+' en retard · <b style="color:#C25A00;">'+ms.urgent+' expire ce mois</b> · '+ms.warn+' à prévoir sur '+DATA.metro.length+' instruments'+
@@ -2560,7 +2617,7 @@ RENDERERS.planning = function(){
     return '<option value="'+k+'"'+(k===planningMoisFilter?' selected':'')+'>'+label+(k===curMonthKey?' (mois en cours)':'')+'</option>';
   }).join('')+'</select>';
   html += '<select id="flt-planning-type"><option value="">Tous les types</option>'+PLAN_TYPES.map(function(t){return '<option value="'+t[0]+'"'+(t[0]===planningTypeFilter?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select>';
-  html += '<select id="flt-planning-ligne"><option value="">Toutes les lignes</option>'+LINES.map(function(l){return '<option value="'+l+'"'+(l===planningLigneFilter?' selected':'')+'>'+l+'</option>';}).join('')+'</select>';
+  html += '<select id="flt-planning-ligne"><option value="">Toutes les lignes</option>'+secteurLines().map(function(l){return '<option value="'+l+'"'+(l===planningLigneFilter?' selected':'')+'>'+l+'</option>';}).join('')+'</select>';
   html += '</div><button class="btn primary" data-toggle-form="planning">+ Ajouter une échéance</button></div>';
 
   html += '<form class="entryform" id="form-planning" style="display:none">'+
@@ -2591,7 +2648,7 @@ function planningRow(p){
   if(p.id===planningEditingId){
     return '<tr data-row-ligne="'+p.ligne+'" data-row-type="'+p.type+'" data-row-mois="'+(p.echeance?p.echeance.slice(0,7):'')+'" style="background:#FBFAF7;">'+
       '<td>'+badge(s.level,s.label)+'</td>'+
-      '<td><select id="planning-edit-ligne" style="width:80px;">'+LINES.map(function(l){return '<option value="'+l+'"'+(l===p.ligne?' selected':'')+'>'+l+'</option>';}).join('')+'</select></td>'+
+      '<td><select id="planning-edit-ligne" style="width:80px;">'+secteurLines().map(function(l){return '<option value="'+l+'"'+(l===p.ligne?' selected':'')+'>'+l+'</option>';}).join('')+'</select></td>'+
       '<td><select id="planning-edit-type" style="width:130px;">'+PLAN_TYPES.map(function(t){return '<option value="'+t[0]+'"'+(t[0]===p.type?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select></td>'+
       '<td><input type="text" id="planning-edit-mois" value="'+esc(val(p.mois,''))+'" style="width:90px;"></td>'+
       '<td><input type="date" id="planning-edit-echeance" value="'+esc(p.echeance||'')+'" style="width:140px;"></td>'+
@@ -2615,7 +2672,7 @@ RENDERERS.metro = function(){
   var METRO_SECT = bySecteur(DATA.metro);
   var rows = METRO_SECT.slice().sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
   var html = '<div class="section"><div class="toolbar"><div class="left">';
-  html += '<select id="flt-metro-ligne"><option value="">Toutes les lignes</option>'+LINES.map(function(l){return '<option value="'+l+'">'+l+'</option>';}).join('')+'</select>';
+  html += '<select id="flt-metro-ligne"><option value="">Toutes les lignes</option>'+secteurLines().map(function(l){return '<option value="'+l+'">'+l+'</option>';}).join('')+'</select>';
   html += '</div><div style="display:flex; gap:8px;"><button class="btn" data-action="export" data-module="metro">Envoyer un mail de rappel</button><button class="btn primary" data-toggle-form="metro">+ Ajouter un instrument</button></div></div>';
 
   html += '<form class="entryform" id="form-metro" style="display:none">'+
@@ -2641,7 +2698,7 @@ function metroRow(e){
   if(e.id===metroEditingId){
     return '<tr data-row-ligne="'+e.ligne+'" style="background:#FBFAF7;">'+
       '<td>'+badge(s.level,s.label)+'</td>'+
-      '<td><select id="metro-edit-ligne" style="width:80px;">'+LINES.map(function(l){return '<option value="'+l+'"'+(l===e.ligne?' selected':'')+'>'+l+'</option>';}).join('')+'</select></td>'+
+      '<td><select id="metro-edit-ligne" style="width:80px;">'+secteurLines().map(function(l){return '<option value="'+l+'"'+(l===e.ligne?' selected':'')+'>'+l+'</option>';}).join('')+'</select></td>'+
       '<td><input type="text" id="metro-edit-num" value="'+esc(e.numMoyen)+'" style="width:90px;"></td>'+
       '<td><input type="text" id="metro-edit-desig" value="'+esc(e.designation)+'" style="width:160px;"></td>'+
       '<td><input type="text" id="metro-edit-lieu" value="'+esc(val(e.lieu,''))+'" style="width:100px;"></td>'+
@@ -3136,7 +3193,7 @@ function renderAlertsSection(){
   }).sort(function(a,b){ return (a.echeance&&b.echeance) ? a.echeance.localeCompare(b.echeance) : 0; });
 
   var html = '<div class="alert-toolbar">';
-  html += '<select id="flt-alert-ligne"><option value="">Toutes les lignes</option>'+LINES.map(function(l){return '<option value="'+l+'"'+(l===alertFilterLigne?' selected':'')+'>'+l+'</option>';}).join('')+'</select>';
+  html += '<select id="flt-alert-ligne"><option value="">Toutes les lignes</option>'+secteurLines().map(function(l){return '<option value="'+l+'"'+(l===alertFilterLigne?' selected':'')+'>'+l+'</option>';}).join('')+'</select>';
   html += '<select id="flt-alert-module"><option value="">Tous les modules</option>'+MODULES.map(function(m){return '<option value="'+m+'"'+(m===alertFilterModule?' selected':'')+'>'+m+'</option>';}).join('')+'</select>';
   html += '<label class="tiny" style="display:flex; align-items:center; gap:6px;">Échéances à venir sous J+<input type="number" id="alert-horizon" value="'+alertHorizon+'" min="1" style="width:56px;"></label>';
   html += '</div>';
@@ -4025,6 +4082,8 @@ app.addEventListener('click', async function(e){
   if(toggleAteqDetail){ ateqDetailActionId = (ateqDetailActionId===toggleAteqDetail.dataset.id)?null:toggleAteqDetail.dataset.id; render(); return; }
 
   // PERF
+  if(e.target.closest('[data-action="actions-view-all"]')){ actionsViewAll = true; render(); return; }
+  if(e.target.closest('[data-action="actions-view-secteur"]')){ actionsViewAll = false; render(); return; }
   if(e.target.closest('[data-action="new-perf"]')){ perfFormOpen = true; render(); return; }
   if(e.target.closest('[data-action="cancel-perf"]')){ perfFormOpen = false; render(); return; }
   if(e.target.closest('[data-action="save-perf"]')){ await handleSavePerf(); return; }
