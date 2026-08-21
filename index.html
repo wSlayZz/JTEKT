@@ -217,6 +217,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -885,19 +886,23 @@ function renderAuditDetailModal(){
 // ===== RESULTATS AUDITS (%) — navigation par mois + récap annuel + graphiques =====
 function monthRecapValue(ligne, monthIdx, year){
   var moisLabel = MONTHS_FR[monthIdx].charAt(0).toUpperCase()+MONTHS_FR[monthIdx].slice(1);
-  var audits = DATA.propAudits.filter(function(a){
-    if(a.ligne!==ligne || a.score===null || a.score===undefined) return false;
+  var vals = [];
+  // Audits de la grille (score calculé, datés précisément)
+  DATA.propAudits.forEach(function(a){
+    if(a.ligne!==ligne || a.score===null || a.score===undefined) return;
     var d = a.date.split('-');
-    return Number(d[0])===year && Number(d[1])-1===monthIdx;
+    if(Number(d[0])===year && Number(d[1])-1===monthIdx) vals.push(a.score);
   });
-  if(audits.length){
-    return {val: Math.round(audits.reduce(function(s,a){return s+a.score;},0)/audits.length), source:'audits', n:audits.length};
-  }
-  var legacy = DATA.resultats.find(function(r){ return r.ligne===ligne && r.mois===moisLabel && (r.annee===year || r.annee===undefined); });
-  if(legacy && legacy.resultatPct!==null && legacy.resultatPct!==undefined){
-    return {val:legacy.resultatPct, source:'historique', n:1};
-  }
-  return null;
+  // Résultats saisis manuellement (hebdo ou mensuels)
+  var manual = DATA.resultats.filter(function(r){
+    return r.ligne===ligne && r.mois===moisLabel && (r.annee===year || r.annee===undefined) && r.resultatPct!==null && r.resultatPct!==undefined;
+  });
+  manual.forEach(function(r){ vals.push(r.resultatPct); });
+  if(!vals.length) return null;
+  var n = vals.length;
+  var source = (DATA.propAudits.some(function(a){var d=a.date.split('-');return a.ligne===ligne&&Number(d[0])===year&&Number(d[1])-1===monthIdx&&a.score!==null;}))
+    ? 'audits' : 'historique';
+  return {val: Math.round(vals.reduce(function(s,v){return s+v;},0)/n), source:source, n:n};
 }
 function weeksOfMonth(year, monthIdx){
   var weeks = [];
@@ -916,9 +921,12 @@ function proprResultats(){
   var html = '<div class="toolbar"><div class="left"><label class="field" style="flex-direction:row; align-items:center; gap:8px;">Année<select id="results-year">'+years.map(function(y){return '<option value="'+y+'"'+(y===resultsYear?' selected':'')+'>'+y+'</option>';}).join('')+'</select></label></div>'+
     '<div style="display:flex; gap:8px;"><button class="btn" data-action="export" data-module="proprete">Générer l\'export labo</button><button class="btn primary" data-toggle-form="resultats">+ Ajouter un résultat</button></div></div>';
   html += '<div id="proprete-export"></div>';
+  var curMonthForForm = Number(todayStr().split('-')[1])-1;
+  var weeksForForm = weeksOfMonth(resultsYear, curMonthForForm);
   html += '<form class="entryform cols2" id="form-resultats" style="display:none">'+
     field('select','ligne','Ligne', LINES.map(function(l){return [l,l];})) +
-    field('select','mois','Mois', MONTHS_FR.map(function(m){return [m.charAt(0).toUpperCase()+m.slice(1), m.charAt(0).toUpperCase()+m.slice(1)];})) +
+    '<label class="field">Mois<select name="mois" id="resultats-form-mois">'+MONTHS_FR.map(function(m,i){var lab=m.charAt(0).toUpperCase()+m.slice(1);return '<option value="'+lab+'"'+(i===curMonthForForm?' selected':'')+'>'+lab+'</option>';}).join('')+'</select></label>'+
+    '<label class="field">Semaine<select name="semaine" id="resultats-form-semaine">'+weeksForForm.map(function(w){return '<option value="'+w.week+'">S'+w.week+' ('+fmtDateShort(isoWeekMondayDate(w.year,w.week))+')</option>';}).join('')+'</select></label>'+
     field('number','resultatPct','Résultat (%)') +
     '<div class="actions-row"><button type="button" class="btn" data-cancel-form="resultats">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'+
   '</form>';
@@ -993,11 +1001,23 @@ function proprResultats(){
         var ai = isoWeekInfo(a.date);
         return ai.year===info.year && ai.week===info.week;
       });
-      if(!auditsThisWeek.length){ html += '<td class="c-empty">—</td>'; return; }
-      var avgScore = Math.round(auditsThisWeek.reduce(function(s,a){return s+a.score;},0)/auditsThisWeek.length);
-      var linkId = auditsThisWeek[0].id;
-      var label = auditsThisWeek.length>1 ? avgScore+'% ('+auditsThisWeek.length+')' : avgScore+'%';
-      html += '<td class="score-cell '+scoreCellClass(avgScore)+'" data-action="view-audit" data-id="'+linkId+'" title="'+auditsThisWeek.length+' audit(s) cette semaine">'+label+'</td>';
+      // Résultats manuels de cette semaine
+      var moisLabel2 = MONTHS_FR[resultsMonthView].charAt(0).toUpperCase()+MONTHS_FR[resultsMonthView].slice(1);
+      var manualThisWeek = DATA.resultats.filter(function(r){
+        return r.ligne===l && r.mois===moisLabel2 && r.semaine===info.week &&
+          (r.annee===resultsYear || r.annee===undefined) && r.resultatPct!==null && r.resultatPct!==undefined;
+      });
+      var allVals = auditsThisWeek.map(function(a){return a.score;}).concat(manualThisWeek.map(function(r){return r.resultatPct;}));
+      if(!allVals.length){ html += '<td class="c-empty">—</td>'; return; }
+      var avgScore = Math.round(allVals.reduce(function(s,v){return s+v;},0)/allVals.length);
+      var label = allVals.length>1 ? avgScore+'% ('+allVals.length+')' : avgScore+'%';
+      if(auditsThisWeek.length){
+        var linkId = auditsThisWeek[0].id;
+        html += '<td class="score-cell '+scoreCellClass(avgScore)+'" data-action="view-audit" data-id="'+linkId+'" title="'+auditsThisWeek.length+' audit(s) + '+manualThisWeek.length+' saisie(s) manuelle(s)">'+label+'</td>';
+      } else {
+        // Saisie manuelle uniquement : cliquable pour SUPPRIMER
+        html += '<td class="score-cell '+scoreCellClass(avgScore)+'" data-action="delete-manual-result" data-id="'+manualThisWeek[0].id+'" title="Saisie manuelle S'+info.week+' — cliquer pour supprimer">'+label+'</td>';
+      }
     });
     html += '</tr>';
   });
@@ -1595,8 +1615,10 @@ var particuleDTEditId = null;            // campagne en cours de saisie DT
 var particuleResultatEditId = null;      // campagne en cours de saisie résultat
 
 function proprParticules(){
+  var html = '<div class="card" style="margin-bottom:14px; padding:10px 14px; background:var(--accent-bg); border-left:3px solid var(--ok);">'+
+    '<span style="font-size:13px;"><b>ℹ Méthode de comptage :</b> seules les particules <b>supérieures à 500 µm</b> sont comptabilisées dans les relevés.</span></div>';
   // Graphiques
-  var html = '<div class="grid grid-2" style="margin-bottom:18px;">';
+  html += '<div class="grid grid-2" style="margin-bottom:18px;">';
   PARTICULE_LINES.forEach(function(l){
     html += '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">'+l+' — tendance par poste</div><div class="chart-box"><canvas id="chart-particules-'+l+'"></canvas></div></div>';
   });
@@ -1611,6 +1633,37 @@ function proprParticules(){
     '<div class="statcard"><div class="eyebrow">Campagnes terminées</div><div class="val">'+DATA.particules.filter(function(p){return p.statut==='resultat';}).length+'</div></div>'+
     '<div class="statcard"><div class="eyebrow">Total campagnes</div><div class="val">'+DATA.particules.length+'</div></div>'+
   '</div>';
+
+  // Tableau récapitulatif annuel : semaines × lignes (somme des particules des postes)
+  var yearNow = Number(todayStr().split('-')[0]);
+  var withResults = DATA.particules.filter(function(p){
+    return p.statut==='resultat' && p.nbParticules!==null && p.nbParticules!==undefined && p.datePose &&
+      Number(p.datePose.split('-')[0])===yearNow;
+  });
+  if(withResults.length){
+    var weekMap = {}; // week -> ligne -> {sum, n}
+    withResults.forEach(function(p){
+      var wk = isoWeekInfo(p.datePose).week;
+      if(!weekMap[wk]) weekMap[wk] = {};
+      if(!weekMap[wk][p.ligne]) weekMap[wk][p.ligne] = {sum:0, n:0};
+      weekMap[wk][p.ligne].sum += p.nbParticules;
+      weekMap[wk][p.ligne].n++;
+    });
+    var sortedWeeks = Object.keys(weekMap).map(Number).sort(function(a,b){return b-a;});
+    html += '<div class="eyebrow" style="margin-bottom:8px;">Récapitulatif annuel '+yearNow+' — total particules &gt;500µm par ligne</div>';
+    html += '<div class="table-wrap" style="margin-bottom:22px;"><table class="annual-table"><thead><tr><th>Semaine</th>'+
+      PARTICULE_LINES.map(function(l){return '<th>'+esc(l)+'</th>';}).join('')+'</tr></thead><tbody>';
+    sortedWeeks.forEach(function(wk){
+      html += '<tr><td class="tiny">S'+wk+'</td>';
+      PARTICULE_LINES.forEach(function(l){
+        var cell = weekMap[wk][l];
+        if(!cell){ html += '<td class="c-empty">—</td>'; return; }
+        html += '<td style="text-align:center; font-family:var(--mono); font-weight:700;">'+cell.sum+' <span class="tiny" style="font-weight:400;">('+cell.n+' poste'+(cell.n>1?'s':'')+')</span></td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+  }
 
   // Bouton nouvelle semaine
   html += '<div class="toolbar"><div class="eyebrow">Suivi des campagnes</div>'+
@@ -1648,9 +1701,8 @@ function proprParticules(){
       '<th style="text-align:left; padding:4px 8px;">Statut</th>'+
       '<th style="text-align:left; padding:4px 8px;">Retrait</th>'+
       '<th style="text-align:left; padding:4px 8px;">N° DT</th>'+
-      '<th style="text-align:right; padding:4px 8px;">Particules</th>'+
+      '<th style="text-align:right; padding:4px 8px;">Particules &gt;500µm</th>'+
       '<th style="text-align:left; padding:4px 8px;">Rapport</th>'+
-      '<th style="text-align:right; padding:4px 8px;">Particules</th>'+
       '<th style="text-align:left; padding:4px 8px;">Actions</th>'+
       '</tr></thead><tbody>';
     sem.items.forEach(function(p){
@@ -1662,10 +1714,10 @@ function proprParticules(){
           '<input type="text" id="dt-numero-'+p.id+'" placeholder="N° DT" value="'+esc(p.numeroDT||'')+'" style="width:110px; font-size:12px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:var(--radius-sm);">'+
           '<button class="btn small primary" data-action="save-dt" data-id="'+p.id+'">OK</button>'+
           '<button class="btn small" data-action="cancel-dt">✕</button></div>';
-      } else if(p.statut==='en_analyse' && particuleResultatEditId===p.id){
+      } else if((p.statut==='en_analyse'||p.statut==='resultat') && particuleResultatEditId===p.id){
         actionCell = '<div style="display:flex; gap:6px; align-items:center;">'+
-          '<input type="number" id="res-nb-'+p.id+'" placeholder="Nb particules" min="0" style="width:130px; font-size:12px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:var(--radius-sm);">'+
-          '<input type="text" id="res-rapport-'+p.id+'" placeholder="Lien rapport (optionnel)" style="width:200px; font-size:12px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:var(--radius-sm);">'+
+          '<input type="number" id="res-nb-'+p.id+'" placeholder="Nb particules >500µm" min="0" value="'+(p.nbParticules!==null&&p.nbParticules!==undefined?p.nbParticules:'')+'" style="width:150px; font-size:12px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:var(--radius-sm);">'+
+          '<input type="text" id="res-rapport-'+p.id+'" placeholder="Lien rapport (optionnel)" value="'+esc(p.rapport||'')+'" style="width:200px; font-size:12px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:var(--radius-sm);">'+
           '<button class="btn small primary" data-action="save-resultat" data-id="'+p.id+'">OK</button>'+
           '<button class="btn small" data-action="cancel-resultat">✕</button></div>';
       } else {
@@ -1673,7 +1725,7 @@ function proprParticules(){
           actionCell = '<button class="btn small" data-action="edit-dt" data-id="'+p.id+'">Saisir DT</button> '+
                        '<button class="btn small primary" data-action="saisir-resultat" data-id="'+p.id+'">Saisir résultat</button>';
         } else if(p.statut==='resultat'){
-          actionCell = '<span class="tiny">'+esc(val(p.comment,''))+'</span>';
+          actionCell = '<button class="btn small" data-action="saisir-resultat" data-id="'+p.id+'">Modifier</button> <span class="tiny">'+esc(val(p.comment,''))+'</span>';
         }
       }
       html += '<tr style="border-top:1px solid var(--border);">'+
@@ -3861,7 +3913,7 @@ async function handleFormSubmit(form){
     }catch(err){ alert(err.message); return; }
   }
   if(mod==='ateq'){ entry.nbDefauts = parseInt(entry.nbDefauts||0,10); entry.nb2nd = parseInt(entry.nb2nd||0,10); }
-  if(mod==='resultats'){ entry.resultatPct = parseFloat(entry.resultatPct||0); }
+  if(mod==='resultats'){ entry.resultatPct = parseFloat(entry.resultatPct||0); entry.semaine = entry.semaine? Number(entry.semaine) : null; entry.annee = resultsYear; }
   if(mod==='planning'){ entry.resultatPct = (entry.resultatPct!==undefined && entry.resultatPct!=='') ? parseFloat(entry.resultatPct) : null; }
   // Pour type=labo : lire la ref sélectionnée et forcer la ligne correspondante
   if(mod==='planning' && entry.type==='labo'){
@@ -4072,6 +4124,17 @@ app.addEventListener('click', async function(e){
   var saisiresBtn = e.target.closest('[data-action="saisir-resultat"]');
   if(saisiresBtn){ particuleResultatEditId = saisiresBtn.dataset.id; particuleDTEditId = null; render(); return; }
   if(e.target.closest('[data-action="cancel-resultat"]')){ particuleResultatEditId = null; render(); return; }
+  var delManualBtn = e.target.closest('[data-action="delete-manual-result"]');
+  if(delManualBtn){
+    var mr = DATA.resultats.find(function(r){ return r.id===delManualBtn.dataset.id; });
+    if(mr && confirm('Supprimer la saisie manuelle '+mr.ligne+' — '+mr.mois+(mr.semaine?' S'+mr.semaine:'')+' ('+mr.resultatPct+'%) ?')){
+      DATA.resultats = DATA.resultats.filter(function(r){ return r.id!==delManualBtn.dataset.id; });
+      await save('resultats');
+      logChange('Propreté', 'Suppression résultat manuel', mr.ligne+' — '+mr.mois+(mr.semaine?' S'+mr.semaine:''));
+      render();
+    }
+    return;
+  }
   var saveResBtn = e.target.closest('[data-action="save-resultat"]');
   if(saveResBtn){ await handleSaveResultat(saveResBtn.dataset.id); return; }
 
@@ -4211,6 +4274,15 @@ app.addEventListener('change', async function(e){
   if(e.target.id==='cd-ref'){ contamDirectState.ref = e.target.value; render(); return; }
   if(e.target.id==='secteur-select'){ currentSecteur = e.target.value; renderNav(); render(); return; }
   if(e.target.id==='perf-year'){ perfYear = Number(e.target.value); render(); return; }
+  if(e.target.id==='resultats-form-mois'){
+    var mIdx2 = monthIndex(e.target.value);
+    var wSel = document.getElementById('resultats-form-semaine');
+    if(wSel && mIdx2>=0){
+      var wks = weeksOfMonth(resultsYear, mIdx2);
+      wSel.innerHTML = wks.map(function(w){return '<option value="'+w.week+'">S'+w.week+' ('+fmtDateShort(isoWeekMondayDate(w.year,w.week))+')</option>';}).join('');
+    }
+    return;
+  }
   if(e.target.id==='af2-allSecteurs'){
     var lst = document.getElementById('af2-secteurs-list');
     if(lst) lst.style.display = e.target.checked? 'none' : 'grid';
@@ -4322,6 +4394,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
