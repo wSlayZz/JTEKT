@@ -218,6 +218,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -1448,6 +1449,80 @@ function analyseFormRow(c){
     '</div></td></tr>';
   return row;
 }
+function contamDirectForm(){
+  var curMoisIdx = Number(todayStr().split('-')[1])-1;
+  var firstLigne = CONTAM_LINES[0];
+  var firstRef = refsForLigne(firstLigne)[0];
+  var crit = REF_CRITERIA[firstRef]||[];
+  return '<div class="card" style="max-width:560px; margin-bottom:16px;">'+
+    '<div class="eyebrow" style="margin-bottom:10px;">Saisie directe — résultat déjà connu</div>'+
+    '<p class="tiny" style="margin-bottom:10px;">À utiliser pour ajouter un résultat sans passer par le circuit collecte → analyse (ex. rattrapage d\'un mois oublié).</p>'+
+    '<div class="entryform cols2">'+
+    '<label class="field">Ligne<select id="cd-ligne">'+CONTAM_LINES.map(function(l){return '<option value="'+l+'">'+l+'</option>';}).join('')+'</select></label>'+
+    '<label class="field">Référence<select id="cd-ref">'+refsForLigne(firstLigne).map(function(r){return '<option value="'+r+'">'+r+'</option>';}).join('')+'</select></label>'+
+    '<label class="field">Mois<select id="cd-mois">'+MONTHS_FR.map(function(m,i){return '<option value="'+i+'"'+(i===curMoisIdx?' selected':'')+'>'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>';}).join('')+'</select></label>'+
+    '<label class="field">Année<input type="number" id="cd-annee" value="'+resultsYear+'"></label>'+
+    '</div>'+
+    '<div id="cd-criteria" class="entryform cols2" style="margin-top:8px;">'+
+      crit.map(function(cr){
+        return '<label class="field">'+esc(cr.label)+' <span class="tiny">(seuil '+cr.seuil+(cr.unit?' '+cr.unit:'')+')</span>'+
+          '<input type="number" step="0.01" class="cd-crit" data-crit="'+cr.id+'"></label>';
+      }).join('')+
+    '</div>'+
+    '<label class="field" style="margin-top:8px;">Lien / référence du rapport PDF (optionnel)<input type="text" id="cd-rapport" placeholder="https://... ou chemin réseau"></label>'+
+    '<div class="actions-row" style="margin-top:12px;">'+
+    '<button class="btn" data-action="cancel-contam-direct">Annuler</button>'+
+    '<button class="btn primary" data-action="save-contam-direct">Enregistrer</button>'+
+    '</div></div>';
+}
+function refreshContamDirectFields(){
+  var ligneEl = document.getElementById('cd-ligne');
+  var refEl = document.getElementById('cd-ref');
+  if(!ligneEl || !refEl) return;
+  var ligne = ligneEl.value;
+  var refs = refsForLigne(ligne);
+  refEl.innerHTML = refs.map(function(r){return '<option value="'+r+'">'+r+'</option>';}).join('');
+  var critBox = document.getElementById('cd-criteria');
+  var crit = REF_CRITERIA[refs[0]]||[];
+  if(critBox){
+    critBox.innerHTML = crit.map(function(cr){
+      return '<label class="field">'+esc(cr.label)+' <span class="tiny">(seuil '+cr.seuil+(cr.unit?' '+cr.unit:'')+')</span>'+
+        '<input type="number" step="0.01" class="cd-crit" data-crit="'+cr.id+'"></label>';
+    }).join('');
+  }
+}
+async function handleSaveContamDirect(){
+  var ligne = document.getElementById('cd-ligne').value;
+  var ref = document.getElementById('cd-ref').value;
+  var mois = Number(document.getElementById('cd-mois').value);
+  var annee = Number(document.getElementById('cd-annee').value);
+  var values = {};
+  var hasValue = false;
+  Array.prototype.forEach.call(document.querySelectorAll('.cd-crit'), function(inp){
+    if(inp.value!==''){ values[inp.dataset.crit] = parseFloat(inp.value); hasValue = true; }
+  });
+  if(!hasValue){ alert('Merci de renseigner au moins une valeur mesurée.'); return; }
+  var existing = DATA.contamination.find(function(c){
+    return c.ligne===ligne && c.ref===ref && c.mois===mois && c.annee===annee && !c.isRetest;
+  });
+  if(existing && !confirm('Un résultat existe déjà pour '+ligne+' · '+ref+' ('+MONTHS_FR[mois]+' '+annee+'). Le remplacer ?')) return;
+  var statut = contamConformite(ref, values);
+  var rapport = document.getElementById('cd-rapport').value || null;
+  if(existing){
+    existing.values = values; existing.statut = statut; existing.rapport = rapport;
+    existing.collecteDate = existing.collecteDate || todayStr();
+  } else {
+    DATA.contamination.push({
+      id: uid('contam'), ligne:ligne, ref:ref, mois:mois, annee:annee,
+      statut:statut, isRetest:false, values:values, serie:null,
+      collecteDate:todayStr(), rapport:rapport, comment:'Saisie directe'
+    });
+  }
+  await save('contamination');
+  logChange('Contamination', 'Saisie directe', ligne+' · '+ref+' — '+MONTHS_FR[mois]+' '+annee+' — '+statut.toUpperCase());
+  contamDirectFormOpen = false;
+  render();
+}
 async function handleDeleteContam(id){
   var c = DATA.contamination.find(function(x){ return x.id===id; });
   if(!c) return;
@@ -2366,8 +2441,21 @@ function render(){
   Array.prototype.forEach.call(app.querySelectorAll('#tabs button'), function(b){
     b.classList.toggle('active', b.dataset.tab===currentTab);
   });
+  // Préserver le focus + la position du curseur d'un champ texte en cours de saisie
+  var activeEl = document.activeElement;
+  var focusInfo = null;
+  if(activeEl && activeEl.id && view.contains(activeEl) && (activeEl.tagName==='INPUT'||activeEl.tagName==='TEXTAREA')){
+    focusInfo = {id:activeEl.id, start:activeEl.selectionStart, end:activeEl.selectionEnd};
+  }
   var fn = RENDERERS[currentTab] || RENDERERS.dashboard;
   view.innerHTML = fn();
+  if(focusInfo){
+    var el = document.getElementById(focusInfo.id);
+    if(el && (el.tagName==='INPUT'||el.tagName==='TEXTAREA')){
+      el.focus();
+      try{ el.setSelectionRange(focusInfo.start, focusInfo.end); }catch(e){}
+    }
+  }
   if(currentTab==='dashboard' && currentSecteur==='MCU'){
     lastChartRefresh = Date.now();
     renderTrendChart();
@@ -4063,6 +4151,7 @@ app.addEventListener('click', async function(e){
   if(e.target.closest('[data-action="add-contam-direct"]')){ contamDirectFormOpen = !contamDirectFormOpen; render(); return; }
   if(e.target.closest('[data-action="cancel-contam-direct"]')){ contamDirectFormOpen = false; render(); return; }
   if(e.target.closest('[data-action="save-contam-direct"]')){ await handleSaveContamDirect(); return; }
+  if(e.target.closest('[data-action="save-contam-direct"]')){ await handleSaveContamDirect(); return; }
 
   if(e.target.classList && e.target.classList.contains('modal-overlay')){ openAuditDetailId = null; openContamDetailId = null; render(); return; }
   var delContamBtn = e.target.closest('[data-action="delete-contam"]');
@@ -4245,6 +4334,7 @@ app.addEventListener('click', async function(e){
 });
 
 app.addEventListener('change', async function(e){
+  if(e.target.id==='cd-ligne'){ refreshContamDirectFields(); return; }
   if(e.target.matches('[data-action="change-status"]')){
     await handleChangeStatus(e.target.dataset.id, e.target.value);
     return;
@@ -4288,7 +4378,6 @@ app.addEventListener('change', async function(e){
     if(lst) lst.style.display = e.target.checked? 'none' : 'grid';
     return;
   }
-  if(e.target.id==='esd-search'){ esdSearch = e.target.value; render(); return; }
   if(e.target.id==='flt-planning-ligne'){ planningLigneFilter = e.target.value; applyPlanningFilter(); return; }
   if(e.target.id==='flt-planning-mois'){ planningMoisFilter = e.target.value; applyPlanningFilter(); return; }
   // Afficher le champ ref quand type=labo dans le formulaire d'ajout
@@ -4394,6 +4483,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
