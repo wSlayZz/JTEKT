@@ -248,6 +248,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -2266,21 +2267,20 @@ RENDERERS.actions = function(){
     html += '<div style="display:flex; gap:8px; margin-bottom:14px; align-items:center;">'+
       '<button class="btn small'+(!actionsViewAll?' primary':'')+'" data-action="actions-view-secteur">Secteur '+esc(currentSecteur)+'</button>'+
       '<button class="btn small'+(actionsViewAll?' primary':'')+'" data-action="actions-view-all">Tous mes secteurs</button>'+
-      (actionsViewAll?'<span class="tiny">Vue consolidée de tous vos secteurs</span>':'')+
+      (actionsViewAll?'<span class="tiny">Vue globale</span>':'')+
     '</div>';
   }
   html += '<div class="toolbar"><div></div><button class="btn primary" data-toggle-form="actions">+ Ajouter une action</button></div>';
   html += '<form class="entryform" id="form-actions" style="display:none">'+
     field('text','description','Description de l\'action') +
-    field('select','origine','Origine', [['ATEQ','ATEQ'],['Métrologie','Métrologie'],['Propreté','Propreté'],['Audit perf','Audit perf'],['Autre','Autre']]) +
     field('select','ligne','Ligne', secteurLines().map(function(l){return [l,l];})) +
     field('text','responsable','Responsable') +
     field('date','echeance','Échéance') +
     field('select','statut','Statut', ACTION_STATUSES) +
     '<div class="actions-row"><button type="button" class="btn" data-cancel-form="actions">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'+
   '</form>';
-  html += '<div class="table-wrap"><table><thead><tr><th>Statut</th><th>Description</th><th>Origine</th><th>Ligne</th><th>Responsable</th><th>Échéance</th><th></th></tr></thead><tbody>';
-  html += rows.map(actionRow).join('') || '<tr><td colspan="7"><div class="empty">Aucune action</div></td></tr>';
+  html += '<div class="table-wrap"><table><thead><tr><th>Statut</th><th>Description</th><th>Ligne</th><th>Responsable</th><th>Échéance</th><th></th></tr></thead><tbody>';
+  html += rows.map(actionRow).join('') || '<tr><td colspan="6"><div class="empty">Aucune action</div></td></tr>';
   html += '</tbody></table></div></div>';
   return html;
 };
@@ -2293,7 +2293,7 @@ function actionRow(a){
   if(actionsViewAll && userSecteurs().length>1){
     ligneCell = '<b style="color:var(--ok);">'+esc(a.secteur||'MCU')+'</b>'+(a.ligne?' · '+esc(a.ligne):'');
   }
-  return '<tr><td>'+badge(level, label)+'</td><td>'+esc(a.description)+'</td><td>'+esc(val(a.origine,''))+'</td><td>'+ligneCell+'</td><td>'+esc(val(a.responsable,''))+'</td>'+
+  return '<tr><td>'+badge(level, label)+'</td><td>'+esc(a.description)+'</td><td>'+ligneCell+'</td><td>'+esc(val(a.responsable,''))+'</td>'+
     '<td class="num">'+fmtDate(a.echeance)+'</td>'+
     '<td><select data-action="change-status" data-id="'+a.id+'">'+ACTION_STATUSES.map(function(s){return '<option value="'+s[0]+'"'+(s[0]===a.statut?' selected':'')+'>'+s[1]+'</option>';}).join('')+'</select> '+
     '<button class="btn small danger-outline" data-action="delete" data-module="actions" data-id="'+a.id+'">Suppr.</button></td></tr>';
@@ -4439,8 +4439,8 @@ async function handleFormSubmit(form){
   Array.prototype.forEach.call(form.elements, function(el){
     if(el.name && el.type!=='file') entry[el.name] = fd.get(el.name);
   });
-  if(['metro','planning','actions'].indexOf(mod)>=0){ entry.secteur = currentSecteur; }  // ← AJOUT
-    var fileInput = form.querySelector('input[type=file]');
+  if(['metro','planning','actions'].indexOf(mod)>=0){ entry.secteur = currentSecteur; }
+  var fileInput = form.querySelector('input[type=file]');
   if(fileInput && fileInput.files[0]){
     try{
       var isImg = fileInput.files[0].type.indexOf('image')===0;
@@ -5113,55 +5113,6 @@ async function init(){
 init();
 
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 </script>
 </body>
