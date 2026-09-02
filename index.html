@@ -248,6 +248,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -313,6 +314,7 @@ var WIDGET_TITLES = {
   w_actions:"Plan d'actions — échéances", w_trend:'Tendance globale', w_scorehist:'Évolution du score', w_alerts:'Alertes'
 };
 var dashboardCustomizing = false;
+var widgetPickerOpen = false;
 function KPI_INDICATORS(){
   return {
     score_global: {label:'Score de conformité global', calc:function(){
@@ -794,11 +796,11 @@ RENDERERS.proprete = function(){
   var allowedAudit = hasSub('canAudit');
   if(!allowedAudit && propreteSub==='grille') propreteSub = 'resultats';
   var html = '<div class="section"><div class="subtabs">'+
-    (allowedAudit? '<button data-sub="grille" class="'+(propreteSub==='grille'?'active':'')+'">Grille d\'audit</button>' : '')+
-    (hasSub('canViewResultats')? '<button data-sub="resultats" class="'+(propreteSub==='resultats'?'active':'')+'">Résultats audits (%)</button>' : '')+
-    (hasSub('canContamination')? '<button data-sub="contamination" class="'+(propreteSub==='contamination'?'active':'')+'">Contamination</button>' : '')+
-    (hasSub('canParticules')? '<button data-sub="particules" class="'+(propreteSub==='particules'?'active':'')+'">Relevés particules</button>' : '')+
-    (hasSub('canVidange')? '<button data-sub="vidange" class="'+(propreteSub==='vidange'?'active':'')+'">MCU0 · Vidange</button>' : '')+
+    (allowedAudit? '<button data-sub="grille" class="'+(propreteSub==='grille'?'active':'')+'">'+esc(t('sub_grille',"Grille d'audit"))+'</button>' : '')+
+    (hasSub('canViewResultats')? '<button data-sub="resultats" class="'+(propreteSub==='resultats'?'active':'')+'">'+esc(t('sub_resultats','Résultats audits (%)'))+'</button>' : '')+
+    (hasSub('canContamination')? '<button data-sub="contamination" class="'+(propreteSub==='contamination'?'active':'')+'">'+esc(t('sub_contamination','Contamination'))+'</button>' : '')+
+    (hasSub('canParticules')? '<button data-sub="particules" class="'+(propreteSub==='particules'?'active':'')+'">'+esc(t('sub_particules','Relevés particules'))+'</button>' : '')+
+    (hasSub('canVidange')? '<button data-sub="vidange" class="'+(propreteSub==='vidange'?'active':'')+'">'+esc(t('sub_vidange','MCU0 · Vidange'))+'</button>' : '')+
   '</div>';
   if(propreteSub==='grille' && allowedAudit) html += renderProprGrilleTab();
   else if(propreteSub==='contamination' && hasSub('canContamination')) html += proprContamination();
@@ -2539,7 +2541,7 @@ function downloadText(filename, text, mime){
 }
 RENDERERS.archives = function(){
   var month = currentYYYYMM(0);
-  var html = '<div class="section"><h2>Archivage des données</h2>';
+  var html = '<div class="section"><h2>'+esc(t('archives_titre','Archivage des données'))+'</h2>';
   html += '<p class="tiny" style="max-width:660px; margin-bottom:16px;">Pour la traçabilité IATF, exportez régulièrement un instantané daté de chaque module (équivalent à un onglet mensuel sur Excel) et classez-le dans votre système documentaire. Les données restent disponibles en continu dans l\'application — l\'export ci-dessous crée une copie figée pour archivage.</p>';
   html += '<div class="toolbar"><div class="left"><label class="field" style="flex-direction:row; align-items:center; gap:8px;">Mois à exporter <input type="month" id="archive-month" value="'+month+'"></label></div></div>';
   html += '<div class="grid grid-2">';
@@ -2907,7 +2909,7 @@ RENDERERS.dashboard = function(){
   W.w_alerts = '<h2>'+esc(t('title_alerts','Alertes'))+'</h2><div id="alerts-section">'+renderAlertsSection()+'</div>';
 
   // ===== Assemblage avec disposition personnalisable =====
-  var layout = getDashboardLayout();
+  var layout = getDashboardLayout().filter(function(w){ return !w.hidden; }); // "hidden" = supprimé du modèle
   var html = '';
   if(userSecteurs().length>1) html += renderMultiSecteurBanner();
 
@@ -2920,45 +2922,52 @@ RENDERERS.dashboard = function(){
   html += '<button class="btn primary" data-action="print-dashboard">Exporter le tableau de bord en PDF</button>';
   html += '</div><div id="digest-box"></div>';
 
+  var WIDGET_COLORS = ['', '#1F5C5C', '#B8730A', '#B23B2E', '#2E7D4F', '#7B4FA3'];
+
   if(dashboardCustomizing){
-    html += '<div class="customize-banner"><span>🖐 Glissez une carte par sa poignée <b>⠿</b> pour la déplacer, S/M/L pour la taille, une pastille de couleur pour l\'accent, 👁 pour la masquer. Utilisez un espace vide pour sauter une ligne.</span>'+
+    html += '<div class="customize-banner"><span>Utilisez ↑↓ pour réordonner, S/M/L pour la taille, une pastille pour la couleur, 🗑 pour supprimer une carte. "+ Ajouter une carte" permet d\'en remettre une supprimée.</span>'+
       '<div style="display:flex; gap:8px; flex-wrap:wrap;">'+
-      '<button class="btn small" data-action="add-kpi-widget">+ Indicateur personnalisé</button>'+
-      '<button class="btn small" data-action="add-spacer-widget">+ Espace vide</button>'+
+      '<button class="btn small" data-action="open-widget-picker">+ Ajouter une carte</button>'+
       '<button class="btn small" data-action="reset-dashboard-layout">Réinitialiser</button>'+
       '</div></div>';
-    var hidden = layout.filter(function(w){return w.hidden;});
-    if(hidden.length){
-      html += '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">'+hidden.map(function(w){
-        return '<div class="widget-hidden-chip" data-action="show-widget" data-id="'+w.id+'">👁 '+esc(widgetLabel(w))+'</div>';
-      }).join('')+'</div>';
+    if(widgetPickerOpen){
+      var allIds = layout.map(function(w){return w.id;});
+      var catalog = DASHBOARD_WIDGETS_DEFAULT.filter(function(w){ return allIds.indexOf(w.id)<0; });
+      html += '<div class="card" style="margin-bottom:14px;"><div class="eyebrow" style="margin-bottom:8px;">Cartes disponibles</div>';
+      html += '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
+      catalog.forEach(function(w){
+        html += '<button class="btn small" data-action="add-back-widget" data-id="'+w.id+'">+ '+esc(WIDGET_TITLES[w.id]||w.id)+'</button>';
+      });
+      html += '<button class="btn small" data-action="add-kpi-widget">+ Indicateur personnalisé</button>';
+      html += '<button class="btn small" data-action="add-spacer-widget">+ Espace vide</button>';
+      if(!catalog.length) html += '<span class="tiny">Toutes les cartes standards sont déjà affichées.</span>';
+      html += '</div></div>';
     }
   }
 
-  var WIDGET_COLORS = ['', '#1F5C5C', '#B8730A', '#B23B2E', '#2E7D4F', '#7B4FA3'];
-
   html += '<div class="dash-grid" id="dash-sortable">';
-  layout.filter(function(w){return !w.hidden;}).forEach(function(w){
+  layout.forEach(function(w, idx){
     var isSpacer = w.id.indexOf('spacer-')===0;
     var isKpi = w.id.indexOf('kpi-')===0;
     if(!isSpacer && !isKpi && W[w.id]===undefined) return;
 
-    var accentStyle = w.color ? 'border-left:4px solid '+w.color+';' : '';
-    html += '<div class="widget widget-'+(w.size||'m')+'" data-widget-id="'+w.id+'" '+(dashboardCustomizing?'draggable="true"':'')+'>';
+    var accentStyle = w.color ? 'border-top:5px solid '+w.color+'; background:linear-gradient(180deg, '+w.color+'14, transparent 60px);' : '';
+    html += '<div class="widget widget-'+(w.size||'m')+'" data-widget-id="'+w.id+'">';
     if(dashboardCustomizing){
       html += '<div class="widget-toolbar">'+
-        '<span class="widget-drag-handle" title="Glisser pour réordonner">⠿</span>'+
+        '<button data-action="widget-move" data-id="'+w.id+'" data-dir="up" title="Monter" '+(idx===0?'disabled':'')+'>↑</button>'+
+        '<button data-action="widget-move" data-id="'+w.id+'" data-dir="down" title="Descendre" '+(idx===layout.length-1?'disabled':'')+'>↓</button>'+
         WIDGET_COLORS.map(function(c){
           return '<button data-action="widget-color" data-id="'+w.id+'" data-color="'+c+'" title="'+(c?'Couleur':'Aucune couleur')+'" style="width:16px; height:16px; padding:0; border-radius:50%; background:'+(c||'#fff')+'; border:2px solid '+(w.color===c?'var(--text)':'var(--border)')+';"></button>';
         }).join('')+
         '<button data-action="widget-size" data-id="'+w.id+'" data-size="s" class="'+(w.size==='s'?'active':'')+'">S</button>'+
         '<button data-action="widget-size" data-id="'+w.id+'" data-size="m" class="'+(w.size==='m'?'active':'')+'">M</button>'+
         '<button data-action="widget-size" data-id="'+w.id+'" data-size="l" class="'+(w.size==='l'?'active':'')+'">L</button>'+
-        (isSpacer||isKpi ? '<button data-action="delete-widget" data-id="'+w.id+'" title="Supprimer">🗑</button>' : '<button data-action="hide-widget" data-id="'+w.id+'" title="Masquer">👁</button>')+
+        '<button data-action="delete-widget" data-id="'+w.id+'" title="Supprimer">🗑</button>'+
       '</div>';
     }
     if(isSpacer){
-      html += '<div class="section card" style="'+accentStyle+(dashboardCustomizing?'min-height:60px; display:flex; align-items:center; justify-content:center; border:2px dashed var(--border); background:transparent; box-shadow:none;':'visibility:hidden; height:0; padding:0; margin:0; border:none; box-shadow:none;')+'">'+
+      html += '<div class="section card" style="'+accentStyle+(dashboardCustomizing?'min-height:60px; display:flex; align-items:center; justify-content:center; border:2px dashed var(--border); box-shadow:none;':'visibility:hidden; height:0; padding:0; margin:0; border:none; box-shadow:none;')+'">'+
         (dashboardCustomizing? '<span class="tiny">Espace vide</span>' : '')+
       '</div>';
     } else if(isKpi){
@@ -3173,11 +3182,11 @@ function trendBadge(current, previous){
 
 RENDERERS.ateq = function(){
   var html = '<div class="section">';
-  html += '<h2 style="margin-bottom:6px;">Saisie de la semaine</h2><p class="tiny" style="margin-bottom:12px;">Renseignez les chiffres du jour directement dans la grille, puis enregistrez la semaine en une fois.</p>';
+  html += '<h2 style="margin-bottom:6px;">'+esc(t('ateq_saisie','Saisie de la semaine'))+'</h2><p class="tiny" style="margin-bottom:12px;">Renseignez les chiffres du jour directement dans la grille, puis enregistrez la semaine en une fois.</p>';
   html += renderAteqWeekGrid();
   html += '</div>';
 
-  html += '<div class="section"><h2>Indicateurs</h2><div class="grid grid-2">';
+  html += '<div class="section"><h2>'+esc(t('ateq_indicateurs','Indicateurs'))+'</h2><div class="grid grid-2">';
   ['MCU1','MCU2'].forEach(function(l){
     var curM = currentYYYYMM(0), prevM = currentYYYYMM(-1);
     var totalCur = monthTotal(l, curM), totalPrev = monthTotal(l, prevM);
@@ -3903,24 +3912,29 @@ RENDERERS.comptes = function(){
 
   if(isSuperAdmin()){
     html += '<h2 style="font-size:14px; margin:26px 0 10px;">Personnalisation des libellés (Super Admin)</h2>';
-    html += '<p class="tiny" style="margin-bottom:10px;">Renommez les titres affichés dans l\'application. Laissez vide pour revenir au libellé par défaut.</p>';
+    html += '<p class="tiny" style="margin-bottom:10px;">Renommez les grands titres affichés dans l\'application, page par page. Laissez vide pour revenir au libellé par défaut. Ceci couvre les titres principaux — pas chaque mot de chaque bouton ; dites-moi si un libellé précis manque et je l\'ajouterai.</p>';
     html += '<div class="card" style="max-width:640px;">';
-    html += '<div class="eyebrow" style="margin-bottom:8px;">Onglets de navigation</div>';
-    html += '<div style="display:flex; flex-direction:column; gap:8px; margin-bottom:18px;">';
-    ALL_TABS.forEach(function(tb){
-      var key = 'tab_'+tb[0];
-      html += '<label class="field" style="flex-direction:row; align-items:center; gap:10px;"><span style="width:160px; font-size:12px; color:var(--text-faint);">'+esc(tb[1])+'</span>'+
-        '<input type="text" class="label-override-input" data-key="'+key+'" placeholder="'+esc(tb[1])+'" value="'+esc(DATA.labelOverrides[key]||'')+'" style="flex:1;"></label>';
+
+    var LABEL_GROUPS = [
+      {title:'Onglets de navigation', keys: ALL_TABS.map(function(tb){ return ['tab_'+tb[0], tb[1]]; })},
+      {title:'Tableau de bord', keys: Object.keys(WIDGET_TITLES).map(function(wid){ return ['title_'+wid.replace('w_',''), WIDGET_TITLES[wid]]; })},
+      {title:'Propreté — sous-onglets', keys: [
+        ['sub_grille',"Grille d'audit"], ['sub_resultats','Résultats audits (%)'],
+        ['sub_contamination','Contamination'], ['sub_particules','Relevés particules'], ['sub_vidange','MCU0 · Vidange']
+      ]},
+      {title:'Défauts ATEQ', keys: [['ateq_saisie','Saisie de la semaine'], ['ateq_indicateurs','Indicateurs']]},
+      {title:'Archives', keys: [['archives_titre','Archivage des données']]}
+    ];
+    LABEL_GROUPS.forEach(function(group){
+      html += '<div class="eyebrow" style="margin-bottom:8px; margin-top:14px;">'+esc(group.title)+'</div>';
+      html += '<div style="display:flex; flex-direction:column; gap:8px; margin-bottom:6px;">';
+      group.keys.forEach(function(pair){
+        var key = pair[0], defaultLabel = pair[1];
+        html += '<label class="field" style="flex-direction:row; align-items:center; gap:10px;"><span style="width:180px; font-size:12px; color:var(--text-faint);">'+esc(defaultLabel)+'</span>'+
+          '<input type="text" class="label-override-input" data-key="'+key+'" placeholder="'+esc(defaultLabel)+'" value="'+esc(DATA.labelOverrides[key]||'')+'" style="flex:1;"></label>';
+      });
+      html += '</div>';
     });
-    html += '</div>';
-    html += '<div class="eyebrow" style="margin-bottom:8px;">Titres du tableau de bord</div>';
-    html += '<div style="display:flex; flex-direction:column; gap:8px;">';
-    Object.keys(WIDGET_TITLES).forEach(function(wid){
-      var key = 'title_'+wid.replace('w_','');
-      html += '<label class="field" style="flex-direction:row; align-items:center; gap:10px;"><span style="width:160px; font-size:12px; color:var(--text-faint);">'+esc(WIDGET_TITLES[wid])+'</span>'+
-        '<input type="text" class="label-override-input" data-key="'+key+'" placeholder="'+esc(WIDGET_TITLES[wid])+'" value="'+esc(DATA.labelOverrides[key]||'')+'" style="flex:1;"></label>';
-    });
-    html += '</div>';
     html += '<div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="reset-labels">Tout réinitialiser</button><button class="btn primary" data-action="save-labels">Enregistrer les libellés</button></div>';
     html += '</div>';
   }
@@ -4628,7 +4642,8 @@ app.addEventListener('click', async function(e){
   if(delRoleBtn){ await handleDeleteRole(delRoleBtn.dataset.id); return; }
 
   // ===== Dashboard personnalisable =====
-  if(e.target.closest('[data-action="toggle-customize"]')){ dashboardCustomizing = !dashboardCustomizing; render(); return; }
+  if(e.target.closest('[data-action="toggle-customize"]')){ dashboardCustomizing = !dashboardCustomizing; widgetPickerOpen = false; render(); return; }
+  if(e.target.closest('[data-action="open-widget-picker"]')){ widgetPickerOpen = !widgetPickerOpen; render(); return; }
   var sizeBtn = e.target.closest('[data-action="widget-size"]');
   if(sizeBtn){
     var layout = getDashboardLayout();
@@ -4638,22 +4653,20 @@ app.addEventListener('click', async function(e){
     render();
     return;
   }
-  var hideBtn = e.target.closest('[data-action="hide-widget"]');
-  if(hideBtn){
-    var layout2 = getDashboardLayout();
-    var w2 = layout2.find(function(x){return x.id===hideBtn.dataset.id;});
-    if(w2) w2.hidden = true;
-    await saveDashboardLayout(layout2);
-    render();
-    return;
-  }
-  var showBtn = e.target.closest('[data-action="show-widget"]');
-  if(showBtn){
-    var layout3 = getDashboardLayout();
-    var w3 = layout3.find(function(x){return x.id===showBtn.dataset.id;});
-    if(w3) w3.hidden = false;
-    await saveDashboardLayout(layout3);
-    render();
+  var moveBtn = e.target.closest('[data-action="widget-move"]');
+  if(moveBtn){
+    var layoutM = getDashboardLayout();
+    var visible = layoutM.filter(function(x){return !x.hidden;});
+    var idx = visible.findIndex(function(x){return x.id===moveBtn.dataset.id;});
+    var dir = moveBtn.dataset.dir==='up' ? -1 : 1;
+    var swapIdx = idx+dir;
+    if(idx>=0 && swapIdx>=0 && swapIdx<visible.length){
+      var tmp = visible[idx]; visible[idx] = visible[swapIdx]; visible[swapIdx] = tmp;
+      // Reconstruire le tableau complet en respectant le nouvel ordre des éléments visibles
+      var hiddenOnes = layoutM.filter(function(x){return x.hidden;});
+      await saveDashboardLayout(visible.concat(hiddenOnes));
+      render();
+    }
     return;
   }
   var colorBtn = e.target.closest('[data-action="widget-color"]');
@@ -4669,6 +4682,7 @@ app.addEventListener('click', async function(e){
     var layoutSp = getDashboardLayout();
     layoutSp.push({id:uid('spacer'), size:'m', hidden:false});
     await saveDashboardLayout(layoutSp);
+    widgetPickerOpen = false;
     render();
     return;
   }
@@ -4676,12 +4690,34 @@ app.addEventListener('click', async function(e){
     var layoutK = getDashboardLayout();
     layoutK.push({id:uid('kpi'), size:'s', hidden:false, indicator:null});
     await saveDashboardLayout(layoutK);
+    widgetPickerOpen = false;
+    render();
+    return;
+  }
+  var addBackBtn = e.target.closest('[data-action="add-back-widget"]');
+  if(addBackBtn){
+    var layoutAB = getDashboardLayout();
+    var existingW = layoutAB.find(function(x){return x.id===addBackBtn.dataset.id;});
+    if(existingW){ existingW.hidden = false; }
+    else {
+      var def = DASHBOARD_WIDGETS_DEFAULT.find(function(x){return x.id===addBackBtn.dataset.id;});
+      layoutAB.push({id:addBackBtn.dataset.id, size:def?def.size:'m', hidden:false});
+    }
+    await saveDashboardLayout(layoutAB);
+    widgetPickerOpen = false;
     render();
     return;
   }
   var deleteWidgetBtn = e.target.closest('[data-action="delete-widget"]');
   if(deleteWidgetBtn){
-    var layoutD = getDashboardLayout().filter(function(x){return x.id!==deleteWidgetBtn.dataset.id;});
+    var isCustom = deleteWidgetBtn.dataset.id.indexOf('spacer-')===0 || deleteWidgetBtn.dataset.id.indexOf('kpi-')===0;
+    var layoutD = getDashboardLayout();
+    if(isCustom){
+      layoutD = layoutD.filter(function(x){return x.id!==deleteWidgetBtn.dataset.id;});
+    } else {
+      var wD = layoutD.find(function(x){return x.id===deleteWidgetBtn.dataset.id;});
+      if(wD) wD.hidden = true; // widgets standards : retirés mais récupérables via "+ Ajouter une carte"
+    }
     await saveDashboardLayout(layoutD);
     render();
     return;
@@ -4689,6 +4725,7 @@ app.addEventListener('click', async function(e){
   if(e.target.closest('[data-action="reset-dashboard-layout"]')){
     if(confirm('Réinitialiser la disposition du tableau de bord à sa configuration par défaut ?')){
       await saveDashboardLayout(DASHBOARD_WIDGETS_DEFAULT.map(function(w){return {id:w.id, size:w.size, hidden:false};}));
+      widgetPickerOpen = false;
       render();
     }
     return;
@@ -4891,48 +4928,7 @@ app.addEventListener('input', function(e){
   if(e.target.id==='formation-search'){ formationSearch = e.target.value; render(); }
 });
 
-// ===== Drag & drop des widgets du dashboard (réordonnancement) =====
-var dragWidgetId = null;
-app.addEventListener('dragstart', function(e){
-  var wEl = e.target.closest('.widget[draggable="true"]');
-  if(!wEl) return;
-  dragWidgetId = wEl.dataset.widgetId;
-  wEl.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-});
-app.addEventListener('dragend', function(e){
-  var wEl = e.target.closest('.widget');
-  if(wEl) wEl.classList.remove('dragging');
-});
-app.addEventListener('dragover', function(e){
-  var container = e.target.closest('#dash-sortable');
-  if(!container) return;
-  e.preventDefault();
-  var afterEl = null;
-  var closestOffset = -Infinity;
-  Array.prototype.forEach.call(container.querySelectorAll('.widget:not(.dragging)'), function(child){
-    var box = child.getBoundingClientRect();
-    var offset = e.clientY - box.top - box.height/2;
-    if(offset < 0 && offset > closestOffset){ closestOffset = offset; afterEl = child; }
-  });
-  var dragging = container.querySelector('.widget.dragging');
-  if(!dragging) return;
-  if(afterEl==null) container.appendChild(dragging);
-  else container.insertBefore(dragging, afterEl);
-});
-app.addEventListener('drop', async function(e){
-  var container = e.target.closest('#dash-sortable');
-  if(!container || !dragWidgetId) return;
-  e.preventDefault();
-  var newOrderIds = Array.prototype.map.call(container.querySelectorAll('.widget'), function(el){ return el.dataset.widgetId; });
-  var layout = getDashboardLayout();
-  var byId = {}; layout.forEach(function(w){ byId[w.id]=w; });
-  var newLayout = newOrderIds.map(function(id){ return byId[id]; }).filter(Boolean);
-  // Ajouter les widgets masqués à la fin (ils ne sont pas dans le DOM triable)
-  layout.forEach(function(w){ if(w.hidden) newLayout.push(w); });
-  await saveDashboardLayout(newLayout);
-  dragWidgetId = null;
-});
+// ===== Réordonnancement du dashboard : flèches ↑↓ (voir handler widget-move) =====
 
 // ===== Drag libre des post-its (souris + tactile) =====
 (function(){
@@ -5007,6 +5003,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
