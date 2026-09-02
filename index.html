@@ -4439,7 +4439,8 @@ async function handleFormSubmit(form){
   Array.prototype.forEach.call(form.elements, function(el){
     if(el.name && el.type!=='file') entry[el.name] = fd.get(el.name);
   });
-  var fileInput = form.querySelector('input[type=file]');
+  if(['metro','planning','actions'].indexOf(mod)>=0){ entry.secteur = currentSecteur; }  // ← AJOUT
+    var fileInput = form.querySelector('input[type=file]');
   if(fileInput && fileInput.files[0]){
     try{
       var isImg = fileInput.files[0].type.indexOf('image')===0;
