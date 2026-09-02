@@ -293,7 +293,6 @@ function t(key, fallback){
   if(DATA.labelOverrides && DATA.labelOverrides[key]!==undefined && DATA.labelOverrides[key]!=='') return DATA.labelOverrides[key];
   return fallback;
 }
-function isSuperAdmin(){ return !!(currentUser && currentUser.isSuperAdmin); }
 
 // ============ DASHBOARD PERSONNALISABLE (widgets) ============
 var DASHBOARD_WIDGETS_DEFAULT = [
@@ -3728,7 +3727,7 @@ function renderPostits(){
     return '<div class="postit" data-id="'+p.id+'" style="left:'+(p.x||20)+'px; top:'+(p.y||20)+'px; background:'+esc(p.color||POSTIT_COLORS[0])+';">'+
       '<div style="white-space:pre-wrap; word-break:break-word;">'+esc(p.text)+'</div>'+
       '<div class="postit-meta"><span>'+esc(p.author||'?')+'</span>'+
-        ((p.author===(currentUser?currentUser.displayName:'') || isSuperAdmin() || (currentUser&&currentUser.roleId===ADMIN_ROLE_ID))?
+        ((p.author===(currentUser?currentUser.displayName:'') || (currentUser&&currentUser.roleId===ADMIN_ROLE_ID))?
           '<button class="postit-del" data-action="delete-postit" data-id="'+p.id+'" title="Supprimer">✕</button>' : '')+
       '</div></div>';
   }).join('')+'</div>';
@@ -3837,7 +3836,7 @@ function bootstrapAdmin(){
     changed = true;
   }
   if(!DATA.accounts.length){
-    DATA.accounts.push({id:uid('acc'), username:'admin', password:'admin1234', displayName:'Administrateur', roleId:ADMIN_ROLE_ID, allSecteurs:true, secteurs:[], isSuperAdmin:true});
+    DATA.accounts.push({id:uid('acc'), username:'admin', password:'admin1234', displayName:'Administrateur', roleId:ADMIN_ROLE_ID, allSecteurs:true, secteurs:[]});
     changed = true;
   }
   // Migration multi-secteurs : comptes existants sans champ secteurs
@@ -3845,11 +3844,6 @@ function bootstrapAdmin(){
     if(a.secteurs===undefined){
       if(a.roleId===ADMIN_ROLE_ID){ a.allSecteurs = true; a.secteurs = []; }
       else { a.allSecteurs = false; a.secteurs = ['MCU']; }
-      changed = true;
-    }
-    // Migration indépendante : le(s) compte(s) Administrateur deviennent Super Admin s'ils ne le sont pas déjà
-    if(a.roleId===ADMIN_ROLE_ID && a.isSuperAdmin===undefined){
-      a.isSuperAdmin = true;
       changed = true;
     }
   });
@@ -4038,13 +4032,13 @@ RENDERERS.comptes = function(){
   html += '<div class="table-wrap" style="overflow-x:auto;"><table class="perm-table"><thead>';
   html += '<tr><th rowspan="2" style="min-width:130px;">Profil</th>';
   html += ALL_TABS.filter(function(t){return t[0]!=='proprete';}).map(function(t){return '<th rowspan="2">'+esc(t[1])+'</th>';}).join('');
-  html += '<th colspan="'+PROPRETE_SUBS.length+'" style="text-align:center; border-bottom:2px solid var(--ok);">Propreté</th>';
+  html += '<th colspan="'+(PROPRETE_SUBS.length+1)+'" style="text-align:center; border-bottom:2px solid var(--ok);">Propreté</th>';
   html += '<th rowspan="2"></th></tr>';
-  html += '<tr>'+PROPRETE_SUBS.map(function(s){return '<th style="font-size:10px; color:var(--ok);">'+esc(s[1])+'</th>';}).join('')+'</tr>';
+  html += '<tr><th style="font-size:10px; color:var(--ok); font-weight:700;">Onglet actif</th>'+PROPRETE_SUBS.map(function(s){return '<th style="font-size:10px; color:var(--ok);">'+esc(s[1])+'</th>';}).join('')+'</tr>';
   html += '</thead><tbody>';
   html += DATA.roles.map(function(r){
     if(r.id===ADMIN_ROLE_ID){
-      var totalCols = ALL_TABS.filter(function(t){return t[0]!=='proprete';}).length + PROPRETE_SUBS.length;
+      var totalCols = ALL_TABS.filter(function(t){return t[0]!=='proprete';}).length + PROPRETE_SUBS.length + 1;
       return '<tr><td>'+esc(r.name)+' <span class="role-protected">(accès complet)</span></td>'+
         Array(totalCols).fill('<td style="text-align:center;">✓</td>').join('')+'<td></td></tr>';
     }
@@ -4064,6 +4058,9 @@ RENDERERS.comptes = function(){
       var checked = r.tabs.indexOf(t[0])>=0;
       return '<td style="text-align:center;"><input type="checkbox" data-action="toggle-role-tab" data-role="'+r.id+'" data-tabkey="'+t[0]+'" '+(checked?'checked':'')+'></td>';
     }).join('');
+    // Case principale : activer l'onglet Propreté
+    var proprActive = r.tabs.indexOf('proprete')>=0;
+    row += '<td style="text-align:center; background:var(--ok-bg);"><input type="checkbox" data-action="toggle-role-tab" data-role="'+r.id+'" data-tabkey="proprete" '+(proprActive?'checked':'')+'></td>';
     // Sous-permissions propreté
     row += PROPRETE_SUBS.map(function(s){
       // canViewResultats : true par défaut si non défini
@@ -4098,7 +4095,6 @@ function accountForm(){
         return '<label style="display:flex; align-items:center; gap:5px; font-size:12.5px;"><input type="checkbox" class="af2-secteur-chk" value="'+sec.id+'" '+(checked?'checked':'')+'> '+esc(sec.nom)+'</label>';
       }).join('')+
     '</div></div>'+
-    (isSuperAdmin()? '<label style="display:flex; align-items:center; gap:6px; font-size:13px; margin-top:10px; padding:8px; border:1px dashed var(--ok); border-radius:var(--radius-sm);"><input type="checkbox" id="af2-superAdmin" '+(s.isSuperAdmin?'checked':'')+'> <b>Super Admin</b> - peut renommer les libellés de l\'application</label>' : '')+
     '</div><div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="cancel-account">Annuler</button><button class="btn primary" data-action="save-account">Enregistrer</button></div></div>';
 }
 function roleForm(){
@@ -4111,7 +4107,7 @@ function handleNewAccount(){ accountFormState = {id:null, displayName:'', userna
 function handleEditAccount(id){
   var a = DATA.accounts.find(function(x){ return x.id===id; });
   if(!a) return;
-  accountFormState = {id:a.id, displayName:a.displayName, username:a.username, roleId:a.roleId, secteurs:a.secteurs||['MCU'], allSecteurs:!!a.allSecteurs, isSuperAdmin:!!a.isSuperAdmin};
+  accountFormState = {id:a.id, displayName:a.displayName, username:a.username, roleId:a.roleId, secteurs:a.secteurs||['MCU'], allSecteurs:!!a.allSecteurs};
   render();
 }
 async function handleSaveAccount(){
@@ -4125,20 +4121,17 @@ async function handleSaveAccount(){
   var allSecteurs = document.getElementById('af2-allSecteurs').checked;
   var secteurs = allSecteurs ? [] : Array.prototype.map.call(document.querySelectorAll('.af2-secteur-chk:checked'), function(c){return c.value;});
   if(!allSecteurs && !secteurs.length){ alert('Sélectionnez au moins un secteur.'); return; }
-  var superAdminEl = document.getElementById('af2-superAdmin');
-  var isSuperAdminVal = superAdminEl ? superAdminEl.checked : undefined;
   if(accountFormState.id){
     var a = DATA.accounts.find(function(x){ return x.id===accountFormState.id; });
     a.displayName = displayName; a.username = username; a.roleId = roleId;
     a.allSecteurs = allSecteurs; a.secteurs = secteurs;
-    if(isSuperAdminVal!==undefined) a.isSuperAdmin = isSuperAdminVal;
     if(password) a.password = password;
     if(currentUser && currentUser.id===a.id) currentUser = a;
     await save('accounts');
     logChange('Comptes', 'Modification', displayName+' ('+username+')');
   } else {
     if(!password){ alert('Mot de passe requis.'); return; }
-    DATA.accounts.push({id:uid('acc'), displayName:displayName, username:username, password:password, roleId:roleId, allSecteurs:allSecteurs, secteurs:secteurs, isSuperAdmin:!!isSuperAdminVal});
+    DATA.accounts.push({id:uid('acc'), displayName:displayName, username:username, password:password, roleId:roleId, allSecteurs:allSecteurs, secteurs:secteurs});
     await save('accounts');
     logChange('Comptes', 'Création', displayName+' ('+username+')');
   }
@@ -5145,6 +5138,55 @@ async function init(){
 init();
 
 })();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 </script>
