@@ -1472,7 +1472,6 @@ function proprContamination(){
   html += '<div class="card" style="margin-bottom:18px;">'+
     '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;">'+
       '<div><div class="eyebrow">'+(pendingRetests.length?'2':'1')+' - Déclarer une collecte (production)</div>'+
-        '<p class="tiny" style="margin-top:4px;">La production déclare qu\'un échantillon a été prélevé. Le labo le retrouvera dans la liste ci-dessous pour saisir les mesures.</p></div>'+
       '<div style="display:flex; gap:8px;">'+
         '<button class="btn" data-action="contam-noprod">Pas de prod ce mois</button>'+
         '<button class="btn primary" data-action="new-collecte-contam">+ Déclarer une collecte</button>'+
@@ -1542,10 +1541,6 @@ function proprContamination(){
   });
   html += '</tbody></table></div>';
 
-  var legacy = DATA.releves.filter(function(r){ return r.produit==='144P'||r.produit==='143X'; });
-  if(legacy.length){
-    html += '<p class="tiny" style="margin-top:14px;">'+legacy.length+' relevé(s) historique(s) non rattachés à une ligne précise (144P et 143X existent sur MCU1 et MCU2).</p>';
-  }
 
   // ── TABLEAU PAGINÉ DES RÉSULTATS ───────────────────────────────────
   var allResults = DATA.contamination.filter(function(c){ return c.statut==='ok'||c.statut==='nc'; })
@@ -2965,7 +2960,7 @@ RENDERERS.dashboard = function(){
         var dlvl = scoreLevel(d.val);
         return '<div style="text-align:center; min-width:120px;"><div class="tiny" style="margin-bottom:4px;">'+esc(d.label)+'</div><div style="font-family:var(--mono); font-weight:700; font-size:24px; color:var(--'+dlvl+');">'+d.val+'%</div></div>';
       }).join('')+'</div>'+
-      '<p class="tiny" style="margin-top:16px; text-align:center; color:var(--text-faint);">Seuils : ≥85% conforme, 50–85% attention, &lt;50% en danger - identiques aux audits propreté.</p>';
+      '<p class="tiny" style="margin-top:16px; text-align:center; color:var(--text-faint);">Seuils : ≥85% conforme, 50–85% attention, &lt;50% en danger.</p>';
   })();
 
   W.w_planning = (function(){
