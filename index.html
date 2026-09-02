@@ -247,6 +247,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -312,6 +313,62 @@ var WIDGET_TITLES = {
   w_actions:"Plan d'actions — échéances", w_trend:'Tendance globale', w_scorehist:'Évolution du score', w_alerts:'Alertes'
 };
 var dashboardCustomizing = false;
+function KPI_INDICATORS(){
+  return {
+    score_global: {label:'Score de conformité global', calc:function(){
+      var gs = globalConformityScore();
+      return {value: gs.score!==null? gs.score+'%':'—', level: gs.score!==null?scoreLevel(gs.score):'neutral'};
+    }},
+    metro_late: {label:'Métrologie — en retard', calc:function(){
+      var n = DATA.metro.filter(function(e){return metroStatus(e).level==='danger';}).length;
+      return {value:n, level:n>0?'danger':'ok'};
+    }},
+    metro_urgent: {label:'Métrologie — expire ce mois', calc:function(){
+      var n = DATA.metro.filter(function(e){return metroStatus(e).level==='urgent';}).length;
+      return {value:n, level:n>0?'warn':'ok'};
+    }},
+    ateq_defauts7j: {label:'Défauts ATEQ (7 derniers jours)', calc:function(){
+      var n = DATA.ateq.filter(function(a){ var d=daysBetween(a.date,todayStr()); return d<=6 && d>=0; }).reduce(function(s,a){return s+(a.nbDefauts||0);},0);
+      return {value:n, level:n>20?'danger':n>5?'warn':'ok'};
+    }},
+    actions_open: {label:'Actions ouvertes', calc:function(){
+      var n = DATA.actions.filter(isActionOpen).length;
+      return {value:n, level:n>0?'warn':'ok'};
+    }},
+    actions_late: {label:'Actions en retard', calc:function(){
+      var n = DATA.actions.filter(isActionLate).length;
+      return {value:n, level:n>0?'danger':'ok'};
+    }},
+    propr_moy: {label:'Propreté — moyenne dernières valeurs', calc:function(){
+      var vals = LINES.map(latestResultByLine).filter(Boolean).map(function(r){return r.resultatPct;});
+      if(!vals.length) return {value:'—', level:'neutral'};
+      var avg = Math.round(vals.reduce(function(s,v){return s+v;},0)/vals.length);
+      return {value:avg+'%', level:scoreLevel(avg)};
+    }},
+    perf_moy: {label:'Audits perf — moyenne dernières valeurs', calc:function(){
+      var vals = LINES.map(latestPerfResultByLine).filter(Boolean).map(function(r){return r.resultatPct;});
+      if(!vals.length) return {value:'—', level:'neutral'};
+      var avg = Math.round(vals.reduce(function(s,v){return s+v;},0)/vals.length);
+      return {value:avg+'%', level:scoreLevel(avg)};
+    }}
+  };
+}
+function widgetLabel(w){
+  if(w.id.indexOf('spacer-')===0) return 'Espace vide';
+  if(w.id.indexOf('kpi-')===0){ var defs=KPI_INDICATORS(); return (w.indicator && defs[w.indicator]) ? defs[w.indicator].label : 'Indicateur personnalisé'; }
+  return WIDGET_TITLES[w.id]||w.id;
+}
+function renderKpiWidget(w){
+  var defs = KPI_INDICATORS();
+  var options = Object.keys(defs).map(function(k){return '<option value="'+k+'"'+(w.indicator===k?' selected':'')+'>'+esc(defs[k].label)+'</option>';}).join('');
+  var picker = dashboardCustomizing ? '<select data-action="pick-kpi-indicator" data-id="'+w.id+'" style="font-size:11px; margin-bottom:8px; width:100%;"><option value="">— Choisir un indicateur —</option>'+options+'</select>' : '';
+  if(!w.indicator || !defs[w.indicator]){
+    return picker + (dashboardCustomizing? '' : '<div class="tiny">Indicateur non configuré.</div>');
+  }
+  var res = defs[w.indicator].calc();
+  return picker + '<div class="eyebrow">'+esc(defs[w.indicator].label)+'</div>'+
+    '<div style="font-family:var(--mono); font-weight:700; font-size:28px; color:var(--'+(res.level||'text')+');">'+res.value+'</div>';
+}
 function getDashboardLayout(){
   if(currentUser && Array.isArray(currentUser.dashboardLayout) && currentUser.dashboardLayout.length){
     // Compléter avec les widgets manquants (nouveaux widgets ajoutés depuis la dernière sauvegarde)
@@ -1328,7 +1385,10 @@ function proprContamination(){
     html += '<tr><td>'+m+'</td>';
     CONTAM_COMBOS.forEach(function(c){
       var rec = rs.find(function(x){ return x.ligne===c.ligne && x.ref===c.ref && x.mois===mIdx; });
-      if(!rec){ html += '<td class="c-empty">—</td>'; return; }
+      if(!rec){
+        html += '<td class="c-empty" data-action="contam-cell-add" data-ligne="'+c.ligne+'" data-ref="'+c.ref+'" data-mois="'+mIdx+'" style="cursor:pointer;" title="Cliquer pour saisir un résultat ou marquer non produit">—</td>';
+        return;
+      }
       var lvl = contamLevelForStatut(rec.statut);
       var cls = lvl==='danger'?'sc-danger':lvl==='warn'?'sc-warn':lvl==='ok'?'sc-ok':'';
       var display = rec.statut==='noprod'? 'NP' : rec.statut==='collected'? '…' : (rec.values && (rec.values.masse!==undefined? rec.values.masse : rec.values.masse_a))+'mg';
@@ -1526,27 +1586,36 @@ function analyseFormRow(c){
     '</div></td></tr>';
   return row;
 }
+var contamDirectPrefill = null; // {ligne, ref, mois, annee, editId, values, rapport, noProd}
 function contamDirectForm(){
-  var curMoisIdx = Number(todayStr().split('-')[1])-1;
-  var firstLigne = CONTAM_LINES[0];
-  var firstRef = refsForLigne(firstLigne)[0];
-  var crit = REF_CRITERIA[firstRef]||[];
-  return '<div class="card" style="max-width:560px; margin-bottom:16px;">'+
-    '<div class="eyebrow" style="margin-bottom:10px;">Saisie directe — résultat déjà connu</div>'+
-    '<p class="tiny" style="margin-bottom:10px;">À utiliser pour ajouter un résultat sans passer par le circuit collecte → analyse (ex. rattrapage d\'un mois oublié).</p>'+
+  var pf = contamDirectPrefill || {};
+  var curMoisIdx = pf.mois!==undefined ? pf.mois : Number(todayStr().split('-')[1])-1;
+  var ligne = pf.ligne || CONTAM_LINES[0];
+  var refs = refsForLigne(ligne);
+  var ref = pf.ref || refs[0];
+  var crit = REF_CRITERIA[ref]||[];
+  var values = pf.values || {};
+  var noProd = !!pf.noProd;
+  return '<div class="card" style="max-width:580px; margin-bottom:16px;">'+
+    '<div class="eyebrow" style="margin-bottom:10px;">'+(pf.editId?'Modifier le résultat':'Saisie directe — résultat déjà connu')+'</div>'+
+    (pf.editId? '' : '<p class="tiny" style="margin-bottom:10px;">À utiliser pour ajouter un résultat sans passer par le circuit collecte → analyse, ou pour indiquer qu\'une référence n\'a pas été produite ce mois.</p>')+
     '<div class="entryform cols2">'+
-    '<label class="field">Ligne<select id="cd-ligne">'+CONTAM_LINES.map(function(l){return '<option value="'+l+'">'+l+'</option>';}).join('')+'</select></label>'+
-    '<label class="field">Référence<select id="cd-ref">'+refsForLigne(firstLigne).map(function(r){return '<option value="'+r+'">'+r+'</option>';}).join('')+'</select></label>'+
+    '<label class="field">Ligne<select id="cd-ligne">'+CONTAM_LINES.map(function(l){return '<option value="'+l+'"'+(l===ligne?' selected':'')+'>'+l+'</option>';}).join('')+'</select></label>'+
+    '<label class="field">Référence<select id="cd-ref">'+refs.map(function(r){return '<option value="'+r+'"'+(r===ref?' selected':'')+'>'+r+'</option>';}).join('')+'</select></label>'+
     '<label class="field">Mois<select id="cd-mois">'+MONTHS_FR.map(function(m,i){return '<option value="'+i+'"'+(i===curMoisIdx?' selected':'')+'>'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>';}).join('')+'</select></label>'+
-    '<label class="field">Année<input type="number" id="cd-annee" value="'+resultsYear+'"></label>'+
+    '<label class="field">Année<input type="number" id="cd-annee" value="'+(pf.annee||resultsYear)+'"></label>'+
     '</div>'+
-    '<div id="cd-criteria" class="entryform cols2" style="margin-top:8px;">'+
+    '<label style="display:flex; align-items:center; gap:8px; margin-top:12px; padding:8px 10px; background:var(--accent-bg); border-radius:var(--radius-sm); font-size:13px; cursor:pointer;">'+
+      '<input type="checkbox" id="cd-noprod" '+(noProd?'checked':'')+'> Cette référence n\'a pas été produite ce mois (aucune mesure à saisir)'+
+    '</label>'+
+    '<div id="cd-criteria" class="entryform cols2" style="margin-top:10px; '+(noProd?'display:none;':'')+'">'+
       crit.map(function(cr){
+        var v = values[cr.id];
         return '<label class="field">'+esc(cr.label)+' <span class="tiny">(seuil '+cr.seuil+(cr.unit?' '+cr.unit:'')+')</span>'+
-          '<input type="number" step="0.01" class="cd-crit" data-crit="'+cr.id+'"></label>';
+          '<input type="number" step="0.01" class="cd-crit" data-crit="'+cr.id+'" value="'+(v!==undefined&&v!==null?v:'')+'"></label>';
       }).join('')+
     '</div>'+
-    '<label class="field" style="margin-top:8px;">Lien / référence du rapport PDF (optionnel)<input type="text" id="cd-rapport" placeholder="https://... ou chemin réseau"></label>'+
+    '<label class="field" id="cd-rapport-wrap" style="margin-top:8px; '+(noProd?'display:none;':'')+'">Lien / référence du rapport PDF (optionnel)<input type="text" id="cd-rapport" placeholder="https://... ou chemin réseau" value="'+esc(pf.rapport||'')+'"></label>'+
     '<div class="actions-row" style="margin-top:12px;">'+
     '<button class="btn" data-action="cancel-contam-direct">Annuler</button>'+
     '<button class="btn primary" data-action="save-contam-direct">Enregistrer</button>'+
@@ -1571,24 +1640,41 @@ function refreshContamCriteriaOnly(){
       '<input type="number" step="0.01" class="cd-crit" data-crit="'+cr.id+'"></label>';
   }).join('');
 }
+function toggleContamNoProd(checked){
+  var box = document.getElementById('cd-criteria');
+  var rapWrap = document.getElementById('cd-rapport-wrap');
+  if(box) box.style.display = checked? 'none' : '';
+  if(rapWrap) rapWrap.style.display = checked? 'none' : '';
+}
 async function handleSaveContamDirect(){
   var ligne = document.getElementById('cd-ligne').value;
   var ref = document.getElementById('cd-ref').value;
   var mois = Number(document.getElementById('cd-mois').value);
   var annee = Number(document.getElementById('cd-annee').value);
-  var values = {};
-  var hasValue = false;
-  Array.prototype.forEach.call(document.querySelectorAll('.cd-crit'), function(inp){
-    if(inp.value!==''){ values[inp.dataset.crit] = parseFloat(inp.value); hasValue = true; }
-  });
-  if(!hasValue){ alert('Merci de renseigner au moins une valeur mesurée.'); return; }
-  var existing = DATA.contamination.find(function(c){
-    return c.ligne===ligne && c.ref===ref && c.mois===mois && c.annee===annee && !c.isRetest;
-  });
-  if(existing && !confirm('Un résultat existe déjà pour '+ligne+' · '+ref+' ('+MONTHS_FR[mois]+' '+annee+'). Le remplacer ?')) return;
-  var statut = contamConformite(ref, values);
-  var rapport = document.getElementById('cd-rapport').value || null;
+  var noProd = document.getElementById('cd-noprod').checked;
+  var editId = contamDirectPrefill && contamDirectPrefill.editId;
+
+  var existing = editId
+    ? DATA.contamination.find(function(c){ return c.id===editId; })
+    : DATA.contamination.find(function(c){ return c.ligne===ligne && c.ref===ref && c.mois===mois && c.annee===annee && !c.isRetest; });
+
+  if(!editId && existing && !confirm('Un résultat existe déjà pour '+ligne+' · '+ref+' ('+MONTHS_FR[mois]+' '+annee+'). Le remplacer ?')) return;
+
+  var values = {}, statut, rapport;
+  if(noProd){
+    statut = 'noprod'; rapport = null;
+  } else {
+    var hasValue = false;
+    Array.prototype.forEach.call(document.querySelectorAll('.cd-crit'), function(inp){
+      if(inp.value!==''){ values[inp.dataset.crit] = parseFloat(inp.value); hasValue = true; }
+    });
+    if(!hasValue){ alert('Merci de renseigner au moins une valeur mesurée, ou cochez "non produite ce mois".'); return; }
+    statut = contamConformite(ref, values);
+    rapport = document.getElementById('cd-rapport').value || null;
+  }
+
   if(existing){
+    existing.ligne = ligne; existing.ref = ref; existing.mois = mois; existing.annee = annee;
     existing.values = values; existing.statut = statut; existing.rapport = rapport;
     existing.collecteDate = existing.collecteDate || todayStr();
   } else {
@@ -1599,8 +1685,10 @@ async function handleSaveContamDirect(){
     });
   }
   await save('contamination');
-  logChange('Contamination', 'Saisie directe', ligne+' · '+ref+' — '+MONTHS_FR[mois]+' '+annee+' — '+statut.toUpperCase());
+  logChange('Contamination', editId?'Modification':'Saisie directe', ligne+' · '+ref+' — '+MONTHS_FR[mois]+' '+annee+' — '+statut.toUpperCase());
   contamDirectFormOpen = false;
+  contamDirectPrefill = null;
+  openContamDetailId = null;
   render();
 }
 async function handleDeleteContam(id){
@@ -1735,6 +1823,7 @@ function renderContamDetailModal(){
   }
   html += '<div class="actions-row" style="margin-top:16px;">'+
     '<button class="btn danger-outline" data-action="delete-contam" data-id="'+c.id+'">Supprimer ce relevé</button>'+
+    '<button class="btn" data-action="edit-contam-direct" data-id="'+c.id+'">Modifier</button>'+
     (c.statut==='nc' && !c.retested ? '<button class="btn" data-action="trigger-retest" data-id="'+c.id+'" data-ligne="'+c.ligne+'" data-ref="'+c.ref+'">Déclencher la contre-analyse</button>' : '')+
     '<button class="btn primary" data-action="close-contam-detail">Fermer</button></div>';
   html += '</div></div>';
@@ -2832,32 +2921,52 @@ RENDERERS.dashboard = function(){
   html += '</div><div id="digest-box"></div>';
 
   if(dashboardCustomizing){
-    html += '<div class="customize-banner"><span>🖐 Glissez une carte par sa poignée <b>⠿</b> pour la déplacer, utilisez S/M/L pour sa taille, 👁 pour la masquer.</span>'+
-      '<button class="btn small" data-action="reset-dashboard-layout">Réinitialiser la disposition</button></div>';
+    html += '<div class="customize-banner"><span>🖐 Glissez une carte par sa poignée <b>⠿</b> pour la déplacer, S/M/L pour la taille, une pastille de couleur pour l\'accent, 👁 pour la masquer. Utilisez un espace vide pour sauter une ligne.</span>'+
+      '<div style="display:flex; gap:8px; flex-wrap:wrap;">'+
+      '<button class="btn small" data-action="add-kpi-widget">+ Indicateur personnalisé</button>'+
+      '<button class="btn small" data-action="add-spacer-widget">+ Espace vide</button>'+
+      '<button class="btn small" data-action="reset-dashboard-layout">Réinitialiser</button>'+
+      '</div></div>';
     var hidden = layout.filter(function(w){return w.hidden;});
     if(hidden.length){
       html += '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">'+hidden.map(function(w){
-        return '<div class="widget-hidden-chip" data-action="show-widget" data-id="'+w.id+'">👁 '+esc(WIDGET_TITLES[w.id]||w.id)+'</div>';
+        return '<div class="widget-hidden-chip" data-action="show-widget" data-id="'+w.id+'">👁 '+esc(widgetLabel(w))+'</div>';
       }).join('')+'</div>';
     }
   }
 
+  var WIDGET_COLORS = ['', '#1F5C5C', '#B8730A', '#B23B2E', '#2E7D4F', '#7B4FA3'];
+
   html += '<div class="dash-grid" id="dash-sortable">';
   layout.filter(function(w){return !w.hidden;}).forEach(function(w){
-    if(W[w.id]===undefined) return;
-    var isCard = ['w_score','w_planning','w_actions','w_trend','w_scorehist'].indexOf(w.id)>=0;
-    html += '<div class="widget widget-'+(w.size||'m')+(isCard||w.id==='w_metro'||w.id==='w_ateq'||w.id==='w_propr'||w.id==='w_perf'?'':'')+'" data-widget-id="'+w.id+'" '+(dashboardCustomizing?'draggable="true"':'')+'>';
+    var isSpacer = w.id.indexOf('spacer-')===0;
+    var isKpi = w.id.indexOf('kpi-')===0;
+    if(!isSpacer && !isKpi && W[w.id]===undefined) return;
+
+    var accentStyle = w.color ? 'border-left:4px solid '+w.color+';' : '';
+    html += '<div class="widget widget-'+(w.size||'m')+'" data-widget-id="'+w.id+'" '+(dashboardCustomizing?'draggable="true"':'')+'>';
     if(dashboardCustomizing){
       html += '<div class="widget-toolbar">'+
         '<span class="widget-drag-handle" title="Glisser pour réordonner">⠿</span>'+
+        WIDGET_COLORS.map(function(c){
+          return '<button data-action="widget-color" data-id="'+w.id+'" data-color="'+c+'" title="'+(c?'Couleur':'Aucune couleur')+'" style="width:16px; height:16px; padding:0; border-radius:50%; background:'+(c||'#fff')+'; border:2px solid '+(w.color===c?'var(--text)':'var(--border)')+';"></button>';
+        }).join('')+
         '<button data-action="widget-size" data-id="'+w.id+'" data-size="s" class="'+(w.size==='s'?'active':'')+'">S</button>'+
         '<button data-action="widget-size" data-id="'+w.id+'" data-size="m" class="'+(w.size==='m'?'active':'')+'">M</button>'+
         '<button data-action="widget-size" data-id="'+w.id+'" data-size="l" class="'+(w.size==='l'?'active':'')+'">L</button>'+
-        '<button data-action="hide-widget" data-id="'+w.id+'" title="Masquer">👁</button>'+
+        (isSpacer||isKpi ? '<button data-action="delete-widget" data-id="'+w.id+'" title="Supprimer">🗑</button>' : '<button data-action="hide-widget" data-id="'+w.id+'" title="Masquer">👁</button>')+
       '</div>';
     }
-    var wrapClass = (w.id==='w_alerts') ? 'section' : ((w.id==='w_metro'||w.id==='w_ateq'||w.id==='w_propr'||w.id==='w_perf') ? 'statcard' : 'section card');
-    html += '<div class="'+wrapClass+'"'+(w.id==='w_actions'?' style="margin-bottom:0;"':'')+'>'+W[w.id]+'</div>';
+    if(isSpacer){
+      html += '<div class="section card" style="'+accentStyle+(dashboardCustomizing?'min-height:60px; display:flex; align-items:center; justify-content:center; border:2px dashed var(--border); background:transparent; box-shadow:none;':'visibility:hidden; height:0; padding:0; margin:0; border:none; box-shadow:none;')+'">'+
+        (dashboardCustomizing? '<span class="tiny">Espace vide</span>' : '')+
+      '</div>';
+    } else if(isKpi){
+      html += '<div class="statcard" style="'+accentStyle+'">'+renderKpiWidget(w)+'</div>';
+    } else {
+      var wrapClass = (w.id==='w_alerts') ? 'section' : ((w.id==='w_metro'||w.id==='w_ateq'||w.id==='w_propr'||w.id==='w_perf') ? 'statcard' : 'section card');
+      html += '<div class="'+wrapClass+'" style="'+accentStyle+(w.id==='w_actions'?'margin-bottom:0;':'')+'">'+W[w.id]+'</div>';
+    }
     html += '</div>';
   });
   html += '</div></div>';
@@ -3564,8 +3673,13 @@ function bootstrapAdmin(){
   // Migration multi-secteurs : comptes existants sans champ secteurs
   DATA.accounts.forEach(function(a){
     if(a.secteurs===undefined){
-      if(a.roleId===ADMIN_ROLE_ID){ a.allSecteurs = true; a.secteurs = []; a.isSuperAdmin = true; }
+      if(a.roleId===ADMIN_ROLE_ID){ a.allSecteurs = true; a.secteurs = []; }
       else { a.allSecteurs = false; a.secteurs = ['MCU']; }
+      changed = true;
+    }
+    // Migration indépendante : le(s) compte(s) Administrateur deviennent Super Admin s'ils ne le sont pas déjà
+    if(a.roleId===ADMIN_ROLE_ID && a.isSuperAdmin===undefined){
+      a.isSuperAdmin = true;
       changed = true;
     }
   });
@@ -4339,8 +4453,33 @@ app.addEventListener('click', async function(e){
   if(e.target.closest('[data-action="cancel-analyse-contam"]')){ contamAnalyseEditId = null; render(); return; }
   var saveAnalyseBtn = e.target.closest('[data-action="save-analyse-contam"]');
   if(saveAnalyseBtn){ await handleSaveAnalyseContam(saveAnalyseBtn.dataset.id); return; }
-  if(e.target.closest('[data-action="add-contam-direct"]')){ contamDirectFormOpen = !contamDirectFormOpen; render(); return; }
-  if(e.target.closest('[data-action="cancel-contam-direct"]')){ contamDirectFormOpen = false; render(); return; }
+  if(e.target.closest('[data-action="add-contam-direct"]')){ contamDirectPrefill = null; contamDirectFormOpen = !contamDirectFormOpen; render(); return; }
+  var cellAddBtn = e.target.closest('[data-action="contam-cell-add"]');
+  if(cellAddBtn){
+    contamDirectPrefill = {ligne:cellAddBtn.dataset.ligne, ref:cellAddBtn.dataset.ref, mois:Number(cellAddBtn.dataset.mois), annee:resultsYear};
+    contamDirectFormOpen = true;
+    render();
+    var formEl = document.querySelector('#cd-ligne');
+    if(formEl && formEl.closest('.card') && typeof formEl.closest('.card').scrollIntoView==='function'){
+      formEl.closest('.card').scrollIntoView({behavior:'smooth', block:'center'});
+    }
+    return;
+  }
+  var editContamBtn = e.target.closest('[data-action="edit-contam-direct"]');
+  if(editContamBtn){
+    var cRec = DATA.contamination.find(function(x){ return x.id===editContamBtn.dataset.id; });
+    if(cRec){
+      contamDirectPrefill = {
+        ligne:cRec.ligne, ref:cRec.ref, mois:cRec.mois, annee:cRec.annee, editId:cRec.id,
+        values: cRec.values||{}, rapport: cRec.rapport, noProd: cRec.statut==='noprod'
+      };
+      contamDirectFormOpen = true;
+      openContamDetailId = null;
+      render();
+    }
+    return;
+  }
+  if(e.target.closest('[data-action="cancel-contam-direct"]')){ contamDirectFormOpen = false; contamDirectPrefill = null; render(); return; }
   if(e.target.closest('[data-action="save-contam-direct"]')){ await handleSaveContamDirect(); return; }
   if(e.target.closest('[data-action="save-contam-direct"]')){ await handleSaveContamDirect(); return; }
 
@@ -4517,6 +4656,36 @@ app.addEventListener('click', async function(e){
     render();
     return;
   }
+  var colorBtn = e.target.closest('[data-action="widget-color"]');
+  if(colorBtn){
+    var layoutC = getDashboardLayout();
+    var wC = layoutC.find(function(x){return x.id===colorBtn.dataset.id;});
+    if(wC) wC.color = colorBtn.dataset.color || null;
+    await saveDashboardLayout(layoutC);
+    render();
+    return;
+  }
+  if(e.target.closest('[data-action="add-spacer-widget"]')){
+    var layoutSp = getDashboardLayout();
+    layoutSp.push({id:uid('spacer'), size:'m', hidden:false});
+    await saveDashboardLayout(layoutSp);
+    render();
+    return;
+  }
+  if(e.target.closest('[data-action="add-kpi-widget"]')){
+    var layoutK = getDashboardLayout();
+    layoutK.push({id:uid('kpi'), size:'s', hidden:false, indicator:null});
+    await saveDashboardLayout(layoutK);
+    render();
+    return;
+  }
+  var deleteWidgetBtn = e.target.closest('[data-action="delete-widget"]');
+  if(deleteWidgetBtn){
+    var layoutD = getDashboardLayout().filter(function(x){return x.id!==deleteWidgetBtn.dataset.id;});
+    await saveDashboardLayout(layoutD);
+    render();
+    return;
+  }
   if(e.target.closest('[data-action="reset-dashboard-layout"]')){
     if(confirm('Réinitialiser la disposition du tableau de bord à sa configuration par défaut ?')){
       await saveDashboardLayout(DASHBOARD_WIDGETS_DEFAULT.map(function(w){return {id:w.id, size:w.size, hidden:false};}));
@@ -4590,6 +4759,16 @@ app.addEventListener('click', async function(e){
 app.addEventListener('change', async function(e){
   if(e.target.id==='cd-ligne'){ refreshContamDirectFields(); return; }
   if(e.target.id==='cd-ref'){ refreshContamCriteriaOnly(); return; }
+  if(e.target.id==='cd-noprod'){ toggleContamNoProd(e.target.checked); return; }
+  var kpiSel = e.target.closest('[data-action="pick-kpi-indicator"]');
+  if(kpiSel){
+    var layoutKpi = getDashboardLayout();
+    var wKpi = layoutKpi.find(function(x){return x.id===kpiSel.dataset.id;});
+    if(wKpi) wKpi.indicator = kpiSel.value || null;
+    await saveDashboardLayout(layoutKpi);
+    render();
+    return;
+  }
   if(e.target.matches('[data-action="change-status"]')){
     await handleChangeStatus(e.target.dataset.id, e.target.value);
     return;
@@ -4828,6 +5007,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
