@@ -4912,13 +4912,13 @@ app.addEventListener('change', async function(e){
   var poseInput = e.target.closest('[data-action="edit-date-pose"]');
   if(poseInput){
     var pp = DATA.particules.find(function(x){ return x.id===poseInput.dataset.id; });
-    if(pp){ pp.datePose = poseInput.value || null; await save('particules'); logChange('Propreté', 'Date de pose modifiée', pp.ligne+' '+pp.poste+' → '+fmtDate(pp.datePose)); render(); }
+    if(pp){ pp.datePose = poseInput.value || null; await save('particules'); logChange('Propreté', 'Date de pose modifiée', pp.ligne+' '+pp.poste+' → '+fmtDate(pp.datePose)); }
     return;
   }
   var retraitInput = e.target.closest('[data-action="edit-date-retrait"]');
   if(retraitInput){
     var pr = DATA.particules.find(function(x){ return x.id===retraitInput.dataset.id; });
-    if(pr){ pr.dateRetrait = retraitInput.value || null; await save('particules'); logChange('Propreté', 'Date de retrait modifiée', pr.ligne+' '+pr.poste+' → '+(pr.dateRetrait?fmtDate(pr.dateRetrait):'-')); render(); }
+    if(pr){ pr.dateRetrait = retraitInput.value || null; await save('particules'); logChange('Propreté', 'Date de retrait modifiée', pr.ligne+' '+pr.poste+' → '+(pr.dateRetrait?fmtDate(pr.dateRetrait):'-')); }
     return;
   }
   if(e.target.id==='cd-ligne'){ refreshContamDirectFields(); return; }
@@ -5061,6 +5061,15 @@ app.addEventListener('input', function(e){
   if(e.target.id==='formation-search'){ formationSearch = e.target.value; render(); }
 });
 
+// Les dates pose/retrait des particules ne redessinent le tableau qu'à la sortie du champ
+// (évite de perdre le focus en pleine saisie : certains navigateurs déclenchent 'change'
+// après chaque segment jour/mois/année du sélecteur de date, pas seulement à la fin).
+app.addEventListener('focusout', function(e){
+  if(e.target.closest && (e.target.closest('[data-action="edit-date-pose"]') || e.target.closest('[data-action="edit-date-retrait"]'))){
+    render();
+  }
+});
+
 // ===== Réordonnancement du dashboard : flèches ↑↓ (voir handler widget-move) =====
 
 // ===== Drag libre des post-its (souris + tactile) =====
@@ -5136,55 +5145,6 @@ async function init(){
 init();
 
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 </script>
