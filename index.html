@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Suivi qualité — Secteur MCU</title>
+<title>Suivi qualité - Secteur MCU</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -186,7 +186,7 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 <div class="app" id="app">
   <header class="top">
     <div>
-      <h1>Suivi qualité — Secteur MCU</h1>
+      <h1>Suivi qualité - Secteur MCU</h1>
       <div class="sub" id="todaylabel"></div>
     </div>
     <div class="userbox" id="userbox"></div>
@@ -247,11 +247,12 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
 // ====================================================================
-// CONFIGURATION SUPABASE — à renseigner avant de déployer sur GitHub Pages
+// CONFIGURATION SUPABASE - à renseigner avant de déployer sur GitHub Pages
 // Remplacez les deux valeurs ci-dessous par celles de votre projet
 // (Supabase > Project Settings > API > Project URL / anon public key).
 // Si vous laissez les valeurs par défaut, l'app utilise automatiquement
@@ -306,7 +307,7 @@ var DASHBOARD_WIDGETS_DEFAULT = [
 var WIDGET_TITLES = {
   w_score:'Score de conformité', w_planning:"Planning échéances",
   w_indicateurs:'Indicateurs (métrologie, ATEQ, propreté, perf)',
-  w_actions:"Plan d'actions — échéances", w_trend:'Tendance globale', w_scorehist:'Évolution du score', w_alerts:'Alertes'
+  w_actions:"Plan d'actions - échéances", w_trend:'Tendance globale', w_scorehist:'Évolution du score', w_alerts:'Alertes'
 };
 var dashboardCustomizing = false;
 var widgetPickerOpen = false;
@@ -314,13 +315,13 @@ function KPI_INDICATORS(){
   return {
     score_global: {label:'Score de conformité global', calc:function(){
       var gs = globalConformityScore();
-      return {value: gs.score!==null? gs.score+'%':'—', level: gs.score!==null?scoreLevel(gs.score):'neutral'};
+      return {value: gs.score!==null? gs.score+'%':'-', level: gs.score!==null?scoreLevel(gs.score):'neutral'};
     }},
-    metro_late: {label:'Métrologie — en retard', calc:function(){
+    metro_late: {label:'Métrologie - en retard', calc:function(){
       var n = DATA.metro.filter(function(e){return metroStatus(e).level==='danger';}).length;
       return {value:n, level:n>0?'danger':'ok'};
     }},
-    metro_urgent: {label:'Métrologie — expire ce mois', calc:function(){
+    metro_urgent: {label:'Métrologie - expire ce mois', calc:function(){
       var n = DATA.metro.filter(function(e){return metroStatus(e).level==='urgent';}).length;
       return {value:n, level:n>0?'warn':'ok'};
     }},
@@ -336,15 +337,15 @@ function KPI_INDICATORS(){
       var n = DATA.actions.filter(isActionLate).length;
       return {value:n, level:n>0?'danger':'ok'};
     }},
-    propr_moy: {label:'Propreté — moyenne dernières valeurs', calc:function(){
+    propr_moy: {label:'Propreté - moyenne dernières valeurs', calc:function(){
       var vals = LINES.map(latestResultByLine).filter(Boolean).map(function(r){return r.resultatPct;});
-      if(!vals.length) return {value:'—', level:'neutral'};
+      if(!vals.length) return {value:'-', level:'neutral'};
       var avg = Math.round(vals.reduce(function(s,v){return s+v;},0)/vals.length);
       return {value:avg+'%', level:scoreLevel(avg)};
     }},
-    perf_moy: {label:'Audits perf — moyenne dernières valeurs', calc:function(){
+    perf_moy: {label:'Audits perf - moyenne dernières valeurs', calc:function(){
       var vals = LINES.map(latestPerfResultByLine).filter(Boolean).map(function(r){return r.resultatPct;});
-      if(!vals.length) return {value:'—', level:'neutral'};
+      if(!vals.length) return {value:'-', level:'neutral'};
       var avg = Math.round(vals.reduce(function(s,v){return s+v;},0)/vals.length);
       return {value:avg+'%', level:scoreLevel(avg)};
     }}
@@ -358,7 +359,7 @@ function widgetLabel(w){
 function renderKpiWidget(w){
   var defs = KPI_INDICATORS();
   var options = Object.keys(defs).map(function(k){return '<option value="'+k+'"'+(w.indicator===k?' selected':'')+'>'+esc(defs[k].label)+'</option>';}).join('');
-  var picker = dashboardCustomizing ? '<select data-action="pick-kpi-indicator" data-id="'+w.id+'" style="font-size:11px; margin-bottom:8px; width:100%;"><option value="">— Choisir un indicateur —</option>'+options+'</select>' : '';
+  var picker = dashboardCustomizing ? '<select data-action="pick-kpi-indicator" data-id="'+w.id+'" style="font-size:11px; margin-bottom:8px; width:100%;"><option value="">- Choisir un indicateur -</option>'+options+'</select>' : '';
   if(!w.indicator || !defs[w.indicator]){
     return picker + (dashboardCustomizing? '' : '<div class="tiny">Indicateur non configuré.</div>');
   }
@@ -439,13 +440,13 @@ var view = document.getElementById('view');
 
 // ---------- utils ----------
 function todayStr(){ return new Date().toISOString().slice(0,10); }
-function fmtDate(s){ if(!s) return '—'; var p=s.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+function fmtDate(s){ if(!s) return '-'; var p=s.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
 function daysBetween(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
 function uid(prefix){ return (prefix||'id')+'-'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 var MONTHS_FR = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 function monthIndex(m){ if(!m) return -1; var i = MONTHS_FR.indexOf(String(m).trim().toLowerCase()); return i; }
 function esc(s){ if(s===null||s===undefined) return ''; return String(s).replace(/[&<>"]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-function val(v,fallback){ return (v===undefined||v===null||v==='')?(fallback!==undefined?fallback:'—'):v; }
+function val(v,fallback){ return (v===undefined||v===null||v==='')?(fallback!==undefined?fallback:'-'):v; }
 
 // ---------- storage ----------
 var STORAGE_MODE = supabaseClient ? 'supabase' : 'claude'; // 'supabase' | 'claude' (partagé) | 'local' (repli navigateur)
@@ -513,7 +514,7 @@ async function loadAll(){
         await seedKey(k);
       }
     }catch(e){
-      // ERREUR de connexion : ne PAS seeder, ne PAS écraser — mode dégradé lecture seule
+      // ERREUR de connexion : ne PAS seeder, ne PAS écraser - mode dégradé lecture seule
       console.error('load error', k, e);
       LOAD_DEGRADED = true;
     }
@@ -522,7 +523,7 @@ async function loadAll(){
     try{
       var banner = document.createElement('div');
       banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#B23B2E;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-weight:600;';
-      banner.textContent = '⚠ Connexion aux données impossible — affichage incomplet. NE SAISISSEZ RIEN. Rechargez la page (F5) une fois la connexion rétablie.';
+      banner.textContent = '⚠ Connexion aux données impossible - affichage incomplet. NE SAISISSEZ RIEN. Rechargez la page (F5) une fois la connexion rétablie.';
       document.body.appendChild(banner);
     }catch(e){}
   }
@@ -918,7 +919,7 @@ function renderAuditImportPreview(){
   var lvl = scoreLevel(p.score);
   var labelMap = {ok:'Conforme (≥85%)', warn:'Attention (50–85%)', danger:'En danger (<50%)', neutral:'Aucune donnée exploitable'};
   var html = '<div class="card" style="max-width:520px; margin-bottom:16px;">';
-  html += '<div class="eyebrow" style="margin-bottom:10px;">Aperçu de l\'import — vérifiez avant de confirmer</div>';
+  html += '<div class="eyebrow" style="margin-bottom:10px;">Aperçu de l\'import - vérifiez avant de confirmer</div>';
   html += '<div class="entryform cols2" style="margin-bottom:12px;">'+
     '<label class="field">Ligne<select id="ai-ligne">'+LINES.map(function(l){return '<option value="'+l+'"'+(l===p.ligne?' selected':'')+'>'+l+'</option>';}).join('')+'</select></label>'+
     '<label class="field">Date<input type="date" id="ai-date" value="'+esc(p.date)+'"></label>'+
@@ -926,7 +927,7 @@ function renderAuditImportPreview(){
     '<label class="field">Service<input type="text" id="ai-service" value="'+esc(p.service)+'"></label>'+
   '</div>';
   html += '<div style="text-align:center; margin-bottom:12px;">'+
-    '<div class="score-big" style="color:var(--'+(lvl==='ok'?'ok':lvl==='warn'?'warn':'danger')+');">'+(p.score!==null? p.score+'%':'—')+'</div>'+
+    '<div class="score-big" style="color:var(--'+(lvl==='ok'?'ok':lvl==='warn'?'warn':'danger')+');">'+(p.score!==null? p.score+'%':'-')+'</div>'+
     '<div style="margin-bottom:8px;">'+badge(lvl, labelMap[lvl])+'</div>'+
     '<div class="tiny">'+p.ok+' conformes · '+p.ng+' non-conformes · sur '+p.total+' critères lus</div>'+
     (p.unmatched? '<div class="tiny" style="color:var(--danger);">'+p.unmatched+' ligne(s) du fichier n\'ont pas pu être associées à un critère connu.</div>' : '')+
@@ -1010,7 +1011,7 @@ function wizardStep1(){
     html += '<div class="checklist-item" data-crit-id="'+item.id+'">'+
       '<div class="ci-label"><b>'+esc(item.critere)+'</b><span>'+esc(item.poste)+(item.moyen?' · '+esc(item.moyen):'')+'</span></div>'+
       '<select data-crit-field="result" data-crit-id="'+item.id+'">'+
-        ['','OK','NG','NA'].map(function(v){return '<option value="'+v+'"'+(st.result===v?' selected':'')+'>'+(v||'—')+'</option>';}).join('')+
+        ['','OK','NG','NA'].map(function(v){return '<option value="'+v+'"'+(st.result===v?' selected':'')+'>'+(v||'-')+'</option>';}).join('')+
       '</select>'+
       '<input type="text" placeholder="Remarque" data-crit-field="remarque" data-crit-id="'+item.id+'" value="'+esc(st.remarque)+'">'+
       '<input type="text" placeholder="Action mise en place" data-crit-field="action" data-crit-id="'+item.id+'" value="'+esc(st.action)+'">'+
@@ -1026,7 +1027,7 @@ function wizardStep2(){
   var items = (DATA.checklist[key]||[]).filter(function(it){ return w.items[it.id] && w.items[it.id].result==='NG'; });
   var html = '<h2 style="font-size:14px; margin-bottom:10px;">Non-conformités relevées ('+items.length+')</h2>';
   if(!items.length){
-    html += '<div class="empty">Aucune non-conformité — bravo !</div>';
+    html += '<div class="empty">Aucune non-conformité - bravo !</div>';
   } else {
     html += '<div class="table-wrap" style="padding:6px 14px;">';
     items.forEach(function(item){
@@ -1048,8 +1049,8 @@ function wizardStep3(){
   var lvl = scoreLevel(sc.score);
   var labelMap = {ok:'Conforme (≥85%)', warn:'Attention (50–85%)', danger:'En danger (<50%)', neutral:'Aucune donnée'};
   var html = '<div class="card" style="max-width:420px; text-align:center;">'+
-    '<div class="eyebrow">Résultat de l\'audit — '+esc(w.ligne)+'</div>'+
-    '<div class="score-big" style="color:var(--'+(lvl==='ok'?'ok':lvl==='warn'?'warn':'danger')+');">'+(sc.score!==null? sc.score+'%':'—')+'</div>'+
+    '<div class="eyebrow">Résultat de l\'audit - '+esc(w.ligne)+'</div>'+
+    '<div class="score-big" style="color:var(--'+(lvl==='ok'?'ok':lvl==='warn'?'warn':'danger')+');">'+(sc.score!==null? sc.score+'%':'-')+'</div>'+
     '<div style="margin-bottom:12px;">'+badge(lvl, labelMap[lvl])+'</div>'+
     '<div class="tiny">'+sc.ok+' conformes · '+sc.ng+' non-conformes · sur '+sc.total+' critères évalués</div>'+
     '</div>'+
@@ -1097,7 +1098,7 @@ async function handleSaveAudit(fromImport){
     if(st.result==='NG'){
       var crit = (DATA.checklist[key]||[]).find(function(c){return c.id===critId;});
       DATA.actions.push({
-        id: uid('act'), origine:'Propreté', description:(crit?crit.critere:'Non-conformité')+(crit&&crit.poste!=='Général'?' ('+crit.poste+')':'')+(st.remarque?' — '+st.remarque:''),
+        id: uid('act'), origine:'Propreté', description:(crit?crit.critere:'Non-conformité')+(crit&&crit.poste!=='Général'?' ('+crit.poste+')':'')+(st.remarque?' - '+st.remarque:''),
         ligne:w.ligne, responsable:st.responsable||'', echeance:st.echeance||null, statut:'planifiee', dateCreation:todayStr(), photo:st.photo||null
       });
       created++;
@@ -1106,8 +1107,8 @@ async function handleSaveAudit(fromImport){
   if(created) await save('actions');
 
   auditWizard = null;
-  logChange('Propreté', fromImport?'Audit importé (Excel)':'Audit réalisé', w.ligne+' — score '+(sc.score!==null?sc.score+'%':'n/a'));
-  alert((fromImport?'Audit importé et enregistré':'Audit enregistré')+(sc.score!==null? ' — score '+sc.score+'%.':' (aucun critère renseigné).')+' '+created+' non-conformité(s) ajoutée(s) au plan d\'actions.');
+  logChange('Propreté', fromImport?'Audit importé (Excel)':'Audit réalisé', w.ligne+' - score '+(sc.score!==null?sc.score+'%':'n/a'));
+  alert((fromImport?'Audit importé et enregistré':'Audit enregistré')+(sc.score!==null? ' - score '+sc.score+'%.':' (aucun critère renseigné).')+' '+created+' non-conformité(s) ajoutée(s) au plan d\'actions.');
   render();
 }
 async function recomputeResultatMois(ligne, moisLabel, annee){
@@ -1136,7 +1137,7 @@ async function handleDeleteAudit(id){
   var d = a.date.split('-');
   var moisLabel = MONTHS_FR[Number(d[1])-1]; moisLabel = moisLabel.charAt(0).toUpperCase()+moisLabel.slice(1);
   await recomputeResultatMois(a.ligne, moisLabel, Number(d[0]));
-  logChange('Propreté', 'Suppression audit', a.ligne+' — '+fmtDate(a.date));
+  logChange('Propreté', 'Suppression audit', a.ligne+' - '+fmtDate(a.date));
   openAuditDetailId = null;
   render();
 }
@@ -1144,14 +1145,14 @@ function renderAuditDetailModal(){
   var a = DATA.propAudits.find(function(x){ return x.id===openAuditDetailId; });
   if(!a) return '';
   var html = '<div class="modal-overlay"><div class="modal-box">';
-  html += '<h3>Audit propreté — '+esc(a.ligne)+' · '+fmtDate(a.date)+'</h3>';
-  html += '<div class="tiny" style="margin-bottom:10px;">Auditeur : '+esc(val(a.auditeur,'—'))+' · Service : '+esc(val(a.service,'—'))+'</div>';
-  html += '<div style="margin-bottom:14px;">'+badge(scoreLevel(a.score), a.score+'% — '+a.ok+' conformes / '+a.ng+' non-conformes')+'</div>';
+  html += '<h3>Audit propreté - '+esc(a.ligne)+' · '+fmtDate(a.date)+'</h3>';
+  html += '<div class="tiny" style="margin-bottom:10px;">Auditeur : '+esc(val(a.auditeur,'-'))+' · Service : '+esc(val(a.service,'-'))+'</div>';
+  html += '<div style="margin-bottom:14px;">'+badge(scoreLevel(a.score), a.score+'% - '+a.ok+' conformes / '+a.ng+' non-conformes')+'</div>';
   var ngItems = a.items.filter(function(it){ return it.result==='NG'; });
   if(ngItems.length){
     html += '<div class="eyebrow" style="margin-bottom:8px;">Non-conformités</div>';
     ngItems.forEach(function(it){
-      html += '<div style="padding:6px 0; border-bottom:1px solid var(--border); font-size:12.5px;"><b>'+esc(it.critere)+'</b> ('+esc(it.poste)+')'+(it.remarque?' — '+esc(it.remarque):'')+(it.action?'<br><span class="tiny">Action : '+esc(it.action)+'</span>':'')+'</div>';
+      html += '<div style="padding:6px 0; border-bottom:1px solid var(--border); font-size:12.5px;"><b>'+esc(it.critere)+'</b> ('+esc(it.poste)+')'+(it.remarque?' - '+esc(it.remarque):'')+(it.action?'<br><span class="tiny">Action : '+esc(it.action)+'</span>':'')+'</div>';
     });
   } else {
     html += '<div class="empty">Aucune non-conformité sur cet audit.</div>';
@@ -1161,7 +1162,7 @@ function renderAuditDetailModal(){
   return html;
 }
 
-// ===== RESULTATS AUDITS (%) — navigation par mois + récap annuel + graphiques =====
+// ===== RESULTATS AUDITS (%) - navigation par mois + récap annuel + graphiques =====
 function monthRecapValue(ligne, monthIdx, year){
   var moisLabel = MONTHS_FR[monthIdx].charAt(0).toUpperCase()+MONTHS_FR[monthIdx].slice(1);
   var vals = [];
@@ -1215,7 +1216,7 @@ function proprResultats(){
   var danger = scored.filter(function(r){ return r.resultatPct<SCORE_DANGER; }).length;
   var attn = scored.filter(function(r){ return r.resultatPct>=SCORE_DANGER && r.resultatPct<SCORE_ATTENTION; }).length;
   html += '<div class="grid grid-4" style="margin-bottom:18px;">'+
-    '<div class="statcard"><div class="eyebrow">Score moyen '+resultsYear+'</div><div class="val" style="color:var(--'+(moy===null?'text':scoreLevel(moy))+');">'+(moy!==null?moy+'%':'—')+'</div></div>'+
+    '<div class="statcard"><div class="eyebrow">Score moyen '+resultsYear+'</div><div class="val" style="color:var(--'+(moy===null?'text':scoreLevel(moy))+');">'+(moy!==null?moy+'%':'-')+'</div></div>'+
     '<div class="statcard s-warn"><div class="eyebrow">En attention</div><div class="val">'+attn+'</div></div>'+
     '<div class="statcard s-danger"><div class="eyebrow">En danger</div><div class="val">'+danger+'</div></div>'+
     '<div class="statcard"><div class="eyebrow">Audits enregistrés</div><div class="val">'+scored.length+'</div></div>'+
@@ -1233,28 +1234,28 @@ function proprResultats(){
     html += '<div class="section"><div class="alertlist">'+alerts.map(function(r){
       var lvl = scoreLevel(r.resultatPct);
       return '<div class="alertitem"><div>'+badge(lvl,'')+'</div><div>'+
-        '<div class="txt">'+esc(r.ligne)+' — '+esc(r.mois)+' : score '+r.resultatPct+'%</div>'+
-        '<div class="meta">'+(lvl==='danger'?'Sous le seuil danger ('+SCORE_DANGER+'%)':'Sous le seuil attention ('+SCORE_ATTENTION+'%)')+' — <span class="tiny">2 derniers mois uniquement</span></div>'+
+        '<div class="txt">'+esc(r.ligne)+' - '+esc(r.mois)+' : score '+r.resultatPct+'%</div>'+
+        '<div class="meta">'+(lvl==='danger'?'Sous le seuil danger ('+SCORE_DANGER+'%)':'Sous le seuil attention ('+SCORE_ATTENTION+'%)')+' - <span class="tiny">2 derniers mois uniquement</span></div>'+
         '</div></div>';
     }).join('')+'</div></div>';
   }
 
   html += '<div class="grid grid-2" style="margin-bottom:18px;">'+
-    '<div class="card"><div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; flex-wrap:wrap; gap:6px;"><div class="eyebrow">Évolution du score par ligne — '+resultsYear+'</div><div style="display:flex; gap:5px;">'+
+    '<div class="card"><div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; flex-wrap:wrap; gap:6px;"><div class="eyebrow">Évolution du score par ligne - '+resultsYear+'</div><div style="display:flex; gap:5px;">'+
       LINES.map(function(l){return '<button class="btn small'+(chartProprLigneFilter.indexOf(l)>=0?' primary':'')+'" data-action="toggle-propr-ligne" data-val="'+l+'">'+l+'</button>';}).join('')+
     '</div></div><div class="chart-box"><canvas id="chart-proprete-evol"></canvas></div></div>'+
     '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">Comparatif du mois en cours</div><div class="chart-box"><canvas id="chart-proprete-comp"></canvas></div></div>'+
   '</div>';
 
   // Récapitulatif annuel (mois × ligne), combine audits + historique
-  html += '<div class="eyebrow" style="margin-bottom:8px;">Récapitulatif annuel — '+resultsYear+'</div>';
+  html += '<div class="eyebrow" style="margin-bottom:8px;">Récapitulatif annuel - '+resultsYear+'</div>';
   html += '<div class="table-wrap" style="margin-bottom:22px;"><table class="annual-table"><thead><tr><th>Mois</th>'+LINES.map(function(l){return '<th>'+l+'</th>';}).join('')+'</tr></thead><tbody>';
   MONTHS_FR.forEach(function(mRaw, mIdx){
     var mLabel = mRaw.charAt(0).toUpperCase()+mRaw.slice(1);
     html += '<tr><td>'+(mIdx===resultsMonthView?'<b>'+mLabel+'</b>':mLabel)+'</td>';
     LINES.forEach(function(l){
       var r = monthRecapValue(l, mIdx, resultsYear);
-      if(!r){ html += '<td class="c-empty">—</td>'; return; }
+      if(!r){ html += '<td class="c-empty">-</td>'; return; }
       var titre = r.source==='audits' ? (r.n>1? r.n+' audit(s)' : '1 audit') : 'donnée historique';
       html += '<td class="score-cell '+scoreCellClass(r.val)+'" data-action="goto-month" data-month="'+mIdx+'" title="'+titre+'">'+r.val+'%</td>';
     });
@@ -1286,7 +1287,7 @@ function proprResultats(){
           (r.annee===resultsYear || r.annee===undefined) && r.resultatPct!==null && r.resultatPct!==undefined;
       });
       var allVals = auditsThisWeek.map(function(a){return a.score;}).concat(manualThisWeek.map(function(r){return r.resultatPct;}));
-      if(!allVals.length){ html += '<td class="c-empty">—</td>'; return; }
+      if(!allVals.length){ html += '<td class="c-empty">-</td>'; return; }
       var avgScore = Math.round(allVals.reduce(function(s,v){return s+v;},0)/allVals.length);
       var label = allVals.length>1 ? avgScore+'% ('+allVals.length+')' : avgScore+'%';
       if(auditsThisWeek.length){
@@ -1294,7 +1295,7 @@ function proprResultats(){
         html += '<td class="score-cell '+scoreCellClass(avgScore)+'" data-action="view-audit" data-id="'+linkId+'" title="'+auditsThisWeek.length+' audit(s) + '+manualThisWeek.length+' saisie(s) manuelle(s)">'+label+'</td>';
       } else {
         // Saisie manuelle uniquement : cliquable pour SUPPRIMER
-        html += '<td class="score-cell '+scoreCellClass(avgScore)+'" data-action="delete-manual-result" data-id="'+manualThisWeek[0].id+'" title="Saisie manuelle S'+info.week+' — cliquer pour supprimer">'+label+'</td>';
+        html += '<td class="score-cell '+scoreCellClass(avgScore)+'" data-action="delete-manual-result" data-id="'+manualThisWeek[0].id+'" title="Saisie manuelle S'+info.week+' - cliquer pour supprimer">'+label+'</td>';
       }
     });
     html += '</tr>';
@@ -1372,7 +1373,7 @@ function renderResultatsCharts(){
   }catch(err){ console.error('chart error', err); }
 }
 
-// ===== RELEVES PRODUITS — contamination avec seuils =====
+// ===== RELEVES PRODUITS - contamination avec seuils =====
 var openContamDetailId = null;
 var contamDirectFormOpen = false;
 var contamCollecteFormOpen = false;
@@ -1394,7 +1395,7 @@ var CONTAM_COMBOS = (function(){
   return arr;
 })();
 function contamLevelForStatut(s){ return s==='nc'?'danger':s==='collected'?'warn':s==='noprod'?'neutral':s==='ok'?'ok':'neutral'; }
-function contamStatutLabel(s){ return {ok:'Conforme', nc:'Non conforme', collected:'En attente d\'analyse', noprod:'Pas de prod'}[s] || '—'; }
+function contamStatutLabel(s){ return {ok:'Conforme', nc:'Non conforme', collected:'En attente d\'analyse', noprod:'Pas de prod'}[s] || '-'; }
 
 function retestDeadline(c){
   // Deadline = 15 du mois suivant le NC
@@ -1470,7 +1471,7 @@ function proprContamination(){
   // ── SECTION 2 : COLLECTE ──────────────────────────────────────────
   html += '<div class="card" style="margin-bottom:18px;">'+
     '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;">'+
-      '<div><div class="eyebrow">'+(pendingRetests.length?'2':'1')+' — Déclarer une collecte (production)</div>'+
+      '<div><div class="eyebrow">'+(pendingRetests.length?'2':'1')+' - Déclarer une collecte (production)</div>'+
         '<p class="tiny" style="margin-top:4px;">La production déclare qu\'un échantillon a été prélevé. Le labo le retrouvera dans la liste ci-dessous pour saisir les mesures.</p></div>'+
       '<div style="display:flex; gap:8px;">'+
         '<button class="btn" data-action="contam-noprod">Pas de prod ce mois</button>'+
@@ -1481,7 +1482,7 @@ function proprContamination(){
 
   // ── SECTION 3 : EN ATTENTE D'ANALYSE ────────────────────────────
   html += '<div class="card" style="margin-bottom:18px;">'+
-    '<div class="eyebrow" style="margin-bottom:10px;">'+(pendingRetests.length?'3':'2')+' — Saisir les mesures (laboratoire)</div>';
+    '<div class="eyebrow" style="margin-bottom:10px;">'+(pendingRetests.length?'3':'2')+' - Saisir les mesures (laboratoire)</div>';
   var pendingItems = DATA.contamination.filter(function(c){ return c.statut==='collected'; })
     .sort(function(a,b){ return (a.collecteDate||'').localeCompare(b.collecteDate||''); });
   if(!pendingItems.length){
@@ -1492,7 +1493,7 @@ function proprContamination(){
       if(contamAnalyseEditId === c.id) return analyseFormRow(c);
       return '<tr><td>'+esc(c.ligne)+'</td><td>'+esc(c.ref)+'</td><td>'+
         (c.isRetest? badge('danger','Contre-analyse') : badge('neutral','1er relevé'))+'</td>'+
-        '<td class="num">'+fmtDate(c.collecteDate)+'</td><td class="num tiny">'+esc(val(c.serie,'—'))+'</td>'+
+        '<td class="num">'+fmtDate(c.collecteDate)+'</td><td class="num tiny">'+esc(val(c.serie,'-'))+'</td>'+
         '<td><button class="btn small primary" data-action="open-analyse-contam" data-id="'+c.id+'">Saisir mesures</button> '+
         '<button class="btn small danger-outline" data-action="delete-collecte" data-id="'+c.id+'">Supprimer</button></td></tr>';
     }).join('');
@@ -1519,7 +1520,7 @@ function proprContamination(){
       '</div></div>'+
     '<div class="chart-box"><canvas id="chart-contamination"></canvas></div></div>';
 
-  html += '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;"><div class="eyebrow">Tableau annuel — '+resultsYear+'</div><button class="btn small" data-action="add-contam-direct">+ Saisie directe</button></div>';
+  html += '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;"><div class="eyebrow">Tableau annuel - '+resultsYear+'</div><button class="btn small" data-action="add-contam-direct">+ Saisie directe</button></div>';
   if(contamDirectFormOpen) html += contamDirectForm();
 
   html += '<div class="table-wrap"><table class="annual-table"><thead><tr><th>Mois</th>'+CONTAM_COMBOS.map(function(c){return '<th>'+c.ligne+' · '+c.ref+'</th>';}).join('')+'</tr></thead><tbody>';
@@ -1529,7 +1530,7 @@ function proprContamination(){
     CONTAM_COMBOS.forEach(function(c){
       var rec = rs.find(function(x){ return x.ligne===c.ligne && x.ref===c.ref && x.mois===mIdx; });
       if(!rec){
-        html += '<td class="c-empty" data-action="contam-cell-add" data-ligne="'+c.ligne+'" data-ref="'+c.ref+'" data-mois="'+mIdx+'" style="cursor:pointer;" title="Cliquer pour saisir un résultat ou marquer non produit">—</td>';
+        html += '<td class="c-empty" data-action="contam-cell-add" data-ligne="'+c.ligne+'" data-ref="'+c.ref+'" data-mois="'+mIdx+'" style="cursor:pointer;" title="Cliquer pour saisir un résultat ou marquer non produit">-</td>';
         return;
       }
       var lvl = contamLevelForStatut(rec.statut);
@@ -1571,7 +1572,7 @@ function proprContamination(){
       var over = masse!==null && masse!==undefined && masse>seuil;
       html += '<tr><td>'+esc(c.ligne)+'</td><td>'+esc(c.ref)+'</td><td>'+moisLabel+'</td>'+
         '<td>'+(c.isRetest? badge('danger','Contre-analyse') : badge('neutral','1er relevé'))+'</td>'+
-        '<td style="font-family:var(--mono); color:'+(over?'var(--danger)':'inherit')+'; font-weight:700;">'+(masse!==null&&masse!==undefined? masse+'<span class="tiny"> mg</span>':'—')+'</td>'+
+        '<td style="font-family:var(--mono); color:'+(over?'var(--danger)':'inherit')+'; font-weight:700;">'+(masse!==null&&masse!==undefined? masse+'<span class="tiny"> mg</span>':'-')+'</td>'+
         '<td>'+badge(contamLevelForStatut(c.statut), contamStatutLabel(c.statut))+'</td>'+
         '<td class="num tiny">'+fmtDate(c.collecteDate)+'</td>'+
         '<td><button class="btn small" data-action="view-contam" data-id="'+c.id+'">Détail</button></td></tr>';
@@ -1603,7 +1604,7 @@ function contamCollecteForm(){
     '<label class="field">N° série / repère<input type="text" id="cc-serie" placeholder="Saisie manuelle"></label>'+
     '<label class="field">Commentaire<input type="text" id="cc-comment"></label>'+
     '</div>';
-  if(retest) html += '<div class="tiny" style="margin:8px 0; color:var(--danger); font-weight:700;">⚠ Contre-analyse requise — résultat précédent non conforme non encore re-testé.</div>';
+  if(retest) html += '<div class="tiny" style="margin:8px 0; color:var(--danger); font-weight:700;">⚠ Contre-analyse requise - résultat précédent non conforme non encore re-testé.</div>';
   html += '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="cancel-collecte-contam">Annuler</button><button class="btn primary" data-action="save-collecte-contam">Confirmer la collecte</button></div></div>';
   return html;
 }
@@ -1653,7 +1654,7 @@ async function handleSaveCollecteContam(){
         responsable:'', resultatPct:null, autoCreated:true
       });
       await save('planning');
-      logChange('Planning', 'Échéance créée automatiquement (collecte)', ligne+' · '+ref+' — '+moisLabel);
+      logChange('Planning', 'Échéance créée automatiquement (collecte)', ligne+' · '+ref+' - '+moisLabel);
     }
   }
 
@@ -1706,7 +1707,7 @@ async function handleDeleteCollecte(id){
 
   DATA.contamination = DATA.contamination.filter(function(x){ return x.id!==id; });
   await save('contamination');
-  logChange('Contamination', 'Suppression collecte', c.ligne+' · '+c.ref+' — collecté le '+fmtDate(c.collecteDate));
+  logChange('Contamination', 'Suppression collecte', c.ligne+' · '+c.ref+' - collecté le '+fmtDate(c.collecteDate));
   render();
 }
 function analyseFormRow(c){
@@ -1714,7 +1715,7 @@ function analyseFormRow(c){
   var row = '<tr style="background:var(--accent-bg);">'+
     '<td colspan="6"><div style="padding:8px 0;">'+
     badge(c.isRetest?'danger':'neutral', c.isRetest?'Contre-analyse':'1er relevé')+' '+esc(c.ligne)+' · '+esc(c.ref)+
-    ' — collecté le '+fmtDate(c.collecteDate)+(c.serie?' · n° '+esc(c.serie):'')+'</div>'+
+    ' - collecté le '+fmtDate(c.collecteDate)+(c.serie?' · n° '+esc(c.serie):'')+'</div>'+
     '<div class="entryform cols2" style="margin-top:8px;">';
   crit.forEach(function(cr){
     row += '<label class="field">'+esc(cr.label)+' <span class="tiny">(seuil '+cr.seuil+(cr.unit?' '+cr.unit:'')+')</span>'+
@@ -1740,7 +1741,7 @@ function contamDirectForm(){
   var values = pf.values || {};
   var noProd = !!pf.noProd;
   return '<div class="card" style="max-width:580px; margin-bottom:16px;">'+
-    '<div class="eyebrow" style="margin-bottom:10px;">'+(pf.editId?'Modifier le résultat':'Saisie directe — résultat déjà connu')+'</div>'+
+    '<div class="eyebrow" style="margin-bottom:10px;">'+(pf.editId?'Modifier le résultat':'Saisie directe - résultat déjà connu')+'</div>'+
     (pf.editId? '' : '<p class="tiny" style="margin-bottom:10px;">À utiliser pour ajouter un résultat sans passer par le circuit collecte → analyse, ou pour indiquer qu\'une référence n\'a pas été produite ce mois.</p>')+
     '<div class="entryform cols2">'+
     '<label class="field">Ligne<select id="cd-ligne">'+CONTAM_LINES.map(function(l){return '<option value="'+l+'"'+(l===ligne?' selected':'')+'>'+l+'</option>';}).join('')+'</select></label>'+
@@ -1828,7 +1829,7 @@ async function handleSaveContamDirect(){
     });
   }
   await save('contamination');
-  logChange('Contamination', editId?'Modification':'Saisie directe', ligne+' · '+ref+' — '+MONTHS_FR[mois]+' '+annee+' — '+statut.toUpperCase());
+  logChange('Contamination', editId?'Modification':'Saisie directe', ligne+' · '+ref+' - '+MONTHS_FR[mois]+' '+annee+' - '+statut.toUpperCase());
   contamDirectFormOpen = false;
   contamDirectPrefill = null;
   openContamDetailId = null;
@@ -1838,7 +1839,7 @@ async function handleDeleteContam(id){
   var c = DATA.contamination.find(function(x){ return x.id===id; });
   if(!c) return;
   var moisLabel = MONTHS_FR[c.mois].charAt(0).toUpperCase()+MONTHS_FR[c.mois].slice(1);
-  if(!confirm('Supprimer ce relevé ('+c.ligne+' · '+c.ref+' — '+moisLabel+' '+c.annee+') ?')) return;
+  if(!confirm('Supprimer ce relevé ('+c.ligne+' · '+c.ref+' - '+moisLabel+' '+c.annee+') ?')) return;
   // Si c'est un NC avec retest marqué, annuler le flag retested sur l'original
   if(c.isRetest){
     var original = DATA.contamination.find(function(x){
@@ -1848,7 +1849,7 @@ async function handleDeleteContam(id){
   }
   DATA.contamination = DATA.contamination.filter(function(x){ return x.id!==id; });
   await save('contamination');
-  logChange('Contamination', 'Suppression', c.ligne+' · '+c.ref+' — '+moisLabel+' '+c.annee);
+  logChange('Contamination', 'Suppression', c.ligne+' · '+c.ref+' - '+moisLabel+' '+c.annee);
   openContamDetailId = null;
   render();
 }
@@ -1860,7 +1861,7 @@ async function handleDismissRetest(id){
   c.retested = true;
   c.dismissedAt = todayStr();
   await save('contamination');
-  logChange('Contamination', 'Contre-analyse close sans re-test', c.ligne+' · '+c.ref+' — '+moisLabel);
+  logChange('Contamination', 'Contre-analyse close sans re-test', c.ligne+' · '+c.ref+' - '+moisLabel);
   render();
 }
 function handleTriggerRetest(id, ligne, ref, mois, annee){
@@ -1895,10 +1896,10 @@ async function handleSaveAnalyseContam(id){
     var msg, description;
     if(rec.isRetest){
       // 2ème NC consécutif → escalade
-      description = '🚨 ESCALADE — Contre-analyse également NC : '+rec.ligne+' · '+rec.ref+'. Blocage production recommandé.';
-      msg = '⚠️ CONTRE-ANALYSE NON CONFORME — résultat NC deux fois consécutives ('+rec.ligne+' · '+rec.ref+').\n\nAction d\'escalade créée dans le plan d\'actions.';
+      description = '🚨 ESCALADE - Contre-analyse également NC : '+rec.ligne+' · '+rec.ref+'. Blocage production recommandé.';
+      msg = '⚠️ CONTRE-ANALYSE NON CONFORME - résultat NC deux fois consécutives ('+rec.ligne+' · '+rec.ref+').\n\nAction d\'escalade créée dans le plan d\'actions.';
     } else {
-      description = 'Contre-analyse à réaliser — '+rec.ligne+' · '+rec.ref+' (résultat NC)';
+      description = 'Contre-analyse à réaliser - '+rec.ligne+' · '+rec.ref+' (résultat NC)';
       msg = 'Résultat NON CONFORME. Une contre-analyse est requise.\nUne action corrective a été créée dans le plan d\'actions.';
     }
     DATA.actions.push({id:uid('act'), origine:'Propreté', secteur:currentSecteur, description:description, ligne:rec.ligne, responsable:'', echeance:null, statut:'planifiee', dateCreation:todayStr()});
@@ -1949,20 +1950,20 @@ function renderContamDetailModal(){
   if(!c) return '';
   var crit = REF_CRITERIA[c.ref]||[];
   var html = '<div class="modal-overlay"><div class="modal-box">';
-  html += '<h3>'+esc(c.ligne)+' · '+esc(c.ref)+' — '+MONTHS_FR[c.mois].charAt(0).toUpperCase()+MONTHS_FR[c.mois].slice(1)+' '+c.annee+'</h3>';
+  html += '<h3>'+esc(c.ligne)+' · '+esc(c.ref)+' - '+MONTHS_FR[c.mois].charAt(0).toUpperCase()+MONTHS_FR[c.mois].slice(1)+' '+c.annee+'</h3>';
   html += '<div style="margin-bottom:12px;">'+badge(contamLevelForStatut(c.statut), contamStatutLabel(c.statut))+(c.isRetest?' <span class="tiny">(contre-analyse)</span>':'')+'</div>';
   if(c.statut==='ok'||c.statut==='nc'){
     crit.forEach(function(cr){
       var v = c.values[cr.id];
       var over = v!==undefined && v!==null && v!=='' && Number(v)>cr.seuil;
-      html += '<div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border); font-size:12.5px;"><span>'+esc(cr.label)+'</span><span style="font-family:var(--mono); color:'+(over?'var(--danger)':'var(--text)')+'; font-weight:600;">'+(v!==undefined&&v!==null&&v!==''?v:'—')+(cr.unit?' '+cr.unit:'')+' <span class="tiny">(seuil '+cr.seuil+(cr.unit?' '+cr.unit:'')+')</span></span></div>';
+      html += '<div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border); font-size:12.5px;"><span>'+esc(cr.label)+'</span><span style="font-family:var(--mono); color:'+(over?'var(--danger)':'var(--text)')+'; font-weight:600;">'+(v!==undefined&&v!==null&&v!==''?v:'-')+(cr.unit?' '+cr.unit:'')+' <span class="tiny">(seuil '+cr.seuil+(cr.unit?' '+cr.unit:'')+')</span></span></div>';
     });
   }
   html += '<div class="tiny" style="margin-top:10px;">'+(c.serie?'N° série : '+esc(c.serie)+' · ':'')+(c.collecteDate?'Collecté le '+fmtDate(c.collecteDate):'')+'</div>';
   if(c.comment) html += '<div class="tiny" style="margin-top:4px;">Note : '+esc(c.comment)+'</div>';
   if(c.rapport) html += '<div style="margin-top:8px;"><span class="tiny">Rapport : </span>'+(c.rapport.startsWith('http')||c.rapport.startsWith('\\\\')?'<a href="'+esc(c.rapport)+'" target="_blank" style="font-size:12px; color:var(--ok);">'+esc(c.rapport)+'</a>':'<span class="tiny">'+esc(c.rapport)+'</span>')+'</div>';
   if(c.statut==='nc' && !c.retested){
-    html += '<div style="margin-top:12px; padding:10px; background:var(--danger-bg); border-radius:var(--radius-sm); font-size:12.5px; color:var(--danger);">⚠ Contre-analyse requise — aucun re-test enregistré pour ce résultat.</div>';
+    html += '<div style="margin-top:12px; padding:10px; background:var(--danger-bg); border-radius:var(--radius-sm); font-size:12.5px; color:var(--danger);">⚠ Contre-analyse requise - aucun re-test enregistré pour ce résultat.</div>';
   }
   html += '<div class="actions-row" style="margin-top:16px;">'+
     '<button class="btn danger-outline" data-action="delete-contam" data-id="'+c.id+'">Supprimer ce relevé</button>'+
@@ -1973,7 +1974,7 @@ function renderContamDetailModal(){
   return html;
 }
 
-// ===== MCU0 — VIDANGE =====
+// ===== MCU0 - VIDANGE =====
 var VIDANGE_INTERVALLE = 90;
 function vidangeStatus(v){
   var next = addDays(v.derniereVidange, v.intervalle||VIDANGE_INTERVALLE);
@@ -1989,7 +1990,7 @@ function addDays(dateStr, n){
   return fmtISOLocal(d);
 }
 
-// ---------- RELEVÉS PARTICULES — campagnes hebdomadaires ----------
+// ---------- RELEVÉS PARTICULES - campagnes hebdomadaires ----------
 var PARTICULE_LINES = ['MCU1','MCU2'];
 var PARTICULE_POSTES = ['OP1060','OP1070'];
 var PARTICULE_STATUTS = {
@@ -2007,7 +2008,7 @@ function proprParticules(){
   // Graphiques
   html += '<div class="grid grid-2" style="margin-bottom:18px;">';
   PARTICULE_LINES.forEach(function(l){
-    html += '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">'+l+' — tendance par poste</div><div class="chart-box"><canvas id="chart-particules-'+l+'"></canvas></div></div>';
+    html += '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">'+l+' - tendance par poste</div><div class="chart-box"><canvas id="chart-particules-'+l+'"></canvas></div></div>';
   });
   html += '</div>';
 
@@ -2037,14 +2038,14 @@ function proprParticules(){
       weekMap[wk][p.ligne].n++;
     });
     var sortedWeeks = Object.keys(weekMap).map(Number).sort(function(a,b){return b-a;});
-    html += '<div class="eyebrow" style="margin-bottom:8px;">Récapitulatif annuel '+yearNow+' — total particules &gt;500µm par ligne</div>';
+    html += '<div class="eyebrow" style="margin-bottom:8px;">Récapitulatif annuel '+yearNow+' - total particules &gt;500µm par ligne</div>';
     html += '<div class="table-wrap" style="margin-bottom:22px;"><table class="annual-table"><thead><tr><th>Semaine</th>'+
       PARTICULE_LINES.map(function(l){return '<th>'+esc(l)+'</th>';}).join('')+'</tr></thead><tbody>';
     sortedWeeks.forEach(function(wk){
       html += '<tr><td class="tiny">S'+wk+'</td>';
       PARTICULE_LINES.forEach(function(l){
         var cell = weekMap[wk][l];
-        if(!cell){ html += '<td class="c-empty">—</td>'; return; }
+        if(!cell){ html += '<td class="c-empty">-</td>'; return; }
         html += '<td style="text-align:center; font-family:var(--mono); font-weight:700;">'+cell.sum+' <span class="tiny" style="font-weight:400;">('+cell.n+' poste'+(cell.n>1?'s':'')+')</span></td>';
       });
       html += '</tr>';
@@ -2078,7 +2079,7 @@ function proprParticules(){
     var info = isoWeekInfo(sem.key!=='?'?sem.key:todayStr());
     html += '<div class="card" style="margin-bottom:14px;">'+
       '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;">'+
-        '<div class="eyebrow">Semaine '+info.week+' — posées le '+fmtDate(sem.key)+'</div>'+
+        '<div class="eyebrow">Semaine '+info.week+' - posées le '+fmtDate(sem.key)+'</div>'+
         (sem.items.every(function(p){return p.statut==='en_pose';}) ?
           '<button class="btn small primary" data-action="retrait-semaine" data-pose="'+sem.key+'">↑ Envoyer au labo (retrait + DT)</button>' : '')+
       '</div>';
@@ -2120,9 +2121,9 @@ function proprParticules(){
         '<td style="padding:6px 8px;"><b>'+esc(p.poste)+'</b></td>'+
         '<td style="padding:6px 8px;">'+statBadge+'</td>'+
         '<td style="padding:6px 8px; font-size:12px;">'+fmtDate(p.dateRetrait||'')+'</td>'+
-        '<td style="padding:6px 8px; font-size:12px; font-family:var(--mono);">'+esc(p.numeroDT||'—')+'</td>'+
-        '<td style="padding:6px 8px; text-align:right; font-family:var(--mono); font-weight:700;">'+(p.nbParticules!==null&&p.nbParticules!==undefined?p.nbParticules:'—')+'</td>'+
-        '<td style="padding:6px 8px; max-width:180px; font-size:11px;">'+(p.rapport?(p.rapport.startsWith('http')?'<a href="'+esc(p.rapport)+'" target="_blank" style="color:var(--ok);">Rapport ↗</a>':'<span class="tiny">'+esc(p.rapport)+'</span>'):'—')+'</td>'+
+        '<td style="padding:6px 8px; font-size:12px; font-family:var(--mono);">'+esc(p.numeroDT||'-')+'</td>'+
+        '<td style="padding:6px 8px; text-align:right; font-family:var(--mono); font-weight:700;">'+(p.nbParticules!==null&&p.nbParticules!==undefined?p.nbParticules:'-')+'</td>'+
+        '<td style="padding:6px 8px; max-width:180px; font-size:11px;">'+(p.rapport?(p.rapport.startsWith('http')?'<a href="'+esc(p.rapport)+'" target="_blank" style="color:var(--ok);">Rapport ↗</a>':'<span class="tiny">'+esc(p.rapport)+'</span>'):'-')+'</td>'+
         '<td style="padding:6px 8px;">'+actionCell+
           ' <button class="btn small danger-outline" data-action="delete" data-module="particules" data-id="'+p.id+'">Suppr.</button>'+
         '</td></tr>';
@@ -2198,7 +2199,7 @@ async function handleSaveResultat(id){
     if(rapEl && rapEl.value) p.rapport = rapEl.value;
     p.statut = 'resultat';
     await save('particules');
-    logChange('Propreté', 'Résultat particules', p.ligne+' · '+p.poste+' — '+p.nbParticules);
+    logChange('Propreté', 'Résultat particules', p.ligne+' · '+p.poste+' - '+p.nbParticules);
   }
   particuleResultatEditId = null;
   render();
@@ -2230,7 +2231,7 @@ function renderParticulesCharts(){
 }
 
 function proprVidange(){
-  var html = '<p class="tiny" style="margin-bottom:12px;">Suivi des vidanges MCU0 — intervalle standard : '+VIDANGE_INTERVALLE+' jours.</p>';
+  var html = '<p class="tiny" style="margin-bottom:12px;">Suivi des vidanges MCU0 - intervalle standard : '+VIDANGE_INTERVALLE+' jours.</p>';
   html += '<div class="toolbar"><div></div><button class="btn primary" data-toggle-form="vidange">+ Ajouter un équipement</button></div>';
   html += '<form class="entryform cols2" id="form-vidange" style="display:none">'+
     field('text','equipement','Intervention / repère') +
@@ -2364,9 +2365,9 @@ RENDERERS.esd = function(){
       var dl = ech ? daysLabel(ech) : null;
       return '<tr>'+
         '<td style="font-weight:600;">'+esc(p.nom)+'</td>'+
-        '<td class="num">'+(p.dateFormation?fmtDate(p.dateFormation):'—')+'</td>'+
+        '<td class="num">'+(p.dateFormation?fmtDate(p.dateFormation):'-')+'</td>'+
         '<td class="num" style="'+(s.level==='danger'?'color:var(--danger);font-weight:700;':'')+'">'+
-          (ech?fmtDate(ech):'—')+
+          (ech?fmtDate(ech):'-')+
           (dl&&s.level!=='ok'?' <span class="tiny">('+dl.text+')</span>':'')+
         '</td>'+
         '<td>'+badge(s.level, s.label)+'</td>'+
@@ -2394,7 +2395,7 @@ function esdEditRow(p){
   return '<tr style="background:var(--accent-bg);">'+
     '<td><input type="text" id="esd-edit-nom" value="'+esc(p.nom)+'" style="width:200px;"></td>'+
     '<td><input type="date" id="esd-edit-date" value="'+esc(p.dateFormation||'')+'" style="width:150px;"></td>'+
-    '<td class="tiny">'+(ech?fmtDate(ech):'—')+' (calculé auto)</td>'+
+    '<td class="tiny">'+(ech?fmtDate(ech):'-')+' (calculé auto)</td>'+
     '<td></td>'+
     '<td style="display:flex; gap:5px;">'+
       '<button class="btn small primary" data-action="esd-save-edit" data-id="'+p.id+'">Valider</button>'+
@@ -2420,7 +2421,7 @@ async function handleSaveEsdEdit(id){
   var oldDate = p.dateFormation;
   p.nom = nom; p.dateFormation = date||null;
   await save('esd');
-  logChange('ESD', 'Mise à jour', nom+(date!==oldDate?' — date : '+fmtDate(date):''));
+  logChange('ESD', 'Mise à jour', nom+(date!==oldDate?' - date : '+fmtDate(date):''));
   esdEditId = null;
   render();
 }
@@ -2454,7 +2455,7 @@ RENDERERS.perf = function(){
   if(perfFormOpen) html += perfForm();
 
   html += '<div class="grid grid-4" style="margin-bottom:18px;">'+
-    '<div class="statcard"><div class="eyebrow">Score moyen '+perfYear+'</div><div class="val" style="color:var(--'+(moy===null?'text':scoreLevel(moy))+');">'+(moy!==null?moy+'%':'—')+'</div></div>'+
+    '<div class="statcard"><div class="eyebrow">Score moyen '+perfYear+'</div><div class="val" style="color:var(--'+(moy===null?'text':scoreLevel(moy))+');">'+(moy!==null?moy+'%':'-')+'</div></div>'+
     '<div class="statcard s-warn"><div class="eyebrow">En attention</div><div class="val">'+attn+'</div></div>'+
     '<div class="statcard s-danger"><div class="eyebrow">En danger</div><div class="val">'+danger+'</div></div>'+
     '<div class="statcard"><div class="eyebrow">Audits '+perfYear+'</div><div class="val">'+scored.length+'</div></div>'+
@@ -2470,22 +2471,22 @@ RENDERERS.perf = function(){
     html += '<div class="section"><div class="alertlist">'+alerts.map(function(r){
       var lvl = scoreLevel(r.resultatPct);
       var mLabel = MONTHS_FR[r.mois].charAt(0).toUpperCase()+MONTHS_FR[r.mois].slice(1);
-      return '<div class="alertitem"><div>'+badge(lvl,'')+'</div><div><div class="txt">'+esc(r.ligne)+' — '+mLabel+' : '+r.resultatPct+'%</div><div class="meta">'+(lvl==='danger'?'Sous le seuil danger':'Sous le seuil attention')+'</div></div></div>';
+      return '<div class="alertitem"><div>'+badge(lvl,'')+'</div><div><div class="txt">'+esc(r.ligne)+' - '+mLabel+' : '+r.resultatPct+'%</div><div class="meta">'+(lvl==='danger'?'Sous le seuil danger':'Sous le seuil attention')+'</div></div></div>';
     }).join('')+'</div></div>';
   }
 
   // Graphique évolution
-  html += '<div class="card" style="margin-bottom:18px;"><div class="eyebrow" style="margin-bottom:8px;">Évolution par ligne — '+perfYear+'</div><div class="chart-box"><canvas id="chart-perf-evol"></canvas></div></div>';
+  html += '<div class="card" style="margin-bottom:18px;"><div class="eyebrow" style="margin-bottom:8px;">Évolution par ligne - '+perfYear+'</div><div class="chart-box"><canvas id="chart-perf-evol"></canvas></div></div>';
 
   // Tableau annuel mois × lignes
-  html += '<div class="eyebrow" style="margin-bottom:8px;">Tableau annuel — '+perfYear+'</div>';
+  html += '<div class="eyebrow" style="margin-bottom:8px;">Tableau annuel - '+perfYear+'</div>';
   html += '<div class="table-wrap"><table class="annual-table"><thead><tr><th>Mois</th>'+lines.map(function(l){return '<th>'+esc(l)+'</th>';}).join('')+'</tr></thead><tbody>';
   MONTHS_FR.forEach(function(mRaw, mIdx){
     var mLabel = mRaw.charAt(0).toUpperCase()+mRaw.slice(1);
     html += '<tr><td>'+mLabel+'</td>';
     lines.forEach(function(l){
       var r = rs.find(function(x){ return x.ligne===l && x.mois===mIdx; });
-      if(!r || r.resultatPct===null || r.resultatPct===undefined){ html += '<td class="c-empty">—</td>'; return; }
+      if(!r || r.resultatPct===null || r.resultatPct===undefined){ html += '<td class="c-empty">-</td>'; return; }
       html += '<td class="score-cell '+scoreCellClass(r.resultatPct)+'" data-action="perf-delete-cell" data-id="'+r.id+'" title="Cliquer pour supprimer">'+r.resultatPct+'%</td>';
     });
     html += '</tr>';
@@ -2499,7 +2500,7 @@ function perfForm(){
   var lines = secteurLines();
   var today = new Date();
   return '<div class="card" style="max-width:460px; margin-bottom:16px;">'+
-    '<div class="eyebrow" style="margin-bottom:10px;">Audit de perf — '+esc(currentSecteur)+'</div>'+
+    '<div class="eyebrow" style="margin-bottom:10px;">Audit de perf - '+esc(currentSecteur)+'</div>'+
     '<div class="entryform cols2">'+
     '<label class="field">Ligne<select id="pf-ligne">'+lines.map(function(l){return '<option value="'+esc(l)+'">'+esc(l)+'</option>';}).join('')+'</select></label>'+
     '<label class="field">Mois<select id="pf-mois">'+MONTHS_FR.map(function(m,i){return '<option value="'+i+'"'+(i===today.getMonth()?' selected':'')+'>'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>';}).join('')+'</select></label>'+
@@ -2521,14 +2522,14 @@ async function handleSavePerf(){
     DATA.perf.push({id:uid('perf'), secteur:currentSecteur, ligne:ligne, mois:mois, annee:annee, resultatPct:parseFloat(pct)});
   }
   await save('perf');
-  logChange('Audits perf', 'Saisie', currentSecteur+' · '+ligne+' — '+MONTHS_FR[mois]+' : '+pct+'%');
+  logChange('Audits perf', 'Saisie', currentSecteur+' · '+ligne+' - '+MONTHS_FR[mois]+' : '+pct+'%');
   perfFormOpen = false;
   render();
 }
 async function handleDeletePerfCell(id){
   var r = DATA.perf.find(function(x){ return x.id===id; });
   if(!r) return;
-  if(!confirm('Supprimer le résultat '+r.ligne+' — '+MONTHS_FR[r.mois]+' ('+r.resultatPct+'%) ?')) return;
+  if(!confirm('Supprimer le résultat '+r.ligne+' - '+MONTHS_FR[r.mois]+' ('+r.resultatPct+'%) ?')) return;
   DATA.perf = DATA.perf.filter(function(x){ return x.id!==id; });
   await save('perf');
   render();
@@ -2619,8 +2620,8 @@ RENDERERS.formations = function(){
       var ech = formationEcheance(p);
       var dl = ech ? daysLabel(ech) : null;
       return '<tr><td style="font-weight:600;">'+esc(p.nom)+'</td>'+
-        '<td class="num">'+(p.dateFormation?fmtDate(p.dateFormation):'—')+'</td>'+
-        '<td class="num" style="'+(s.level==='danger'?'color:var(--danger);font-weight:700;':'')+'">'+(ech?fmtDate(ech):'—')+(dl&&s.level!=='ok'?' <span class="tiny">('+dl.text+')</span>':'')+'</td>'+
+        '<td class="num">'+(p.dateFormation?fmtDate(p.dateFormation):'-')+'</td>'+
+        '<td class="num" style="'+(s.level==='danger'?'color:var(--danger);font-weight:700;':'')+'">'+(ech?fmtDate(ech):'-')+(dl&&s.level!=='ok'?' <span class="tiny">('+dl.text+')</span>':'')+'</td>'+
         '<td>'+badge(s.level, s.label)+'</td>'+
         '<td style="display:flex; gap:5px; flex-wrap:wrap;"><button class="btn small primary" data-action="formation-edit" data-id="'+p.id+'">Renouveler / Modifier</button><button class="btn small danger-outline" data-action="formation-delete" data-id="'+p.id+'">Suppr.</button></td></tr>';
     }).join('');
@@ -2683,16 +2684,16 @@ function downloadText(filename, text, mime){
 RENDERERS.archives = function(){
   var month = currentYYYYMM(0);
   var html = '<div class="section"><h2>'+esc(t('archives_titre','Archivage des données'))+'</h2>';
-  html += '<p class="tiny" style="max-width:660px; margin-bottom:16px;">Pour la traçabilité IATF, exportez régulièrement un instantané daté de chaque module (équivalent à un onglet mensuel sur Excel) et classez-le dans votre système documentaire. Les données restent disponibles en continu dans l\'application — l\'export ci-dessous crée une copie figée pour archivage.</p>';
+  html += '<p class="tiny" style="max-width:660px; margin-bottom:16px;">Pour la traçabilité IATF, exportez régulièrement un instantané daté de chaque module (équivalent à un onglet mensuel sur Excel) et classez-le dans votre système documentaire. Les données restent disponibles en continu dans l\'application - l\'export ci-dessous crée une copie figée pour archivage.</p>';
   html += '<div class="toolbar"><div class="left"><label class="field" style="flex-direction:row; align-items:center; gap:8px;">Mois à exporter <input type="month" id="archive-month" value="'+month+'"></label></div></div>';
   html += '<div class="grid grid-2">';
   html += archiveCard('Défauts ATEQ', 'Saisies quotidiennes du mois sélectionné (MCU1/MCU2).', 'ateq');
   html += archiveCard('Planning échéances', 'Échéances du mois sélectionné, toutes lignes et types.', 'planning');
   html += archiveCard('Métrologie', 'État actuel complet de la base instruments (photo à la date d\'export, indépendant du mois choisi).', 'metro');
-  html += archiveCard('Propreté — résultats audits', 'Résultats (%) du mois sélectionné.', 'resultats');
+  html += archiveCard('Propreté - résultats audits', 'Résultats (%) du mois sélectionné.', 'resultats');
   html += archiveCard('Plan d\'actions', 'Actions créées ou échéant ce mois.', 'actions');
   html += '</div>';
-  html += '<div class="card" style="margin-top:18px;"><div class="eyebrow">Sauvegarde complète</div><p class="tiny" style="margin:8px 0 12px;">Export brut de la totalité des données (tous modules, tout historique) au format JSON — utile en cas de migration ou de demande d\'audit complète. À ouvrir avec un éditeur de texte ou à réimporter techniquement si besoin.</p><button class="btn primary" data-action="export-full-json">Télécharger la sauvegarde complète (JSON)</button></div>';
+  html += '<div class="card" style="margin-top:18px;"><div class="eyebrow">Sauvegarde complète</div><p class="tiny" style="margin:8px 0 12px;">Export brut de la totalité des données (tous modules, tout historique) au format JSON - utile en cas de migration ou de demande d\'audit complète. À ouvrir avec un éditeur de texte ou à réimporter techniquement si besoin.</p><button class="btn primary" data-action="export-full-json">Télécharger la sauvegarde complète (JSON)</button></div>';
   html += renderChangelogSection();
   html += '</div>';
   return html;
@@ -2824,11 +2825,11 @@ function renderSecteurDashboard(){
 
   var glvl = secteurGaugeScore!==null ? scoreLevel(secteurGaugeScore) : 'neutral';
   html += '<div class="section card" style="margin-bottom:18px;">'+
-    '<div class="eyebrow" style="text-align:center; margin-bottom:14px;">Score de conformité — secteur '+esc(sec?sec.nom:currentSecteur)+'</div>'+
+    '<div class="eyebrow" style="text-align:center; margin-bottom:14px;">Score de conformité - secteur '+esc(sec?sec.nom:currentSecteur)+'</div>'+
     '<div style="display:flex; justify-content:center;">'+
       '<div style="position:relative; width:200px; height:200px;"><canvas id="chart-global-gauge"></canvas>'+
       '<div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">'+
-        '<div style="font-family:var(--mono); font-weight:700; font-size:42px; color:var(--'+(secteurGaugeScore!==null?glvl:'text-faint')+');">'+(secteurGaugeScore!==null?secteurGaugeScore+'%':'—')+'</div>'+
+        '<div style="font-family:var(--mono); font-weight:700; font-size:42px; color:var(--'+(secteurGaugeScore!==null?glvl:'text-faint')+');">'+(secteurGaugeScore!==null?secteurGaugeScore+'%':'-')+'</div>'+
       '</div></div>'+
     '</div>'+
     (detail.length?
@@ -2840,14 +2841,14 @@ function renderSecteurDashboard(){
   '</div>';
 
   html += '<div class="section"><div class="grid grid-4">';
-  html += '<div class="statcard"><div class="eyebrow">Perf moyenne du mois</div><div class="val" style="color:var(--'+(perfMoy===null?'text':scoreLevel(perfMoy))+');">'+(perfMoy!==null?perfMoy+'%':'—')+'</div><div class="tiny">'+perfMonth.length+'/'+lines.length+' lignes auditées</div></div>';
+  html += '<div class="statcard"><div class="eyebrow">Perf moyenne du mois</div><div class="val" style="color:var(--'+(perfMoy===null?'text':scoreLevel(perfMoy))+');">'+(perfMoy!==null?perfMoy+'%':'-')+'</div><div class="tiny">'+perfMonth.length+'/'+lines.length+' lignes auditées</div></div>';
   html += '<div class="statcard s-'+ms.level+'"><div class="eyebrow">Métrologie</div><div class="tiny" style="margin-top:6px;">'+ms.late+' en retard · <b style="color:#C25A00;">'+(ms.urgent||0)+' expire ce mois</b> · '+ms.warn+' à prévoir</div></div>';
   html += '<div class="statcard '+(late?'s-danger':'')+'"><div class="eyebrow">Actions en retard</div><div class="val">'+late+'</div></div>';
   html += '<div class="statcard"><div class="eyebrow">Actions ouvertes</div><div class="val">'+openA+'</div></div>';
   html += '</div></div>';
 
   // Perf par ligne du mois en cours
-  html += '<div class="section card" style="margin-bottom:18px;"><div class="eyebrow" style="margin-bottom:10px;">Audits de perf — '+MONTHS_FR[curM].charAt(0).toUpperCase()+MONTHS_FR[curM].slice(1)+' '+curY+'</div>';
+  html += '<div class="section card" style="margin-bottom:18px;"><div class="eyebrow" style="margin-bottom:10px;">Audits de perf - '+MONTHS_FR[curM].charAt(0).toUpperCase()+MONTHS_FR[curM].slice(1)+' '+curY+'</div>';
   html += '<div class="linebadges">'+lines.map(function(l){
     var r = perfMonth.find(function(x){ return x.ligne===l; });
     var b = r ? badge(scoreLevel(r.resultatPct), r.resultatPct+'%') : badge('neutral','Non audité');
@@ -2860,7 +2861,7 @@ function renderSecteurDashboard(){
     html += '<div class="section card" style="margin-bottom:18px;"><div class="eyebrow" style="color:var(--danger); margin-bottom:10px;">Actions en retard ('+lateActions.length+')</div>';
     html += '<div class="table-wrap"><table><thead><tr><th>Description</th><th>Ligne</th><th>Échéance</th><th>Responsable</th></tr></thead><tbody>';
     html += lateActions.slice(0,8).map(function(a){
-      return '<tr><td>'+esc(a.description)+'</td><td>'+esc(val(a.ligne,'—'))+'</td><td class="num" style="color:var(--danger);">'+fmtDate(a.echeance)+'</td><td>'+esc(val(a.responsable,'—'))+'</td></tr>';
+      return '<tr><td>'+esc(a.description)+'</td><td>'+esc(val(a.ligne,'-'))+'</td><td class="num" style="color:var(--danger);">'+fmtDate(a.echeance)+'</td><td>'+esc(val(a.responsable,'-'))+'</td></tr>';
     }).join('');
     html += '</tbody></table></div></div>';
   }
@@ -2873,33 +2874,56 @@ function renderMultiSecteurBanner(){
   var curY = Number(todayStr().split('-')[0]);
   var curM = Number(todayStr().split('-')[1])-1;
   var html = '<div class="section card" style="margin-bottom:18px; border:2px solid var(--ok);">';
-  html += '<div class="eyebrow" style="margin-bottom:10px;">Vue consolidée — tous vos secteurs</div>';
+  html += '<div class="eyebrow" style="margin-bottom:10px;">Tous les secteurs</div>';
   html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:10px;">';
   us.forEach(function(sid){
     var sec = getSecteur(sid);
     if(!sec) return;
-    var score = null, label = '';
+    var score = null, label = '', periodLabel = '';
     if(sid==='MCU'){
-      // Score propreté du mois
-      var rs = DATA.resultats.filter(function(r){ return (r.annee===curY || r.annee===undefined) && r.resultatPct!==null && r.resultatPct!==undefined; });
+      // Score propreté : mois en cours, sinon le mois le plus récent disponible
+      var rs = DATA.resultats.filter(function(r){ return r.resultatPct!==null && r.resultatPct!==undefined; });
       var moisLabel = MONTHS_FR[curM].charAt(0).toUpperCase()+MONTHS_FR[curM].slice(1);
-      var monthScores = rs.filter(function(r){ return r.mois===moisLabel; });
-      if(monthScores.length) score = Math.round(monthScores.reduce(function(s,r){return s+r.resultatPct;},0)/monthScores.length);
-      label = 'propreté';
+      var monthScores = rs.filter(function(r){ return r.mois===moisLabel && (r.annee===curY || r.annee===undefined); });
+      if(monthScores.length){
+        score = Math.round(monthScores.reduce(function(s,r){return s+r.resultatPct;},0)/monthScores.length);
+        periodLabel = 'propreté du mois';
+      } else {
+        var sorted = rs.slice().sort(function(a,b){
+          var ay=a.annee||curY, by=b.annee||curY, am=MONTHS_FR.indexOf(a.mois.toLowerCase()), bm=MONTHS_FR.indexOf(b.mois.toLowerCase());
+          return (by*12+bm)-(ay*12+am);
+        });
+        if(sorted.length){
+          var lastMois = sorted[0].mois, lastAnnee = sorted[0].annee||curY;
+          var lastScores = rs.filter(function(r){ return r.mois===lastMois && (r.annee||curY)===lastAnnee; });
+          score = Math.round(lastScores.reduce(function(s,r){return s+r.resultatPct;},0)/lastScores.length);
+          periodLabel = 'propreté - '+lastMois;
+        }
+      }
     } else {
-      var perfM = DATA.perf.filter(function(r){ return (r.secteur||'')===sid && r.annee===curY && r.mois===curM && r.resultatPct!==null; });
-      if(perfM.length) score = Math.round(perfM.reduce(function(s,r){return s+r.resultatPct;},0)/perfM.length);
-      label = 'perf';
+      var perfAll = DATA.perf.filter(function(r){ return (r.secteur||'')===sid && r.resultatPct!==null && r.resultatPct!==undefined; });
+      var perfM = perfAll.filter(function(r){ return r.annee===curY && r.mois===curM; });
+      if(perfM.length){
+        score = Math.round(perfM.reduce(function(s,r){return s+r.resultatPct;},0)/perfM.length);
+        periodLabel = 'perf du mois';
+      } else if(perfAll.length){
+        var sortedP = perfAll.slice().sort(function(a,b){ return (b.annee*12+b.mois)-(a.annee*12+a.mois); });
+        var lastY = sortedP[0].annee, lastM = sortedP[0].mois;
+        var lastP = perfAll.filter(function(r){ return r.annee===lastY && r.mois===lastM; });
+        score = Math.round(lastP.reduce(function(s,r){return s+r.resultatPct;},0)/lastP.length);
+        periodLabel = 'perf - '+(MONTHS_FR[lastM].charAt(0).toUpperCase()+MONTHS_FR[lastM].slice(1));
+      }
     }
+    if(!periodLabel) periodLabel = sid==='MCU' ? 'propreté' : 'perf';
     var metroLate = DATA.metro.filter(function(e){ return (e.secteur||'MCU')===sid && e.echeance && e.echeance.slice(0,7) < todayStr().slice(0,7); }).length;
     var actLate = DATA.actions.filter(function(a){ return (a.secteur||'MCU')===sid && isActionLate(a); }).length;
     var lvl = score===null? 'neutral' : scoreLevel(score);
     var isCur = sid===currentSecteur;
     html += '<div style="padding:10px; border-radius:var(--radius-sm); border:1.5px solid '+(isCur?'var(--ok)':'var(--border)')+'; background:'+(isCur?'var(--ok-bg)':'var(--card)')+'; cursor:pointer;" data-action="switch-secteur" data-id="'+sid+'">'+
       '<div style="font-weight:700; font-size:13px; margin-bottom:4px;">'+esc(sec.nom)+'</div>'+
-      '<div style="font-family:var(--mono); font-size:20px; font-weight:700; color:var(--'+lvl+');">'+(score!==null?score+'%':'—')+'</div>'+
-      '<div class="tiny">'+label+' du mois</div>'+
-      (metroLate||actLate? '<div class="tiny" style="color:var(--danger); margin-top:3px;">'+(metroLate?metroLate+' métro. retard':'')+(metroLate&&actLate?' · ':'')+(actLate?actLate+' act. retard':'')+'</div>' : '<div class="tiny" style="color:var(--ok); margin-top:3px;">RAS</div>')+
+      '<div style="font-family:var(--mono); font-size:20px; font-weight:700; color:var(--'+lvl+');">'+(score!==null?score+'%':'-')+'</div>'+
+      '<div class="tiny">'+esc(periodLabel)+'</div>'+
+      (metroLate||actLate? '<div class="tiny" style="color:var(--danger); margin-top:3px;">'+(metroLate?metroLate+' métro. retard':'')+(metroLate&&actLate?' - ':'')+(actLate?actLate+' act. retard':'')+'</div>' : '<div class="tiny" style="color:var(--ok); margin-top:3px;">RAS</div>')+
     '</div>';
   });
   html += '</div></div>';
@@ -2923,13 +2947,13 @@ RENDERERS.dashboard = function(){
     var deltaHtml = '';
     if(prevScore!==null){
       var delta = gs.score - prevScore;
-      var darrow = delta>0?'▲':delta<0?'▼':'—';
+      var darrow = delta>0?'▲':delta<0?'▼':'-';
       var dcolor = delta>0?'var(--ok)':delta<0?'var(--danger)':'var(--text-faint)';
       deltaHtml = '<div class="tiny" style="margin-top:4px; color:'+dcolor+'; font-weight:600;">'+darrow+' '+(delta>0?'+':'')+delta+' pt vs mois dernier ('+prevScore+'%)</div>';
     } else {
       deltaHtml = '<div class="tiny" style="margin-top:4px; color:var(--text-faint);">Pas encore de comparaison disponible (historique en cours de constitution)</div>';
     }
-    return '<div class="eyebrow" style="text-align:center; margin-bottom:14px;">'+esc(t('title_score','Score de conformité — secteur MCU'))+'</div>'+
+    return '<div class="eyebrow" style="text-align:center; margin-bottom:14px;">'+esc(t('title_score','Score de conformité - secteur MCU'))+'</div>'+
       '<div style="display:flex; justify-content:center;">'+
         '<div style="position:relative; width:200px; height:200px;"><canvas id="chart-global-gauge"></canvas>'+
         '<div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">'+
@@ -2941,7 +2965,7 @@ RENDERERS.dashboard = function(){
         var dlvl = scoreLevel(d.val);
         return '<div style="text-align:center; min-width:120px;"><div class="tiny" style="margin-bottom:4px;">'+esc(d.label)+'</div><div style="font-family:var(--mono); font-weight:700; font-size:24px; color:var(--'+dlvl+');">'+d.val+'%</div></div>';
       }).join('')+'</div>'+
-      '<p class="tiny" style="margin-top:16px; text-align:center; color:var(--text-faint);">Seuils : ≥85% conforme, 50–85% attention, &lt;50% en danger — identiques aux audits propreté.</p>';
+      '<p class="tiny" style="margin-top:16px; text-align:center; color:var(--text-faint);">Seuils : ≥85% conforme, 50–85% attention, &lt;50% en danger - identiques aux audits propreté.</p>';
   })();
 
   W.w_planning = (function(){
@@ -3003,14 +3027,14 @@ RENDERERS.dashboard = function(){
       var lvl = r.resultatPct>=90?'ok':r.resultatPct>=80?'warn':'danger';
       return '<div class="linebadge">'+l+' '+badge(lvl, r.resultatPct+'% ('+r.mois+')')+'</div>';
     }).join('');
-    var proprHtml = '<div class="eyebrow">'+esc(t('title_propr','Propreté — derniers résultats'))+'</div><div class="linebadges">'+proprLines+'</div>';
+    var proprHtml = '<div class="eyebrow">'+esc(t('title_propr','Propreté - derniers résultats'))+'</div><div class="linebadges">'+proprLines+'</div>';
 
     var perfLines = LINES.map(function(l){
       var p = latestPerfResultByLine(l);
       if(!p) return '<div class="linebadge">'+l+' <span class="tiny">Aucune donnée</span></div>';
       return '<div class="linebadge">'+l+' '+badge(scoreLevel(p.resultatPct), p.resultatPct+'% ('+fmtDate(p.echeance)+')')+'</div>';
     }).join('');
-    var perfHtml = '<div class="eyebrow">'+esc(t('title_perf','Audits de perf — derniers résultats'))+'</div><div class="linebadges">'+perfLines+'</div>';
+    var perfHtml = '<div class="eyebrow">'+esc(t('title_perf','Audits de perf - derniers résultats'))+'</div><div class="linebadges">'+perfLines+'</div>';
 
     return '<div class="grid grid-4">'+
       '<div class="statcard">'+metroHtml+'</div>'+
@@ -3030,14 +3054,14 @@ RENDERERS.dashboard = function(){
       var html2 = '<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Description</th><th>Origine</th><th>Échéance</th><th>Délai</th><th>Responsable</th></tr></thead><tbody>';
       html2 += items.map(function(a){
         var dl = daysLabel(a.echeance);
-        return '<tr><td>'+esc(val(a.ligne,'—'))+'</td><td>'+esc(a.description)+'</td><td class="tiny">'+esc(val(a.origine,'—'))+'</td>'+
-          '<td class="num">'+(a.echeance?fmtDate(a.echeance):'—')+'</td>'+
-          '<td>'+(dl? '<span class="delay-pill delay-'+lvl+'">'+dl.text+'</span>' : '—')+'</td>'+
-          '<td>'+esc(val(a.responsable,'—'))+'</td></tr>';
+        return '<tr><td>'+esc(val(a.ligne,'-'))+'</td><td>'+esc(a.description)+'</td><td class="tiny">'+esc(val(a.origine,'-'))+'</td>'+
+          '<td class="num">'+(a.echeance?fmtDate(a.echeance):'-')+'</td>'+
+          '<td>'+(dl? '<span class="delay-pill delay-'+lvl+'">'+dl.text+'</span>' : '-')+'</td>'+
+          '<td>'+esc(val(a.responsable,'-'))+'</td></tr>';
       }).join('');
       return html2+'</tbody></table></div>';
     }
-    var h = '<div style="display:flex; align-items:baseline; gap:14px; margin-bottom:10px; flex-wrap:wrap;"><div class="eyebrow">'+esc(t('title_actions',"Plan d'actions — échéances"))+'</div>'+
+    var h = '<div style="display:flex; align-items:baseline; gap:14px; margin-bottom:10px; flex-wrap:wrap;"><div class="eyebrow">'+esc(t('title_actions',"Plan d'actions - échéances"))+'</div>'+
       '<span class="tiny">'+openActions.length+' ouvertes au total · '+lateActions.length+' en retard · '+upcomingActions.length+' à venir sous '+alertHorizon+'j</span></div>';
     h += '<div class="alert-group-title alert-group-danger">En retard ('+lateActions.length+')</div>';
     h += lateActions.length? actionsTable(lateActions,'late') : '<div class="empty">Aucune action en retard.</div>';
@@ -3046,7 +3070,7 @@ RENDERERS.dashboard = function(){
     return h;
   })();
 
-  W.w_trend = '<div class="eyebrow" style="margin-bottom:8px;">'+esc(t('title_trend','Tendance globale — 12 derniers mois'))+'</div><div class="chart-box"><canvas id="chart-trend"></canvas></div>';
+  W.w_trend = '<div class="eyebrow" style="margin-bottom:8px;">'+esc(t('title_trend','Tendance globale - 12 derniers mois'))+'</div><div class="chart-box"><canvas id="chart-trend"></canvas></div>';
   W.w_scorehist = '<div class="eyebrow" style="margin-bottom:8px;">'+esc(t('title_scorehist','Évolution du score de conformité global'))+'</div><div class="chart-box"><canvas id="chart-score-history"></canvas></div>';
   W.w_alerts = '<h2>'+esc(t('title_alerts','Alertes'))+'</h2><div id="alerts-section">'+renderAlertsSection()+'</div>';
 
@@ -3075,7 +3099,7 @@ RENDERERS.dashboard = function(){
     var allIds = layout.map(function(w){return w.id;});
     var catalog = DASHBOARD_WIDGETS_DEFAULT.filter(function(w){ return allIds.indexOf(w.id)<0; });
     if(catalog.length){
-      html += '<div class="card" style="margin-bottom:14px;"><div class="eyebrow" style="margin-bottom:8px;">Cartes retirées — cliquer pour les remettre</div>';
+      html += '<div class="card" style="margin-bottom:14px;"><div class="eyebrow" style="margin-bottom:8px;">Cartes retirées - cliquer pour les remettre</div>';
       html += '<div style="display:flex; gap:8px; flex-wrap:wrap;">';
       catalog.forEach(function(w){
         html += '<button class="btn small" data-action="add-back-widget" data-id="'+w.id+'">+ '+esc(WIDGET_TITLES[w.id]||w.id)+'</button>';
@@ -3145,7 +3169,7 @@ RENDERERS.planning = function(){
     field('date','echeance','Date échéance') +
     field('date','realisation','Date de réalisation (si fait)', null, true) +
     field('text','responsable','Responsable') +
-    field('number','resultatPct','Résultat (%) — pour audits de perf', null, true) +
+    field('number','resultatPct','Résultat (%) - pour audits de perf', null, true) +
     '<div class="actions-row"><button type="button" class="btn" data-cancel-form="planning">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'+
   '</form>';
 
@@ -3172,7 +3196,7 @@ function planningRow(p){
       '<td><button class="btn small primary" data-action="save-planning-edit" data-id="'+p.id+'">Valider</button> '+
       '<button class="btn small" data-action="cancel-planning-edit">Annuler</button></td></tr>';
   }
-  var resultCell = (p.resultatPct!==undefined && p.resultatPct!==null && p.resultatPct!=='') ? badge(scoreLevel(p.resultatPct), p.resultatPct+'%') : '—';
+  var resultCell = (p.resultatPct!==undefined && p.resultatPct!==null && p.resultatPct!=='') ? badge(scoreLevel(p.resultatPct), p.resultatPct+'%') : '-';
   return '<tr data-row-ligne="'+p.ligne+'" data-row-type="'+p.type+'" data-row-mois="'+(p.echeance?p.echeance.slice(0,7):'')+'">'+
     '<td>'+badge(s.level,s.label)+'</td><td>'+ligneLabel+'</td><td>'+esc(typeLabel)+'</td><td>'+esc(val(p.mois))+'</td>'+
     '<td class="num">'+fmtDate(p.echeance)+'</td><td class="num">'+fmtDate(p.realisation)+'</td><td>'+resultCell+'</td><td>'+esc(val(p.responsable))+'</td>'+
@@ -3217,13 +3241,13 @@ function metroRow(e){
       '<td><input type="text" id="metro-edit-desig" value="'+esc(e.designation)+'" style="width:160px;"></td>'+
       '<td><input type="text" id="metro-edit-lieu" value="'+esc(val(e.lieu,''))+'" style="width:100px;"></td>'+
       '<td><input type="date" id="metro-edit-date" value="'+esc(e.echeance||'')+'" style="width:140px;"></td>'+
-      '<td>'+(e.certificat? '<img class="thumb" src="'+e.certificat+'" data-action="view-photo">' : '—')+'</td>'+
+      '<td>'+(e.certificat? '<img class="thumb" src="'+e.certificat+'" data-action="view-photo">' : '-')+'</td>'+
       '<td><button class="btn small primary" data-action="save-echeance" data-id="'+e.id+'">Valider</button> '+
       '<button class="btn small" data-action="cancel-echeance">Annuler</button></td></tr>';
   }
   return '<tr data-row-ligne="'+e.ligne+'">'+
     '<td>'+badge(s.level,s.label)+'</td><td>'+esc(e.ligne)+'</td><td class="num">'+esc(e.numMoyen)+'</td><td>'+esc(e.designation)+'</td><td>'+esc(val(e.lieu,''))+'</td>'+
-    '<td class="num">'+fmtDate(e.echeance)+'</td><td>'+(e.certificat? '<img class="thumb" src="'+e.certificat+'" data-action="view-photo">' : '—')+'</td>'+
+    '<td class="num">'+fmtDate(e.echeance)+'</td><td>'+(e.certificat? '<img class="thumb" src="'+e.certificat+'" data-action="view-photo">' : '-')+'</td>'+
     '<td><button class="btn small" data-action="edit-echeance" data-id="'+e.id+'">Modifier</button> '+
     '<button class="btn small danger-outline" data-action="delete" data-module="metro" data-id="'+e.id+'">Suppr.</button></td></tr>';
 }
@@ -3326,7 +3350,7 @@ RENDERERS.ateq = function(){
     var monthItems = DATA.ateq.filter(function(a){ return a.ligne===l && a.date.slice(0,7)===curM; });
     var nb2ndCur = monthItems.reduce(function(s,a){return s+(a.nb2nd||0);},0);
     var tauxCur = totalCur>0? Math.round(nb2ndCur/totalCur*100) : 0;
-    html += '<div class="card"><div class="eyebrow">'+l+' — mois en cours</div>'+
+    html += '<div class="card"><div class="eyebrow">'+l+' - mois en cours</div>'+
       '<div style="display:flex; align-items:baseline; gap:10px; margin:8px 0;"><div class="val" style="font-size:26px;">'+totalCur+'</div><div class="tiny">défauts cumulés</div></div>'+
       '<div class="tiny" style="margin-bottom:4px;">Moyenne : '+avg+' / jour · Taux 2nd passage : <b style="color:var(--'+(tauxCur>20?'danger':tauxCur>10?'warn':'ok')+');">'+tauxCur+'%</b></div>'+
       trendBadge(totalCur, totalPrev)+
@@ -3339,17 +3363,17 @@ RENDERERS.ateq = function(){
   html += '<div class="grid grid-2" style="margin-bottom:18px;">'+
     '<div class="card">'+
       '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">'+
-        '<div class="eyebrow">Défauts quotidiens — MCU1 vs MCU2</div>'+
+        '<div class="eyebrow">Défauts quotidiens - MCU1 vs MCU2</div>'+
         '<div style="display:flex; align-items:center; gap:8px;">'+
           '<button class="btn small" data-action="ateq-chart-prev">← Mois préc.</button>'+
           '<span class="tiny" id="ateq-chart-period-label" style="font-size:11px;"></span>'+
           (ateqChartOffset<0? '<button class="btn small" data-action="ateq-chart-next">Mois suiv. →</button>' : '')+
         '</div>'+
       '</div>'+
-      '<p class="tiny" style="margin-bottom:6px;">▼ = action corrective — cliquer pour voir le détail</p>'+
+      '<p class="tiny" style="margin-bottom:6px;">▼ = action corrective - cliquer pour voir le détail</p>'+
       '<div class="chart-box"><canvas id="chart-ateq-compare"></canvas></div>'+
     '</div>'+
-    '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">Taux de 2nd passage — même période</div><div class="chart-box"><canvas id="chart-ateq-2nd"></canvas></div></div>'+
+    '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">Taux de 2nd passage - même période</div><div class="chart-box"><canvas id="chart-ateq-2nd"></canvas></div></div>'+
   '</div>';
 
   html += '<div class="section"><h2>Synthèse mensuelle</h2>'+renderAteqMonthlyTable()+'</div>';
@@ -3364,7 +3388,7 @@ function renderAteqActionPlan(){
     .sort(function(a,b){ return (b.dateCrise||b.dateCreation||'').localeCompare(a.dateCrise||a.dateCreation||''); });
   var html = '<div class="section card" style="margin-bottom:18px;">';
   html += '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:10px;">'+
-    '<div><div class="eyebrow">Plan de réaction — actions correctives immédiates</div>'+
+    '<div><div class="eyebrow">Plan de réaction - actions correctives immédiates</div>'+
     '<p class="tiny" style="margin-top:4px;">Les marqueurs ▼ sur le graphique indiquent les crises. Cliquez sur la description pour voir le détail.</p></div>'+
     '<button class="btn primary" data-action="new-ateq-action">+ Déclencher une action corrective</button></div>';
   if(ateqActionFormOpen) html += ateqActionForm();
@@ -3379,18 +3403,18 @@ function renderAteqActionPlan(){
       var lvl = isActionLate(a)?'danger':(a.statut==='planifiee'?'warn':'ok');
       var isOpen = ateqDetailActionId===a.id;
       var e = a.dateCrise && a.ligne ? DATA.ateq.find(function(x){return x.date===a.dateCrise&&x.ligne===a.ligne;}) : null;
-      var criseTxt = a.dateCrise ? fmtDate(a.dateCrise) : '—';
+      var criseTxt = a.dateCrise ? fmtDate(a.dateCrise) : '-';
       if(e) criseTxt += ' <span class="tiny" style="color:var(--danger);">('+e.nbDefauts+'↑)</span>';
       return '<tr style="'+(isOpen?'background:var(--accent-bg);':'')+'">'+
         '<td style="font-size:12px; white-space:nowrap;">'+criseTxt+'</td>'+
-        '<td>'+esc(val(a.ligne,'—'))+'</td>'+
+        '<td>'+esc(val(a.ligne,'-'))+'</td>'+
         '<td style="cursor:pointer;" data-action="toggle-ateq-detail" data-id="'+a.id+'">'+
           '<span style="color:var(--text-faint); margin-right:5px;">'+(isOpen?'▲':'▼')+'</span>'+esc(a.description)+
         '</td>'+
         '<td>'+badge(lvl, statusLabel)+'</td>'+
-        '<td class="num">'+(a.echeance?fmtDate(a.echeance):'—')+'</td>'+
-        '<td>'+(dl? '<span class="delay-pill delay-'+(dl.d<0?'late':dl.d<=3?'soon':'ok')+'">'+dl.text+'</span>' : '—')+'</td>'+
-        '<td>'+esc(val(a.responsable,'—'))+'</td>'+
+        '<td class="num">'+(a.echeance?fmtDate(a.echeance):'-')+'</td>'+
+        '<td>'+(dl? '<span class="delay-pill delay-'+(dl.d<0?'late':dl.d<=3?'soon':'ok')+'">'+dl.text+'</span>' : '-')+'</td>'+
+        '<td>'+esc(val(a.responsable,'-'))+'</td>'+
         '<td><button class="btn small danger-outline" data-action="delete" data-module="actions" data-id="'+a.id+'">Suppr.</button></td></tr>'+
         (isOpen? '<tr><td colspan="7">'+ateqActionDetail(a)+'</td></tr>' : '');
     }).join('');
@@ -3403,7 +3427,7 @@ function ateqActionDetail(a){
   var e = a.dateCrise && a.ligne ? DATA.ateq.find(function(x){return x.date===a.dateCrise&&x.ligne===a.ligne;}) : null;
   var html = '<div style="padding:10px 14px; border-top:1px solid var(--border); font-size:12.5px;">';
   html += '<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-bottom:8px;">';
-  html += '<div><div class="tiny">Date de crise</div><b>'+(a.dateCrise?fmtDate(a.dateCrise):'—')+'</b></div>';
+  html += '<div><div class="tiny">Date de crise</div><b>'+(a.dateCrise?fmtDate(a.dateCrise):'-')+'</b></div>';
   if(e){
     html += '<div><div class="tiny">Défauts ce jour</div><b style="color:var(--danger);">'+e.nbDefauts+'</b></div>';
     var tauxJour = e.nbDefauts>0 ? Math.round((e.nb2nd||0)/e.nbDefauts*100) : 0;
@@ -3412,7 +3436,7 @@ function ateqActionDetail(a){
     html += '<div><div class="tiny">Données ce jour</div><span class="tiny">Aucune saisie ATEQ pour cette date</span></div>';
   }
   html += '<div><div class="tiny">Créée le</div><b>'+fmtDate(a.dateCreation)+'</b></div>';
-  html += '<div><div class="tiny">Responsable</div><b>'+esc(val(a.responsable,'—'))+'</b></div>';
+  html += '<div><div class="tiny">Responsable</div><b>'+esc(val(a.responsable,'-'))+'</b></div>';
   html += '</div></div>';
   return html;
 }
@@ -3588,10 +3612,10 @@ function renderAteqCharts(){
       chartAteq2nd = new Chart(ctx2, {
         type:'line',
         data:{labels:labels, datasets:[
-          {label:'MCU1 — 2nd %', data:s1.map(function(s){return s.taux;}),
+          {label:'MCU1 - 2nd %', data:s1.map(function(s){return s.taux;}),
             borderColor:'#1F5C5C', backgroundColor:'#1F5C5C15', borderWidth:2,
             pointRadius:2, spanGaps:true, fill:true, tension:0.25},
-          {label:'MCU2 — 2nd %', data:s2.map(function(s){return s.taux;}),
+          {label:'MCU2 - 2nd %', data:s2.map(function(s){return s.taux;}),
             borderColor:'#B8730A', backgroundColor:'#B8730A15', borderWidth:2,
             pointRadius:2, spanGaps:true, fill:true, tension:0.25},
           {label:'Seuil 20%', data:Array(pd.days).fill(20),
@@ -3617,7 +3641,7 @@ function renderAteqWeekGrid(){
     '<button class="btn small" data-action="ateq-week-next">Semaine suiv. →</button>'+
     (ateqWeekOffset!==0? '<button class="btn small" data-action="ateq-week-today">Revenir à aujourd\'hui</button>' : '')+
     '</div></div>';
-  html += '<div class="table-wrap"><table><thead><tr><th>Jour</th><th>MCU1 — Défauts</th><th>MCU1 — 2nd passage</th><th>MCU2 — Défauts</th><th>MCU2 — 2nd passage</th></tr></thead><tbody>';
+  html += '<div class="table-wrap"><table><thead><tr><th>Jour</th><th>MCU1 - Défauts</th><th>MCU1 - 2nd passage</th><th>MCU2 - Défauts</th><th>MCU2 - 2nd passage</th></tr></thead><tbody>';
   days.forEach(function(d,i){
     var e1 = DATA.ateq.find(function(a){return a.date===d && a.ligne==='MCU1';});
     var e2 = DATA.ateq.find(function(a){return a.date===d && a.ligne==='MCU2';});
@@ -3671,14 +3695,14 @@ function computeAlerts(){
     if(s.level!=='ok'){
       var last = ateqLastByLine(l);
       alerts.push({id:'al-'+(n++), level:s.level, module:'ATEQ', ligne:l, echeance:null,
-        title:'Défauts ATEQ — saisie en attente', meta: s.label,
+        title:'Défauts ATEQ - saisie en attente', meta: s.label,
         detail: last? ('Dernière saisie enregistrée le '+fmtDate(last.date)+' ('+last.nbDefauts+' défauts).') : 'Aucune saisie enregistrée.'});
     }
   });
   DATA.actions.filter(isActionLate).forEach(function(a){
     alerts.push({id:'al-'+(n++), level:'danger', module:'Actions', ligne:a.ligne||'', echeance:a.echeance,
       title: a.description, meta:(a.responsable||'sans responsable'),
-      detail: 'Origine : '+esc(val(a.origine,'—'))+' · Créée le '+fmtDate(a.dateCreation)});
+      detail: 'Origine : '+esc(val(a.origine,'-'))+' · Créée le '+fmtDate(a.dateCreation)});
   });
   return alerts;
 }
@@ -3764,9 +3788,9 @@ function alertTable(title, items, level){
   html += '<div class="table-wrap"><table class="alert-table alert-table-'+level+'"><thead><tr><th></th><th>Module</th><th>Ligne</th><th>Élément</th><th>Échéance</th><th>Délai</th></tr></thead><tbody>';
   items.forEach(function(a){
     var dl = daysLabel(a.echeance);
-    html += '<tr class="alert-row" data-alert-id="'+a.id+'"><td><span class="chev">▸</span></td><td>'+esc(a.module)+'</td><td>'+esc(val(a.ligne,'—'))+'</td><td>'+esc(a.title)+'<div class="tiny">'+esc(a.meta)+'</div></td>'+
-      '<td class="num">'+(a.echeance?fmtDate(a.echeance):'—')+'</td>'+
-      '<td>'+(dl? '<span class="delay-pill delay-'+(dl.d<0?'late':dl.d<=3?'soon':'ok')+'">'+dl.text+'</span>' : '—')+'</td></tr>';
+    html += '<tr class="alert-row" data-alert-id="'+a.id+'"><td><span class="chev">▸</span></td><td>'+esc(a.module)+'</td><td>'+esc(val(a.ligne,'-'))+'</td><td>'+esc(a.title)+'<div class="tiny">'+esc(a.meta)+'</div></td>'+
+      '<td class="num">'+(a.echeance?fmtDate(a.echeance):'-')+'</td>'+
+      '<td>'+(dl? '<span class="delay-pill delay-'+(dl.d<0?'late':dl.d<=3?'soon':'ok')+'">'+dl.text+'</span>' : '-')+'</td></tr>';
     html += '<tr class="alert-detail-row" data-alert-detail="'+a.id+'" style="display:none"><td colspan="6">'+a.detail+'</td></tr>';
   });
   html += '</tbody></table></div></div>';
@@ -3788,7 +3812,7 @@ function logChange(module, action, summary, detail){
   save('changelog');
 }
 function fmtDateTime(iso){
-  if(!iso) return '—';
+  if(!iso) return '-';
   var d = new Date(iso);
   return d.toLocaleDateString('fr-FR')+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
 }
@@ -3885,7 +3909,7 @@ function renderUserbox(){
 }
 function renderLoginOverlay(error){
   var el = document.getElementById('login-overlay');
-  el.innerHTML = '<div class="login-box"><h1>Suivi qualité — MCU</h1><div class="sub">Connectez-vous pour continuer</div>'+
+  el.innerHTML = '<div class="login-box"><h1>Suivi qualité - MCU</h1><div class="sub">Connectez-vous pour continuer</div>'+
     '<div class="login-error">'+(error?esc(error):'')+'</div>'+
     '<label class="field">Compte<select id="login-username">'+DATA.accounts.map(function(a){return '<option value="'+a.id+'">'+esc(a.displayName)+' ('+esc(a.username)+')</option>';}).join('')+'</select></label>'+
     '<label class="field">Mot de passe<input type="password" id="login-password"></label>'+
@@ -3967,7 +3991,7 @@ RENDERERS.comptes = function(){
     var role = DATA.roles.find(function(r){ return r.id===a.roleId; });
     var canDelete = !(a.roleId===ADMIN_ROLE_ID && adminCount<=1);
     var sectLabel = a.allSecteurs ? '<b style="color:var(--ok);">Tous</b>' : esc((a.secteurs||['MCU']).join(', '));
-    return '<tr><td>'+esc(a.displayName)+'</td><td>'+esc(a.username)+'</td><td>'+esc(role?role.name:'—')+'</td>'+
+    return '<tr><td>'+esc(a.displayName)+'</td><td>'+esc(a.username)+'</td><td>'+esc(role?role.name:'-')+'</td>'+
       '<td class="tiny">'+sectLabel+'</td>'+
       '<td style="display:flex; gap:6px; flex-wrap:wrap;">'+
         '<button class="btn small" data-action="edit-account" data-id="'+a.id+'">Modifier</button>'+
@@ -4068,7 +4092,7 @@ function accountForm(){
         return '<label style="display:flex; align-items:center; gap:5px; font-size:12.5px;"><input type="checkbox" class="af2-secteur-chk" value="'+sec.id+'" '+(checked?'checked':'')+'> '+esc(sec.nom)+'</label>';
       }).join('')+
     '</div></div>'+
-    (isSuperAdmin()? '<label style="display:flex; align-items:center; gap:6px; font-size:13px; margin-top:10px; padding:8px; border:1px dashed var(--ok); border-radius:var(--radius-sm);"><input type="checkbox" id="af2-superAdmin" '+(s.isSuperAdmin?'checked':'')+'> <b>Super Admin</b> — peut renommer les libellés de l\'application</label>' : '')+
+    (isSuperAdmin()? '<label style="display:flex; align-items:center; gap:6px; font-size:13px; margin-top:10px; padding:8px; border:1px dashed var(--ok); border-radius:var(--radius-sm);"><input type="checkbox" id="af2-superAdmin" '+(s.isSuperAdmin?'checked':'')+'> <b>Super Admin</b> - peut renommer les libellés de l\'application</label>' : '')+
     '</div><div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="cancel-account">Annuler</button><button class="btn primary" data-action="save-account">Enregistrer</button></div></div>';
 }
 function roleForm(){
@@ -4232,18 +4256,18 @@ async function handleSaveRoleRename(id){
 function buildMetroExport(){
   var items = DATA.metro.filter(function(e){ return metroStatus(e).level!=='ok'; })
     .sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
-  var txt = 'Suivi métrologie — secteur MCU\nPoints à traiter au '+fmtDate(todayStr())+' :\n\n';
+  var txt = 'Suivi métrologie - secteur MCU\nPoints à traiter au '+fmtDate(todayStr())+' :\n\n';
   if(!items.length) txt += 'Aucun instrument à signaler pour le moment.\n';
   items.forEach(function(e){
     var s = metroStatus(e);
-    txt += '- ['+s.label+'] '+e.ligne+' — '+e.designation+' (n° '+e.numMoyen+', '+esc0(e.lieu)+') — échéance '+fmtDate(e.echeance)+'\n';
+    txt += '- ['+s.label+'] '+e.ligne+' - '+e.designation+' (n° '+e.numMoyen+', '+esc0(e.lieu)+') - échéance '+fmtDate(e.echeance)+'\n';
   });
   return txt;
 }
 function buildProprExport(){
   var rows = DATA.resultats.filter(function(r){ return r.resultatPct<90; })
     .sort(function(a,b){ return (b.id||'').localeCompare(a.id||''); });
-  var txt = 'Suivi propreté — secteur MCU\nRésultats à surveiller au '+fmtDate(todayStr())+' :\n\n';
+  var txt = 'Suivi propreté - secteur MCU\nRésultats à surveiller au '+fmtDate(todayStr())+' :\n\n';
   if(!rows.length) txt += 'Aucun résultat sous le seuil de 90% pour le moment.\n';
   rows.forEach(function(r){ txt += '- '+r.ligne+' ('+r.mois+') : '+r.resultatPct+'%\n'; });
   return txt;
@@ -4253,19 +4277,19 @@ function esc0(s){ return s? s : 'lieu non précisé'; }
 function buildWeeklyDigest(){
   var alerts = computeAlerts();
   var late = alerts.filter(function(a){ return a.level==='danger'; }).sort(function(a,b){ return (a.echeance&&b.echeance)?a.echeance.localeCompare(b.echeance):0; });
-  var txt = 'Résumé qualité MCU — semaine du '+fmtDate(todayStr())+'\n\n';
+  var txt = 'Résumé qualité MCU - semaine du '+fmtDate(todayStr())+'\n\n';
   txt += late.length+' point(s) en retard :\n\n';
   if(!late.length) txt += "Aucun retard à signaler. Tout est à jour.\n";
   late.forEach(function(a){
     var dl = daysLabel(a.echeance);
-    txt += '- ['+a.module+'] '+(a.ligne?a.ligne+' — ':'')+a.title+(dl?' ('+dl.text+')':'')+'\n';
+    txt += '- ['+a.module+'] '+(a.ligne?a.ligne+' - ':'')+a.title+(dl?' ('+dl.text+')':'')+'\n';
   });
   return txt;
 }
 function handleWeeklyDigest(){
   var text = buildWeeklyDigest();
   var target = document.getElementById('digest-box');
-  var mailto = 'mailto:?subject='+encodeURIComponent('Résumé qualité MCU — '+fmtDate(todayStr()))+'&body='+encodeURIComponent(text);
+  var mailto = 'mailto:?subject='+encodeURIComponent('Résumé qualité MCU - '+fmtDate(todayStr()))+'&body='+encodeURIComponent(text);
   target.innerHTML = '<div class="exportbox"><textarea readonly id="digest-ta">'+esc(text)+'</textarea>'+
     '<div style="display:flex; gap:8px; margin-top:8px;">'+
     '<button class="btn" id="copy-digest">Copier le texte</button>'+
@@ -4357,7 +4381,7 @@ function showExport(module){
   var text = module==='metro' ? buildMetroExport() : buildProprExport();
   var target = document.getElementById(module==='metro' ? 'metro-export' : 'proprete-export');
   if(!target) return;
-  var mailto = 'mailto:?subject='+encodeURIComponent((module==='metro'?'Rappel métrologie':'Suivi propreté')+' — secteur MCU')+'&body='+encodeURIComponent(text);
+  var mailto = 'mailto:?subject='+encodeURIComponent((module==='metro'?'Rappel métrologie':'Suivi propreté')+' - secteur MCU')+'&body='+encodeURIComponent(text);
   target.innerHTML = '<div class="exportbox"><textarea readonly id="export-ta-'+module+'">'+esc(text)+'</textarea>'+
     '<div style="display:flex; gap:8px; margin-top:8px;">'+
     '<button class="btn" id="copy-export-'+module+'">Copier le texte</button>'+
@@ -4404,12 +4428,12 @@ async function handleChangeStatus(id, newVal){
 }
 function describeEntry(mod, item){
   if(mod==='metro') return item.designation+' ('+item.numMoyen+')';
-  if(mod==='planning') return item.ligne+' — '+item.type;
-  if(mod==='ateq') return item.ligne+' — '+fmtDate(item.date);
+  if(mod==='planning') return item.ligne+' - '+item.type;
+  if(mod==='ateq') return item.ligne+' - '+fmtDate(item.date);
   if(mod==='actions') return item.description;
   if(mod==='vidange') return item.equipement;
   if(mod==='contamination') return item.ligne+' · '+item.ref;
-  if(mod==='particules') return item.ligne+' · '+item.poste+' — '+item.nbParticules+' particules';
+  if(mod==='particules') return item.ligne+' · '+item.poste+' - '+item.nbParticules+' particules';
   return item.id;
 }
 
@@ -4447,7 +4471,7 @@ async function handleFormSubmit(form){
   logChange(MODULE_LABELS[mod]||mod, 'Création', describeEntry(mod, entry));
   if(mod==='planning' && entry.echeance){
     planningMoisFilter = entry.echeance.slice(0,7);
-    alert('Échéance ajoutée : '+entry.ligne+' — '+(PLAN_TYPES.filter(function(t){return t[0]===entry.type;})[0]||['',entry.type])[1]+' le '+fmtDate(entry.echeance)+'.');
+    alert('Échéance ajoutée : '+entry.ligne+' - '+(PLAN_TYPES.filter(function(t){return t[0]===entry.type;})[0]||['',entry.type])[1]+' le '+fmtDate(entry.echeance)+'.');
   }
   form.reset();
   form.style.display = 'none';
@@ -4527,7 +4551,7 @@ app.addEventListener('click', async function(e){
       var rEl = document.getElementById('planning-edit-resultat');
       pitem.resultatPct = (rEl && rEl.value!=='') ? parseFloat(rEl.value) : null;
       await save('planning');
-      logChange('Planning', 'Modification', pitem.ligne+' — '+pitem.type, beforeP+' → '+pitem.ligne+' / '+pitem.type+' / '+fmtDate(pitem.echeance));
+      logChange('Planning', 'Modification', pitem.ligne+' - '+pitem.type, beforeP+' → '+pitem.ligne+' / '+pitem.type+' / '+fmtDate(pitem.echeance));
     }
     planningEditingId = null;
     render();
@@ -4668,10 +4692,10 @@ app.addEventListener('click', async function(e){
   var delManualBtn = e.target.closest('[data-action="delete-manual-result"]');
   if(delManualBtn){
     var mr = DATA.resultats.find(function(r){ return r.id===delManualBtn.dataset.id; });
-    if(mr && confirm('Supprimer la saisie manuelle '+mr.ligne+' — '+mr.mois+(mr.semaine?' S'+mr.semaine:'')+' ('+mr.resultatPct+'%) ?')){
+    if(mr && confirm('Supprimer la saisie manuelle '+mr.ligne+' - '+mr.mois+(mr.semaine?' S'+mr.semaine:'')+' ('+mr.resultatPct+'%) ?')){
       DATA.resultats = DATA.resultats.filter(function(r){ return r.id!==delManualBtn.dataset.id; });
       await save('resultats');
-      logChange('Propreté', 'Suppression résultat manuel', mr.ligne+' — '+mr.mois+(mr.semaine?' S'+mr.semaine:''));
+      logChange('Propreté', 'Suppression résultat manuel', mr.ligne+' - '+mr.mois+(mr.semaine?' S'+mr.semaine:''));
       render();
     }
     return;
@@ -5093,6 +5117,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
