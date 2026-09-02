@@ -246,6 +246,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -1558,14 +1559,17 @@ function refreshContamDirectFields(){
   var ligne = ligneEl.value;
   var refs = refsForLigne(ligne);
   refEl.innerHTML = refs.map(function(r){return '<option value="'+r+'">'+r+'</option>';}).join('');
+  refreshContamCriteriaOnly();
+}
+function refreshContamCriteriaOnly(){
+  var refEl = document.getElementById('cd-ref');
   var critBox = document.getElementById('cd-criteria');
-  var crit = REF_CRITERIA[refs[0]]||[];
-  if(critBox){
-    critBox.innerHTML = crit.map(function(cr){
-      return '<label class="field">'+esc(cr.label)+' <span class="tiny">(seuil '+cr.seuil+(cr.unit?' '+cr.unit:'')+')</span>'+
-        '<input type="number" step="0.01" class="cd-crit" data-crit="'+cr.id+'"></label>';
-    }).join('');
-  }
+  if(!refEl || !critBox) return;
+  var crit = REF_CRITERIA[refEl.value]||[];
+  critBox.innerHTML = crit.map(function(cr){
+    return '<label class="field">'+esc(cr.label)+' <span class="tiny">(seuil '+cr.seuil+(cr.unit?' '+cr.unit:'')+')</span>'+
+      '<input type="number" step="0.01" class="cd-crit" data-crit="'+cr.id+'"></label>';
+  }).join('');
 }
 async function handleSaveContamDirect(){
   var ligne = document.getElementById('cd-ligne').value;
@@ -4585,6 +4589,7 @@ app.addEventListener('click', async function(e){
 
 app.addEventListener('change', async function(e){
   if(e.target.id==='cd-ligne'){ refreshContamDirectFields(); return; }
+  if(e.target.id==='cd-ref'){ refreshContamCriteriaOnly(); return; }
   if(e.target.matches('[data-action="change-status"]')){
     await handleChangeStatus(e.target.dataset.id, e.target.value);
     return;
@@ -4610,8 +4615,6 @@ app.addEventListener('change', async function(e){
   }
   if(e.target.id==='cc-ligne'){ contamCollecteState.ligne = e.target.value; contamCollecteState.ref = refsForLigne(e.target.value)[0]; render(); return; }
   if(e.target.id==='cc-ref'){ contamCollecteState.ref = e.target.value; render(); return; }
-  if(e.target.id==='cd-ligne'){ contamDirectState.ligne = e.target.value; contamDirectState.ref = refsForLigne(e.target.value)[0]; render(); return; }
-  if(e.target.id==='cd-ref'){ contamDirectState.ref = e.target.value; render(); return; }
   if(e.target.id==='secteur-select'){ currentSecteur = e.target.value; renderNav(); render(); return; }
   if(e.target.id==='perf-year'){ perfYear = Number(e.target.value); render(); return; }
   if(e.target.id==='resultats-form-mois'){
@@ -4825,6 +4828,39 @@ async function init(){
 init();
 
 })();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
