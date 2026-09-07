@@ -57,7 +57,7 @@ body{font-family:var(--sans); background:var(--bg); color:var(--text); line-heig
 .sidebar-item:hover{background:rgba(255,255,255,0.1); color:#fff;}
 .sidebar-item.active{background:#fff; color:var(--accent-dark); font-weight:700;}
 .sidebar-icon{width:16px; text-align:center; flex-shrink:0; font-size:13px;}
-.app-content{flex:1; min-width:0; max-width:1180px; padding:20px 24px 60px;}
+.app-content{flex:1; min-width:0; max-width:1600px; padding:20px 28px 60px;}
 @media (max-width:820px){
   .sidebar{position:fixed; z-index:70; top:0; left:0; height:100vh; transform:translateX(-100%); transition:transform 0.2s ease; box-shadow:4px 0 16px rgba(0,0,0,0.15);}
   .sidebar.mobile-open{transform:translateX(0);}
@@ -316,6 +316,8 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
+
 (function(){
 "use strict";
 
@@ -347,11 +349,11 @@ var KEYS = {
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
   esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1',
-  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1'
+  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[]};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[]};
 var RENDERERS = {};
-var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['archives','Archives']];
+var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
 
 // ============ LABELS PERSONNALISABLES ============
@@ -458,7 +460,7 @@ var currentUser = null;
 
 // ============ SECTEURS ============
 var SECTEURS_DEFAULT = [
-  {id:'MCU', nom:'MCU', lignes:['MCU1','MCU2','MCU3'], tabs:['dashboard','proprete','metro','ateq','actions','planning','esd','cicl','archives']},
+  {id:'MCU', nom:'MCU', lignes:['MCU1','MCU2','MCU3'], tabs:['dashboard','proprete','metro','ateq','chokko','actions','planning','esd','cicl','archives']},
   {id:'PV',  nom:'PV',  lignes:['PV01','PV02','PV03','PV04'], tabs:['dashboard','perf','metro','actions','planning','archives']},
   {id:'CR',  nom:'CR',  lignes:['CR03','CR05','CR06','CR08','CR09','CR10'], tabs:['dashboard','perf','metro','actions','planning','archives']},
   {id:'KA',  nom:'KA',  lignes:['KA03','KA04/05','KA06/07/09','KA14/15/16'], tabs:['dashboard','perf','metro','actions','planning','archives']},
@@ -2941,6 +2943,297 @@ async function handleDeleteFormation(id){
   render();
 }
 
+// ============ SUIVI CHOKKO (production / rebuts par poste, par jour) ============
+// "Chokko" = taux de bon (%) = (production totale - non-conformes) / production totale * 100
+var CHOKKO_CONFIG = {
+  MCU1: [
+    ['OP1010','Emm Bague / Moteur'], ['OP1015','Scanne composants'], ['OP1020','Vissages Relais'],
+    ['OP1050','PLASMA'], ['OP1060','Vissages PCB'], ['OP1070','Vissages Contact'],
+    ['OP1080','Calibration'], ['OP1091','Sertissage Capot (143X / 144P)'],
+    ['OP1101','Contrôle EOL1'], ['OP1102','Contrôle EOL2'], ['OP1110','MEP Etiquette'], ['OP1120','Contrôle ATEQ']
+  ],
+  MCU2: [
+    ['OP1010','Emm Bague / Moteur'], ['OP1015','Scanne composants'], ['OP1030','Dépose PT'],
+    ['OP1050','PLASMA'], ['OP1060','Vissages PCB'], ['OP1070','Vissages Contact'], ['OP1080','Calibration'],
+    ['OP1090A','Sertissage Capot (143X / 144P)'], ['OP1090B','Vissages Capot (149X)'],
+    ['OP1100','Contrôle EOL'], ['OP1110','MEP Etiquette'], ['OP1120','Contrôle ATEQ']
+  ],
+  MCU3: [
+    ['OP1006','Dépose composants'], ['OP1015','Scanne composants'], ['OP1040','Dépose silicone'],
+    ['OP1059','Vissage Heat Sink'], ['OP1060','Vissage ECU'], ['OP1076','Contrôle Brasage'],
+    ['OP1077','Contrôle PAD'], ['OP1090','MEP capot'], ['OP1080','Calibration'],
+    ['OP1100','Contrôle EOL'], ['OP1107','Reflashage'], ['OP1120','Contrôle ATEQ']
+  ]
+};
+var CHOKKO_TEAMS = [['A','Équipe A'], ['B','Équipe B'], ['CouD','Équipe C ou D']];
+var CHOKKO_MONTH_ABBR = ['JANV','FEV','MARS','AVR','MAI','JUIN','JUIL','AOUT','SEPT','OCT','NOV','DEC'];
+var CHOKKO_ATTENTION = 97; // seuil %
+var CHOKKO_DANGER = 90;
+var chokkoLigne = 'MCU1';
+var chokkoYear = Number(todayStr().split('-')[0]);
+var chokkoMonth = Number(todayStr().split('-')[1])-1;
+var chokkoView = 'saisie'; // 'saisie' | 'recap'
+
+function chokkoPostes(ligne){ return CHOKKO_CONFIG[ligne]||[]; }
+function daysInMonth(year, monthIdx){ return new Date(year, monthIdx+1, 0).getDate(); }
+function chokkoEntry(ligne, dateStr){
+  return DATA.chokko.find(function(e){ return e.ligne===ligne && e.date===dateStr; });
+}
+function chokkoGetOrCreate(ligne, dateStr){
+  var e = chokkoEntry(ligne, dateStr);
+  if(!e){ e = {id:uid('chk'), ligne:ligne, secteur:'MCU', date:dateStr, defects:{}, prod:{}}; DATA.chokko.push(e); }
+  return e;
+}
+function chokkoDayTotals(ligne, dateStr){
+  var e = chokkoEntry(ligne, dateStr);
+  var totalProd = 0, totalNC = 0;
+  if(e){
+    CHOKKO_TEAMS.forEach(function(t){ totalProd += Number(e.prod[t[0]]||0); });
+    chokkoPostes(ligne).forEach(function(p){ totalNC += Number(e.defects[p[0]]||0); });
+  }
+  var pct = totalProd>0 ? ((totalProd-totalNC)/totalProd*100) : null;
+  return {totalProd:totalProd, totalNC:totalNC, pct:pct};
+}
+function chokkoLevel(pct){
+  if(pct===null || pct===undefined) return 'neutral';
+  if(pct>=CHOKKO_ATTENTION) return 'ok';
+  if(pct>=CHOKKO_DANGER) return 'warn';
+  return 'danger';
+}
+function chokkoMonthDays(ligne, year, monthIdx){
+  var nb = daysInMonth(year, monthIdx);
+  var days = [];
+  for(var d=1; d<=nb; d++){
+    var dateStr = year+'-'+String(monthIdx+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    days.push({day:d, date:dateStr, totals:chokkoDayTotals(ligne, dateStr)});
+  }
+  return days;
+}
+function chokkoMonthAverage(ligne, year, monthIdx){
+  var days = chokkoMonthDays(ligne, year, monthIdx).filter(function(d){ return d.totals.pct!==null; });
+  if(!days.length) return null;
+  return days.reduce(function(s,d){return s+d.totals.pct;},0)/days.length;
+}
+function chokkoNote(ligne, poste, year, monthIdx){
+  return DATA.chokkoNotes.find(function(n){ return n.ligne===ligne && n.poste===poste && n.annee===year && n.mois===monthIdx; });
+}
+
+RENDERERS.chokko = function(){
+  var html = '<div class="section"><div class="subtabs">'+
+    ['MCU1','MCU2','MCU3'].map(function(l){ return '<button data-action="chokko-ligne" data-ligne="'+l+'" class="'+(chokkoLigne===l?'active':'')+'">'+l+'</button>'; }).join('')+
+  '</div>';
+  html += '<div class="toolbar"><div class="left">'+
+    '<button class="btn small'+(chokkoView==='saisie'?' primary':'')+'" data-action="chokko-view" data-view="saisie">Saisie</button>'+
+    '<button class="btn small'+(chokkoView==='recap'?' primary':'')+'" data-action="chokko-view" data-view="recap">Récapitulatif annuel</button>'+
+    '</div>'+
+    '<button class="btn primary" data-action="chokko-export">📥 Exporter en Excel</button>'+
+  '</div>';
+  html += chokkoView==='saisie' ? chokkoSaisieView() : chokkoRecapView();
+  html += '</div>';
+  return html;
+};
+
+function chokkoSaisieView(){
+  var ligne = chokkoLigne;
+  var postes = chokkoPostes(ligne);
+  var days = chokkoMonthDays(ligne, chokkoYear, chokkoMonth);
+  var monthAvg = chokkoMonthAverage(ligne, chokkoYear, chokkoMonth);
+
+  var html = '<div class="toolbar"><div class="left">'+
+    '<label class="field" style="flex-direction:row; align-items:center; gap:8px;">Mois<select id="chokko-mois">'+MONTHS_FR.map(function(m,i){return '<option value="'+i+'"'+(i===chokkoMonth?' selected':'')+'>'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>';}).join('')+'</select></label>'+
+    '<label class="field" style="flex-direction:row; align-items:center; gap:8px;">Année<input type="number" id="chokko-annee" value="'+chokkoYear+'" style="width:80px;"></label>'+
+    '</div>'+
+    '<div class="statcard" style="padding:8px 14px;"><div class="tiny">Chokko du mois</div><div id="chokko-month-avg" style="font-family:var(--mono); font-weight:700; font-size:20px; color:var(--'+chokkoLevel(monthAvg)+');">'+(monthAvg!==null?monthAvg.toFixed(1)+'%':'-')+'</div></div>'+
+  '</div>';
+
+  html += '<div class="table-wrap" style="overflow-x:auto;"><table style="font-size:12px;"><thead><tr>'+
+    '<th style="position:sticky; left:0; background:var(--surface); min-width:220px;">Défauts / jour</th>'+
+    days.map(function(d){ return '<th style="text-align:center; min-width:38px;">'+d.day+'</th>'; }).join('')+
+    '<th style="text-align:center; min-width:60px;">Total NC</th>'+
+    '<th style="min-width:220px;">Actions ce mois</th>'+
+  '</tr></thead><tbody>';
+
+  postes.forEach(function(poste){
+    var posteId = poste[0], posteLabel = poste[1];
+    var totalPoste = days.reduce(function(s,d){ var e=chokkoEntry(ligne,d.date); return s+(e?Number(e.defects[posteId]||0):0); },0);
+    var note = chokkoNote(ligne, posteId, chokkoYear, chokkoMonth);
+    html += '<tr><td style="position:sticky; left:0; background:var(--surface); font-size:11.5px;">'+esc(posteId)+' - '+esc(posteLabel)+'</td>';
+    html += days.map(function(d){
+      var e = chokkoEntry(ligne, d.date);
+      var v = e && e.defects[posteId]!==undefined ? e.defects[posteId] : '';
+      return '<td style="padding:1px;"><input type="number" min="0" class="chokko-defect-cell" data-ligne="'+ligne+'" data-date="'+d.date+'" data-poste="'+posteId+'" value="'+v+'" style="width:34px; padding:3px 2px; font-size:11px; text-align:center; border:1px solid var(--border);"></td>';
+    }).join('');
+    html += '<td class="num" style="text-align:center; font-weight:700;" id="chokko-poste-total-'+posteId+'">'+totalPoste+'</td>';
+    html += '<td><textarea class="chokko-note" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-annee="'+chokkoYear+'" data-mois="'+chokkoMonth+'" rows="1" style="width:100%; font-size:11px; padding:3px 5px; resize:vertical;" placeholder="Actions menées ce mois...">'+esc(note?note.texte:'')+'</textarea></td>';
+    html += '</tr>';
+  });
+
+  // Lignes production par équipe
+  CHOKKO_TEAMS.forEach(function(team){
+    html += '<tr style="border-top:2px solid var(--border-strong);"><td style="position:sticky; left:0; background:var(--surface); font-weight:700;">'+esc(team[1])+'</td>';
+    html += days.map(function(d){
+      var e = chokkoEntry(ligne, d.date);
+      var v = e && e.prod[team[0]]!==undefined ? e.prod[team[0]] : '';
+      return '<td style="padding:1px;"><input type="number" min="0" class="chokko-prod-cell" data-ligne="'+ligne+'" data-date="'+d.date+'" data-team="'+team[0]+'" value="'+v+'" style="width:34px; padding:3px 2px; font-size:11px; text-align:center; border:1px solid var(--border); background:var(--accent-bg);"></td>';
+    }).join('');
+    html += '<td></td><td></td></tr>';
+  });
+
+  // Lignes calculées : TOTAL PROD, TOTAL NC, CHOKKO DU JOUR
+  html += '<tr style="border-top:2px solid var(--border-strong);"><td style="position:sticky; left:0; background:var(--surface); font-weight:700;">TOTAL PROD</td>'+
+    days.map(function(d){ return '<td class="num" style="text-align:center;" id="chokko-total-prod-'+d.date+'">'+(d.totals.totalProd||'-')+'</td>'; }).join('')+'<td></td><td></td></tr>';
+  html += '<tr><td style="position:sticky; left:0; background:var(--surface); font-weight:700;">TOTAL NC</td>'+
+    days.map(function(d){ return '<td class="num" style="text-align:center;" id="chokko-total-nc-'+d.date+'">'+(d.totals.totalNC||'-')+'</td>'; }).join('')+'<td></td><td></td></tr>';
+  html += '<tr><td style="position:sticky; left:0; background:var(--surface); font-weight:700;">CHOKKO DU JOUR</td>'+
+    days.map(function(d){
+      var lvl = chokkoLevel(d.totals.pct);
+      return '<td class="num" style="text-align:center; font-weight:700; color:var(--'+lvl+');" id="chokko-total-pct-'+d.date+'">'+(d.totals.pct!==null?d.totals.pct.toFixed(1):'-')+'</td>';
+    }).join('')+'<td></td><td></td></tr>';
+
+  html += '</tbody></table></div>';
+  html += '<p class="tiny" style="margin-top:8px;">Seuils Chokko : ≥'+CHOKKO_ATTENTION+'% conforme, '+CHOKKO_DANGER+'-'+CHOKKO_ATTENTION+'% attention, &lt;'+CHOKKO_DANGER+'% en danger.</p>';
+  return html;
+}
+
+function chokkoRecapView(){
+  var ligne = chokkoLigne;
+  var html = '<div class="card" style="margin-bottom:18px;"><div class="eyebrow" style="margin-bottom:8px;">Évolution annuelle - '+ligne+' ('+chokkoYear+')</div><div class="chart-box"><canvas id="chart-chokko-year"></canvas></div></div>';
+  html += '<div class="table-wrap"><table><thead><tr><th>Mois</th><th>% Chokko moyen</th><th>Production totale</th><th>Total NC</th></tr></thead><tbody>';
+  for(var m=0; m<12; m++){
+    var days = chokkoMonthDays(ligne, chokkoYear, m);
+    var avg = chokkoMonthAverage(ligne, chokkoYear, m);
+    var prodTotal = days.reduce(function(s,d){return s+d.totals.totalProd;},0);
+    var ncTotal = days.reduce(function(s,d){return s+d.totals.totalNC;},0);
+    html += '<tr><td>'+MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1)+'</td>'+
+      '<td>'+(avg!==null?badge(chokkoLevel(avg), avg.toFixed(1)+'%'):'<span class="tiny">-</span>')+'</td>'+
+      '<td class="num">'+(prodTotal||'-')+'</td><td class="num">'+(ncTotal||'-')+'</td></tr>';
+  }
+  html += '</tbody></table></div>';
+  return html;
+}
+
+var chartChokkoYear = null;
+function renderChokkoChart(){
+  if(typeof Chart==='undefined') return;
+  var ctx = document.getElementById('chart-chokko-year');
+  if(!ctx) return;
+  if(chartChokkoYear){ chartChokkoYear.destroy(); chartChokkoYear=null; }
+  try{
+    var data = [];
+    for(var m=0; m<12; m++){ data.push(chokkoMonthAverage(chokkoLigne, chokkoYear, m)); }
+    chartChokkoYear = new Chart(ctx, {
+      type:'line',
+      data:{labels:MONTHS_FR.map(function(m){return m.slice(0,3);}), datasets:[
+        {label:'% Chokko', data:data, borderColor:'#1F5C5C', backgroundColor:'#1F5C5C22', borderWidth:2, pointRadius:3, spanGaps:true, fill:true, tension:0.2},
+        {label:'Seuil attention', data:Array(12).fill(CHOKKO_ATTENTION), borderColor:'#B8730A88', borderWidth:1.5, borderDash:[5,4], pointRadius:0},
+        {label:'Seuil danger', data:Array(12).fill(CHOKKO_DANGER), borderColor:'#B23B2E88', borderWidth:1.5, borderDash:[5,4], pointRadius:0}
+      ]},
+      options:{responsive:true, maintainAspectRatio:false, scales:{y:{min:80, max:100, ticks:{callback:function(v){return v+'%';}}}}}
+    });
+  }catch(err){ console.error('chokko chart error', err); }
+}
+
+function refreshChokkoTotals(ligne){
+  var days = chokkoMonthDays(ligne, chokkoYear, chokkoMonth);
+  days.forEach(function(d){
+    var prodEl = document.getElementById('chokko-total-prod-'+d.date);
+    var ncEl = document.getElementById('chokko-total-nc-'+d.date);
+    var pctEl = document.getElementById('chokko-total-pct-'+d.date);
+    if(prodEl) prodEl.textContent = d.totals.totalProd||'-';
+    if(ncEl) ncEl.textContent = d.totals.totalNC||'-';
+    if(pctEl){
+      var lvl = chokkoLevel(d.totals.pct);
+      pctEl.textContent = d.totals.pct!==null ? d.totals.pct.toFixed(1) : '-';
+      pctEl.style.color = 'var(--'+lvl+')';
+    }
+  });
+  chokkoPostes(ligne).forEach(function(poste){
+    var totalPoste = days.reduce(function(s,d){ var e=chokkoEntry(ligne,d.date); return s+(e?Number(e.defects[poste[0]]||0):0); },0);
+    var el = document.getElementById('chokko-poste-total-'+poste[0]);
+    if(el) el.textContent = totalPoste;
+  });
+  var monthAvg = chokkoMonthAverage(ligne, chokkoYear, chokkoMonth);
+  var avgEl = document.getElementById('chokko-month-avg');
+  if(avgEl){
+    avgEl.textContent = monthAvg!==null? monthAvg.toFixed(1)+'%' : '-';
+    avgEl.style.color = 'var(--'+chokkoLevel(monthAvg)+')';
+  }
+}
+async function handleChokkoDefectChange(ligne, date, poste, val){
+  var e = chokkoGetOrCreate(ligne, date);
+  if(val===''){ delete e.defects[poste]; } else { e.defects[poste] = Math.max(0, parseInt(val,10)||0); }
+  await save('chokko');
+  refreshChokkoTotals(ligne);
+}
+async function handleChokkoProdChange(ligne, date, team, val){
+  var e = chokkoGetOrCreate(ligne, date);
+  if(val===''){ delete e.prod[team]; } else { e.prod[team] = Math.max(0, parseInt(val,10)||0); }
+  await save('chokko');
+  refreshChokkoTotals(ligne);
+}
+async function handleChokkoNoteChange(ligne, poste, annee, mois, texte){
+  var n = chokkoNote(ligne, poste, annee, mois);
+  if(!n){ n = {id:uid('chknote'), ligne:ligne, poste:poste, annee:annee, mois:mois, texte:''}; DATA.chokkoNotes.push(n); }
+  n.texte = texte;
+  await save('chokkoNotes');
+}
+
+// ---------- Export Excel (SheetJS) — reproduit la structure du fichier CHOKKO ----------
+function handleExportChokkoExcel(){
+  if(typeof XLSX==='undefined'){ alert('La librairie Excel n\'a pas pu être chargée (connexion internet requise). Réessayez.'); return; }
+  var ligne = chokkoLigne;
+  var postes = chokkoPostes(ligne);
+  var wb = XLSX.utils.book_new();
+  var anyMonth = false;
+
+  for(var m=0; m<12; m++){
+    var days = chokkoMonthDays(ligne, chokkoYear, m);
+    var hasData = days.some(function(d){ return d.totals.totalProd>0 || d.totals.totalNC>0; });
+    if(!hasData) continue;
+    anyMonth = true;
+    var aoa = [];
+    var headerRow = ['DEFAUTS / JOURS'].concat(days.map(function(d){return d.day;})).concat(['TOTAL NC','ACTIONS']);
+    aoa.push(headerRow);
+    postes.forEach(function(poste){
+      var posteId = poste[0];
+      var row = [poste[0]+' - '+poste[1]];
+      var total = 0;
+      days.forEach(function(d){
+        var e = chokkoEntry(ligne, d.date);
+        var v = e && e.defects[posteId]!==undefined ? Number(e.defects[posteId]) : '';
+        if(v!=='') total += v;
+        row.push(v);
+      });
+      row.push(total);
+      var note = chokkoNote(ligne, posteId, chokkoYear, m);
+      row.push(note?note.texte:'');
+      aoa.push(row);
+    });
+    CHOKKO_TEAMS.forEach(function(team){
+      var row = [team[1]];
+      days.forEach(function(d){
+        var e = chokkoEntry(ligne, d.date);
+        var v = e && e.prod[team[0]]!==undefined ? Number(e.prod[team[0]]) : '';
+        row.push(v);
+      });
+      aoa.push(row);
+    });
+    aoa.push(['TOTAL PROD'].concat(days.map(function(d){return d.totals.totalProd||'';})));
+    aoa.push(['TOTAL NC'].concat(days.map(function(d){return d.totals.totalNC||'';})));
+    aoa.push(['CHOKKO DU JOUR (%)'].concat(days.map(function(d){return d.totals.pct!==null?Math.round(d.totals.pct*100)/100:'';})));
+    aoa.push([]);
+    aoa.push(['CHOKKO DU MOIS (%)', chokkoMonthAverage(ligne, chokkoYear, m)]);
+
+    var ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{wch:32}].concat(days.map(function(){return {wch:5};})).concat([{wch:9},{wch:40}]);
+    XLSX.utils.book_append_sheet(wb, ws, CHOKKO_MONTH_ABBR[m]);
+  }
+
+  if(!anyMonth){ alert('Aucune donnée saisie pour '+ligne+' en '+chokkoYear+'.'); return; }
+  XLSX.writeFile(wb, 'CHOKKO_'+ligne+'_'+chokkoYear+'.xlsx');
+  logChange('CHOKKO', 'Export Excel', ligne+' - '+chokkoYear);
+}
+
 // ---------- ARCHIVES ----------
 function toCSV(rows, columns){
   var lines = [columns.map(function(c){return c[1];}).join(';')];
@@ -3064,6 +3357,7 @@ function render(){
   if(currentTab==='planning'){ applyPlanningFilter(); }
   if(currentTab==='ateq'){ renderAteqCharts(); }
   if(currentTab==='perf'){ renderPerfChart(); }
+  if(currentTab==='chokko' && chokkoView==='recap'){ renderChokkoChart(); }
   if(currentTab==='proprete'){
     if(propreteSub==='resultats') renderResultatsCharts();
     else if(propreteSub==='contamination') renderContaminationCharts();
@@ -4175,13 +4469,13 @@ function canSub(key){
 }
 // ===== Navigation en sidebar avec groupes rétractables =====
 var TAB_GROUPS = [
-  {id:'production', label:'Production', icon:'\ud83d\udce6', tabs:['proprete','metro','ateq','perf']},
+  {id:'production', label:'Production', icon:'\ud83d\udce6', tabs:['proprete','metro','ateq','chokko','perf']},
   {id:'qualite',    label:'Qualite',    icon:'\ud83d\udccb', tabs:['actions','planning','archives']},
   {id:'formations', label:'Formations', icon:'\ud83c\udf93', tabs:['esd','cicl','formations']},
   {id:'admin',      label:'Admin',      icon:'\u2699\ufe0f', tabs:['comptes']}
 ];
 var TAB_ICONS = {
-  dashboard:'\ud83d\udcca', proprete:'\ud83e\uddfc', metro:'\ud83d\udccf', ateq:'\u26a0\ufe0f', perf:'\ud83d\udcc8',
+  dashboard:'\ud83d\udcca', proprete:'\ud83e\uddfc', metro:'\ud83d\udccf', ateq:'\u26a0\ufe0f', chokko:'\ud83c\udfed', perf:'\ud83d\udcc8',
   actions:'\u2705', planning:'\ud83d\uddd3\ufe0f', archives:'\ud83d\uddc4\ufe0f',
   esd:'\ud83c\udf93', cicl:'\ud83d\udd27', formations:'\ud83c\udf93', comptes:'\u2699\ufe0f'
 };
@@ -4351,7 +4645,7 @@ RENDERERS.comptes = function(){
   html += '<div class="toolbar"><div></div><button class="btn primary" data-action="new-secteur">+ Ajouter un secteur</button></div>';
   if(secteurFormState) html += secteurForm();
   var allSecteursList = (DATA.secteurs && DATA.secteurs.length? DATA.secteurs : SECTEURS_DEFAULT);
-  var CONFIGURABLE_TABS = [['perf','Audits perf'],['proprete','Propreté'],['metro','Métrologie'],['ateq','ATEQ'],['actions','Actions'],['planning','Planning'],['esd','ESD'],['cicl','CI/CL'],['formations','SREM']];
+  var CONFIGURABLE_TABS = [['perf','Audits perf'],['proprete','Propreté'],['metro','Métrologie'],['ateq','ATEQ'],['chokko','CHOKKO'],['actions','Actions'],['planning','Planning'],['esd','ESD'],['cicl','CI/CL'],['formations','SREM']];
   html += '<div class="table-wrap" style="overflow-x:auto;"><table class="perm-table"><thead><tr><th style="min-width:80px;">Secteur</th><th style="min-width:180px;">Lignes</th>'+
     CONFIGURABLE_TABS.map(function(t){return '<th style="font-size:10px;">'+t[1]+'</th>';}).join('')+'<th></th></tr></thead><tbody>';
   html += allSecteursList.map(function(sec){
@@ -5227,6 +5521,12 @@ app.addEventListener('click', async function(e){
     return;
   }
   // ===== Post-its =====
+  var chokkoLigneBtn = e.target.closest('[data-action="chokko-ligne"]');
+  if(chokkoLigneBtn){ chokkoLigne = chokkoLigneBtn.dataset.ligne; render(); return; }
+  var chokkoViewBtn = e.target.closest('[data-action="chokko-view"]');
+  if(chokkoViewBtn){ chokkoView = chokkoViewBtn.dataset.view; render(); return; }
+  if(e.target.closest('[data-action="chokko-export"]')){ handleExportChokkoExcel(); return; }
+
   if(e.target.closest('[data-action="add-postit"]')){ await handleAddPostit(); return; }
   var delPostitBtn = e.target.closest('[data-action="delete-postit"]');
   if(delPostitBtn){ await handleDeletePostit(delPostitBtn.dataset.id); return; }
@@ -5275,6 +5575,14 @@ app.addEventListener('click', async function(e){
 });
 
 app.addEventListener('change', async function(e){
+  var chokkoDefectInput = e.target.closest('.chokko-defect-cell');
+  if(chokkoDefectInput){ await handleChokkoDefectChange(chokkoDefectInput.dataset.ligne, chokkoDefectInput.dataset.date, chokkoDefectInput.dataset.poste, chokkoDefectInput.value); return; }
+  var chokkoProdInput = e.target.closest('.chokko-prod-cell');
+  if(chokkoProdInput){ await handleChokkoProdChange(chokkoProdInput.dataset.ligne, chokkoProdInput.dataset.date, chokkoProdInput.dataset.team, chokkoProdInput.value); return; }
+  if(e.target.id==='chokko-mois'){ chokkoMonth = Number(e.target.value); render(); return; }
+  if(e.target.id==='chokko-annee'){ chokkoYear = Number(e.target.value)||chokkoYear; render(); return; }
+  var chokkoNoteInput = e.target.closest('.chokko-note');
+  if(chokkoNoteInput){ await handleChokkoNoteChange(chokkoNoteInput.dataset.ligne, chokkoNoteInput.dataset.poste, Number(chokkoNoteInput.dataset.annee), Number(chokkoNoteInput.dataset.mois), chokkoNoteInput.value); return; }
   var poseInput = e.target.closest('[data-action="edit-date-pose"]');
   if(poseInput){
     var pp = DATA.particules.find(function(x){ return x.id===poseInput.dataset.id; });
@@ -5511,6 +5819,8 @@ async function init(){
 init();
 
 })();
+
+
 
 
 
