@@ -337,6 +337,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -368,9 +369,9 @@ var KEYS = {
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
   esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1',
-  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1'
+  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[]};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[]};
 var RENDERERS = {};
 var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
@@ -2553,10 +2554,42 @@ var CICL_LIGNE_REFS = {
   MCU2: ['143X-144P','149X'],
   MCU3: ['162R']
 };
-var ciclSubTab = 'recap'; // 'recap' | 'MCU1' | 'MCU2' | 'MCU3'
+var ciclSubTab = 'recap'; // 'recap' | 'MCU1' | 'MCU2' | 'MCU3' | 'personnel'
 var ciclFormOpenFor = null; // ref en cours d'ajout, ex. '141P'
 var ciclEditId = null;
 var ciclSearch = '';
+var ciclPersonFormOpen = false;
+var ciclPersonEditId = null;
+
+function ciclAllRefs(){
+  var seen = {}, out = [];
+  ['MCU1','MCU2','MCU3'].forEach(function(l){
+    CICL_LIGNE_REFS[l].forEach(function(r){ if(!seen[r]){ seen[r]=true; out.push(r); } });
+  });
+  return out;
+}
+function ciclApplicableRefs(role, lignes){
+  if(role==='pilote') return ciclAllRefs();
+  var seen = {}, out = [];
+  (lignes||[]).forEach(function(l){
+    (CICL_LIGNE_REFS[l]||[]).forEach(function(r){ if(!seen[r]){ seen[r]=true; out.push(r); } });
+  });
+  return out;
+}
+async function applyCiclTrainingForPerson(person, dateStr){
+  var refs = ciclApplicableRefs(person.role, person.lignes);
+  var count = 0;
+  refs.forEach(function(ref){
+    (REF_CICL_POSTES[ref]||[]).forEach(function(poste){
+      var rec = DATA.cicl.find(function(r){ return r.ref===ref && r.poste===poste && r.nom.toLowerCase()===person.nom.toLowerCase(); });
+      if(rec){ rec.dateFormation = dateStr; } else { DATA.cicl.push({id:uid('cicl'), ref:ref, poste:poste, nom:person.nom, dateFormation:dateStr}); }
+      count++;
+    });
+  });
+  await save('cicl');
+  logChange('CI/CL', 'Application formation groupée', person.nom+' ('+(person.role==='pilote'?'Pilote, toutes lignes':'Régleur '+person.lignes.join('+'))+') - '+count+' poste(s) - '+fmtDate(dateStr));
+  return count;
+}
 
 function ciclEcheance(p){
   if(!p.dateFormation) return null;
@@ -2583,12 +2616,70 @@ RENDERERS.cicl = function(){
     '<button data-cicl-sub="MCU1" class="'+(ciclSubTab==='MCU1'?'active':'')+'">MCU1</button>'+
     '<button data-cicl-sub="MCU2" class="'+(ciclSubTab==='MCU2'?'active':'')+'">MCU2</button>'+
     '<button data-cicl-sub="MCU3" class="'+(ciclSubTab==='MCU3'?'active':'')+'">MCU3</button>'+
+    '<button data-cicl-sub="personnel" class="'+(ciclSubTab==='personnel'?'active':'')+'">Personnel</button>'+
   '</div>';
   if(ciclSubTab==='recap') html += ciclRecapView();
+  else if(ciclSubTab==='personnel') html += ciclPersonnelView();
   else html += ciclLigneView(ciclSubTab);
   html += '</div>';
   return html;
 };
+
+function ciclPersonnelView(){
+  var html = '<div class="toolbar"><div class="left"><p class="tiny" style="max-width:520px;">Un <b>Pilote</b> est formé sur tous les postes, toutes les lignes. Un <b>Régleur</b> n\'est formé que sur les lignes qui lui sont assignées. Appliquer une formation ici coche automatiquement tous les postes concernés, en une seule fois.</p></div>'+
+    '<button class="btn primary" data-action="new-cicl-person">+ Ajouter une personne</button></div>';
+
+  if(ciclPersonFormOpen || ciclPersonEditId) html += ciclPersonForm();
+
+  var persons = DATA.ciclPersons.slice().sort(function(a,b){ return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'}); });
+  html += '<div class="table-wrap"><table><thead><tr><th>Nom</th><th>Rôle</th><th>Ligne(s)</th><th>Postes couverts</th><th></th></tr></thead><tbody>';
+  if(!persons.length){
+    html += '<tr><td colspan="5"><div class="empty">Aucune personne enregistrée.</div></td></tr>';
+  } else {
+    persons.forEach(function(p){
+      var refs = ciclApplicableRefs(p.role, p.lignes);
+      var nbPostes = refs.reduce(function(s,r){ return s+(REF_CICL_POSTES[r]||[]).length; },0);
+      html += '<tr>'+
+        '<td style="font-weight:600;">'+esc(p.nom)+'</td>'+
+        '<td>'+(p.role==='pilote'?badge('ok','Pilote'):badge('neutral','Régleur'))+'</td>'+
+        '<td>'+(p.role==='pilote'?'Toutes (MCU1, MCU2, MCU3)':esc((p.lignes||[]).join(', ')||'—'))+'</td>'+
+        '<td class="tiny">'+nbPostes+' poste(s) / '+refs.length+' réf.</td>'+
+        '<td style="display:flex; gap:5px; flex-wrap:wrap; align-items:center;">'+
+          '<input type="date" class="cicl-person-apply-date" data-id="'+p.id+'" value="'+todayStr()+'" style="width:130px; font-size:12px;">'+
+          '<button class="btn small primary" data-action="cicl-apply-person" data-id="'+p.id+'">Appliquer</button>'+
+          '<button class="btn small" data-action="cicl-edit-person" data-id="'+p.id+'">Modifier</button>'+
+          '<button class="btn small danger-outline" data-action="cicl-delete-person" data-id="'+p.id+'">Suppr.</button>'+
+        '</td></tr>';
+    });
+  }
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function ciclPersonForm(){
+  var editing = ciclPersonEditId ? DATA.ciclPersons.find(function(p){return p.id===ciclPersonEditId;}) : null;
+  var role = editing ? editing.role : 'regleur';
+  var lignes = editing ? (editing.lignes||[]) : [];
+  return '<div class="card" style="max-width:480px; margin-bottom:16px;">'+
+    '<div class="eyebrow" style="margin-bottom:10px;">'+(editing?'Modifier':'Ajouter')+' une personne</div>'+
+    '<div class="entryform cols2">'+
+    '<label class="field" style="grid-column:1/-1;">Nom complet<input type="text" id="cpf-nom" value="'+(editing?esc(editing.nom):'')+'" placeholder="EX. : DUPONT Jean"></label>'+
+    '<label class="field">Rôle<select id="cpf-role">'+
+      '<option value="regleur"'+(role==='regleur'?' selected':'')+'>Régleur</option>'+
+      '<option value="pilote"'+(role==='pilote'?' selected':'')+'>Pilote (toutes lignes)</option>'+
+    '</select></label>'+
+    '<div class="field" id="cpf-lignes-wrap" style="'+(role==='pilote'?'display:none;':'')+'">'+
+      '<span style="margin-bottom:4px; display:block;">Ligne(s) du régleur</span>'+
+      ['MCU1','MCU2','MCU3'].map(function(l){
+        return '<label style="display:inline-flex; align-items:center; gap:4px; margin-right:12px; font-weight:400;"><input type="checkbox" class="cpf-ligne-chk" value="'+l+'" '+(lignes.indexOf(l)>=0?'checked':'')+'> '+l+'</label>';
+      }).join('')+
+    '</div>'+
+    '</div>'+
+    '<div class="actions-row" style="margin-top:12px;">'+
+      '<button class="btn" data-action="cancel-cicl-person">Annuler</button>'+
+      '<button class="btn primary" data-action="save-cicl-person" data-id="'+(editing?editing.id:'')+'">Enregistrer</button>'+
+    '</div></div>';
+}
 
 function ciclRecapView(){
   var html = '';
@@ -2736,6 +2827,34 @@ async function handleDeleteCicl(id){
   DATA.cicl = DATA.cicl.filter(function(x){ return x.id!==id; });
   await save('cicl');
   logChange('CI/CL', 'Suppression', p.nom+' - '+p.ref+' / '+p.poste);
+  render();
+}
+async function handleSaveCiclPerson(existingId){
+  var nom = document.getElementById('cpf-nom').value.trim();
+  if(!nom){ alert('Merci de saisir un nom.'); return; }
+  var role = document.getElementById('cpf-role').value;
+  var lignes = role==='pilote' ? [] : Array.prototype.map.call(document.querySelectorAll('.cpf-ligne-chk:checked'), function(c){return c.value;});
+  if(role==='regleur' && !lignes.length){ alert('Sélectionnez au moins une ligne pour un régleur.'); return; }
+  if(existingId){
+    var p = DATA.ciclPersons.find(function(x){ return x.id===existingId; });
+    if(p){ p.nom = nom; p.role = role; p.lignes = lignes; }
+    logChange('CI/CL', 'Personnel modifié', nom);
+  } else {
+    DATA.ciclPersons.push({id:uid('ciclp'), nom:nom, role:role, lignes:lignes});
+    logChange('CI/CL', 'Personnel ajouté', nom);
+  }
+  await save('ciclPersons');
+  ciclPersonFormOpen = false;
+  ciclPersonEditId = null;
+  render();
+}
+async function handleDeleteCiclPerson(id){
+  var p = DATA.ciclPersons.find(function(x){ return x.id===id; });
+  if(!p) return;
+  if(!confirm('Retirer '+p.nom+' de la liste du personnel CI/CL ? (les formations déjà appliquées ne seront pas supprimées)')) return;
+  DATA.ciclPersons = DATA.ciclPersons.filter(function(x){ return x.id!==id; });
+  await save('ciclPersons');
+  logChange('CI/CL', 'Personnel retiré', p.nom);
   render();
 }
 
@@ -5666,6 +5785,27 @@ app.addEventListener('click', async function(e){
   var ciclDeleteBtn = e.target.closest('[data-action="cicl-delete"]');
   if(ciclDeleteBtn){ await handleDeleteCicl(ciclDeleteBtn.dataset.id); return; }
 
+  if(e.target.closest('[data-action="new-cicl-person"]')){ ciclPersonFormOpen = true; ciclPersonEditId = null; render(); return; }
+  if(e.target.closest('[data-action="cancel-cicl-person"]')){ ciclPersonFormOpen = false; ciclPersonEditId = null; render(); return; }
+  var ciclEditPersonBtn = e.target.closest('[data-action="cicl-edit-person"]');
+  if(ciclEditPersonBtn){ ciclPersonEditId = ciclEditPersonBtn.dataset.id; ciclPersonFormOpen = false; render(); return; }
+  var ciclSavePersonBtn = e.target.closest('[data-action="save-cicl-person"]');
+  if(ciclSavePersonBtn){ await handleSaveCiclPerson(ciclSavePersonBtn.dataset.id || null); return; }
+  var ciclDeletePersonBtn = e.target.closest('[data-action="cicl-delete-person"]');
+  if(ciclDeletePersonBtn){ await handleDeleteCiclPerson(ciclDeletePersonBtn.dataset.id); return; }
+  var ciclApplyPersonBtn = e.target.closest('[data-action="cicl-apply-person"]');
+  if(ciclApplyPersonBtn){
+    var person = DATA.ciclPersons.find(function(p){ return p.id===ciclApplyPersonBtn.dataset.id; });
+    var dateInput = document.querySelector('.cicl-person-apply-date[data-id="'+ciclApplyPersonBtn.dataset.id+'"]');
+    var dateVal = dateInput ? dateInput.value : todayStr();
+    if(person){
+      var n = await applyCiclTrainingForPerson(person, dateVal);
+      alert(person.nom+' : formation appliquée sur '+n+' poste(s).');
+      render();
+    }
+    return;
+  }
+
   if(e.target.closest('[data-action="logout"]')){ handleLogout(); return; }
   var toggleRoleSub = e.target.closest('[data-action="toggle-role-sub"]');
   if(toggleRoleSub){ await handleToggleRoleSub(toggleRoleSub.dataset.role, toggleRoleSub.dataset.sub, toggleRoleSub.checked); return; }
@@ -5834,6 +5974,11 @@ app.addEventListener('click', async function(e){
 });
 
 app.addEventListener('change', async function(e){
+  if(e.target.id==='cpf-role'){
+    var wrap = document.getElementById('cpf-lignes-wrap');
+    if(wrap) wrap.style.display = (e.target.value==='pilote') ? 'none' : '';
+    return;
+  }
   var chokkoDefectInput = e.target.closest('.chokko-defect-cell');
   if(chokkoDefectInput){ await handleChokkoDefectChange(chokkoDefectInput.dataset.ligne, chokkoDefectInput.dataset.date, chokkoDefectInput.dataset.poste, chokkoDefectInput.value); return; }
   var chokkoProdInput = e.target.closest('.chokko-prod-cell');
@@ -6080,6 +6225,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
