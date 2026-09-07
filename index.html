@@ -249,6 +249,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -280,11 +281,11 @@ var KEYS = {
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
   esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1',
-  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1'
+  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[]};
 var RENDERERS = {};
-var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['formations','Formations SREM'],['archives','Archives']];
+var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
 
 // ============ LABELS PERSONNALISABLES ============
@@ -391,7 +392,7 @@ var currentUser = null;
 
 // ============ SECTEURS ============
 var SECTEURS_DEFAULT = [
-  {id:'MCU', nom:'MCU', lignes:['MCU1','MCU2','MCU3'], tabs:['dashboard','proprete','metro','ateq','actions','planning','esd','archives']},
+  {id:'MCU', nom:'MCU', lignes:['MCU1','MCU2','MCU3'], tabs:['dashboard','proprete','metro','ateq','actions','planning','esd','cicl','archives']},
   {id:'PV',  nom:'PV',  lignes:['PV01','PV02','PV03','PV04'], tabs:['dashboard','perf','metro','actions','planning','archives']},
   {id:'CR',  nom:'CR',  lignes:['CR03','CR05','CR06','CR08','CR09','CR10'], tabs:['dashboard','perf','metro','actions','planning','archives']},
   {id:'KA',  nom:'KA',  lignes:['KA03','KA04/05','KA06/07/09','KA14/15/16'], tabs:['dashboard','perf','metro','actions','planning','archives']},
@@ -2440,6 +2441,217 @@ async function handleDeleteEsd(id){
   render();
 }
 
+// ============ FORMATIONS CI/CL (regleurs formes par poste, par reference) ============
+// Modele : chaque enregistrement est {id, ref, poste, nom, dateFormation}.
+// La ref determine automatiquement sur quelle(s) ligne(s) elle apparait (REF_CICL_LIGNES).
+// 143X et 144P sont communes a MCU1 et MCU2 : comme il n'y a qu'un seul enregistrement
+// par personne/poste/ref (pas de duplication par ligne), ajouter une formation sur 144P
+// depuis l'onglet MCU1 la fait apparaitre automatiquement dans l'onglet MCU2, et inversement.
+var REF_CICL_POSTES = {
+  '141P': ['OP1015','OP1020','OP1030','OP1070','OP1080','OP1100','OP1120'],
+  '143X': ['OP1015','OP1030','OP1070','OP1080','OP1100','OP1120'],
+  '144P': ['OP1015','OP1030','OP1070','OP1080','OP1100','OP1120'],
+  '149X': ['OP1015','OP1030','OP1070','OP1080','OP1100','OP1120'],
+  '162R': ['OP1015','OP1030','OP1045','OP1059','OP1060','OP1075','OP1076','OP1080','OP1090']
+};
+var REF_CICL_LIGNES = {
+  '141P': ['MCU1'],
+  '143X': ['MCU1','MCU2'],
+  '144P': ['MCU1','MCU2'],
+  '149X': ['MCU2'],
+  '162R': ['MCU3']
+};
+var CICL_LIGNE_REFS = {
+  MCU1: ['141P','143X','144P'],
+  MCU2: ['143X','144P','149X'],
+  MCU3: ['162R']
+};
+var ciclSubTab = 'recap'; // 'recap' | 'MCU1' | 'MCU2' | 'MCU3'
+var ciclFormOpenFor = null; // ref en cours d'ajout, ex. '141P'
+var ciclEditId = null;
+var ciclSearch = '';
+
+function ciclEcheance(p){
+  if(!p.dateFormation) return null;
+  var d = new Date(p.dateFormation+'T00:00:00');
+  d.setFullYear(d.getFullYear()+1);
+  return d.toISOString().slice(0,10);
+}
+function ciclStatus(p){
+  var ech = ciclEcheance(p);
+  if(!ech) return {level:'neutral', label:'Sans date'};
+  var today = todayStr();
+  if(ech < today) return {level:'danger', label:'Expiree'};
+  if(ech.slice(0,7) === today.slice(0,7)) return {level:'urgent', label:'Expire ce mois'};
+  if(daysBetween(today, ech) <= 60) return {level:'warn', label:'A renouveler'};
+  return {level:'ok', label:'A jour'};
+}
+function ciclRecordsForRef(ref){
+  return DATA.cicl.filter(function(r){ return r.ref===ref; });
+}
+
+RENDERERS.cicl = function(){
+  var html = '<div class="section"><div class="subtabs">'+
+    '<button data-cicl-sub="recap" class="'+(ciclSubTab==='recap'?'active':'')+'">Tableau de bord</button>'+
+    '<button data-cicl-sub="MCU1" class="'+(ciclSubTab==='MCU1'?'active':'')+'">MCU1</button>'+
+    '<button data-cicl-sub="MCU2" class="'+(ciclSubTab==='MCU2'?'active':'')+'">MCU2</button>'+
+    '<button data-cicl-sub="MCU3" class="'+(ciclSubTab==='MCU3'?'active':'')+'">MCU3</button>'+
+  '</div>';
+  if(ciclSubTab==='recap') html += ciclRecapView();
+  else html += ciclLigneView(ciclSubTab);
+  html += '</div>';
+  return html;
+};
+
+function ciclRecapView(){
+  var html = '';
+  ['MCU1','MCU2','MCU3'].forEach(function(ligne){
+    var refs = CICL_LIGNE_REFS[ligne];
+    var allRecords = [];
+    refs.forEach(function(ref){ allRecords = allRecords.concat(ciclRecordsForRef(ref)); });
+    var expired = allRecords.filter(function(p){ return ciclStatus(p).level==='danger'; }).length;
+    var urgent = allRecords.filter(function(p){ return ciclStatus(p).level==='urgent'; }).length;
+    var warn = allRecords.filter(function(p){ return ciclStatus(p).level==='warn'; }).length;
+
+    // Postes sans personne a jour (aucun enregistrement non expire) -> couverture a risque
+    var uncovered = [];
+    refs.forEach(function(ref){
+      REF_CICL_POSTES[ref].forEach(function(poste){
+        var recs = ciclRecordsForRef(ref).filter(function(r){ return r.poste===poste; });
+        var hasValid = recs.some(function(r){ return ciclStatus(r).level==='ok' || ciclStatus(r).level==='warn' || ciclStatus(r).level==='urgent'; });
+        if(!hasValid) uncovered.push(ref+' / '+poste);
+      });
+    });
+
+    html += '<div class="section card" style="margin-bottom:16px; cursor:pointer;" data-action="cicl-goto-ligne" data-ligne="'+ligne+'">';
+    html += '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px; margin-bottom:10px;">';
+    html += '<div class="eyebrow">'+ligne+' <span class="tiny" style="text-transform:none; font-weight:400;">('+refs.join(', ')+')</span></div>';
+    html += '<div style="display:flex; gap:16px;">'+
+      '<span class="tiny">'+allRecords.length+' formation(s) enregistree(s)</span>'+
+    '</div></div>';
+    html += '<div class="grid grid-4">'+
+      '<div class="statcard s-danger"><div class="eyebrow">Expirees</div><div class="val">'+expired+'</div></div>'+
+      '<div class="statcard s-urgent"><div class="eyebrow">Expire ce mois</div><div class="val">'+urgent+'</div></div>'+
+      '<div class="statcard s-warn"><div class="eyebrow">A renouveler</div><div class="val">'+warn+'</div></div>'+
+      '<div class="statcard'+(uncovered.length?' s-danger':'')+'"><div class="eyebrow">Postes non couverts</div><div class="val">'+uncovered.length+'</div></div>'+
+    '</div>';
+    if(uncovered.length){
+      html += '<p class="tiny" style="margin-top:8px; color:var(--danger);">Aucun regleur a jour sur : '+uncovered.map(esc).join(', ')+'</p>';
+    }
+    html += '</div>';
+  });
+  html += '<p class="tiny">Cliquez sur une ligne pour voir le detail par reference et poste.</p>';
+  return html;
+}
+
+function ciclLigneView(ligne){
+  var refs = CICL_LIGNE_REFS[ligne];
+  var html = '';
+  refs.forEach(function(ref){
+    var partage = REF_CICL_LIGNES[ref].length>1;
+    var records = ciclRecordsForRef(ref).slice().sort(function(a,b){
+      if(a.poste!==b.poste) return a.poste.localeCompare(b.poste);
+      return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'});
+    });
+    html += '<div class="section card" style="margin-bottom:18px;">';
+    html += '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:10px;">';
+    html += '<div class="eyebrow">Reference '+esc(ref)+
+      (partage? ' <span class="tiny" style="text-transform:none; font-weight:400; color:var(--accent);">(commune '+REF_CICL_LIGNES[ref].join(' + ')+')</span>' : '')+
+      '</div>';
+    html += '<button class="btn small primary" data-action="cicl-new" data-ref="'+ref+'">+ Ajouter un regleur</button>';
+    html += '</div>';
+
+    if(ciclFormOpenFor===ref) html += ciclForm(ref);
+
+    if(!records.length){
+      html += '<div class="empty">Aucun regleur forme sur cette reference.</div>';
+    } else {
+      html += '<div class="table-wrap"><table><thead><tr><th>Poste</th><th>Nom</th><th>Derniere formation</th><th>Echeance (1 an)</th><th>Statut</th><th></th></tr></thead><tbody>';
+      html += records.map(function(p){
+        if(ciclEditId===p.id) return ciclEditRow(p, ref);
+        var s = ciclStatus(p);
+        var ech = ciclEcheance(p);
+        var dl = ech ? daysLabel(ech) : null;
+        return '<tr>'+
+          '<td style="font-family:var(--mono); font-size:12px;">'+esc(p.poste)+'</td>'+
+          '<td style="font-weight:600;">'+esc(p.nom)+'</td>'+
+          '<td class="num">'+(p.dateFormation?fmtDate(p.dateFormation):'-')+'</td>'+
+          '<td class="num" style="'+(s.level==='danger'?'color:var(--danger);font-weight:700;':'')+'">'+
+            (ech?fmtDate(ech):'-')+(dl&&s.level!=='ok'?' <span class="tiny">('+dl.text+')</span>':'')+
+          '</td>'+
+          '<td>'+badge(s.level, s.label)+'</td>'+
+          '<td style="display:flex; gap:5px; flex-wrap:wrap;">'+
+            '<button class="btn small primary" data-action="cicl-edit" data-id="'+p.id+'">Renouveler / Modifier</button>'+
+            '<button class="btn small danger-outline" data-action="cicl-delete" data-id="'+p.id+'">Suppr.</button>'+
+          '</td></tr>';
+      }).join('');
+      html += '</tbody></table></div>';
+    }
+    html += '</div>';
+  });
+  return html;
+}
+
+function ciclForm(ref){
+  var postes = REF_CICL_POSTES[ref]||[];
+  return '<div class="card" style="max-width:480px; margin-bottom:16px;">'+
+    '<div class="eyebrow" style="margin-bottom:10px;">Ajouter un regleur - '+esc(ref)+'</div>'+
+    '<div class="entryform cols2">'+
+    '<label class="field" style="grid-column:1/-1;">Nom complet<input type="text" id="cf-nom" placeholder="EX. : DUPONT Jean"></label>'+
+    '<label class="field">Poste<select id="cf-poste">'+postes.map(function(p){return '<option value="'+p+'">'+p+'</option>';}).join('')+'</select></label>'+
+    '<label class="field">Date de la derniere formation<input type="date" id="cf-date" value="'+todayStr()+'"></label>'+
+    '</div>'+
+    '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="cancel-cicl">Annuler</button><button class="btn primary" data-action="save-cicl" data-ref="'+ref+'">Enregistrer</button></div></div>';
+}
+function ciclEditRow(p, ref){
+  var postes = REF_CICL_POSTES[ref]||[];
+  var ech = ciclEcheance(p);
+  return '<tr style="background:var(--accent-bg);">'+
+    '<td><select id="cicl-edit-poste" style="width:100px;">'+postes.map(function(po){return '<option value="'+po+'"'+(po===p.poste?' selected':'')+'>'+po+'</option>';}).join('')+'</select></td>'+
+    '<td><input type="text" id="cicl-edit-nom" value="'+esc(p.nom)+'" style="width:170px;"></td>'+
+    '<td><input type="date" id="cicl-edit-date" value="'+esc(p.dateFormation||'')+'" style="width:150px;"></td>'+
+    '<td class="tiny">'+(ech?fmtDate(ech):'-')+' (auto)</td>'+
+    '<td></td>'+
+    '<td style="display:flex; gap:5px;">'+
+      '<button class="btn small primary" data-action="cicl-save-edit" data-id="'+p.id+'">Valider</button>'+
+      '<button class="btn small" data-action="cicl-cancel-edit">Annuler</button>'+
+    '</td></tr>';
+}
+async function handleSaveCicl(ref){
+  var nom = document.getElementById('cf-nom').value.trim();
+  if(!nom){ alert('Merci de saisir un nom.'); return; }
+  var poste = document.getElementById('cf-poste').value;
+  var date = document.getElementById('cf-date').value||null;
+  DATA.cicl.push({id:uid('cicl'), ref:ref, poste:poste, nom:nom, dateFormation:date});
+  await save('cicl');
+  var lignesTxt = REF_CICL_LIGNES[ref].join(' + ');
+  logChange('CI/CL', 'Ajout', nom+' - '+ref+' / '+poste+' ('+lignesTxt+')');
+  ciclFormOpenFor = null;
+  render();
+}
+async function handleSaveCiclEdit(id){
+  var p = DATA.cicl.find(function(x){ return x.id===id; });
+  if(!p) return;
+  var nom = document.getElementById('cicl-edit-nom').value.trim();
+  var poste = document.getElementById('cicl-edit-poste').value;
+  var date = document.getElementById('cicl-edit-date').value;
+  if(!nom){ alert('Merci de saisir un nom.'); return; }
+  p.nom = nom; p.poste = poste; p.dateFormation = date||null;
+  await save('cicl');
+  logChange('CI/CL', 'Mise a jour', nom+' - '+p.ref+' / '+poste);
+  ciclEditId = null;
+  render();
+}
+async function handleDeleteCicl(id){
+  var p = DATA.cicl.find(function(x){ return x.id===id; });
+  if(!p) return;
+  if(!confirm('Supprimer '+p.nom+' ('+p.ref+' / '+p.poste+') ?'+(REF_CICL_LIGNES[p.ref].length>1?' Cette formation est commune a '+REF_CICL_LIGNES[p.ref].join(' et ')+', elle disparaitra des deux.':''))) return;
+  DATA.cicl = DATA.cicl.filter(function(x){ return x.id!==id; });
+  await save('cicl');
+  logChange('CI/CL', 'Suppression', p.nom+' - '+p.ref+' / '+p.poste);
+  render();
+}
+
 
 // ---------- AUDITS DE PERF (secteurs hors MCU) ----------
 var perfFormOpen = false;
@@ -3852,6 +4064,14 @@ function bootstrapAdmin(){
     DATA.secteurs = JSON.parse(JSON.stringify(SECTEURS_DEFAULT));
     changed = true;
   }
+  // Migration : ajouter l'onglet CI/CL au secteur MCU s'il n'y est pas déjà
+  if(DATA.secteurs){
+    var mcuSec = DATA.secteurs.find(function(s){ return s.id==='MCU'; });
+    if(mcuSec && mcuSec.tabs.indexOf('cicl')<0){
+      mcuSec.tabs.push('cicl');
+      changed = true;
+    }
+  }
   // Fonctionnalité de personnalisation des libellés retirée : purge des éventuels renommages existants
   if(DATA.labelOverrides && Object.keys(DATA.labelOverrides).length){
     DATA.labelOverrides = {};
@@ -4006,7 +4226,7 @@ RENDERERS.comptes = function(){
   html += '<div class="toolbar"><div></div><button class="btn primary" data-action="new-secteur">+ Ajouter un secteur</button></div>';
   if(secteurFormState) html += secteurForm();
   var allSecteursList = (DATA.secteurs && DATA.secteurs.length? DATA.secteurs : SECTEURS_DEFAULT);
-  var CONFIGURABLE_TABS = [['perf','Audits perf'],['proprete','Propreté'],['metro','Métrologie'],['ateq','ATEQ'],['actions','Actions'],['planning','Planning'],['esd','ESD'],['formations','SREM']];
+  var CONFIGURABLE_TABS = [['perf','Audits perf'],['proprete','Propreté'],['metro','Métrologie'],['ateq','ATEQ'],['actions','Actions'],['planning','Planning'],['esd','ESD'],['cicl','CI/CL'],['formations','SREM']];
   html += '<div class="table-wrap" style="overflow-x:auto;"><table class="perm-table"><thead><tr><th style="min-width:80px;">Secteur</th><th style="min-width:180px;">Lignes</th>'+
     CONFIGURABLE_TABS.map(function(t){return '<th style="font-size:10px;">'+t[1]+'</th>';}).join('')+'<th></th></tr></thead><tbody>';
   html += allSecteursList.map(function(sec){
@@ -4507,7 +4727,7 @@ app.addEventListener('click', async function(e){
   var tabBtn = e.target.closest('#tabs button');
   if(tabBtn){ currentTab = tabBtn.dataset.tab; render(); return; }
 
-  var subBtn = e.target.closest('.subtabs button');
+  var subBtn = e.target.closest('.subtabs button[data-sub]');
   if(subBtn){ propreteSub = subBtn.dataset.sub; render(); return; }
 
   var toggleBtn = e.target.closest('[data-toggle-form]');
@@ -4739,6 +4959,23 @@ app.addEventListener('click', async function(e){
   if(esdSaveEditBtn){ await handleSaveEsdEdit(esdSaveEditBtn.dataset.id); return; }
   var esdDeleteBtn = e.target.closest('[data-action="esd-delete"]');
   if(esdDeleteBtn){ await handleDeleteEsd(esdDeleteBtn.dataset.id); return; }
+
+  var ciclSubBtn = e.target.closest('[data-cicl-sub]');
+  if(ciclSubBtn){ ciclSubTab = ciclSubBtn.dataset.ciclSub; ciclFormOpenFor = null; ciclEditId = null; render(); return; }
+  var ciclGotoBtn = e.target.closest('[data-action="cicl-goto-ligne"]');
+  if(ciclGotoBtn){ ciclSubTab = ciclGotoBtn.dataset.ligne; render(); return; }
+  var ciclNewBtn = e.target.closest('[data-action="cicl-new"]');
+  if(ciclNewBtn){ ciclFormOpenFor = ciclNewBtn.dataset.ref; render(); return; }
+  if(e.target.closest('[data-action="cancel-cicl"]')){ ciclFormOpenFor = null; render(); return; }
+  var ciclSaveBtn = e.target.closest('[data-action="save-cicl"]');
+  if(ciclSaveBtn){ await handleSaveCicl(ciclSaveBtn.dataset.ref); return; }
+  var ciclEditBtn = e.target.closest('[data-action="cicl-edit"]');
+  if(ciclEditBtn){ ciclEditId = ciclEditBtn.dataset.id; ciclFormOpenFor = null; render(); return; }
+  if(e.target.closest('[data-action="cicl-cancel-edit"]')){ ciclEditId = null; render(); return; }
+  var ciclSaveEditBtn = e.target.closest('[data-action="cicl-save-edit"]');
+  if(ciclSaveEditBtn){ await handleSaveCiclEdit(ciclSaveEditBtn.dataset.id); return; }
+  var ciclDeleteBtn = e.target.closest('[data-action="cicl-delete"]');
+  if(ciclDeleteBtn){ await handleDeleteCicl(ciclDeleteBtn.dataset.id); return; }
 
   if(e.target.closest('[data-action="logout"]')){ handleLogout(); return; }
   var toggleRoleSub = e.target.closest('[data-action="toggle-role-sub"]');
@@ -5138,55 +5375,6 @@ async function init(){
 init();
 
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 </script>
