@@ -367,6 +367,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -3297,7 +3298,10 @@ function chokkoSaisieView(){
     var totalPoste = days.reduce(function(s,d){ var e=chokkoEntry(ligne,d.date); return s+(e?Number(e.defects[posteId]||0):0); },0);
     var note = chokkoNote(ligne, posteId, chokkoYear, chokkoMonth);
     html += '<tr>';
-    html += '<td class="chk-label chk-sticky">'+esc(posteId)+' - '+esc(posteLabel)+'</td>';
+    var ateqLinked = posteId==='OP1120' && (ligne==='MCU1' || ligne==='MCU2');
+    html += '<td class="chk-label chk-sticky">'+esc(posteId)+' - '+esc(posteLabel)+
+      (ateqLinked? ' <span class="tiny" title="Alimente automatiquement l\'onglet ATEQ" style="color:var(--accent);">⇄ ATEQ</span>' : '')+
+      '</td>';
     html += days.map(function(d){
       var e = chokkoEntry(ligne, d.date);
       var v = e && e.defects[posteId]!==undefined ? e.defects[posteId] : '';
@@ -3448,6 +3452,15 @@ async function handleChokkoDefectChange(ligne, date, poste, val){
   if(val===''){ delete e.defects[poste]; } else { e.defects[poste] = Math.max(0, parseInt(val,10)||0); }
   await save('chokko');
   refreshChokkoTotals(ligne);
+  // Le poste OP1120 "Contrôle ATEQ" alimente directement l'onglet ATEQ (évite une double saisie).
+  // Limité à MCU1/MCU2 : l'onglet ATEQ ne couvre pas MCU3 aujourd'hui.
+  if(poste==='OP1120' && (ligne==='MCU1' || ligne==='MCU2')){
+    var nbDefauts = val===''? 0 : Math.max(0, parseInt(val,10)||0);
+    var ateqEntry = DATA.ateq.find(function(a){ return a.date===date && a.ligne===ligne; });
+    if(ateqEntry){ ateqEntry.nbDefauts = nbDefauts; }
+    else { DATA.ateq.push({id:uid('ateq'), date:date, ligne:ligne, nbDefauts:nbDefauts, nb2nd:0}); }
+    await save('ateq');
+  }
 }
 async function handleChokkoProdChange(ligne, date, team, val){
   var e = chokkoGetOrCreate(ligne, date);
@@ -5009,7 +5022,7 @@ function renderNav(){
     var hasActive = visibleTabs.indexOf(currentTab)>=0;
     html += '<div class="sidebar-group'+(isOpen?'':' closed')+'" data-group="'+group.id+'">';
     html += '<div class="sidebar-group-header" data-action="toggle-sidebar-group" data-group="'+group.id+'">'+
-      '<span class="sidebar-group-title-text">'+group.icon+' '+esc(group.label)+'</span>'+
+      '<span class="sidebar-group-title-text"><span class="sidebar-icon" style="display:inline-flex; margin-right:4px;">'+group.icon+'</span>'+esc(group.label)+'</span>'+
       '<span class="sidebar-group-chevron">\u25be</span></div>';
     html += '<div class="sidebar-group-items">';
     html += visibleTabs.map(function(tid){
@@ -6347,6 +6360,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
