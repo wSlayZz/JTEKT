@@ -384,6 +384,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -2847,11 +2848,12 @@ function ciclLigneView(ligne){
   refs.forEach(function(ref){
     var partage = REF_CICL_LIGNES[ref].length>1;
     var records = ciclRecordsForRef(ref).slice().sort(function(a,b){
+      if(a.poste!==b.poste) return a.poste.localeCompare(b.poste);
       var ea = ciclEcheance(a), eb = ciclEcheance(b);
       if(!ea && !eb) return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'});
-      if(!ea) return 1;  // sans date -> en dernier
+      if(!ea) return 1;  // sans date -> en dernier dans le groupe
       if(!eb) return -1;
-      return ea.localeCompare(eb); // date la plus proche/expirée en premier
+      return ea.localeCompare(eb); // dans chaque poste : le plus urgent/expire en premier
     });
     html += '<div class="section card" style="margin-bottom:18px;">';
     html += '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:10px;">';
@@ -2873,8 +2875,10 @@ function ciclLigneView(ligne){
         var s = ciclStatus(p);
         var ech = ciclEcheance(p);
         var dl = ech ? daysLabel(ech) : null;
+        var newGroup = p.poste!==prevPoste;
+        prevPoste = p.poste;
         var posteColor = posteBadgeColor(p.poste);
-        return '<tr>'+
+        return '<tr style="'+(newGroup?'border-top:3px solid '+posteColor.fg+';':'')+'">'+
           '<td style="border-left:5px solid '+posteColor.fg+';"><span style="display:inline-block; font-family:var(--mono); font-size:14px; font-weight:800; padding:4px 10px; border-radius:5px; background:'+posteColor.fg+'; color:#fff; letter-spacing:0.02em;">'+esc(p.poste)+'</span></td>'+
           '<td style="font-weight:600;">'+esc(p.nom)+'</td>'+
           '<td class="num">'+(p.dateFormation?fmtDate(p.dateFormation):'-')+'</td>'+
@@ -6453,6 +6457,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
