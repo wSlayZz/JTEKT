@@ -338,6 +338,9 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
+
+
 (function(){
 "use strict";
 
@@ -2543,6 +2546,17 @@ var REF_CICL_POSTES = {
 };
 var REF_CICL_LABELS = { '143X-144P': '143X / 144P' }; // libellé d'affichage si différent de la clé
 function ciclRefLabel(ref){ return REF_CICL_LABELS[ref] || ref; }
+var POSTE_BADGE_PALETTE = [
+  {bg:'#E6EFEE', fg:'#1F5C5C'}, {bg:'#FBEEDC', fg:'#B8730A'}, {bg:'#FBE7E3', fg:'#B23B2E'},
+  {bg:'#E5F3E9', fg:'#2E7D4F'}, {bg:'#EFE6F7', fg:'#7B4FA3'}, {bg:'#E7EEFB', fg:'#3A5FA3'},
+  {bg:'#FDECD6', fg:'#C25A00'}, {bg:'#F0EAE0', fg:'#8A6642'}
+];
+function posteBadgeColor(posteId){
+  var hash = 0;
+  for(var i=0; i<posteId.length; i++){ hash = (hash*31 + posteId.charCodeAt(i)) & 0xffffffff; }
+  var idx = Math.abs(hash) % POSTE_BADGE_PALETTE.length;
+  return POSTE_BADGE_PALETTE[idx];
+}
 var REF_CICL_LIGNES = {
   '141P': ['MCU1'],
   '143X-144P': ['MCU1','MCU2'],
@@ -2560,6 +2574,7 @@ var ciclEditId = null;
 var ciclSearch = '';
 var ciclPersonFormOpen = false;
 var ciclPersonEditId = null;
+var ciclApplyDates = {}; // personId -> date choisie (evite qu'un re-rendu ne l'ecrase par la date du jour)
 
 function ciclAllRefs(){
   var seen = {}, out = [];
@@ -2645,7 +2660,7 @@ function ciclPersonnelView(){
         '<td>'+(p.role==='pilote'?'Toutes (MCU1, MCU2, MCU3)':esc((p.lignes||[]).join(', ')||'—'))+'</td>'+
         '<td class="tiny">'+nbPostes+' poste(s) / '+refs.length+' réf.</td>'+
         '<td style="display:flex; gap:5px; flex-wrap:wrap; align-items:center;">'+
-          '<input type="date" class="cicl-person-apply-date" data-id="'+p.id+'" value="'+todayStr()+'" style="width:130px; font-size:12px;">'+
+          '<input type="date" class="cicl-person-apply-date" data-id="'+p.id+'" value="'+(ciclApplyDates[p.id]||todayStr())+'" style="width:130px; font-size:12px;">'+
           '<button class="btn small primary" data-action="cicl-apply-person" data-id="'+p.id+'">Appliquer</button>'+
           '<button class="btn small" data-action="cicl-edit-person" data-id="'+p.id+'">Modifier</button>'+
           '<button class="btn small danger-outline" data-action="cicl-delete-person" data-id="'+p.id+'">Suppr.</button>'+
@@ -2745,13 +2760,17 @@ function ciclLigneView(ligne){
       html += '<div class="empty">Aucun regleur forme sur cette reference.</div>';
     } else {
       html += '<div class="table-wrap"><table><thead><tr><th>Poste</th><th>Nom</th><th>Derniere formation</th><th>Echeance (1 an)</th><th>Statut</th><th></th></tr></thead><tbody>';
+      var prevPoste = null;
       html += records.map(function(p){
-        if(ciclEditId===p.id) return ciclEditRow(p, ref);
+        if(ciclEditId===p.id){ prevPoste = p.poste; return ciclEditRow(p, ref); }
         var s = ciclStatus(p);
         var ech = ciclEcheance(p);
         var dl = ech ? daysLabel(ech) : null;
-        return '<tr>'+
-          '<td style="font-family:var(--mono); font-size:12px;">'+esc(p.poste)+'</td>'+
+        var newGroup = p.poste!==prevPoste;
+        prevPoste = p.poste;
+        var posteColor = posteBadgeColor(p.poste);
+        return '<tr style="'+(newGroup?'border-top:3px solid '+posteColor.fg+';':'')+' background:'+posteColor.bg+';">'+
+          '<td style="border-left:5px solid '+posteColor.fg+';"><span style="display:inline-block; font-family:var(--mono); font-size:14px; font-weight:800; padding:4px 10px; border-radius:5px; background:'+posteColor.fg+'; color:#fff; letter-spacing:0.02em;">'+esc(p.poste)+'</span></td>'+
           '<td style="font-weight:600;">'+esc(p.nom)+'</td>'+
           '<td class="num">'+(p.dateFormation?fmtDate(p.dateFormation):'-')+'</td>'+
           '<td class="num" style="'+(s.level==='danger'?'color:var(--danger);font-weight:700;':'')+'">'+
@@ -4674,11 +4693,14 @@ function renderPostits(){
   var mine = DATA.postits.filter(function(p){ return (p.secteur||'MCU')===currentSecteur; });
   if(!mine.length) return '';
   return '<div id="postit-layer">'+mine.map(function(p){
+    var canEdit = (p.author===(currentUser?currentUser.displayName:'') || (currentUser&&currentUser.roleId===ADMIN_ROLE_ID));
     return '<div class="postit" data-id="'+p.id+'" style="left:'+(p.x||20)+'px; top:'+(p.y||20)+'px; background:'+esc(p.color||POSTIT_COLORS[0])+';">'+
       '<div style="white-space:pre-wrap; word-break:break-word;">'+esc(p.text)+'</div>'+
       '<div class="postit-meta"><span>'+esc(p.author||'?')+'</span>'+
-        ((p.author===(currentUser?currentUser.displayName:'') || (currentUser&&currentUser.roleId===ADMIN_ROLE_ID))?
-          '<button class="postit-del" data-action="delete-postit" data-id="'+p.id+'" title="Supprimer">✕</button>' : '')+
+        (canEdit? '<span style="display:flex; gap:2px;">'+
+          '<button class="postit-del" data-action="edit-postit" data-id="'+p.id+'" title="Modifier">✎</button>'+
+          '<button class="postit-del" data-action="delete-postit" data-id="'+p.id+'" title="Supprimer">✕</button>'+
+        '</span>' : '')+
       '</div></div>';
   }).join('')+'</div>';
 }
@@ -4693,6 +4715,17 @@ async function handleAddPostit(){
     secteur: currentSecteur, author: currentUser.displayName, createdAt: todayStr()
   });
   await save('postits');
+  render();
+}
+async function handleEditPostit(id){
+  var p = DATA.postits.find(function(x){ return x.id===id; });
+  if(!p) return;
+  var text = prompt('Modifier le message :', p.text);
+  if(text===null) return; // annulé
+  if(!text.trim()) return;
+  p.text = text.trim().slice(0,300);
+  await save('postits');
+  logChange('Tableau de bord', 'Post-it modifié', p.text.slice(0,60));
   render();
 }
 async function handleDeletePostit(id){
@@ -5927,6 +5960,8 @@ app.addEventListener('click', async function(e){
   if(e.target.closest('[data-action="chokko-export"]')){ await handleExportChokkoExcel(); return; }
 
   if(e.target.closest('[data-action="add-postit"]')){ await handleAddPostit(); return; }
+  var editPostitBtn = e.target.closest('[data-action="edit-postit"]');
+  if(editPostitBtn){ await handleEditPostit(editPostitBtn.dataset.id); return; }
   var delPostitBtn = e.target.closest('[data-action="delete-postit"]');
   if(delPostitBtn){ await handleDeletePostit(delPostitBtn.dataset.id); return; }
 
@@ -5974,6 +6009,10 @@ app.addEventListener('click', async function(e){
 });
 
 app.addEventListener('change', async function(e){
+  if(e.target.classList && e.target.classList.contains('cicl-person-apply-date')){
+    ciclApplyDates[e.target.dataset.id] = e.target.value;
+    return;
+  }
   if(e.target.id==='cpf-role'){
     var wrap = document.getElementById('cpf-lignes-wrap');
     if(wrap) wrap.style.display = (e.target.value==='pilote') ? 'none' : '';
@@ -6139,6 +6178,9 @@ loginOverlayEl.addEventListener('keydown', async function(e){
 app.addEventListener('input', function(e){
   if(e.target.id==='esd-search'){ esdSearch = e.target.value; render(); }
   if(e.target.id==='formation-search'){ formationSearch = e.target.value; render(); }
+  if(e.target.classList && e.target.classList.contains('cicl-person-apply-date')){
+    ciclApplyDates[e.target.dataset.id] = e.target.value;
+  }
 });
 
 // Les dates pose/retrait des particules ne redessinent le tableau qu'à la sortie du champ
@@ -6225,6 +6267,9 @@ async function init(){
 init();
 
 })();
+
+
+
 
 
 
