@@ -277,6 +277,13 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .chokko-grid .chk-chokko-row td{background:#E2EFDA; color:#548235; font-weight:700;}
 .chokko-grid td.chokko-paintable{cursor:crosshair;}
 .chokko-grid td.chokko-paintable:hover{outline:2px dashed var(--accent); outline-offset:-2px;}
+.chokko-swatch-row{display:flex; gap:4px; flex-wrap:wrap;}
+.chokko-swatch{width:20px; height:20px; border-radius:5px; border:1.5px solid rgba(0,0,0,0.15); cursor:pointer; padding:0;}
+.chokko-swatch.active{border-color:rgba(0,0,0,0.7); box-shadow:0 0 0 1.5px #fff inset;}
+.chokko-custom-color-btn{position:relative; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:5px; border:1.5px dashed var(--border-strong); cursor:pointer; font-size:13px; font-weight:700; color:var(--text-faint); background:repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 50%/8px 8px;}
+.chokko-custom-color-btn input[type=color]{position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; border:none; padding:0;}
+.chokko-paint-btn{display:inline-flex; align-items:center; gap:7px;}
+.chokko-paint-swatch{width:16px; height:16px; border-radius:4px; border:1.5px solid rgba(0,0,0,0.2); flex-shrink:0;}
 .chokko-grid input.chk-cell{width:100%; min-width:32px; border:none; background:transparent; text-align:center; font-family:inherit; font-size:11px; padding:2px 1px;}
 .chokko-grid input.chk-cell::-webkit-outer-spin-button, .chokko-grid input.chk-cell::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
 .chokko-grid input.chk-cell{-moz-appearance:textfield;}
@@ -400,6 +407,8 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
+
 (function(){
 "use strict";
 
@@ -431,9 +440,9 @@ var KEYS = {
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
   esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1',
-  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1'
+  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[]};
 var RENDERERS = {};
 var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
@@ -723,6 +732,20 @@ async function withBtnLoading(btn, promiseFn){
   btn.classList.add('btn-loading'); btn.disabled = true;
   try{ return await promiseFn(); }
   finally{ btn.classList.remove('btn-loading'); btn.disabled = false; }
+}
+function printWithPageSize(sizeRule){
+  var styleEl = document.createElement('style');
+  styleEl.id = 'dynamic-print-size';
+  styleEl.textContent = '@page{ size:'+sizeRule+'; margin:8mm; }';
+  document.head.appendChild(styleEl);
+  window.print();
+  var cleanup = function(){
+    var el = document.getElementById('dynamic-print-size');
+    if(el) el.remove();
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(cleanup, 4000); // filet de sécurité si l'événement afterprint n'est pas déclenché
 }
 function toast(message, type){
   var layer = document.getElementById('toast-layer');
@@ -3261,6 +3284,7 @@ var chokkoWizardDate = null;
 var chokkoWizardStep = 0; // index dans la séquence postes puis équipes
 var chokkoColorsPanelOpen = false;
 var chokkoPaintMode = false; // false | couleur hex active du pinceau
+var chokkoPaintPickerOpen = false;
 
 function chokkoPostes(ligne){ return CHOKKO_CONFIG[ligne]||[]; }
 function daysInMonth(year, monthIdx){ return new Date(year, monthIdx+1, 0).getDate(); }
@@ -3336,15 +3360,15 @@ RENDERERS.chokko = function(){
     '<button class="btn small'+(chokkoView==='saisie'?' primary':'')+'" data-action="chokko-view" data-view="saisie">Saisie</button>'+
     '<button class="btn small'+(chokkoView==='recap'?' primary':'')+'" data-action="chokko-view" data-view="recap">Récapitulatif annuel</button>'+
     '</div>'+
-    '<div style="display:flex; gap:8px; align-items:center;">'+
+    '<div style="display:flex; gap:8px; align-items:center; position:relative;">'+
     '<button class="btn primary" data-action="chokko-wizard-open">✏️ Saisir les résultats</button>'+
-    '<label class="btn'+(chokkoPaintMode?' primary':'')+'" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; margin:0;">'+
-      '🖌️ '+(chokkoPaintMode?'Cliquez sur une case...':'Colorier une case')+
-      '<input type="color" id="chokko-paint-picker" value="'+(chokkoPaintMode||'#FFF3A3')+'" style="width:20px; height:20px; padding:0; border:none; cursor:pointer;">'+
-    '</label>'+
+    '<button class="btn chokko-paint-btn" data-action="chokko-paint-toggle">'+
+      (chokkoPaintMode? '<span class="chokko-paint-swatch" style="background:'+chokkoPaintMode+';"></span>Cliquez sur une case...' : '🖌️ Colorier une case')+
+    '</button>'+
     (chokkoPaintMode? '<button class="btn small" data-action="chokko-paint-stop">Terminer</button>' : '')+
     '<button class="btn" data-action="chokko-print">🖨️ Exporter en PDF</button>'+
     '<button class="btn" data-action="chokko-export">📥 Exporter en Excel</button>'+
+    (chokkoPaintPickerOpen? chokkoPaintPickerPanel() : '')+
     '</div></div>';
   html += chokkoView==='saisie' ? chokkoSaisieView() : chokkoRecapView();
   html += '</div>';
@@ -3450,16 +3474,20 @@ function chokkoSaisieView(){
     var note = chokkoNote(ligne, posteId, chokkoYear, chokkoMonth);
     html += '<tr>';
     var ateqLinked = posteId==='OP1120' && (ligne==='MCU1' || ligne==='MCU2');
-    html += '<td class="chk-label chk-sticky">'+esc(posteId)+' - '+esc(posteLabel)+
+    var labelHl = DATA.chokkoHighlights[ligne] && DATA.chokkoHighlights[ligne]['label_'+posteId];
+    var labelStyle = labelHl? 'background:'+labelHl+'; color:'+contrastTextColor(labelHl)+';' : '';
+    var labelPaintClass = chokkoPaintMode? ' chokko-paintable' : '';
+    html += '<td class="chk-label chk-sticky'+labelPaintClass+'" style="'+labelStyle+'" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-labelcell="1">'+esc(posteId)+' - '+esc(posteLabel)+
       (ateqLinked? ' <span class="tiny" title="Alimente automatiquement l\'onglet ATEQ" style="color:var(--accent);">⇄ ATEQ</span>' : '')+
       '</td>';
     html += days.map(function(d){
       var e = chokkoEntry(ligne, d.date);
       var v = e && e.defects[posteId]!==undefined ? e.defects[posteId] : '';
       var hl = DATA.chokkoHighlights[ligne] && DATA.chokkoHighlights[ligne][d.date+'_'+posteId];
+      var textColor = hl? contrastTextColor(hl) : '';
       var tdStyle = hl? 'background:'+hl+';' : '';
       var cellClass = chokkoPaintMode? ' chokko-paintable' : '';
-      return '<td class="'+cellClass.trim()+'" style="'+tdStyle+'" data-ligne="'+ligne+'" data-date="'+d.date+'" data-poste="'+posteId+'"><input type="number" min="0" class="chk-cell chokko-defect-cell" data-ligne="'+ligne+'" data-date="'+d.date+'" data-poste="'+posteId+'" value="'+v+'" style="'+(chokkoPaintMode?'pointer-events:none;':'')+'"></td>';
+      return '<td class="'+cellClass.trim()+'" style="'+tdStyle+'" data-ligne="'+ligne+'" data-date="'+d.date+'" data-poste="'+posteId+'"><input type="number" min="0" class="chk-cell chokko-defect-cell" data-ligne="'+ligne+'" data-date="'+d.date+'" data-poste="'+posteId+'" value="'+v+'" style="'+(chokkoPaintMode?'pointer-events:none;':'')+(textColor?'color:'+textColor+';':'')+'"></td>';
     }).join('');
     html += '<td id="chokko-poste-total-'+posteId+'" style="font-weight:700;">'+totalPoste+'</td>';
     html += '<td style="text-align:left;"><textarea class="chk-note chokko-note" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-annee="'+chokkoYear+'" data-mois="'+chokkoMonth+'" rows="1" placeholder="Actions menées ce mois...">'+esc(note?note.texte:'')+'</textarea></td>';
@@ -3554,21 +3582,57 @@ function renderChokkoChart(){
     });
   }catch(err){ console.error('chokko year chart error', err); }
 }
+// Palette "standard" façon Excel + mémoire des couleurs récemment utilisées
+var CHOKKO_PRESET_COLORS = ['#C00000','#FF0000','#FFC000','#FFFF00','#92D050','#00B050','#00B0F0','#0070C0','#002060','#7030A0','#FFFFFF','#000000'];
+function contrastTextColor(hex){
+  if(!hex || hex.charAt(0)!=='#') return '#1C1B18';
+  var h = hex.slice(1);
+  if(h.length===3) h = h.split('').map(function(c){return c+c;}).join('');
+  var r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  // Luminance relative (formule standard W3C)
+  var lum = (0.299*r + 0.587*g + 0.114*b)/255;
+  return lum < 0.55 ? '#FFFFFF' : '#1C1B18';
+}
+async function chokkoRememberColor(color){
+  var arr = DATA.chokkoRecentColors.filter(function(c){ return c.toLowerCase()!==color.toLowerCase(); });
+  arr.unshift(color);
+  DATA.chokkoRecentColors = arr.slice(0,10);
+  await save('chokkoRecentColors');
+}
+function chokkoColorSwatches(idPrefix, activeColor){
+  // Rangée de pastilles cliquables : palette standard + couleurs récemment utilisées
+  var all = CHOKKO_PRESET_COLORS.concat(DATA.chokkoRecentColors.filter(function(c){ return CHOKKO_PRESET_COLORS.indexOf(c)<0; }));
+  return '<div class="chokko-swatch-row" data-swatch-target="'+idPrefix+'">'+
+    all.map(function(c){
+      return '<button type="button" class="chokko-swatch'+(activeColor&&activeColor.toLowerCase()===c.toLowerCase()?' active':'')+'" data-color="'+c+'" data-target="'+idPrefix+'" style="background:'+c+';" title="'+c+'"></button>';
+    }).join('')+
+  '</div>';
+}
+
 function chokkoPosteColor(ligne, posteId){
   if(DATA.chokkoColors[ligne] && DATA.chokkoColors[ligne][posteId]) return DATA.chokkoColors[ligne][posteId];
   return posteBadgeColor(posteId).fg;
 }
+function chokkoPaintPickerPanel(){
+  return '<div class="card" style="position:absolute; top:100%; left:0; margin-top:6px; z-index:60; width:260px; box-shadow:0 6px 20px rgba(0,0,0,0.18);">'+
+    '<div class="tiny" style="margin-bottom:8px;">Choisissez une couleur pour surligner des cases</div>'+
+    chokkoColorSwatches('paint', null)+
+    '<label class="chokko-custom-color-btn" style="margin-top:8px;" title="Couleur personnalisée">+<input type="color" id="chokko-paint-custom-input" value="#FFF3A3"></label>'+
+  '</div>';
+}
 function chokkoColorsPanel(ligne){
   var postes = chokkoPostes(ligne);
   return '<div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">'+
-    '<div class="tiny" style="margin-bottom:10px;">Choisissez la couleur de chaque poste dans le graphique (palette complète du sélecteur système).</div>'+
-    '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:8px;">'+
+    '<div class="tiny" style="margin-bottom:10px;">Cliquez une couleur prédéfinie, ou "+" pour une couleur personnalisée. Les couleurs récemment utilisées apparaissent aussi ici.</div>'+
+    '<div style="display:flex; flex-direction:column; gap:8px;">'+
     postes.map(function(p){
       var c = chokkoPosteColor(ligne, p[0]);
-      return '<label style="display:flex; align-items:center; gap:7px; font-size:12px; padding:5px 8px; border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer;">'+
-        '<input type="color" class="chokko-poste-color-input" data-ligne="'+ligne+'" data-poste="'+p[0]+'" value="'+c+'" style="width:26px; height:26px; padding:0; border:none; cursor:pointer;">'+
-        '<span style="font-family:var(--mono); font-weight:700;">'+esc(p[0])+'</span>'+
-      '</label>';
+      var targetId = 'poste|'+ligne+'|'+p[0];
+      return '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:6px 8px; border:1px solid var(--border); border-radius:var(--radius-sm);">'+
+        '<span style="font-family:var(--mono); font-weight:700; min-width:60px; padding:2px 8px; border-radius:4px; background:'+c+'; color:'+contrastTextColor(c)+';">'+esc(p[0])+'</span>'+
+        chokkoColorSwatches(targetId, c)+
+        '<label class="chokko-custom-color-btn" title="Couleur personnalisée">+<input type="color" class="chokko-poste-color-input" data-ligne="'+ligne+'" data-poste="'+p[0]+'" value="'+c+'"></label>'+
+      '</div>';
     }).join('')+
     '</div>'+
     '<button class="btn small" data-action="reset-chokko-colors" data-ligne="'+ligne+'" style="margin-top:12px;">Réinitialiser les couleurs par défaut</button>'+
@@ -6378,31 +6442,49 @@ app.addEventListener('click', async function(e){
   if(chokkoLigneBtn){ chokkoLigne = chokkoLigneBtn.dataset.ligne; render(); return; }
   var chokkoViewBtn = e.target.closest('[data-action="chokko-view"]');
   if(chokkoViewBtn){ chokkoView = chokkoViewBtn.dataset.view; render(); return; }
-  if(e.target.closest('[data-action="chokko-print"]')){ window.print(); return; }
+  if(e.target.closest('[data-action="chokko-print"]')){ printWithPageSize('A3 landscape'); return; }
   if(e.target.closest('[data-action="chokko-export"]')){
     var exportBtn = e.target.closest('[data-action="chokko-export"]');
     await withBtnLoading(exportBtn, handleExportChokkoExcel);
     return;
   }
   if(e.target.closest('[data-action="chokko-wizard-open"]')){ chokkoWizardOpen = true; render(); return; }
+  if(e.target.closest('[data-action="chokko-paint-toggle"]')){ chokkoPaintPickerOpen = !chokkoPaintPickerOpen; render(); return; }
+  if(e.target.closest('[data-action="chokko-paint-stop"]')){ chokkoPaintMode = false; chokkoPaintPickerOpen = false; render(); return; }
+  var swatchBtn = e.target.closest('.chokko-swatch');
+  if(swatchBtn){
+    var swColor = swatchBtn.dataset.color, swTarget = swatchBtn.dataset.target;
+    await chokkoRememberColor(swColor);
+    if(swTarget==='paint'){
+      chokkoPaintMode = swColor;
+      chokkoPaintPickerOpen = false;
+    } else if(swTarget.indexOf('poste|')===0){
+      var parts = swTarget.split('|'); // poste|LIGNE|POSTE
+      if(!DATA.chokkoColors[parts[1]]) DATA.chokkoColors[parts[1]] = {};
+      DATA.chokkoColors[parts[1]][parts[2]] = swColor;
+      await save('chokkoColors');
+      renderChokkoPostesChart();
+    }
+    render();
+    return;
+  }
+  var paintableCell = e.target.closest('td.chokko-paintable');
+  if(paintableCell && chokkoPaintMode){
+    var plLigne = paintableCell.dataset.ligne, plPoste = paintableCell.dataset.poste;
+    var key = paintableCell.dataset.labelcell ? 'label_'+plPoste : paintableCell.dataset.date+'_'+plPoste;
+    if(!DATA.chokkoHighlights[plLigne]) DATA.chokkoHighlights[plLigne] = {};
+    if(DATA.chokkoHighlights[plLigne][key]===chokkoPaintMode){ delete DATA.chokkoHighlights[plLigne][key]; }
+    else { DATA.chokkoHighlights[plLigne][key] = chokkoPaintMode; }
+    await save('chokkoHighlights');
+    render();
+    return;
+  }
   if(e.target.closest('[data-action="toggle-chokko-colors"]')){ chokkoColorsPanelOpen = !chokkoColorsPanelOpen; render(); return; }
   if(e.target.closest('[data-action="reset-chokko-colors"]')){
     var resetLigne = e.target.closest('[data-action="reset-chokko-colors"]').dataset.ligne;
     delete DATA.chokkoColors[resetLigne];
     await save('chokkoColors');
     render();
-    return;
-  }
-  if(e.target.closest('[data-action="chokko-paint-stop"]')){ chokkoPaintMode = false; render(); return; }
-  var paintableCell = e.target.closest('td.chokko-paintable');
-  if(paintableCell && chokkoPaintMode){
-    var plLigne = paintableCell.dataset.ligne, plDate = paintableCell.dataset.date, plPoste = paintableCell.dataset.poste;
-    if(!DATA.chokkoHighlights[plLigne]) DATA.chokkoHighlights[plLigne] = {};
-    var key = plDate+'_'+plPoste;
-    if(DATA.chokkoHighlights[plLigne][key]===chokkoPaintMode){ delete DATA.chokkoHighlights[plLigne][key]; }
-    else { DATA.chokkoHighlights[plLigne][key] = chokkoPaintMode; }
-    await save('chokkoHighlights');
-    paintableCell.style.background = DATA.chokkoHighlights[plLigne][key] || '';
     return;
   }
   if(e.target.closest('[data-action="chokko-wizard-cancel"]')){ chokkoWizardOpen = false; render(); return; }
@@ -6530,12 +6612,16 @@ app.addEventListener('change', async function(e){
     var pcLigne = e.target.dataset.ligne, pcPoste = e.target.dataset.poste;
     if(!DATA.chokkoColors[pcLigne]) DATA.chokkoColors[pcLigne] = {};
     DATA.chokkoColors[pcLigne][pcPoste] = e.target.value;
+    await chokkoRememberColor(e.target.value);
     await save('chokkoColors');
     renderChokkoPostesChart();
+    render();
     return;
   }
-  if(e.target.id==='chokko-paint-picker'){
+  if(e.target.id==='chokko-paint-custom-input'){
     chokkoPaintMode = e.target.value;
+    chokkoPaintPickerOpen = false;
+    await chokkoRememberColor(e.target.value);
     render();
     return;
   }
@@ -6795,6 +6881,8 @@ async function init(){
 init();
 
 })();
+
+
 
 
 
