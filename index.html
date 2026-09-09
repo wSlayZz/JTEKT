@@ -411,6 +411,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -3564,26 +3565,27 @@ async function handleChokkoImportRun(){
   var wb = XLSX.read(buffer, {type:'array', cellDates:false});
   var summary = {sheets:0, defects:0, prod:0, notes:0, skipped:[], monthsImported:[]};
 
-  var monthsSeen = {};
-  wb.SheetNames.forEach(function(sheetName){
-    var ws = wb.Sheets[sheetName];
+  // Le fichier peut etre un compteur glissant sur 12 mois (ex: SEP,OCT,NOV,DEC,JAN,...,AOUT,SEPT).
+  // Regle : tout mois situe AVANT la premiere feuille "janvier" dans l'ordre du fichier appartient
+  // a l'annee precedente ; a partir de janvier (inclus), on est sur l'annee saisie par l'utilisateur.
+  var sheetMonths = wb.SheetNames.map(function(name){ return {name:name, monthIdx:chokkoNormalizeMonthName(name)}; });
+  var janPos = sheetMonths.findIndex(function(s){ return s.monthIdx===0; });
+
+  sheetMonths.forEach(function(s, i){
+    if(s.monthIdx<0){ summary.skipped.push(s.name); return; }
+    var ws = wb.Sheets[s.name];
     var aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
-    var monthIdx = chokkoNormalizeMonthName(sheetName);
-    if(monthIdx<0){ summary.skipped.push(sheetName); return; }
-    // Si ce mois a deja ete rencontre dans ce meme fichier (ex: "SEP" puis "SEPT"), il s'agit
-    // tres probablement de deux annees differentes (fichier glissant sur 12 mois) : on decale
-    // l'annee des occurrences suivantes d'un an en arriere plutot que d'ecraser les donnees.
-    var yearForSheet = year;
-    if(monthsSeen[monthIdx]!==undefined){
-      yearForSheet = year - (++monthsSeen[monthIdx]);
+    var yearForSheet = (janPos>=0 && i<janPos) ? year-1 : year;
+    if(yearForSheet!==year){
       summary.duplicateMonths = summary.duplicateMonths||[];
-      summary.duplicateMonths.push(sheetName+' → traitée comme '+yearForSheet);
-    } else {
-      monthsSeen[monthIdx] = 0;
+      summary.duplicateMonths.push(s.name+' → traitée comme '+yearForSheet);
     }
-    var ok = chokkoParseSheetAoa(aoa, ligne, yearForSheet, monthIdx, summary);
-    if(ok) summary.monthsImported.push(monthIdx);
-    else summary.skipped.push(sheetName);
+    var ok = chokkoParseSheetAoa(aoa, ligne, yearForSheet, s.monthIdx, summary);
+    if(ok){
+      summary.monthsImported.push(s.monthIdx);
+      summary.periodsImported = summary.periodsImported||[];
+      summary.periodsImported.push({year:yearForSheet, month:s.monthIdx});
+    } else summary.skipped.push(s.name);
   });
 
   await save('chokko');
@@ -3598,7 +3600,11 @@ async function handleChokkoImportRun(){
     (summary.skipped.length? ' Feuilles ignorées (non reconnues) : '+summary.skipped.join(', ')+'.' : '');
   chokkoLigne = ligne;
   chokkoYear = year;
-  if(summary.monthsImported.length) chokkoMonth = Math.min.apply(null, summary.monthsImported);
+  if(summary.periodsImported && summary.periodsImported.length){
+    var earliest = summary.periodsImported.reduce(function(a,b){ return (a.year*12+a.month) <= (b.year*12+b.month) ? a : b; });
+    chokkoMonth = earliest.month;
+    chokkoYear = earliest.year;
+  }
   toast(summary.sheets+' feuille(s) importée(s) avec succès.');
   render();
 }
@@ -7115,6 +7121,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
