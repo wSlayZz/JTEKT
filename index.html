@@ -391,6 +391,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -3245,6 +3246,11 @@ var chokkoLigne = 'MCU1';
 var chokkoYear = Number(todayStr().split('-')[0]);
 var chokkoMonth = Number(todayStr().split('-')[1])-1;
 var chokkoView = 'saisie'; // 'saisie' | 'recap'
+var chokkoWizardOpen = false;   // true = affiche la modale de choix ligne/date
+var chokkoWizardActive = false; // true = assistant pas-à-pas en cours
+var chokkoWizardLigne = null;
+var chokkoWizardDate = null;
+var chokkoWizardStep = 0; // index dans la séquence postes puis équipes
 
 function chokkoPostes(ligne){ return CHOKKO_CONFIG[ligne]||[]; }
 function daysInMonth(year, monthIdx){ return new Date(year, monthIdx+1, 0).getDate(); }
@@ -3320,13 +3326,86 @@ RENDERERS.chokko = function(){
     '<button class="btn small'+(chokkoView==='saisie'?' primary':'')+'" data-action="chokko-view" data-view="saisie">Saisie</button>'+
     '<button class="btn small'+(chokkoView==='recap'?' primary':'')+'" data-action="chokko-view" data-view="recap">Récapitulatif annuel</button>'+
     '</div>'+
+    '<button class="btn primary" data-action="chokko-wizard-open">✏️ Saisir les résultats</button>'+
     '<button class="btn" data-action="chokko-print">🖨️ Exporter en PDF</button>'+
-    '<button class="btn primary" data-action="chokko-export">📥 Exporter en Excel</button>'+
+    '<button class="btn" data-action="chokko-export">📥 Exporter en Excel</button>'+
   '</div>';
   html += chokkoView==='saisie' ? chokkoSaisieView() : chokkoRecapView();
   html += '</div>';
+  if(chokkoWizardOpen) html += chokkoWizardPickerModal();
+  if(chokkoWizardActive) html += chokkoWizardStepModal();
   return html;
 };
+
+function chokkoWizardPickerModal(){
+  return '<div class="modal-overlay chokko-wizard-backdrop">'+
+    '<div class="modal-box" style="max-width:380px;">'+
+    '<h3>Saisir les résultats du jour</h3>'+
+    '<label class="field" style="margin-bottom:12px;">Ligne<select id="wiz-ligne">'+
+      ['MCU1','MCU2','MCU3'].map(function(l){ return '<option value="'+l+'"'+(l===chokkoLigne?' selected':'')+'>'+l+'</option>'; }).join('')+
+    '</select></label>'+
+    '<label class="field">Date<input type="date" id="wiz-date" value="'+todayStr()+'"></label>'+
+    '<div class="actions-row" style="margin-top:16px;">'+
+      '<button class="btn" data-action="chokko-wizard-cancel">Annuler</button>'+
+      '<button class="btn primary" data-action="chokko-wizard-start">Commencer</button>'+
+    '</div></div></div>';
+}
+
+function chokkoWizardSequence(ligne){
+  // Retourne la séquence complète : d'abord les postes (défauts), puis les équipes (production)
+  var postes = chokkoPostes(ligne).map(function(p){ return {kind:'poste', id:p[0], label:p[1]}; });
+  var teams = CHOKKO_TEAMS.map(function(t){ return {kind:'team', id:t[0], label:t[1]}; });
+  return postes.concat(teams);
+}
+async function saveChokkoWizardStep(){
+  var input = document.getElementById('wiz-step-input');
+  if(!input) return;
+  var seq = chokkoWizardSequence(chokkoWizardLigne);
+  var item = seq[Math.max(0, Math.min(chokkoWizardStep, seq.length-1))];
+  if(item.kind==='poste'){
+    await handleChokkoDefectChange(chokkoWizardLigne, chokkoWizardDate, item.id, input.value);
+  } else {
+    await handleChokkoProdChange(chokkoWizardLigne, chokkoWizardDate, item.id, input.value);
+  }
+}
+
+function chokkoWizardStepModal(){
+  var ligne = chokkoWizardLigne, date = chokkoWizardDate;
+  var seq = chokkoWizardSequence(ligne);
+  var step = Math.max(0, Math.min(chokkoWizardStep, seq.length-1));
+  var item = seq[step];
+  var e = chokkoEntry(ligne, date);
+  var currentVal = item.kind==='poste'
+    ? (e && e.defects[item.id]!==undefined ? e.defects[item.id] : '')
+    : (e && e.prod[item.id]!==undefined ? e.prod[item.id] : '');
+  var isLast = step===seq.length-1;
+  var totals = chokkoDayTotals(ligne, date);
+
+  return '<div class="modal-overlay chokko-wizard-backdrop">'+
+    '<div class="modal-box" style="max-width:420px; text-align:center;">'+
+    '<div class="tiny" style="margin-bottom:4px;">'+esc(ligne)+' - '+fmtDate(date)+'</div>'+
+    '<div class="tiny" style="margin-bottom:14px; color:var(--text-faint);">'+(step+1)+' / '+seq.length+
+      (item.kind==='poste'? ' - Défauts' : ' - Production')+'</div>'+
+    '<div style="width:100%; height:4px; background:var(--border); border-radius:3px; margin-bottom:20px; overflow:hidden;">'+
+      '<div style="width:'+Math.round((step+1)/seq.length*100)+'%; height:100%; background:var(--accent);"></div>'+
+    '</div>'+
+    '<div class="eyebrow" style="font-size:15px; margin-bottom:2px;">'+esc(item.id)+'</div>'+
+    '<div style="color:var(--text-muted); margin-bottom:18px;">'+esc(item.label)+'</div>'+
+    '<input type="number" min="0" id="wiz-step-input" value="'+currentVal+'" autofocus '+
+      'style="width:140px; font-size:28px; text-align:center; padding:10px; border:2px solid var(--accent); border-radius:var(--radius-sm); font-family:var(--mono);">'+
+    '<div class="tiny" style="margin-top:8px; color:var(--text-faint);">'+(item.kind==='poste'?'Nombre de défauts':'Quantité produite')+'</div>'+
+    '<div class="actions-row" style="margin-top:22px; justify-content:space-between;">'+
+      '<button class="btn" data-action="chokko-wizard-close">Fermer</button>'+
+      '<div style="display:flex; gap:8px;">'+
+        (step>0? '<button class="btn" data-action="chokko-wizard-prev">← Précédent</button>' : '')+
+        '<button class="btn primary" data-action="chokko-wizard-next">'+(isLast?'Terminer ✓':'Suivant →')+'</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="tiny" style="margin-top:14px; padding-top:10px; border-top:1px solid var(--border); color:var(--text-faint);">'+
+      'Chokko du jour actuel : <b style="color:var(--'+chokkoLevel(totals.pct)+');">'+(totals.pct!==null?totals.pct.toFixed(1)+'%':'-')+'</b>'+
+    '</div>'+
+    '</div></div>';
+}
 
 function chokkoSaisieView(){
   var ligne = chokkoLigne;
@@ -6199,6 +6278,10 @@ app.addEventListener('click', async function(e){
     return;
   }
   // ===== Post-its =====
+  if(e.target.classList && e.target.classList.contains('chokko-wizard-backdrop')){
+    if(chokkoWizardOpen){ chokkoWizardOpen = false; render(); return; }
+    if(chokkoWizardActive){ chokkoWizardActive = false; chokkoLigne = chokkoWizardLigne || chokkoLigne; render(); return; }
+  }
   var chokkoLigneBtn = e.target.closest('[data-action="chokko-ligne"]');
   if(chokkoLigneBtn){ chokkoLigne = chokkoLigneBtn.dataset.ligne; render(); return; }
   var chokkoViewBtn = e.target.closest('[data-action="chokko-view"]');
@@ -6207,6 +6290,47 @@ app.addEventListener('click', async function(e){
   if(e.target.closest('[data-action="chokko-export"]')){
     var exportBtn = e.target.closest('[data-action="chokko-export"]');
     await withBtnLoading(exportBtn, handleExportChokkoExcel);
+    return;
+  }
+  if(e.target.closest('[data-action="chokko-wizard-open"]')){ chokkoWizardOpen = true; render(); return; }
+  if(e.target.closest('[data-action="chokko-wizard-cancel"]')){ chokkoWizardOpen = false; render(); return; }
+  if(e.target.closest('[data-action="chokko-wizard-start"]')){
+    var wizLigne = document.getElementById('wiz-ligne').value;
+    var wizDate = document.getElementById('wiz-date').value || todayStr();
+    chokkoWizardOpen = false;
+    chokkoWizardActive = true;
+    chokkoWizardLigne = wizLigne;
+    chokkoWizardDate = wizDate;
+    chokkoWizardStep = 0;
+    chokkoLigne = wizLigne; // aligne le tableau affiché dessous pour éviter toute collision d'ID pendant la saisie
+    chokkoMonth = Number(wizDate.slice(5,7))-1;
+    chokkoYear = Number(wizDate.slice(0,4));
+    render();
+    return;
+  }
+  if(e.target.closest('[data-action="chokko-wizard-close"]')){
+    chokkoWizardActive = false;
+    chokkoLigne = chokkoWizardLigne || chokkoLigne;
+    render();
+    return;
+  }
+  if(e.target.closest('[data-action="chokko-wizard-prev"]')){
+    await saveChokkoWizardStep();
+    chokkoWizardStep = Math.max(0, chokkoWizardStep-1);
+    render();
+    return;
+  }
+  if(e.target.closest('[data-action="chokko-wizard-next"]')){
+    var seqLen = chokkoWizardSequence(chokkoWizardLigne).length;
+    await saveChokkoWizardStep();
+    if(chokkoWizardStep>=seqLen-1){
+      chokkoWizardActive = false;
+      chokkoLigne = chokkoWizardLigne;
+      toast('Saisie du '+fmtDate(chokkoWizardDate)+' enregistrée.');
+    } else {
+      chokkoWizardStep++;
+    }
+    render();
     return;
   }
 
@@ -6432,6 +6556,13 @@ loginOverlayEl.addEventListener('click', async function(e){
 loginOverlayEl.addEventListener('keydown', async function(e){
   if(e.key==='Enter' && (e.target.id==='login-password' || e.target.id==='login-username')){ await handleLogin(); }
 });
+app.addEventListener('keydown', function(e){
+  if(e.key==='Enter' && e.target.id==='wiz-step-input'){
+    e.preventDefault();
+    var nextBtn = document.querySelector('[data-action="chokko-wizard-next"]');
+    if(nextBtn) nextBtn.click();
+  }
+});
 app.addEventListener('input', function(e){
   if(e.target.id==='esd-search'){ esdSearch = e.target.value; render(); }
   if(e.target.id==='formation-search'){ formationSearch = e.target.value; render(); }
@@ -6524,6 +6655,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
