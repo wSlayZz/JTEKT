@@ -442,9 +442,9 @@ var KEYS = {
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
   esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1',
-  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1'
+  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[]};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}};
 var RENDERERS = {};
 var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
@@ -3290,7 +3290,20 @@ var chokkoPaintPickerOpen = false;
 var chokkoImportOpen = false;
 var chokkoImportSummary = null; // resultat du dernier import (pour affichage)
 
-function chokkoPostes(ligne){ return CHOKKO_CONFIG[ligne]||[]; }
+function chokkoPostes(ligne){
+  var base = CHOKKO_CONFIG[ligne]||[];
+  var baseIds = base.map(function(p){return p[0];});
+  var extra = [];
+  var extraLabels = (DATA.chokkoPosteLabels && DATA.chokkoPosteLabels[ligne]) || {};
+  DATA.chokko.forEach(function(e){
+    if(e.ligne!==ligne) return;
+    Object.keys(e.defects||{}).forEach(function(pid){
+      if(baseIds.indexOf(pid)<0 && extra.indexOf(pid)<0){ extra.push(pid); }
+    });
+  });
+  extra.sort();
+  return base.concat(extra.map(function(pid){ return [pid, extraLabels[pid] || '(poste historique, hors config actuelle)']; }));
+}
 function daysInMonth(year, monthIdx){ return new Date(year, monthIdx+1, 0).getDate(); }
 function chokkoEntry(ligne, dateStr){
   return DATA.chokko.find(function(e){ return e.ligne===ligne && e.date===dateStr; });
@@ -3422,30 +3435,42 @@ function chokkoNormalizeMonthName(name){
 }
 
 function chokkoParseSheetAoa(aoa, ligne, year, monthIdx, summary){
-  // Detecte la ligne d'entete par sa structure : colonne B = 1, colonne C = jour suivant (2 ou plus).
-  // On ne se fie plus au texte de la colonne A ("DEFAUTS / JOURS" ou le nom du mois selon les fichiers/annees).
+  // Detecte la ligne d'entete par sa structure : au moins 4 cellules numeriques 1-31, globalement
+  // croissantes, sur une ligne dont la colonne A n'est ni un poste (OPxxxx) ni une equipe (A/B/C ou D)
+  // ni une ligne calculee (TOTAL.../CHOKKO...). Le premier jour n'est pas forcement 1 (ex: semaine
+  // commencant un vendredi), donc on ne peut pas exiger que la colonne B contienne 1.
   var headerRow = -1;
-  for(var r=0; r<Math.min(aoa.length, 40); r++){
+  for(var r=0; r<Math.min(aoa.length, 45); r++){
     var row = aoa[r];
     if(!row) continue;
-    if(typeof row[1]==='number' && row[1]===1 && typeof row[2]==='number' && row[2]>row[1] && row[2]<=31){
-      headerRow = r; break;
+    var label0 = row[0]!==undefined && row[0]!==null ? String(row[0]).trim() : '';
+    if(/^OP\w/i.test(label0) || /^[AB]$/i.test(label0) || /C\s*ou\s*D/i.test(label0) || /^TOTAL|^CHOKKO/i.test(label0)) continue;
+    var count = 0, lastVal = -1, ascending = true;
+    for(var c=1; c<row.length; c++){
+      var v = row[c];
+      if(typeof v==='number' && v>=1 && v<=31){
+        if(v<lastVal) ascending = false;
+        lastVal = v; count++;
+      }
     }
+    if(count>=4 && ascending){ headerRow = r; break; }
   }
   if(headerRow<0) return false; // feuille non reconnue (PDCA, etc.)
 
   var header = aoa[headerRow];
   var dayCols = []; // {col, day}
-  for(var c=1; c<header.length; c++){
+  for(var c=1; c<Math.max(header.length, 40); c++){
     var v = header[c];
     if(typeof v==='number' && v>=1 && v<=31){ dayCols.push({col:c, day:v}); }
-    else if(dayCols.length>0){ break; } // fin de la plage de jours (colonne TOTAL NC atteinte)
+    else if(typeof v==='string' && v.trim()!==''){ break; } // colonne TOTAL NC atteinte : fin de la plage de jours
+    // cellule vide au milieu (ex: week-end non renseigne dans l'entete elle-meme) -> on continue sans s'arreter
   }
   if(!dayCols.length) return false;
   var actionsCol = dayCols[dayCols.length-1].col + 2; // TOTAL NC puis ACTIONS
 
   var nbImportedDefects = 0, nbImportedProd = 0, nbNotes = 0;
   var teamMap = {A:'A', B:'B'};
+  var seenPostesInSheet = {};
 
   for(var r2=headerRow+1; r2<aoa.length; r2++){
     var row = aoa[r2];
@@ -3458,6 +3483,31 @@ function chokkoParseSheetAoa(aoa, ligne, year, monthIdx, summary){
 
     if(posteMatch){
       var posteId = posteMatch[1].toUpperCase();
+      var posteFullLabel = label.slice(label.indexOf('-')+1).trim();
+
+      // Certains fichiers reutilisent le meme code pour deux postes distincts selon la reference
+      // (ex: MCU2 "OP1090" a la fois pour "Sertissage Capot 143X/144P" et "Vissages Capot 149X").
+      // On desambiguise en reprenant les suffixes A/B deja utilises dans la configuration courante.
+      // Certains fichiers reutilisent le meme code pour deux postes distincts selon la reference
+      // (ex: MCU2 "OP1090" a la fois pour "Sertissage Capot 143X/144P" et "Vissages Capot 149X").
+      // On desambiguise systematiquement via le libelle, meme sur la toute premiere occurrence,
+      // pour que ca corresponde aux codes OP1090A/OP1090B deja utilises dans la configuration.
+      if(/143X|144P/i.test(posteFullLabel)) posteId = posteId+'A';
+      else if(/149X/i.test(posteFullLabel)) posteId = posteId+'B';
+      else if(seenPostesInSheet[posteId]!==undefined){
+        posteId = posteId+'_'+(++seenPostesInSheet[posteMatch[1].toUpperCase()]);
+      }
+      seenPostesInSheet[posteMatch[1].toUpperCase()] = seenPostesInSheet[posteMatch[1].toUpperCase()]||1;
+
+      // Si ce code de poste n'existe pas dans la configuration actuelle de la ligne (ancienne
+      // numerotation, poste renomme depuis), on memorise son libelle d'origine pour qu'il reste
+      // visible dans le tableau au lieu de disparaitre silencieusement.
+      var knownIds = (CHOKKO_CONFIG[ligne]||[]).map(function(p){return p[0];});
+      if(knownIds.indexOf(posteId)<0){
+        if(!DATA.chokkoPosteLabels[ligne]) DATA.chokkoPosteLabels[ligne] = {};
+        if(!DATA.chokkoPosteLabels[ligne][posteId]) DATA.chokkoPosteLabels[ligne][posteId] = posteFullLabel;
+      }
+
       var ateqLinked = posteId==='OP1120' && (ligne==='MCU1' || ligne==='MCU2');
       dayCols.forEach(function(dc){
         var val = row[dc.col];
@@ -3514,12 +3564,24 @@ async function handleChokkoImportRun(){
   var wb = XLSX.read(buffer, {type:'array', cellDates:false});
   var summary = {sheets:0, defects:0, prod:0, notes:0, skipped:[], monthsImported:[]};
 
+  var monthsSeen = {};
   wb.SheetNames.forEach(function(sheetName){
     var ws = wb.Sheets[sheetName];
     var aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
     var monthIdx = chokkoNormalizeMonthName(sheetName);
     if(monthIdx<0){ summary.skipped.push(sheetName); return; }
-    var ok = chokkoParseSheetAoa(aoa, ligne, year, monthIdx, summary);
+    // Si ce mois a deja ete rencontre dans ce meme fichier (ex: "SEP" puis "SEPT"), il s'agit
+    // tres probablement de deux annees differentes (fichier glissant sur 12 mois) : on decale
+    // l'annee des occurrences suivantes d'un an en arriere plutot que d'ecraser les donnees.
+    var yearForSheet = year;
+    if(monthsSeen[monthIdx]!==undefined){
+      yearForSheet = year - (++monthsSeen[monthIdx]);
+      summary.duplicateMonths = summary.duplicateMonths||[];
+      summary.duplicateMonths.push(sheetName+' → traitée comme '+yearForSheet);
+    } else {
+      monthsSeen[monthIdx] = 0;
+    }
+    var ok = chokkoParseSheetAoa(aoa, ligne, yearForSheet, monthIdx, summary);
     if(ok) summary.monthsImported.push(monthIdx);
     else summary.skipped.push(sheetName);
   });
@@ -3527,10 +3589,12 @@ async function handleChokkoImportRun(){
   await save('chokko');
   await save('chokkoNotes');
   if(summary.ateqLinked) await save('ateq');
+  await save('chokkoPosteLabels');
   logChange('CHOKKO', 'Import Excel', ligne+' '+year+' - '+summary.sheets+' feuille(s), '+summary.defects+' valeurs de défauts, '+summary.prod+' valeurs de production');
 
   chokkoImportSummary = summary.sheets+' feuille(s) importée(s) pour '+ligne+' ('+year+') : '+summary.defects+' valeurs de défauts, '+summary.prod+' valeurs de production, '+summary.notes+' note(s).'+
     (summary.ateqLinked? ' '+summary.ateqLinked+' valeur(s) liée(s) automatiquement à l\'onglet ATEQ (OP1120).' : '')+
+    (summary.duplicateMonths&&summary.duplicateMonths.length? ' Mois en double détecté(s) : '+summary.duplicateMonths.join(', ')+'.' : '')+
     (summary.skipped.length? ' Feuilles ignorées (non reconnues) : '+summary.skipped.join(', ')+'.' : '');
   chokkoLigne = ligne;
   chokkoYear = year;
