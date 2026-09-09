@@ -412,6 +412,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -3407,6 +3408,10 @@ function chokkoImportModal(){
     '</select></label>'+
     '<label class="field" style="margin-bottom:12px;">Année des données<input type="number" id="ci-annee" value="'+chokkoYear+'" style="width:100px;"></label>'+
     '<label class="field" style="margin-bottom:12px;">Fichier Excel (.xlsx)<input type="file" id="ci-file" accept=".xlsx,.xls"></label>'+
+    '<label style="display:flex; align-items:flex-start; gap:8px; margin-bottom:12px; padding:10px; border:1px dashed var(--border-strong); border-radius:var(--radius-sm); font-size:12.5px; cursor:pointer;">'+
+      '<input type="checkbox" id="ci-wipe" style="margin-top:2px;">'+
+      '<span>Effacer d\'abord toutes les données CHOKKO existantes de cette ligne avant d\'importer <b>(recommandé si vous réimportez après une correction, pour éviter les résidus d\'un import précédent)</b>.</span>'+
+    '</label>'+
     (chokkoImportSummary? '<div class="card" style="background:var(--ok-bg); border-color:var(--ok-border); margin-bottom:12px; font-size:12.5px;">'+esc(chokkoImportSummary)+'</div>' : '')+
     '<div class="actions-row">'+
       '<button class="btn" data-action="chokko-import-cancel">Fermer</button>'+
@@ -3560,6 +3565,16 @@ async function handleChokkoImportRun(){
   if(typeof XLSX==='undefined'){ toast('La librairie Excel n\'a pas pu être chargée.', 'error'); return; }
   var ligne = document.getElementById('ci-ligne').value;
   var year = Number(document.getElementById('ci-annee').value) || chokkoYear;
+  var wipeFirst = document.getElementById('ci-wipe').checked;
+
+  var nbWiped = 0;
+  if(wipeFirst){
+    var beforeCount = DATA.chokko.length;
+    DATA.chokko = DATA.chokko.filter(function(e){ return e.ligne!==ligne; });
+    nbWiped = beforeCount - DATA.chokko.length;
+    DATA.chokkoNotes = DATA.chokkoNotes.filter(function(n){ return n.ligne!==ligne; });
+    if(DATA.chokkoPosteLabels[ligne]) delete DATA.chokkoPosteLabels[ligne];
+  }
 
   var buffer = new Uint8Array(await file.arrayBuffer());
   var wb = XLSX.read(buffer, {type:'array', cellDates:false});
@@ -3594,7 +3609,8 @@ async function handleChokkoImportRun(){
   await save('chokkoPosteLabels');
   logChange('CHOKKO', 'Import Excel', ligne+' '+year+' - '+summary.sheets+' feuille(s), '+summary.defects+' valeurs de défauts, '+summary.prod+' valeurs de production');
 
-  chokkoImportSummary = summary.sheets+' feuille(s) importée(s) pour '+ligne+' ('+year+') : '+summary.defects+' valeurs de défauts, '+summary.prod+' valeurs de production, '+summary.notes+' note(s).'+
+  chokkoImportSummary = (nbWiped? '🗑 '+nbWiped+' ancienne(s) entrée(s) de '+ligne+' effacée(s) avant import. ' : '')+
+    summary.sheets+' feuille(s) importée(s) pour '+ligne+' ('+year+') : '+summary.defects+' valeurs de défauts, '+summary.prod+' valeurs de production, '+summary.notes+' note(s).'+
     (summary.ateqLinked? ' '+summary.ateqLinked+' valeur(s) liée(s) automatiquement à l\'onglet ATEQ (OP1120).' : '')+
     (summary.duplicateMonths&&summary.duplicateMonths.length? ' Mois en double détecté(s) : '+summary.duplicateMonths.join(', ')+'.' : '')+
     (summary.skipped.length? ' Feuilles ignorées (non reconnues) : '+summary.skipped.join(', ')+'.' : '');
@@ -7121,6 +7137,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
