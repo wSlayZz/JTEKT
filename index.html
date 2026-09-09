@@ -430,6 +430,8 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
+
 (function(){
 "use strict";
 
@@ -480,6 +482,14 @@ var DASHBOARD_WIDGETS_DEFAULT = [
   {id:'w_score'},
   {id:'w_planning'},
   {id:'w_indicateurs'},
+  {id:'w_chokko'},
+  {id:'w_cicl'},
+  {id:'w_esd'},
+  {id:'w_srem'},
+  {id:'w_particules'},
+  {id:'w_contamination'},
+  {id:'w_ciclcoverage'},
+  {id:'w_vidange'},
   {id:'w_actions'},
   {id:'w_trend'},
   {id:'w_scorehist'},
@@ -488,6 +498,10 @@ var DASHBOARD_WIDGETS_DEFAULT = [
 var WIDGET_TITLES = {
   w_score:'Score de conformité', w_planning:"Planning échéances",
   w_indicateurs:'Indicateurs (métrologie, ATEQ, propreté, perf)',
+  w_chokko:'Suivi CHOKKO', w_cicl:'Formations CI/CL',
+  w_esd:'Formations ESD', w_srem:'Formations SREM',
+  w_particules:'Relevés particules', w_contamination:'Contamination',
+  w_ciclcoverage:'Couverture CI/CL', w_vidange:'Vidanges',
   w_actions:"Plan d'actions - échéances", w_trend:'Tendance globale', w_scorehist:'Évolution du score', w_alerts:'Alertes'
 };
 var dashboardCustomizing = false;
@@ -2841,6 +2855,18 @@ function ciclPersonForm(){
     '</div></div>';
 }
 
+function ciclUncoveredPostes(ligne){
+  var refs = CICL_LIGNE_REFS[ligne];
+  var uncovered = [];
+  refs.forEach(function(ref){
+    REF_CICL_POSTES[ref].forEach(function(poste){
+      var recs = ciclRecordsForRef(ref).filter(function(r){ return r.poste===poste; });
+      var hasValid = recs.some(function(r){ return ciclStatus(r).level==='ok' || ciclStatus(r).level==='warn' || ciclStatus(r).level==='urgent'; });
+      if(!hasValid) uncovered.push(ref+' / '+poste);
+    });
+  });
+  return uncovered;
+}
 function ciclRecapView(){
   var html = '';
   ['MCU1','MCU2','MCU3'].forEach(function(ligne){
@@ -2852,14 +2878,7 @@ function ciclRecapView(){
     var warn = allRecords.filter(function(p){ return ciclStatus(p).level==='warn'; }).length;
 
     // Postes sans personne a jour (aucun enregistrement non expire) -> couverture a risque
-    var uncovered = [];
-    refs.forEach(function(ref){
-      REF_CICL_POSTES[ref].forEach(function(poste){
-        var recs = ciclRecordsForRef(ref).filter(function(r){ return r.poste===poste; });
-        var hasValid = recs.some(function(r){ return ciclStatus(r).level==='ok' || ciclStatus(r).level==='warn' || ciclStatus(r).level==='urgent'; });
-        if(!hasValid) uncovered.push(ref+' / '+poste);
-      });
-    });
+    var uncovered = ciclUncoveredPostes(ligne);
 
     html += '<div class="section card" style="margin-bottom:16px; cursor:pointer;" data-action="cicl-goto-ligne" data-ligne="'+ligne+'">';
     html += '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px; margin-bottom:10px;">';
@@ -4641,6 +4660,129 @@ RENDERERS.dashboard = function(){
       '<div class="statcard">'+proprHtml+'</div>'+
       '<div class="statcard">'+perfHtml+'</div>'+
     '</div>';
+  })();
+
+  W.w_chokko = (function(){
+    var today = new Date();
+    var y = today.getFullYear(), m = today.getMonth();
+    var lignes = ['MCU1','MCU2','MCU3'];
+    var cards = lignes.map(function(l){
+      var avg = chokkoMonthAverage(l, y, m);
+      var lvl = chokkoLevel(avg);
+      return '<div class="linebadge"><b>'+l+'</b>'+badge(lvl, avg!==null? avg.toFixed(1)+'% ce mois' : 'Aucune saisie')+'</div>';
+    }).join('');
+    return '<div class="eyebrow">'+esc(t('title_chokko','Suivi CHOKKO'))+'</div><div class="linebadges">'+cards+'</div>';
+  })();
+
+  W.w_cicl = (function(){
+    var expiredByPerson = {};
+    var totalExpired = 0;
+    DATA.cicl.forEach(function(rec){
+      if(ciclStatus(rec).level==='danger'){
+        expiredByPerson[rec.nom] = (expiredByPerson[rec.nom]||0)+1;
+        totalExpired++;
+      }
+    });
+    var names = Object.keys(expiredByPerson).sort(function(a,b){ return expiredByPerson[b]-expiredByPerson[a]; });
+    var html = '<div class="eyebrow">'+esc(t('title_cicl','Formations CI/CL'))+'</div>';
+    if(!totalExpired){
+      html += '<div class="tiny" style="margin-top:6px; color:var(--ok);">Aucune formation expirée</div>';
+    } else {
+      html += '<div class="tiny" style="margin-top:4px; margin-bottom:6px;">'+totalExpired+' formation(s) expirée(s) sur '+names.length+' personne(s)</div>';
+      html += '<div style="display:flex; flex-wrap:wrap; gap:5px;">'+
+        names.slice(0,4).map(function(n){ return '<span class="badge b-danger">'+esc(n)+' - '+expiredByPerson[n]+'</span>'; }).join('')+
+        (names.length>4? '<span class="tiny">+'+(names.length-4)+' autre(s)</span>' : '')+
+      '</div>';
+    }
+    return html;
+  })();
+
+  W.w_esd = (function(){
+    var expired = DATA.esd.filter(function(p){ return esdStatus(p).level==='danger'; });
+    var soon = DATA.esd.filter(function(p){ var l=esdStatus(p).level; return l==='urgent'||l==='warn'; }).length;
+    var html = '<div class="eyebrow">'+esc(t('title_esd','Formations ESD'))+'</div>';
+    if(!expired.length){
+      html += '<div class="tiny" style="margin-top:6px; color:var(--ok);">Aucune formation expirée'+(soon?' - '+soon+' à renouveler bientôt':'')+'</div>';
+    } else {
+      html += '<div class="tiny" style="margin-top:4px; margin-bottom:6px;">'+expired.length+' formation(s) expirée(s)'+(soon?' · '+soon+' à renouveler bientôt':'')+'</div>';
+      html += '<div style="display:flex; flex-wrap:wrap; gap:5px;">'+
+        expired.slice(0,4).map(function(p){ return '<span class="badge b-danger">'+esc(p.nom)+'</span>'; }).join('')+
+        (expired.length>4? '<span class="tiny">+'+(expired.length-4)+' autre(s)</span>' : '')+
+      '</div>';
+    }
+    return html;
+  })();
+
+  W.w_srem = (function(){
+    var list = bySecteur(DATA.formations);
+    var expired = list.filter(function(p){ return formationEcheance(p) && formationEcheance(p)<todayStr(); });
+    var html = '<div class="eyebrow">'+esc(t('title_srem','Formations SREM'))+'</div>';
+    if(!expired.length){
+      html += '<div class="tiny" style="margin-top:6px; color:var(--ok);">Aucune formation expirée</div>';
+    } else {
+      html += '<div class="tiny" style="margin-top:4px; margin-bottom:6px;">'+expired.length+' formation(s) expirée(s)</div>';
+      html += '<div style="display:flex; flex-wrap:wrap; gap:5px;">'+
+        expired.slice(0,4).map(function(p){ return '<span class="badge b-danger">'+esc(p.nom)+'</span>'; }).join('')+
+        (expired.length>4? '<span class="tiny">+'+(expired.length-4)+' autre(s)</span>' : '')+
+      '</div>';
+    }
+    return html;
+  })();
+
+  W.w_particules = (function(){
+    var enPose = DATA.particules.filter(function(p){ return p.statut==='en_pose'; });
+    var enAnalyse = DATA.particules.filter(function(p){ return p.statut==='en_analyse'; });
+    var html = '<div class="eyebrow">'+esc(t('title_particules','Relevés particules'))+'</div>';
+    if(!enPose.length && !enAnalyse.length){
+      html += '<div class="tiny" style="margin-top:6px; color:var(--text-faint);">Aucune campagne en cours</div>';
+    } else {
+      html += '<div class="tiny" style="margin-top:4px;">'+enPose.length+' pastille(s) en pose · '+enAnalyse.length+' en attente de résultat labo</div>';
+    }
+    return html;
+  })();
+
+  W.w_contamination = (function(){
+    var pending = DATA.contamination.filter(function(c){ return c.statut==='collected'; });
+    var html = '<div class="eyebrow">'+esc(t('title_contam_dash','Contamination'))+'</div>';
+    if(!pending.length){
+      html += '<div class="tiny" style="margin-top:6px; color:var(--ok);">Aucune analyse en attente</div>';
+    } else {
+      html += '<div class="tiny" style="margin-top:4px; color:var(--warn); font-weight:600;">'+pending.length+' échantillon(s) collecté(s) en attente d\'analyse</div>';
+    }
+    return html;
+  })();
+
+  W.w_ciclcoverage = (function(){
+    var lignes = ['MCU1','MCU2','MCU3'];
+    var all = [];
+    lignes.forEach(function(l){ ciclUncoveredPostes(l).forEach(function(u){ all.push(l+' - '+u); }); });
+    var html = '<div class="eyebrow">Couverture CI/CL</div>';
+    if(!all.length){
+      html += '<div class="tiny" style="margin-top:6px; color:var(--ok);">Tous les postes ont un régleur à jour</div>';
+    } else {
+      html += '<div class="tiny" style="margin-top:4px; margin-bottom:6px; color:var(--danger); font-weight:600;">'+all.length+' poste(s) sans personne formée à jour</div>';
+      html += '<div style="display:flex; flex-direction:column; gap:2px;">'+
+        all.slice(0,4).map(function(u){ return '<span class="tiny">'+esc(u)+'</span>'; }).join('')+
+        (all.length>4? '<span class="tiny">+'+(all.length-4)+' autre(s)</span>' : '')+
+      '</div>';
+    }
+    return html;
+  })();
+
+  W.w_vidange = (function(){
+    var late = DATA.vidange.filter(function(v){ return vidangeStatus(v).level==='danger'; });
+    var soon = DATA.vidange.filter(function(v){ return vidangeStatus(v).level==='warn'; });
+    var html = '<div class="eyebrow">'+esc(t('title_vidange','Vidanges'))+'</div>';
+    if(!late.length && !soon.length){
+      html += '<div class="tiny" style="margin-top:6px; color:var(--ok);">Tout est à jour</div>';
+    } else {
+      html += '<div class="tiny" style="margin-top:4px;">'+
+        (late.length? '<b style="color:var(--danger);">'+late.length+' en retard</b>' : '')+
+        (late.length&&soon.length? ' · ' : '')+
+        (soon.length? soon.length+' à prévoir sous 14j' : '')+
+      '</div>';
+    }
+    return html;
   })();
 
   W.w_actions = (function(){
@@ -7270,6 +7412,8 @@ async function init(){
 init();
 
 })();
+
+
 
 
 
