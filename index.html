@@ -409,6 +409,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -3285,6 +3286,8 @@ var chokkoWizardStep = 0; // index dans la séquence postes puis équipes
 var chokkoColorsPanelOpen = false;
 var chokkoPaintMode = false; // false | couleur hex active du pinceau
 var chokkoPaintPickerOpen = false;
+var chokkoImportOpen = false;
+var chokkoImportSummary = null; // resultat du dernier import (pour affichage)
 
 function chokkoPostes(ligne){ return CHOKKO_CONFIG[ligne]||[]; }
 function daysInMonth(year, monthIdx){ return new Date(year, monthIdx+1, 0).getDate(); }
@@ -3368,14 +3371,158 @@ RENDERERS.chokko = function(){
     (chokkoPaintMode? '<button class="btn small" data-action="chokko-paint-stop">Terminer</button>' : '')+
     '<button class="btn" data-action="chokko-print">🖨️ Exporter en PDF</button>'+
     '<button class="btn" data-action="chokko-export">📥 Exporter en Excel</button>'+
+    '<button class="btn" data-action="chokko-import-open">📤 Importer un historique Excel</button>'+
     (chokkoPaintPickerOpen? chokkoPaintPickerPanel() : '')+
     '</div></div>';
   html += chokkoView==='saisie' ? chokkoSaisieView() : chokkoRecapView();
   html += '</div>';
   if(chokkoWizardOpen) html += chokkoWizardPickerModal();
+  if(chokkoImportOpen) html += chokkoImportModal();
   if(chokkoWizardActive) html += chokkoWizardStepModal();
   return html;
 };
+
+function chokkoImportModal(){
+  return '<div class="modal-overlay chokko-import-backdrop">'+
+    '<div class="modal-box" style="max-width:460px;">'+
+    '<h3>Importer un historique CHOKKO depuis Excel</h3>'+
+    '<p class="tiny" style="margin-bottom:14px;">Sélectionnez le fichier Excel correspondant à une ligne (toutes les feuilles/mois qu\'il contient seront importés d\'un coup). La structure attendue est celle de vos fichiers CHOKKO habituels (ligne "DEFAUTS / JOURS", postes, équipes A/B/C ou D).</p>'+
+    '<label class="field" style="margin-bottom:12px;">Ligne concernée par ce fichier<select id="ci-ligne">'+
+      ['MCU1','MCU2','MCU3'].map(function(l){ return '<option value="'+l+'"'+(l===chokkoLigne?' selected':'')+'>'+l+'</option>'; }).join('')+
+    '</select></label>'+
+    '<label class="field" style="margin-bottom:12px;">Année des données<input type="number" id="ci-annee" value="'+chokkoYear+'" style="width:100px;"></label>'+
+    '<label class="field" style="margin-bottom:12px;">Fichier Excel (.xlsx)<input type="file" id="ci-file" accept=".xlsx,.xls"></label>'+
+    (chokkoImportSummary? '<div class="card" style="background:var(--ok-bg); border-color:var(--ok-border); margin-bottom:12px; font-size:12.5px;">'+esc(chokkoImportSummary)+'</div>' : '')+
+    '<div class="actions-row">'+
+      '<button class="btn" data-action="chokko-import-cancel">Fermer</button>'+
+      '<button class="btn primary" data-action="chokko-import-run">Importer</button>'+
+    '</div></div></div>';
+}
+
+// Normalise un nom de feuille ("JAN","JANV","SEPT","SEP"...) vers un index de mois 0-11. Retourne -1 si non reconnu.
+function chokkoNormalizeMonthName(name){
+  if(!name) return -1;
+  var n = String(name).trim().toUpperCase().replace(/[^A-ZÉÛ]/g,'');
+  var map = {
+    JAN:0, JANV:0, JANVIER:0,
+    FEV:1, FEVR:1, FEVRIER:1,
+    MAR:2, MARS:2,
+    AVR:3, AVRIL:3,
+    MAI:4,
+    JUIN:5,
+    JUIL:6, JUILLET:6,
+    AOU:7, AOUT:7, AOUT2:7,
+    SEP:8, SEPT:8, SEPTEMBRE:8,
+    OCT:9, OCTOBRE:9,
+    NOV:10, NOVEMBRE:10,
+    DEC:11, DECEMBRE:11
+  };
+  return map[n]!==undefined ? map[n] : -1;
+}
+
+function chokkoParseSheetAoa(aoa, ligne, year, monthIdx, summary){
+  // Cherche la ligne d'entête "DEFAUTS / JOURS"
+  var headerRow = -1;
+  for(var r=0; r<Math.min(aoa.length, 40); r++){
+    var cell0 = aoa[r] && aoa[r][0];
+    if(cell0 && String(cell0).toUpperCase().indexOf('DEFAUTS')>=0){ headerRow = r; break; }
+  }
+  if(headerRow<0) return false; // feuille non reconnue (PDCA, etc.)
+
+  var header = aoa[headerRow];
+  var dayCols = []; // {col, day}
+  for(var c=1; c<header.length; c++){
+    var v = header[c];
+    if(typeof v==='number' && v>=1 && v<=31){ dayCols.push({col:c, day:v}); }
+    else if(dayCols.length>0){ break; } // fin de la plage de jours (colonne TOTAL NC atteinte)
+  }
+  if(!dayCols.length) return false;
+  var actionsCol = dayCols[dayCols.length-1].col + 2; // TOTAL NC puis ACTIONS
+
+  var nbImportedDefects = 0, nbImportedProd = 0, nbNotes = 0;
+  var teamMap = {A:'A', B:'B'};
+
+  for(var r2=headerRow+1; r2<aoa.length; r2++){
+    var row = aoa[r2];
+    if(!row || row[0]===undefined || row[0]===null || String(row[0]).trim()==='') continue;
+    var label = String(row[0]).trim();
+    if(/^TOTAL|^CHOKKO/i.test(label)) continue; // lignes calculées, on ne les importe pas (recalcul auto)
+
+    var posteMatch = label.match(/^([A-Z]{2}\d+[A-Za-z]?)\s*-/); // ex: "OP1010 - Emm Bague / Moteur"
+    var isTeamRow = /^A$/i.test(label) || /^B$/i.test(label) || /C\s*ou\s*D/i.test(label);
+
+    if(posteMatch){
+      var posteId = posteMatch[1].toUpperCase();
+      dayCols.forEach(function(dc){
+        var val = row[dc.col];
+        if(typeof val==='number'){
+          var dateStr = year+'-'+String(monthIdx+1).padStart(2,'0')+'-'+String(dc.day).padStart(2,'0');
+          var e = chokkoGetOrCreate(ligne, dateStr);
+          e.defects[posteId] = val;
+          nbImportedDefects++;
+        }
+      });
+      var actionsText = row[actionsCol];
+      if(actionsText && String(actionsText).trim()){
+        var n = chokkoNote(ligne, posteId, year, monthIdx);
+        if(!n){ n = {id:uid('chknote'), ligne:ligne, poste:posteId, annee:year, mois:monthIdx, texte:''}; DATA.chokkoNotes.push(n); }
+        n.texte = String(actionsText).trim();
+        nbNotes++;
+      }
+    } else if(isTeamRow){
+      var teamId = /C\s*ou\s*D/i.test(label) ? 'CouD' : label.toUpperCase();
+      dayCols.forEach(function(dc){
+        var val = row[dc.col];
+        if(typeof val==='number'){
+          var dateStr2 = year+'-'+String(monthIdx+1).padStart(2,'0')+'-'+String(dc.day).padStart(2,'0');
+          var e2 = chokkoGetOrCreate(ligne, dateStr2);
+          e2.prod[teamId] = val;
+          nbImportedProd++;
+        }
+      });
+    }
+  }
+  summary.defects += nbImportedDefects;
+  summary.prod += nbImportedProd;
+  summary.notes += nbNotes;
+  summary.sheets++;
+  return true;
+}
+
+async function handleChokkoImportRun(){
+  var fileInput = document.getElementById('ci-file');
+  var file = fileInput.files && fileInput.files[0];
+  if(!file){ toast('Choisissez un fichier Excel.', 'error'); return; }
+  if(typeof XLSX==='undefined'){ toast('La librairie Excel n\'a pas pu être chargée.', 'error'); return; }
+  var ligne = document.getElementById('ci-ligne').value;
+  var year = Number(document.getElementById('ci-annee').value) || chokkoYear;
+
+  var buffer = new Uint8Array(await file.arrayBuffer());
+  var wb = XLSX.read(buffer, {type:'array', cellDates:false});
+  var summary = {sheets:0, defects:0, prod:0, notes:0, skipped:[], monthsImported:[]};
+
+  wb.SheetNames.forEach(function(sheetName){
+    var ws = wb.Sheets[sheetName];
+    var aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
+    var monthIdx = chokkoNormalizeMonthName(sheetName);
+    if(monthIdx<0){ summary.skipped.push(sheetName); return; }
+    var ok = chokkoParseSheetAoa(aoa, ligne, year, monthIdx, summary);
+    if(ok) summary.monthsImported.push(monthIdx);
+    else summary.skipped.push(sheetName);
+  });
+
+  await save('chokko');
+  await save('chokkoNotes');
+  logChange('CHOKKO', 'Import Excel', ligne+' '+year+' - '+summary.sheets+' feuille(s), '+summary.defects+' valeurs de défauts, '+summary.prod+' valeurs de production');
+
+  chokkoImportSummary = summary.sheets+' feuille(s) importée(s) pour '+ligne+' ('+year+') : '+summary.defects+' valeurs de défauts, '+summary.prod+' valeurs de production, '+summary.notes+' note(s).'+
+    (summary.skipped.length? ' Feuilles ignorées (non reconnues) : '+summary.skipped.join(', ')+'.' : '');
+  chokkoLigne = ligne;
+  chokkoYear = year;
+  if(summary.monthsImported.length) chokkoMonth = Math.min.apply(null, summary.monthsImported);
+  toast(summary.sheets+' feuille(s) importée(s) avec succès.');
+  render();
+}
 
 function chokkoWizardPickerModal(){
   return '<div class="modal-overlay chokko-wizard-backdrop">'+
@@ -6448,6 +6595,14 @@ app.addEventListener('click', async function(e){
     await withBtnLoading(exportBtn, handleExportChokkoExcel);
     return;
   }
+  if(e.target.closest('[data-action="chokko-import-open"]')){ chokkoImportOpen = true; chokkoImportSummary = null; render(); return; }
+  if(e.target.closest('[data-action="chokko-import-cancel"]')){ chokkoImportOpen = false; render(); return; }
+  if(e.target.classList && e.target.classList.contains('chokko-import-backdrop')){ chokkoImportOpen = false; render(); return; }
+  if(e.target.closest('[data-action="chokko-import-run"]')){
+    var importBtn = e.target.closest('[data-action="chokko-import-run"]');
+    await withBtnLoading(importBtn, handleChokkoImportRun);
+    return;
+  }
   if(e.target.closest('[data-action="chokko-wizard-open"]')){ chokkoWizardOpen = true; render(); return; }
   if(e.target.closest('[data-action="chokko-paint-toggle"]')){ chokkoPaintPickerOpen = !chokkoPaintPickerOpen; render(); return; }
   if(e.target.closest('[data-action="chokko-paint-stop"]')){ chokkoPaintMode = false; chokkoPaintPickerOpen = false; render(); return; }
@@ -6881,6 +7036,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
