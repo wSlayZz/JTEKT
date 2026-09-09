@@ -241,6 +241,7 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .postit-color-dot{width:13px; height:13px; border-radius:50%; border:1.5px solid rgba(0,0,0,0.15); cursor:pointer; padding:0;}
 .postit-color-dot.active{border-color:rgba(0,0,0,0.55); box-shadow:0 0 0 1.5px rgba(255,255,255,0.8) inset;}
 .postit-pin-badge{position:absolute; top:-8px; left:-8px; font-size:15px; transform:rotate(-25deg);}
+.postit-modal-backdrop{z-index:300 !important;}
 .postit-del:hover{color:#a02020;}
 #dashboard-canvas{position:relative;}
 
@@ -274,6 +275,8 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .chokko-grid .chk-team-row .chk-label-bold{background:#fff;}
 .chokko-grid .chk-total-row td{background:#fff; color:#548235; font-weight:700;}
 .chokko-grid .chk-chokko-row td{background:#E2EFDA; color:#548235; font-weight:700;}
+.chokko-grid td.chokko-paintable{cursor:crosshair;}
+.chokko-grid td.chokko-paintable:hover{outline:2px dashed var(--accent); outline-offset:-2px;}
 .chokko-grid input.chk-cell{width:100%; min-width:32px; border:none; background:transparent; text-align:center; font-family:inherit; font-size:11px; padding:2px 1px;}
 .chokko-grid input.chk-cell::-webkit-outer-spin-button, .chokko-grid input.chk-cell::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
 .chokko-grid input.chk-cell{-moz-appearance:textfield;}
@@ -395,6 +398,8 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
+
 (function(){
 "use strict";
 
@@ -426,9 +431,9 @@ var KEYS = {
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
   esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1',
-  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1'
+  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[]};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}};
 var RENDERERS = {};
 var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
@@ -3254,6 +3259,8 @@ var chokkoWizardActive = false; // true = assistant pas-à-pas en cours
 var chokkoWizardLigne = null;
 var chokkoWizardDate = null;
 var chokkoWizardStep = 0; // index dans la séquence postes puis équipes
+var chokkoColorsPanelOpen = false;
+var chokkoPaintMode = false; // false | couleur hex active du pinceau
 
 function chokkoPostes(ligne){ return CHOKKO_CONFIG[ligne]||[]; }
 function daysInMonth(year, monthIdx){ return new Date(year, monthIdx+1, 0).getDate(); }
@@ -3329,8 +3336,13 @@ RENDERERS.chokko = function(){
     '<button class="btn small'+(chokkoView==='saisie'?' primary':'')+'" data-action="chokko-view" data-view="saisie">Saisie</button>'+
     '<button class="btn small'+(chokkoView==='recap'?' primary':'')+'" data-action="chokko-view" data-view="recap">Récapitulatif annuel</button>'+
     '</div>'+
-    '<div style="display:flex; gap:8px;">'+
+    '<div style="display:flex; gap:8px; align-items:center;">'+
     '<button class="btn primary" data-action="chokko-wizard-open">✏️ Saisir les résultats</button>'+
+    '<label class="btn'+(chokkoPaintMode?' primary':'')+'" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; margin:0;">'+
+      '🖌️ '+(chokkoPaintMode?'Cliquez sur une case...':'Colorier une case')+
+      '<input type="color" id="chokko-paint-picker" value="'+(chokkoPaintMode||'#FFF3A3')+'" style="width:20px; height:20px; padding:0; border:none; cursor:pointer;">'+
+    '</label>'+
+    (chokkoPaintMode? '<button class="btn small" data-action="chokko-paint-stop">Terminer</button>' : '')+
     '<button class="btn" data-action="chokko-print">🖨️ Exporter en PDF</button>'+
     '<button class="btn" data-action="chokko-export">📥 Exporter en Excel</button>'+
     '</div></div>';
@@ -3444,7 +3456,10 @@ function chokkoSaisieView(){
     html += days.map(function(d){
       var e = chokkoEntry(ligne, d.date);
       var v = e && e.defects[posteId]!==undefined ? e.defects[posteId] : '';
-      return '<td><input type="number" min="0" class="chk-cell chokko-defect-cell" data-ligne="'+ligne+'" data-date="'+d.date+'" data-poste="'+posteId+'" value="'+v+'"></td>';
+      var hl = DATA.chokkoHighlights[ligne] && DATA.chokkoHighlights[ligne][d.date+'_'+posteId];
+      var tdStyle = hl? 'background:'+hl+';' : '';
+      var cellClass = chokkoPaintMode? ' chokko-paintable' : '';
+      return '<td class="'+cellClass.trim()+'" style="'+tdStyle+'" data-ligne="'+ligne+'" data-date="'+d.date+'" data-poste="'+posteId+'"><input type="number" min="0" class="chk-cell chokko-defect-cell" data-ligne="'+ligne+'" data-date="'+d.date+'" data-poste="'+posteId+'" value="'+v+'" style="'+(chokkoPaintMode?'pointer-events:none;':'')+'"></td>';
     }).join('');
     html += '<td id="chokko-poste-total-'+posteId+'" style="font-weight:700;">'+totalPoste+'</td>';
     html += '<td style="text-align:left;"><textarea class="chk-note chokko-note" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-annee="'+chokkoYear+'" data-mois="'+chokkoMonth+'" rows="1" placeholder="Actions menées ce mois...">'+esc(note?note.texte:'')+'</textarea></td>';
@@ -3490,7 +3505,14 @@ function chokkoSaisieView(){
   html += '<p class="tiny" style="margin-top:8px;">Seuils Chokko : ≥'+CHOKKO_ATTENTION+'% conforme, '+CHOKKO_DANGER+'-'+CHOKKO_ATTENTION+'% attention, &lt;'+CHOKKO_DANGER+'% en danger.</p>';
 
   // Graphique "SUIVI DES CAUSES DE NON CHOKKO" - defauts par poste sur le mois
-  html += '<div class="card" style="margin-top:18px;"><div class="eyebrow" style="margin-bottom:8px;">Suivi des causes de non Chokko - '+esc(ligne)+' ('+MONTHS_FR[chokkoMonth].charAt(0).toUpperCase()+MONTHS_FR[chokkoMonth].slice(1)+')</div><div class="chart-box"><canvas id="chart-chokko-postes"></canvas></div></div>';
+  html += '<div class="card" style="margin-top:18px;">'+
+    '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">'+
+      '<div class="eyebrow">Suivi des causes de non Chokko - '+esc(ligne)+' ('+MONTHS_FR[chokkoMonth].charAt(0).toUpperCase()+MONTHS_FR[chokkoMonth].slice(1)+')</div>'+
+      '<button class="btn small" data-action="toggle-chokko-colors">🎨 Couleurs du graphique</button>'+
+    '</div>'+
+    '<div class="chart-box"><canvas id="chart-chokko-postes"></canvas></div>'+
+    (chokkoColorsPanelOpen? chokkoColorsPanel(ligne) : '')+
+  '</div>';
 
   return html;
 }
@@ -3532,15 +3554,35 @@ function renderChokkoChart(){
     });
   }catch(err){ console.error('chokko year chart error', err); }
 }
+function chokkoPosteColor(ligne, posteId){
+  if(DATA.chokkoColors[ligne] && DATA.chokkoColors[ligne][posteId]) return DATA.chokkoColors[ligne][posteId];
+  return posteBadgeColor(posteId).fg;
+}
+function chokkoColorsPanel(ligne){
+  var postes = chokkoPostes(ligne);
+  return '<div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">'+
+    '<div class="tiny" style="margin-bottom:10px;">Choisissez la couleur de chaque poste dans le graphique (palette complète du sélecteur système).</div>'+
+    '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:8px;">'+
+    postes.map(function(p){
+      var c = chokkoPosteColor(ligne, p[0]);
+      return '<label style="display:flex; align-items:center; gap:7px; font-size:12px; padding:5px 8px; border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer;">'+
+        '<input type="color" class="chokko-poste-color-input" data-ligne="'+ligne+'" data-poste="'+p[0]+'" value="'+c+'" style="width:26px; height:26px; padding:0; border:none; cursor:pointer;">'+
+        '<span style="font-family:var(--mono); font-weight:700;">'+esc(p[0])+'</span>'+
+      '</label>';
+    }).join('')+
+    '</div>'+
+    '<button class="btn small" data-action="reset-chokko-colors" data-ligne="'+ligne+'" style="margin-top:12px;">Réinitialiser les couleurs par défaut</button>'+
+  '</div>';
+}
 function buildChokkoPostesChartConfig(ligne, year, monthIdx){
   var postes = chokkoPostes(ligne);
   var days = chokkoMonthDays(ligne, year, monthIdx);
   var labels = days.map(function(d){ return String(d.day); });
   var datasets = postes.map(function(p, i){
-    var color = posteBadgeColor(p[0]);
+    var color = chokkoPosteColor(ligne, p[0]);
     return {
       type:'bar', stack:'defauts', label:p[0]+' - '+p[1], yAxisID:'y',
-      backgroundColor:color.fg, borderWidth:0,
+      backgroundColor:color, borderWidth:0,
       data:days.map(function(d){ var e=chokkoEntry(ligne,d.date); return e&&e.defects[p[0]]!==undefined? Number(e.defects[p[0]]) : 0; })
     };
   });
@@ -4952,6 +4994,7 @@ function renderPostits(){
     var sorted = mine.slice().sort(function(a,b){ return (a.pinned?1:0)-(b.pinned?1:0); });
     html += '<div id="postit-layer">'+sorted.map(function(p){
       var canEdit = (p.author===currentUser.displayName || currentUser.roleId===ADMIN_ROLE_ID);
+      var canToggleDone = canEdit || (p.assignedTo && p.assignedTo===currentUser.displayName);
       var curColor = p.color||POSTIT_COLORS[0];
       var overdue = p.dueDate && p.dueDate<todayStr() && !p.done;
       var extraStyle = (p.pinned? 'z-index:250; box-shadow:3px 6px 16px rgba(0,0,0,0.3);':'')+(overdue? ' outline:2.5px solid var(--danger);':'');
@@ -4968,12 +5011,12 @@ function renderPostits(){
         '</div>';
       }
       pit += '<div class="postit-meta"><span>'+esc(p.author||'?')+'</span>';
-      if(canEdit){
+      if(canEdit || canToggleDone){
         pit += '<span style="display:flex; gap:2px;">'+
-          '<button class="postit-del" data-action="toggle-postit-done" data-id="'+p.id+'" title="'+(p.done?'Marquer à faire':'Marquer comme fait')+'">'+(p.done?'↺':'✓')+'</button>'+
-          '<button class="postit-del" data-action="toggle-postit-pin" data-id="'+p.id+'" title="'+(p.pinned?'Désépingler':'Épingler')+'">📌</button>'+
-          '<button class="postit-del" data-action="edit-postit" data-id="'+p.id+'" title="Modifier">✎</button>'+
-          '<button class="postit-del" data-action="delete-postit" data-id="'+p.id+'" title="Supprimer">✕</button>'+
+          (canToggleDone? '<button class="postit-del" data-action="toggle-postit-done" data-id="'+p.id+'" title="'+(p.done?'Marquer à faire':'Marquer comme fait')+'">'+(p.done?'↺':'✓')+'</button>' : '')+
+          (canEdit? '<button class="postit-del" data-action="toggle-postit-pin" data-id="'+p.id+'" title="'+(p.pinned?'Désépingler':'Épingler')+'">📌</button>' : '')+
+          (canEdit? '<button class="postit-del" data-action="edit-postit" data-id="'+p.id+'" title="Modifier">✎</button>' : '')+
+          (canEdit? '<button class="postit-del" data-action="delete-postit" data-id="'+p.id+'" title="Supprimer">✕</button>' : '')+
         '</span>';
       }
       pit += '</div></div>';
@@ -4997,9 +5040,12 @@ function renderPostitModal(){
       '<textarea id="pm-text" rows="3" maxlength="300" placeholder="Votre message, visible par les collègues de ce secteur..." style="resize:vertical; font-family:var(--sans);">'+esc(text)+'</textarea>'+
     '</label>'+
     '<div class="grid grid-2" style="margin-bottom:12px;">'+
-      '<label class="field">Assigner à <span class="tiny">(optionnel)</span><input type="text" id="pm-assigned" value="'+esc(assignedTo)+'" placeholder="Nom d\'un collègue"></label>'+
+      '<label class="field">Assigner à <span class="tiny">(optionnel)</span><input type="text" id="pm-assigned" list="pm-assigned-list" value="'+esc(assignedTo)+'" placeholder="Nom d\'un collègue" autocomplete="off"></label>'+
       '<label class="field">Échéance <span class="tiny">(optionnel)</span><input type="date" id="pm-duedate" value="'+esc(dueDate)+'"></label>'+
     '</div>'+
+    '<datalist id="pm-assigned-list">'+
+      DATA.accounts.map(function(a){ return '<option value="'+esc(a.displayName)+'">'; }).join('')+
+    '</datalist>'+
     '<label class="field" style="margin-bottom:4px;">Couleur</label>'+
     '<div style="display:flex; gap:8px; margin-bottom:18px;" id="pm-color-row" data-selected="'+color+'">'+
       POSTIT_COLORS.map(function(c){
@@ -5063,7 +5109,9 @@ async function handleChangePostitColor(id, color){
 }
 async function handleTogglePostitDone(id){
   var p = DATA.postits.find(function(x){ return x.id===id; });
-  if(!p) return;
+  if(!p || !currentUser) return;
+  var allowed = p.author===currentUser.displayName || currentUser.roleId===ADMIN_ROLE_ID || (p.assignedTo && p.assignedTo===currentUser.displayName);
+  if(!allowed) return;
   p.done = !p.done;
   await save('postits');
   render();
@@ -6337,6 +6385,26 @@ app.addEventListener('click', async function(e){
     return;
   }
   if(e.target.closest('[data-action="chokko-wizard-open"]')){ chokkoWizardOpen = true; render(); return; }
+  if(e.target.closest('[data-action="toggle-chokko-colors"]')){ chokkoColorsPanelOpen = !chokkoColorsPanelOpen; render(); return; }
+  if(e.target.closest('[data-action="reset-chokko-colors"]')){
+    var resetLigne = e.target.closest('[data-action="reset-chokko-colors"]').dataset.ligne;
+    delete DATA.chokkoColors[resetLigne];
+    await save('chokkoColors');
+    render();
+    return;
+  }
+  if(e.target.closest('[data-action="chokko-paint-stop"]')){ chokkoPaintMode = false; render(); return; }
+  var paintableCell = e.target.closest('td.chokko-paintable');
+  if(paintableCell && chokkoPaintMode){
+    var plLigne = paintableCell.dataset.ligne, plDate = paintableCell.dataset.date, plPoste = paintableCell.dataset.poste;
+    if(!DATA.chokkoHighlights[plLigne]) DATA.chokkoHighlights[plLigne] = {};
+    var key = plDate+'_'+plPoste;
+    if(DATA.chokkoHighlights[plLigne][key]===chokkoPaintMode){ delete DATA.chokkoHighlights[plLigne][key]; }
+    else { DATA.chokkoHighlights[plLigne][key] = chokkoPaintMode; }
+    await save('chokkoHighlights');
+    paintableCell.style.background = DATA.chokkoHighlights[plLigne][key] || '';
+    return;
+  }
   if(e.target.closest('[data-action="chokko-wizard-cancel"]')){ chokkoWizardOpen = false; render(); return; }
   if(e.target.closest('[data-action="chokko-wizard-start"]')){
     var wizLigne = document.getElementById('wiz-ligne').value;
@@ -6456,6 +6524,19 @@ app.addEventListener('change', async function(e){
   if(e.target.id==='cpf-role'){
     var wrap = document.getElementById('cpf-lignes-wrap');
     if(wrap) wrap.style.display = (e.target.value==='pilote') ? 'none' : '';
+    return;
+  }
+  if(e.target.classList && e.target.classList.contains('chokko-poste-color-input')){
+    var pcLigne = e.target.dataset.ligne, pcPoste = e.target.dataset.poste;
+    if(!DATA.chokkoColors[pcLigne]) DATA.chokkoColors[pcLigne] = {};
+    DATA.chokkoColors[pcLigne][pcPoste] = e.target.value;
+    await save('chokkoColors');
+    renderChokkoPostesChart();
+    return;
+  }
+  if(e.target.id==='chokko-paint-picker'){
+    chokkoPaintMode = e.target.value;
+    render();
     return;
   }
   var chokkoDefectInput = e.target.closest('.chokko-defect-cell');
@@ -6714,6 +6795,8 @@ async function init(){
 init();
 
 })();
+
+
 
 
 
