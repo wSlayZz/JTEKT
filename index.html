@@ -410,6 +410,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -3421,11 +3422,15 @@ function chokkoNormalizeMonthName(name){
 }
 
 function chokkoParseSheetAoa(aoa, ligne, year, monthIdx, summary){
-  // Cherche la ligne d'entête "DEFAUTS / JOURS"
+  // Detecte la ligne d'entete par sa structure : colonne B = 1, colonne C = jour suivant (2 ou plus).
+  // On ne se fie plus au texte de la colonne A ("DEFAUTS / JOURS" ou le nom du mois selon les fichiers/annees).
   var headerRow = -1;
   for(var r=0; r<Math.min(aoa.length, 40); r++){
-    var cell0 = aoa[r] && aoa[r][0];
-    if(cell0 && String(cell0).toUpperCase().indexOf('DEFAUTS')>=0){ headerRow = r; break; }
+    var row = aoa[r];
+    if(!row) continue;
+    if(typeof row[1]==='number' && row[1]===1 && typeof row[2]==='number' && row[2]>row[1] && row[2]<=31){
+      headerRow = r; break;
+    }
   }
   if(headerRow<0) return false; // feuille non reconnue (PDCA, etc.)
 
@@ -3453,6 +3458,7 @@ function chokkoParseSheetAoa(aoa, ligne, year, monthIdx, summary){
 
     if(posteMatch){
       var posteId = posteMatch[1].toUpperCase();
+      var ateqLinked = posteId==='OP1120' && (ligne==='MCU1' || ligne==='MCU2');
       dayCols.forEach(function(dc){
         var val = row[dc.col];
         if(typeof val==='number'){
@@ -3460,6 +3466,13 @@ function chokkoParseSheetAoa(aoa, ligne, year, monthIdx, summary){
           var e = chokkoGetOrCreate(ligne, dateStr);
           e.defects[posteId] = val;
           nbImportedDefects++;
+          // Le defaut principal (nbDefauts) du controle ATEQ alimente aussi l'onglet ATEQ, comme en saisie manuelle.
+          // Le 2nd passage (nb2nd) n'existe pas dans le fichier CHOKKO et n'est donc jamais touche ici.
+          if(ateqLinked){
+            var ae = DATA.ateq.find(function(a){ return a.date===dateStr && a.ligne===ligne; });
+            if(ae){ ae.nbDefauts = val; } else { DATA.ateq.push({id:uid('ateq'), date:dateStr, ligne:ligne, nbDefauts:val, nb2nd:0}); }
+            summary.ateqLinked = (summary.ateqLinked||0)+1;
+          }
         }
       });
       var actionsText = row[actionsCol];
@@ -3513,9 +3526,11 @@ async function handleChokkoImportRun(){
 
   await save('chokko');
   await save('chokkoNotes');
+  if(summary.ateqLinked) await save('ateq');
   logChange('CHOKKO', 'Import Excel', ligne+' '+year+' - '+summary.sheets+' feuille(s), '+summary.defects+' valeurs de défauts, '+summary.prod+' valeurs de production');
 
   chokkoImportSummary = summary.sheets+' feuille(s) importée(s) pour '+ligne+' ('+year+') : '+summary.defects+' valeurs de défauts, '+summary.prod+' valeurs de production, '+summary.notes+' note(s).'+
+    (summary.ateqLinked? ' '+summary.ateqLinked+' valeur(s) liée(s) automatiquement à l\'onglet ATEQ (OP1120).' : '')+
     (summary.skipped.length? ' Feuilles ignorées (non reconnues) : '+summary.skipped.join(', ')+'.' : '');
   chokkoLigne = ligne;
   chokkoYear = year;
@@ -7036,6 +7051,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
