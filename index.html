@@ -441,6 +441,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -472,9 +473,9 @@ var KEYS = {
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
   esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1',
-  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', uiSettings:'app_ui_settings_v1'
+  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', uiSettings:'app_ui_settings_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, uiSettings:{sidebarColor:null, iconStyle:'svg'}};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, uiSettings:{sidebarColor:null, iconStyle:'svg'}};
 var RENDERERS = {};
 var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
@@ -502,6 +503,7 @@ var DASHBOARD_WIDGETS_DEFAULT = [
   {id:'w_contamination'},
   {id:'w_ciclcoverage'},
   {id:'w_vidange'},
+  {id:'w_my_actions'},
   {id:'w_actions'},
   {id:'w_trend'},
   {id:'w_scorehist'},
@@ -516,6 +518,7 @@ var WIDGET_TITLES = {
   w_esd:'Formations ESD', w_srem:'Formations SREM',
   w_particules:'Relevés particules', w_contamination:'Contamination',
   w_ciclcoverage:'Couverture CI/CL', w_vidange:'Vidanges',
+  w_my_actions:'Mes actions',
   w_actions:"Plan d'actions - échéances", w_trend:'Tendance globale', w_scorehist:'Évolution du score', w_alerts:'Alertes'
 };
 var dashboardCustomizing = false;
@@ -3481,7 +3484,6 @@ RENDERERS.chokko = function(){
     '</button>'+
     (chokkoPaintMode? '<button class="btn small" data-action="chokko-paint-stop">Terminer</button>' : '')+
     '<button class="btn" data-action="chokko-print">🖨️ Exporter en PDF</button>'+
-    '<button class="btn" data-action="chokko-export">📥 Exporter en Excel</button>'+
     '<button class="btn" data-action="chokko-import-open">📤 Importer un historique Excel</button>'+
     (chokkoPaintPickerOpen? chokkoPaintPickerPanel() : '')+
     '</div></div>';
@@ -3819,11 +3821,24 @@ function chokkoSaisieView(){
       '</div></div>';
   }
 
+  var unitCost = (DATA.chokkoUnitCost && DATA.chokkoUnitCost[ligne]) || 0;
+  var todayEntry = chokkoEntry(ligne, todayStr());
+  var todayNC = todayEntry ? Object.values(todayEntry.defects||{}).reduce(function(a,b){return a+Number(b||0);},0) : 0;
+  var scrapToday = todayNC * unitCost;
+  var monthNCTotal = days.reduce(function(s,d){ return s+d.totals.totalNC; },0);
+  var scrapMonth = monthNCTotal * unitCost;
+
   html += '<div class="toolbar"><div class="left">'+
     '<label class="field" style="flex-direction:row; align-items:center; gap:8px;">Mois<select id="chokko-mois">'+MONTHS_FR.map(function(m,i){return '<option value="'+i+'"'+(i===chokkoMonth?' selected':'')+'>'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>';}).join('')+'</select></label>'+
     '<label class="field" style="flex-direction:row; align-items:center; gap:8px;">Année<input type="number" id="chokko-annee" value="'+chokkoYear+'" style="width:80px;"></label>'+
     '</div>'+
     '<div class="statcard" style="padding:8px 14px;"><div class="tiny">Chokko du mois</div><div id="chokko-month-avg" style="font-family:var(--mono); font-weight:700; font-size:20px; color:var(--'+chokkoLevel(monthAvg)+');">'+(monthAvg!==null?monthAvg.toFixed(1)+'%':'-')+'</div></div>'+
+    '<div class="statcard" style="padding:8px 14px;">'+
+      '<div class="tiny">Coût SCRAP aujourd\'hui</div>'+
+      '<div id="chokko-scrap-today" style="font-family:var(--mono); font-weight:700; font-size:20px; color:'+(scrapToday>0?'var(--danger)':'var(--text)')+';">'+scrapToday.toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})+' €</div>'+
+      '<div class="tiny" id="chokko-scrap-month" style="margin-top:2px;">'+scrapMonth.toLocaleString('fr-FR',{minimumFractionDigits:0, maximumFractionDigits:0})+' € ce mois</div>'+
+      '<div class="tiny" style="margin-top:4px; display:flex; align-items:center; gap:4px;">Coût/pièce <input type="number" id="chokko-unit-cost" min="0" step="0.01" value="'+unitCost+'" style="width:65px; font-size:11px; padding:2px 4px;"> €</div>'+
+    '</div>'+
   '</div>';
 
   html += '<div class="table-wrap" style="overflow-x:auto;"><table class="chokko-grid"><thead><tr>'+
@@ -4107,6 +4122,14 @@ function refreshChokkoTotals(ligne, excludeElId){
     avgEl.textContent = monthAvg!==null? monthAvg.toFixed(1)+'%' : '-';
     avgEl.style.color = 'var(--'+chokkoLevel(monthAvg)+')';
   }
+  var unitCost = (DATA.chokkoUnitCost && DATA.chokkoUnitCost[ligne]) || 0;
+  var todayEntry = chokkoEntry(ligne, todayStr());
+  var todayNC = todayEntry ? Object.values(todayEntry.defects||{}).reduce(function(a,b){return a+Number(b||0);},0) : 0;
+  var scrapTodayEl = document.getElementById('chokko-scrap-today');
+  if(scrapTodayEl) scrapTodayEl.textContent = (todayNC*unitCost).toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})+' €';
+  var monthNCTotal = days.reduce(function(s,d){ return s+d.totals.totalNC; },0);
+  var scrapMonthEl = document.getElementById('chokko-scrap-month');
+  if(scrapMonthEl) scrapMonthEl.textContent = (monthNCTotal*unitCost).toLocaleString('fr-FR',{minimumFractionDigits:0, maximumFractionDigits:0})+' € ce mois';
   if(chokkoView==='saisie') renderChokkoPostesChart();
 }
 async function handleChokkoDefectChange(ligne, date, poste, val){
@@ -4982,6 +5005,32 @@ RENDERERS.dashboard = function(){
       '</div>';
   })();
 
+  W.w_my_actions = (function(){
+    if(!currentUser) return '<div class="eyebrow">Mes actions</div>';
+    var mine = bySecteur(DATA.actions).filter(function(a){ return a.responsable===currentUser.displayName && isActionOpen(a); });
+    var late = mine.filter(isActionLate);
+    var upcoming = mine.filter(function(a){ return !isActionLate(a) && a.echeance; }).sort(function(a,b){ return a.echeance.localeCompare(b.echeance); });
+    var html = '<div class="eyebrow" style="margin-bottom:8px;">Mes actions ('+esc(currentUser.displayName)+')</div>';
+    if(!mine.length){
+      html += '<div class="tiny" style="color:var(--ok);">Aucune action qui vous est assignée actuellement</div>';
+      return html;
+    }
+    html += '<div class="grid grid-2" style="margin-bottom:10px;">'+
+      '<div class="statcard'+(late.length?' s-danger':'')+'"><div class="eyebrow">En retard</div><div class="val">'+late.length+'</div></div>'+
+      '<div class="statcard"><div class="eyebrow">À venir</div><div class="val">'+upcoming.length+'</div></div>'+
+    '</div>';
+    var toShow = late.concat(upcoming).slice(0,4);
+    html += '<div style="display:flex; flex-direction:column; gap:4px;">'+
+      toShow.map(function(a){
+        var isLate = isActionLate(a);
+        return '<div class="tiny" style="display:flex; justify-content:space-between; gap:8px;"><span>'+esc((a.description||'').slice(0,50))+'</span>'+
+          '<span style="'+(isLate?'color:var(--danger); font-weight:600;':'')+' white-space:nowrap;">'+(a.echeance?fmtDate(a.echeance):'-')+'</span></div>';
+      }).join('')+
+      (mine.length>4? '<span class="tiny" style="color:var(--text-faint);">+'+(mine.length-4)+' autre(s)</span>' : '')+
+    '</div>';
+    return html;
+  })();
+
   W.w_vidange = (function(){
     var late = DATA.vidange.filter(function(v){ return vidangeStatus(v).level==='danger'; }).length;
     var soon = DATA.vidange.filter(function(v){ return vidangeStatus(v).level==='warn'; }).length;
@@ -5090,7 +5139,7 @@ var WIDGET_LINK_TARGET = {
   w_chokko:{tab:'chokko'}, w_production:{tab:'chokko'}, w_cicl:{tab:'cicl'}, w_ciclcoverage:{tab:'cicl'},
   w_esd:{tab:'esd'}, w_srem:{tab:'formations'},
   w_particules:{tab:'proprete', sub:'particules'}, w_contamination:{tab:'proprete', sub:'contamination'},
-  w_vidange:{tab:'proprete', sub:'vidange'}, w_planning:{tab:'planning'}
+  w_vidange:{tab:'proprete', sub:'vidange'}, w_planning:{tab:'planning'}, w_my_actions:{tab:'actions'}
 };
 
 // ---------- PLANNING ----------
@@ -5764,7 +5813,7 @@ function renderPostits(){
       var canToggleDone = canEdit || (p.assignedTo && p.assignedTo===currentUser.displayName);
       var curColor = p.color||POSTIT_COLORS[0];
       var overdue = p.dueDate && p.dueDate<todayStr() && !p.done;
-      var extraStyle = (p.pinned? 'z-index:250; box-shadow:3px 6px 16px rgba(0,0,0,0.3);':'')+(overdue? ' outline:2.5px solid var(--danger);':'');
+      var extraStyle = (p.pinned? 'z-index:5; box-shadow:3px 6px 16px rgba(0,0,0,0.3);':'')+(overdue? ' outline:2.5px solid var(--danger);':'');
       var pit = '<div class="postit'+(p.done?' postit-done':'')+'" data-id="'+p.id+'" style="left:'+(p.x||20)+'px; top:'+(p.y||20)+'px; background:'+esc(curColor)+'; '+extraStyle+'">';
       if(p.pinned) pit += '<span class="postit-pin-badge" title="Épinglé">📌</span>';
       pit += '<div style="white-space:pre-wrap; word-break:break-word; text-decoration:'+(p.done?'line-through':'none')+'; opacity:'+(p.done?'0.55':'1')+';">'+esc(p.text)+'</div>';
@@ -6243,6 +6292,11 @@ async function handleLogin(){
     renderUserbox();
     render();
     startPolling();
+    var myOpenActions = bySecteur(DATA.actions).filter(function(a){ return a.responsable===acc.displayName && isActionOpen(a); });
+    if(myOpenActions.length){
+      var lateCount = myOpenActions.filter(isActionLate).length;
+      toast(myOpenActions.length+' action'+(myOpenActions.length>1?'s vous sont assignées':' vous est assignée')+(lateCount? ' ('+lateCount+' en retard)' : '')+'.');
+    }
   });
 }
 function handleLogout(){
@@ -7591,6 +7645,13 @@ app.addEventListener('change', async function(e){
   if(chokkoProdTotalInput){ await handleChokkoProdTotalChange(chokkoProdTotalInput.dataset.ligne, chokkoProdTotalInput.dataset.date, chokkoProdTotalInput.value); return; }
   if(e.target.id==='chokko-mois'){ chokkoMonth = Number(e.target.value); render(); return; }
   if(e.target.id==='chokko-annee'){ chokkoYear = Number(e.target.value)||chokkoYear; render(); return; }
+  if(e.target.id==='chokko-unit-cost'){
+    if(!DATA.chokkoUnitCost) DATA.chokkoUnitCost = {};
+    DATA.chokkoUnitCost[chokkoLigne] = Math.max(0, Number(e.target.value)||0);
+    await save('chokkoUnitCost');
+    render();
+    return;
+  }
   var chokkoNoteInput = e.target.closest('.chokko-note');
   if(chokkoNoteInput){ await handleChokkoNoteChange(chokkoNoteInput.dataset.ligne, chokkoNoteInput.dataset.poste, Number(chokkoNoteInput.dataset.annee), Number(chokkoNoteInput.dataset.mois), chokkoNoteInput.value); return; }
   var poseInput = e.target.closest('[data-action="edit-date-pose"]');
@@ -7850,6 +7911,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
