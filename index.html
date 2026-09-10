@@ -446,6 +446,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -3825,23 +3826,15 @@ function chokkoSaisieView(){
       '</div></div>';
   }
 
-  var unitCost = (DATA.chokkoUnitCost && DATA.chokkoUnitCost[ligne]) || 0;
-  var todayEntry = chokkoEntry(ligne, todayStr());
-  var todayNC = todayEntry ? Object.values(todayEntry.defects||{}).reduce(function(a,b){return a+Number(b||0);},0) : 0;
-  var scrapToday = todayNC * unitCost;
-  var monthNCTotal = days.reduce(function(s,d){ return s+d.totals.totalNC; },0);
-  var scrapMonth = monthNCTotal * unitCost;
+  var unitCost = (DATA.chokkoUnitCost && DATA.chokkoUnitCost[ligne]) || '';
 
   html += '<div class="toolbar"><div class="left">'+
     '<label class="field" style="flex-direction:row; align-items:center; gap:8px;">Mois<select id="chokko-mois">'+MONTHS_FR.map(function(m,i){return '<option value="'+i+'"'+(i===chokkoMonth?' selected':'')+'>'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>';}).join('')+'</select></label>'+
     '<label class="field" style="flex-direction:row; align-items:center; gap:8px;">Année<input type="number" id="chokko-annee" value="'+chokkoYear+'" style="width:80px;"></label>'+
     '</div>'+
-    '<div class="statcard" style="padding:8px 14px;"><div class="tiny">Chokko du mois</div><div id="chokko-month-avg" style="font-family:var(--mono); font-weight:700; font-size:20px; color:var(--'+chokkoLevel(monthAvg)+');">'+(monthAvg!==null?monthAvg.toFixed(1)+'%':'-')+'</div></div>'+
-    '<div class="statcard" style="padding:8px 14px;">'+
-      '<div class="tiny">Coût SCRAP aujourd\'hui</div>'+
-      '<div id="chokko-scrap-today" style="font-family:var(--mono); font-weight:700; font-size:20px; color:'+(scrapToday>0?'var(--danger)':'var(--text)')+';">'+scrapToday.toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})+' €</div>'+
-      '<div class="tiny" id="chokko-scrap-month" style="margin-top:2px;">'+scrapMonth.toLocaleString('fr-FR',{minimumFractionDigits:0, maximumFractionDigits:0})+' € ce mois</div>'+
-      '<div class="tiny" style="margin-top:4px; display:flex; align-items:center; gap:4px;">Coût/pièce <input type="number" id="chokko-unit-cost" min="0" step="0.01" value="'+unitCost+'" style="width:65px; font-size:11px; padding:2px 4px;"> €</div>'+
+    '<div style="display:flex; gap:12px; margin-left:auto;">'+
+      '<div class="statcard" style="padding:8px 14px;"><div class="tiny">Chokko du mois</div><div id="chokko-month-avg" style="font-family:var(--mono); font-weight:700; font-size:20px; color:var(--'+chokkoLevel(monthAvg)+');">'+(monthAvg!==null?monthAvg.toFixed(1)+'%':'-')+'</div></div>'+
+      '<div class="statcard" style="padding:8px 14px;"><div class="tiny">Coût par pièce</div><div style="display:flex; align-items:baseline; gap:4px;"><input type="number" id="chokko-unit-cost" min="0" step="0.01" placeholder="0.00" value="'+unitCost+'" style="width:75px; font-family:var(--mono); font-weight:700; font-size:20px; border:none; background:transparent; padding:0;"><span class="tiny">€</span></div></div>'+
     '</div>'+
   '</div>';
 
@@ -4126,14 +4119,6 @@ function refreshChokkoTotals(ligne, excludeElId){
     avgEl.textContent = monthAvg!==null? monthAvg.toFixed(1)+'%' : '-';
     avgEl.style.color = 'var(--'+chokkoLevel(monthAvg)+')';
   }
-  var unitCost = (DATA.chokkoUnitCost && DATA.chokkoUnitCost[ligne]) || 0;
-  var todayEntry = chokkoEntry(ligne, todayStr());
-  var todayNC = todayEntry ? Object.values(todayEntry.defects||{}).reduce(function(a,b){return a+Number(b||0);},0) : 0;
-  var scrapTodayEl = document.getElementById('chokko-scrap-today');
-  if(scrapTodayEl) scrapTodayEl.textContent = (todayNC*unitCost).toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})+' €';
-  var monthNCTotal = days.reduce(function(s,d){ return s+d.totals.totalNC; },0);
-  var scrapMonthEl = document.getElementById('chokko-scrap-month');
-  if(scrapMonthEl) scrapMonthEl.textContent = (monthNCTotal*unitCost).toLocaleString('fr-FR',{minimumFractionDigits:0, maximumFractionDigits:0})+' € ce mois';
   if(chokkoView==='saisie') renderChokkoPostesChart();
 }
 async function handleChokkoDefectChange(ligne, date, poste, val){
@@ -7981,6 +7966,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
