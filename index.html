@@ -435,6 +435,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -486,6 +487,7 @@ var DASHBOARD_WIDGETS_DEFAULT = [
   {id:'w_planning'},
   {id:'w_indicateurs'},
   {id:'w_chokko'},
+  {id:'w_production'},
   {id:'w_cicl'},
   {id:'w_esd'},
   {id:'w_srem'},
@@ -501,7 +503,7 @@ var DASHBOARD_WIDGETS_DEFAULT = [
 var WIDGET_TITLES = {
   w_score:'Score de conformité', w_planning:"Planning échéances",
   w_indicateurs:'Indicateurs (métrologie, ATEQ, propreté, perf)',
-  w_chokko:'Suivi CHOKKO', w_cicl:'Formations CI/CL',
+  w_chokko:'Suivi CHOKKO', w_production:'Production du secteur', w_cicl:'Formations CI/CL',
   w_esd:'Formations ESD', w_srem:'Formations SREM',
   w_particules:'Relevés particules', w_contamination:'Contamination',
   w_ciclcoverage:'Couverture CI/CL', w_vidange:'Vidanges',
@@ -818,33 +820,66 @@ function metroStatus(e){
   return {level:'ok', label:'À jour', expiresThisMonth:false};
 }
 function globalConformityScore(){
+  var enabled = (DATA.uiSettings && DATA.uiSettings.scoreModules) || {};
+  function on(key){ return enabled[key]!==false; } // actif par défaut si jamais réglé
   var parts = [];
   var detail = [];
-  var proprVals = LINES.map(latestResultByLine).filter(Boolean).map(function(r){return r.resultatPct;});
-  if(proprVals.length){
-    var p = proprVals.reduce(function(a,b){return a+b;},0)/proprVals.length;
-    parts.push(p); detail.push({label:'Propreté', val:Math.round(p)});
+  if(on('propr')){
+    var proprVals = LINES.map(latestResultByLine).filter(Boolean).map(function(r){return r.resultatPct;});
+    if(proprVals.length){
+      var p = proprVals.reduce(function(a,b){return a+b;},0)/proprVals.length;
+      parts.push(p); detail.push({label:'Propreté', val:Math.round(p)});
+    }
   }
-  if(bySecteur(DATA.metro).length){
+  if(on('metro') && bySecteur(DATA.metro).length){
     var metroSect = bySecteur(DATA.metro);
     var lateCount = metroSect.filter(function(e){ return metroStatus(e).level==='danger'; }).length;
     var m = metroSect.length? (1 - lateCount/metroSect.length)*100 : 100;
     parts.push(m); detail.push({label:'Métrologie à jour', val:Math.round(m)});
   }
-  var contamYear = DATA.contamination.filter(function(c){ return c.annee===Number(todayStr().slice(0,4)) && (c.statut==='ok'||c.statut==='nc'); });
-  if(contamYear.length){
-    var okCount = contamYear.filter(function(c){return c.statut==='ok';}).length;
-    var c = okCount/contamYear.length*100;
-    parts.push(c); detail.push({label:'Contamination conforme', val:Math.round(c)});
+  if(on('contam')){
+    var contamYear = DATA.contamination.filter(function(c){ return c.annee===Number(todayStr().slice(0,4)) && (c.statut==='ok'||c.statut==='nc'); });
+    if(contamYear.length){
+      var okCount = contamYear.filter(function(c){return c.statut==='ok';}).length;
+      var c = okCount/contamYear.length*100;
+      parts.push(c); detail.push({label:'Contamination conforme', val:Math.round(c)});
+    }
   }
-  var relevantActions = DATA.actions.filter(function(a){ return a.statut!=='abandonnee'; });
-  if(relevantActions.length){
-    var lateA = relevantActions.filter(isActionLate).length;
-    var ac = (1-lateA/relevantActions.length)*100;
-    parts.push(ac); detail.push({label:"Actions dans les temps", val:Math.round(ac)});
+  if(on('actions')){
+    var relevantActions = DATA.actions.filter(function(a){ return a.statut!=='abandonnee'; });
+    if(relevantActions.length){
+      var lateA = relevantActions.filter(isActionLate).length;
+      var ac = (1-lateA/relevantActions.length)*100;
+      parts.push(ac); detail.push({label:"Actions dans les temps", val:Math.round(ac)});
+    }
+  }
+  if(on('chokko') && currentSecteur==='MCU'){
+    var today0 = new Date();
+    var chokkoVals = ['MCU1','MCU2','MCU3'].map(function(l){ return chokkoMonthAverage(l, today0.getFullYear(), today0.getMonth()); }).filter(function(v){ return v!==null; });
+    if(chokkoVals.length){
+      var ck = chokkoVals.reduce(function(a,b){return a+b;},0)/chokkoVals.length;
+      parts.push(ck); detail.push({label:'CHOKKO', val:Math.round(ck)});
+    }
   }
   if(!parts.length) return {score:null, detail:[]};
   return {score: Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length), detail:detail};
+}
+var SCORE_MODULES_LIST = [['propr','Propreté'],['metro','Métrologie'],['contam','Contamination'],['actions',"Plan d'actions"],['chokko','CHOKKO']];
+var scoreSettingsOpen = false;
+function scoreSettingsModal(){
+  var enabled = (DATA.uiSettings && DATA.uiSettings.scoreModules) || {};
+  return '<div class="modal-overlay score-settings-backdrop">'+
+    '<div class="modal-box" style="max-width:360px;">'+
+    '<h3>Que compte-t-on dans le score ?</h3>'+
+    '<p class="tiny" style="margin-bottom:14px;">Le score de conformité est la moyenne des modules cochés ci-dessous.</p>'+
+    SCORE_MODULES_LIST.map(function(m){
+      var checked = enabled[m[0]]!==false;
+      return '<label style="display:flex; align-items:center; gap:8px; padding:7px 0; cursor:pointer;">'+
+        '<input type="checkbox" class="score-module-toggle" data-key="'+m[0]+'" '+(checked?'checked':'')+'> '+m[1]+
+      '</label>';
+    }).join('')+
+    '<div class="actions-row" style="margin-top:16px;"><button class="btn primary" data-action="score-settings-close">Fermer</button></div>'+
+    '</div></div>';
 }
 async function recordScoreSnapshot(gs){
   if(gs.score===null) return;
@@ -4574,7 +4609,8 @@ RENDERERS.dashboard = function(){
     } else {
       deltaHtml = '<div class="tiny" style="margin-top:4px; color:var(--text-faint);">Pas encore de comparaison disponible (historique en cours de constitution)</div>';
     }
-    return '<div class="eyebrow" style="text-align:center; margin-bottom:14px;">'+esc(t('title_score','Score de conformité - secteur MCU'))+'</div>'+
+    return '<div class="eyebrow" style="text-align:center; margin-bottom:14px; position:relative;">'+esc(t('title_score','Score de conformité - secteur '+currentSecteur))+
+      '<button class="btn small" data-action="score-settings-open" style="position:absolute; right:0; top:-4px;" title="Choisir ce qui compte dans le score">⚙</button></div>'+
       '<div style="display:flex; justify-content:center;">'+
         '<div style="position:relative; width:200px; height:200px;"><canvas id="chart-global-gauge"></canvas>'+
         '<div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">'+
@@ -4586,7 +4622,8 @@ RENDERERS.dashboard = function(){
         var dlvl = scoreLevel(d.val);
         return '<div style="text-align:center; min-width:120px;"><div class="tiny" style="margin-bottom:4px;">'+esc(d.label)+'</div><div style="font-family:var(--mono); font-weight:700; font-size:24px; color:var(--'+dlvl+');">'+d.val+'%</div></div>';
       }).join('')+'</div>'+
-      '<p class="tiny" style="margin-top:16px; text-align:center; color:var(--text-faint);">Seuils : ≥85% conforme, 50–85% attention, &lt;50% en danger.</p>';
+      '<p class="tiny" style="margin-top:16px; text-align:center; color:var(--text-faint);">Seuils : ≥85% conforme, 50–85% attention, &lt;50% en danger.</p>'+
+      (scoreSettingsOpen? scoreSettingsModal() : '');
   })();
 
   W.w_planning = (function(){
@@ -4644,18 +4681,30 @@ RENDERERS.dashboard = function(){
 
     var proprLines = LINES.map(function(l){
       var r = latestResultByLine(l);
-      if(!r) return '<div class="linebadge">'+l+' <span class="tiny">Aucune donnée</span></div>';
+      var nextAudit = planningCurrentEntry('proprete', l);
+      var nextTxt = nextAudit && nextAudit.echeance ? 'Prochain : '+fmtDate(nextAudit.echeance) : null;
+      if(!r) return '<div class="linebadge" style="flex-direction:column; align-items:flex-start; gap:2px;">'+
+        '<div style="display:flex; width:100%; justify-content:space-between;"><b>'+l+'</b><span class="tiny">Aucune donnée</span></div>'+
+        (nextTxt? '<span class="tiny">'+nextTxt+'</span>' : '')+'</div>';
       var lvl = r.resultatPct>=90?'ok':r.resultatPct>=80?'warn':'danger';
-      return '<div class="linebadge">'+l+' '+badge(lvl, r.resultatPct+'% ('+r.mois+')')+'</div>';
+      return '<div class="linebadge" style="flex-direction:column; align-items:flex-start; gap:2px;">'+
+        '<div style="display:flex; align-items:center; gap:6px; width:100%; justify-content:space-between;"><b>'+l+'</b>'+badge(lvl, r.resultatPct+'% ('+r.mois+')')+'</div>'+
+        (nextTxt? '<span class="tiny">'+nextTxt+'</span>' : '')+'</div>';
     }).join('');
-    var proprHtml = '<div class="eyebrow">'+esc(t('title_propr','Propreté - derniers résultats'))+'</div><div class="linebadges">'+proprLines+'</div>';
+    var proprHtml = '<div class="eyebrow">'+esc(t('title_propr','Propreté - résultats et prochain audit'))+'</div><div class="linebadges" style="gap:8px;">'+proprLines+'</div>';
 
     var perfLines = LINES.map(function(l){
       var p = latestPerfResultByLine(l);
-      if(!p) return '<div class="linebadge">'+l+' <span class="tiny">Aucune donnée</span></div>';
-      return '<div class="linebadge">'+l+' '+badge(scoreLevel(p.resultatPct), p.resultatPct+'% ('+fmtDate(p.echeance)+')')+'</div>';
+      var nextAudit = planningCurrentEntry('perf', l);
+      var nextTxt = nextAudit && nextAudit.echeance ? 'Prochain : '+fmtDate(nextAudit.echeance) : null;
+      if(!p) return '<div class="linebadge" style="flex-direction:column; align-items:flex-start; gap:2px;">'+
+        '<div style="display:flex; width:100%; justify-content:space-between;"><b>'+l+'</b><span class="tiny">Aucune donnée</span></div>'+
+        (nextTxt? '<span class="tiny">'+nextTxt+'</span>' : '')+'</div>';
+      return '<div class="linebadge" style="flex-direction:column; align-items:flex-start; gap:2px;">'+
+        '<div style="display:flex; align-items:center; gap:6px; width:100%; justify-content:space-between;"><b>'+l+'</b>'+badge(scoreLevel(p.resultatPct), p.resultatPct+'% ('+fmtDate(p.echeance)+')')+'</div>'+
+        (nextTxt? '<span class="tiny">'+nextTxt+'</span>' : '')+'</div>';
     }).join('');
-    var perfHtml = '<div class="eyebrow">'+esc(t('title_perf','Audits de perf - derniers résultats'))+'</div><div class="linebadges">'+perfLines+'</div>';
+    var perfHtml = '<div class="eyebrow">'+esc(t('title_perf','Audits de perf - résultats et prochain audit'))+'</div><div class="linebadges" style="gap:8px;">'+perfLines+'</div>';
 
     return '<div class="grid grid-4">'+
       '<div class="statcard">'+metroHtml+'</div>'+
@@ -4737,6 +4786,47 @@ RENDERERS.dashboard = function(){
     return '<div class="eyebrow" style="margin-bottom:8px;">Couverture CI/CL</div><div class="grid grid-1" style="max-width:220px;">'+
       '<div class="statcard'+(total?' s-danger':' s-ok')+'"><div class="eyebrow">Postes sans personne à jour</div><div class="val">'+total+'</div></div>'+
     '</div>';
+  })();
+
+  W.w_production = (function(){
+    if(currentSecteur!=='MCU') return '<div class="eyebrow">Production du secteur</div><div class="tiny" style="margin-top:6px; color:var(--text-faint);">Disponible uniquement pour le secteur MCU (données CHOKKO).</div>';
+    var lignes = ['MCU1','MCU2','MCU3'];
+    var days = [];
+    for(var i=1;i<=35;i++){
+      var d = new Date(); d.setDate(d.getDate()-i);
+      var dateStr = d.toISOString().slice(0,10);
+      var total = lignes.reduce(function(s,l){ return s+chokkoDayTotals(l,dateStr).totalProd; },0);
+      days.push({date:dateStr, total:total});
+    }
+    var yesterday = days[0];
+    var validDays = days.filter(function(d){return d.total>0;});
+    var avgDaily = validDays.length? validDays.reduce(function(s,d){return s+d.total;},0)/validDays.length : null;
+
+    var weeks = {};
+    days.forEach(function(d){
+      var wk = isoWeekInfo(d.date);
+      var key = wk.year+'-'+wk.week;
+      weeks[key] = (weeks[key]||0) + d.total;
+    });
+    var todayWk = isoWeekInfo(todayStr());
+    var todayKey = todayWk.year+'-'+todayWk.week;
+    var thisWeekTotal = weeks[todayKey]||0;
+    var otherWeeks = Object.keys(weeks).filter(function(k){return k!==todayKey;}).map(function(k){return weeks[k];}).filter(function(v){return v>0;});
+    var avgWeekly = otherWeeks.length? otherWeeks.reduce(function(a,b){return a+b;},0)/otherWeeks.length : null;
+
+    function deltaLine(val, avg){
+      if(avg===null || !avg) return '<span class="tiny" style="color:var(--text-faint);">Pas encore de moyenne</span>';
+      var delta = Math.round((val-avg)/avg*100);
+      var arrow = delta>0?'▲':delta<0?'▼':'-';
+      var color = delta>=0?'var(--ok)':'var(--danger)';
+      return '<span class="tiny" style="color:'+color+'; font-weight:600;">'+arrow+' '+(delta>0?'+':'')+delta+'% vs moyenne</span>';
+    }
+
+    return '<div class="eyebrow" style="margin-bottom:10px;">Production du secteur (toutes lignes)</div>'+
+      '<div class="grid grid-2">'+
+        '<div class="statcard"><div class="eyebrow">Hier</div><div class="val">'+(yesterday.total||0)+'</div><div class="lbl">pièces</div>'+deltaLine(yesterday.total, avgDaily)+'</div>'+
+        '<div class="statcard"><div class="eyebrow">Cette semaine</div><div class="val">'+thisWeekTotal+'</div><div class="lbl">pièces</div>'+deltaLine(thisWeekTotal, avgWeekly)+'</div>'+
+      '</div>';
   })();
 
   W.w_vidange = (function(){
@@ -4833,12 +4923,20 @@ RENDERERS.dashboard = function(){
       html += '<div class="statcard" style="'+accentStyle+' max-width:280px;">'+renderKpiWidget(w)+'</div>';
     } else {
       var wrapClass = (w.id==='w_alerts') ? 'section' : 'section card';
-      html += '<div class="'+wrapClass+'" style="'+accentStyle+(w.id==='w_actions'?'margin-bottom:0;':'')+'">'+W[w.id]+'</div>';
+      var linkInfo = (!dashboardCustomizing) ? WIDGET_LINK_TARGET[w.id] : null;
+      var clickAttrs = linkInfo ? ' data-action="goto-widget-tab" data-tab="'+linkInfo.tab+'"'+(linkInfo.sub?' data-sub="'+linkInfo.sub+'"':'')+' style="cursor:pointer;"' : '';
+      html += '<div class="'+wrapClass+'" '+clickAttrs+' style="'+accentStyle+(w.id==='w_actions'?'margin-bottom:0;':'')+'">'+W[w.id]+'</div>';
     }
     html += '</div>';
   });
   html += '</div></div>';
   return html;
+};
+var WIDGET_LINK_TARGET = {
+  w_chokko:{tab:'chokko'}, w_production:{tab:'chokko'}, w_cicl:{tab:'cicl'}, w_ciclcoverage:{tab:'cicl'},
+  w_esd:{tab:'esd'}, w_srem:{tab:'formations'},
+  w_particules:{tab:'proprete', sub:'particules'}, w_contamination:{tab:'proprete', sub:'contamination'},
+  w_vidange:{tab:'proprete', sub:'vidange'}, w_planning:{tab:'planning'}
 };
 
 // ---------- PLANNING ----------
@@ -6502,6 +6600,17 @@ app.addEventListener('click', async function(e){
   if(e.target.closest('#sidebar-toggle')){ sidebarCollapsed = !sidebarCollapsed; renderNav(); return; }
   if(e.target.closest('#sidebar-settings-btn')){ sidebarSettingsOpen = true; renderNav(); return; }
   if(e.target.closest('[data-action="sidebar-settings-close"]')){ sidebarSettingsOpen = false; renderNav(); return; }
+  if(e.target.closest('[data-action="score-settings-open"]')){ scoreSettingsOpen = true; render(); return; }
+  var gotoWidgetTab = e.target.closest('[data-action="goto-widget-tab"]');
+  if(gotoWidgetTab){
+    currentTab = gotoWidgetTab.dataset.tab;
+    if(gotoWidgetTab.dataset.sub) propreteSub = gotoWidgetTab.dataset.sub;
+    sidebarMobileOpen = false;
+    render(); renderNav();
+    return;
+  }
+  if(e.target.closest('[data-action="score-settings-close"]')){ scoreSettingsOpen = false; render(); return; }
+  if(e.target.classList && e.target.classList.contains('score-settings-backdrop')){ scoreSettingsOpen = false; render(); return; }
   if(e.target.classList && e.target.classList.contains('sidebar-settings-backdrop')){ sidebarSettingsOpen = false; renderNav(); return; }
   if(e.target.closest('[data-action="reset-sidebar-color"]')){
     if(!DATA.uiSettings) DATA.uiSettings = {sidebarColor:null, iconStyle:'svg'};
@@ -7110,6 +7219,14 @@ app.addEventListener('change', async function(e){
     render();
     return;
   }
+  if(e.target.classList && e.target.classList.contains('score-module-toggle')){
+    if(!DATA.uiSettings) DATA.uiSettings = {sidebarColor:null, iconStyle:'svg'};
+    if(!DATA.uiSettings.scoreModules) DATA.uiSettings.scoreModules = {};
+    DATA.uiSettings.scoreModules[e.target.dataset.key] = e.target.checked;
+    await save('uiSettings');
+    render();
+    return;
+  }
   if(e.target.id==='sidebar-color-custom-input'){
     if(!DATA.uiSettings) DATA.uiSettings = {sidebarColor:null, iconStyle:'svg'};
     DATA.uiSettings.sidebarColor = e.target.value;
@@ -7375,6 +7492,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
