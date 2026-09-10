@@ -437,6 +437,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -4799,8 +4800,36 @@ RENDERERS.dashboard = function(){
 
   W.w_conformite_pie = (function(){
     if(currentSecteur!=='MCU') return '<div class="eyebrow">Conformité des pièces</div><div class="tiny" style="margin-top:6px; color:var(--text-faint);">Disponible pour le secteur MCU (données CHOKKO).</div>';
-    return '<div class="eyebrow" style="margin-bottom:8px;">Conformité des pièces (mois en cours)</div>'+
-      '<div class="chart-box" style="height:200px;"><canvas id="chart-conformite-pie"></canvas></div>';
+    var today = new Date();
+    var y = today.getFullYear(), m = today.getMonth();
+    var lignes = ['MCU1','MCU2','MCU3'];
+    var totalProd = 0, totalNC = 0;
+    lignes.forEach(function(l){
+      var nb = daysInMonth(y, m);
+      for(var d=1; d<=nb; d++){
+        var dateStr = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+        var t = chokkoDayTotals(l, dateStr);
+        totalProd += t.totalProd; totalNC += t.totalNC;
+      }
+    });
+    var bon = Math.max(0, totalProd-totalNC);
+    var pct = totalProd>0 ? (bon/totalProd*100) : null;
+    var lvl = pct!==null ? chokkoLevel(pct) : 'neutral';
+    if(!totalProd){
+      return '<div class="eyebrow" style="margin-bottom:6px;">Conformité des pièces (mois en cours)</div>'+
+        '<div class="tiny" style="color:var(--text-faint);">Aucune donnée ce mois-ci</div>';
+    }
+    return '<div class="eyebrow" style="margin-bottom:10px;">Conformité des pièces (mois en cours)</div>'+
+      '<div style="display:flex; align-items:center; gap:20px;">'+
+        '<div style="position:relative; width:100px; height:100px; flex-shrink:0;"><canvas id="chart-conformite-pie"></canvas>'+
+          '<div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:700; font-size:19px; color:var(--'+lvl+');">'+pct.toFixed(1)+'%</div>'+
+        '</div>'+
+        '<div>'+
+          '<div class="tiny"><span style="display:inline-block; width:9px; height:9px; border-radius:2px; background:#2E7D4F; margin-right:5px;"></span>'+bon.toLocaleString('fr-FR')+' conformes</div>'+
+          '<div class="tiny" style="margin-top:4px;"><span style="display:inline-block; width:9px; height:9px; border-radius:2px; background:#B23B2E; margin-right:5px;"></span>'+totalNC.toLocaleString('fr-FR')+' non conformes</div>'+
+          '<div class="tiny" style="margin-top:6px; color:var(--text-faint);">'+totalProd.toLocaleString('fr-FR')+' pièces produites</div>'+
+        '</div>'+
+      '</div>';
   })();
 
   W.w_chokko_trend = (function(){
@@ -4985,7 +5014,7 @@ RENDERERS.planning = function(){
   }).join('')+'</select>';
   html += '<select id="flt-planning-type"><option value="">Tous les types</option>'+PLAN_TYPES.map(function(t){return '<option value="'+t[0]+'"'+(t[0]===planningTypeFilter?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select>';
   html += '<select id="flt-planning-ligne"><option value="">Toutes les lignes</option>'+secteurLines().map(function(l){return '<option value="'+l+'"'+(l===planningLigneFilter?' selected':'')+'>'+l+'</option>';}).join('')+'</select>';
-  html += '</div><button class="btn primary" data-toggle-form="planning">+ Ajouter une échéance</button></div>';
+  html += '</div><div style="display:flex; gap:8px;"><button class="btn" data-action="planning-recur-open">🔁 Créer une récurrence</button><button class="btn primary" data-toggle-form="planning">+ Ajouter une échéance</button></div></div>';
 
   html += '<form class="entryform" id="form-planning" style="display:none">'+
     field('select','ligne','Ligne', secteurLines().map(function(l){return [l,l];})) +
@@ -5004,10 +5033,78 @@ RENDERERS.planning = function(){
 
   html += '<div class="table-wrap"><table><thead><tr><th>Statut</th><th>Ligne</th><th>Type</th><th>Mois</th><th>Échéance</th><th>Réalisation</th><th>Résultat</th><th>Responsable</th><th></th></tr></thead><tbody id="planning-rows">';
   html += rows.map(planningRow).join('') || '<tr><td colspan="9">'+emptyState('Aucune échéance')+'</td></tr>';
-  html += '</tbody></table></div></div>';
+  html += '</tbody></table></div>';
+  if(planningRecurOpen) html += planningRecurModal();
+  html += '</div>';
   return html;
 };
+var planningRecurOpen = false;
+var planningRecurSummary = null;
+function planningRecurModal(){
+  return '<div class="modal-overlay planning-recur-backdrop">'+
+    '<div class="modal-box" style="max-width:460px;">'+
+    '<h3>Créer une récurrence</h3>'+
+    '<p class="tiny" style="margin-bottom:14px;">Génère plusieurs échéances d\'un coup, au lieu de les ajouter une par une.</p>'+
+    '<label class="field" style="margin-bottom:12px;">Type<select id="pr-type">'+PLAN_TYPES.map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join('')+'</select></label>'+
+    '<div id="pr-ref-wrap" style="display:none; margin-bottom:12px;"><label class="field">Référence (relevés labo)<select id="pr-ref">'+
+      CONTAM_COMBOS.map(function(c){return '<option value="'+c.ligne+'|'+c.ref+'">'+c.ligne+' · '+c.ref+'</option>';}).join('')+
+    '</select></label></div>'+
+    '<label class="field" style="margin-bottom:6px;">Ligne(s) concernée(s)</label>'+
+    '<div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:14px;">'+
+      secteurLines().map(function(l){ return '<label style="display:inline-flex; align-items:center; gap:5px; font-weight:400; font-size:13px;"><input type="checkbox" class="pr-ligne-chk" value="'+l+'" checked> '+l+'</label>'; }).join('')+
+    '</div>'+
+    '<label class="field" style="margin-bottom:12px;">Fréquence<select id="pr-freq">'+
+      '<option value="7">Chaque semaine</option>'+
+      '<option value="14">Toutes les 2 semaines</option>'+
+      '<option value="30">Chaque mois (environ, tous les 30 jours)</option>'+
+      '<option value="custom">Personnalisée (tous les X jours)</option>'+
+    '</select></label>'+
+    '<div id="pr-custom-wrap" style="display:none; margin-bottom:12px;"><label class="field">Intervalle (jours)<input type="number" id="pr-custom-days" min="1" value="7" style="width:100px;"></label></div>'+
+    '<div class="grid grid-2" style="margin-bottom:12px;">'+
+      '<label class="field">Première échéance<input type="date" id="pr-start" value="'+todayStr()+'"></label>'+
+      '<label class="field">Nombre d\'occurrences<input type="number" id="pr-count" min="1" max="52" value="12" style="width:100px;"></label>'+
+    '</div>'+
+    '<label class="field" style="margin-bottom:14px;">Responsable <span class="tiny">(optionnel)</span><input type="text" id="pr-responsable"></label>'+
+    (planningRecurSummary? '<div class="card" style="background:var(--ok-bg); border-color:var(--ok-border); margin-bottom:12px; font-size:12.5px;">'+esc(planningRecurSummary)+'</div>' : '')+
+    '<div class="actions-row"><button class="btn" data-action="planning-recur-cancel">Fermer</button><button class="btn primary" data-action="planning-recur-generate">Générer les échéances</button></div>'+
+    '</div></div>';
+}
 var planningEditingId = null;
+async function handlePlanningRecurGenerate(){
+  var type = document.getElementById('pr-type').value;
+  var lignes = Array.prototype.map.call(document.querySelectorAll('.pr-ligne-chk:checked'), function(c){return c.value;});
+  if(!lignes.length){ toast('Sélectionnez au moins une ligne.', 'error'); return; }
+  var freqSel = document.getElementById('pr-freq').value;
+  var interval = freqSel==='custom' ? Math.max(1, Number(document.getElementById('pr-custom-days').value)||7) : Number(freqSel);
+  var start = document.getElementById('pr-start').value || todayStr();
+  var count = Math.max(1, Math.min(52, Number(document.getElementById('pr-count').value)||1));
+  var responsable = document.getElementById('pr-responsable').value.trim();
+  var refVal = type==='labo' ? document.getElementById('pr-ref').value : null;
+
+  var dates = [];
+  var d = new Date(start+'T00:00:00');
+  for(var i=0; i<count; i++){
+    dates.push(d.toISOString().slice(0,10));
+    d.setDate(d.getDate()+interval);
+  }
+
+  var created = 0;
+  dates.forEach(function(dateStr){
+    var monthIdx = Number(dateStr.slice(5,7))-1;
+    var moisLabel = MONTHS_FR[monthIdx].charAt(0).toUpperCase()+MONTHS_FR[monthIdx].slice(1)+' '+dateStr.slice(0,4);
+    lignes.forEach(function(l){
+      var entry = {id:uid('planning'), secteur:currentSecteur, ligne:l, type:type, mois:moisLabel, echeance:dateStr, realisation:null, responsable:responsable||null, resultatPct:null};
+      if(type==='labo' && refVal){ var parts = refVal.split('|'); entry.ligne = parts[0]; entry.ref = parts[1]; }
+      DATA.planning.push(entry);
+      created++;
+    });
+  });
+  await save('planning');
+  logChange('Planning', 'Récurrence créée', created+' échéance(s) - '+(PLAN_TYPES.filter(function(t){return t[0]===type;})[0]||['',type])[1]);
+  planningRecurSummary = created+' échéance(s) créée(s) du '+fmtDate(dates[0])+' au '+fmtDate(dates[dates.length-1])+'.';
+  toast(created+' échéance(s) générée(s).');
+  render();
+}
 function planningRow(p){
   var s = planningStatus(p);
   var typeLabel = (PLAN_TYPES.filter(function(t){return t[0]===p.type;})[0]||['',p.type])[1];
@@ -6445,15 +6542,12 @@ function renderConformitePieChart(){
         totalProd += t.totalProd; totalNC += t.totalNC;
       }
     });
+    if(totalProd===0) return; // le HTML affiche déjà "Aucune donnée" dans ce cas, rien à dessiner
     var bon = Math.max(0, totalProd-totalNC);
-    if(totalProd===0){
-      ctx.parentElement.innerHTML = '<div class="empty" style="height:100%; display:flex; align-items:center; justify-content:center;">Aucune donnée ce mois-ci</div>';
-      return;
-    }
     chartConformitePie = new Chart(ctx, {
-      type:'pie',
-      data:{labels:['Conforme','Non-conforme'], datasets:[{data:[bon, totalNC], backgroundColor:['#2E7D4F','#B23B2E'], borderWidth:2, borderColor:'#fff'}]},
-      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:12, font:{size:11}}}}}
+      type:'doughnut',
+      data:{datasets:[{data:[bon, totalNC], backgroundColor:['#2E7D4F','#B23B2E'], borderWidth:2, borderColor:'#fff'}]},
+      options:{responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{legend:{display:false}, tooltip:{enabled:true}}}
     });
   }catch(err){ console.error('conformite pie error', err); }
 }
@@ -7150,6 +7244,14 @@ app.addEventListener('click', async function(e){
     return;
   }
   if(e.target.closest('[data-action="chokko-import-open"]')){ chokkoImportOpen = true; chokkoImportSummary = null; render(); return; }
+  if(e.target.closest('[data-action="planning-recur-open"]')){ planningRecurOpen = true; planningRecurSummary = null; render(); return; }
+  if(e.target.closest('[data-action="planning-recur-cancel"]')){ planningRecurOpen = false; render(); return; }
+  if(e.target.classList && e.target.classList.contains('planning-recur-backdrop')){ planningRecurOpen = false; render(); return; }
+  if(e.target.closest('[data-action="planning-recur-generate"]')){
+    var recBtn = e.target.closest('[data-action="planning-recur-generate"]');
+    await withBtnLoading(recBtn, handlePlanningRecurGenerate);
+    return;
+  }
   if(e.target.closest('[data-action="chokko-import-cancel"]')){ chokkoImportOpen = false; render(); return; }
   if(e.target.classList && e.target.classList.contains('chokko-import-backdrop')){ chokkoImportOpen = false; render(); return; }
   if(e.target.closest('[data-action="chokko-import-run"]')){
@@ -7315,6 +7417,16 @@ app.addEventListener('click', async function(e){
 app.addEventListener('change', async function(e){
   if(e.target.classList && e.target.classList.contains('cicl-person-apply-date')){
     ciclApplyDates[e.target.dataset.id] = e.target.value;
+    return;
+  }
+  if(e.target.id==='pr-type'){
+    var refWrap = document.getElementById('pr-ref-wrap');
+    if(refWrap) refWrap.style.display = (e.target.value==='labo') ? '' : 'none';
+    return;
+  }
+  if(e.target.id==='pr-freq'){
+    var customWrap = document.getElementById('pr-custom-wrap');
+    if(customWrap) customWrap.style.display = (e.target.value==='custom') ? '' : 'none';
     return;
   }
   if(e.target.id==='cpf-role'){
@@ -7612,6 +7724,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
