@@ -436,6 +436,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -484,6 +485,9 @@ function t(key, fallback){
 // ============ DASHBOARD PERSONNALISABLE (widgets) ============
 var DASHBOARD_WIDGETS_DEFAULT = [
   {id:'w_score'},
+  {id:'w_conformite_pie'},
+  {id:'w_chokko_trend'},
+  {id:'w_causes_bar'},
   {id:'w_planning'},
   {id:'w_indicateurs'},
   {id:'w_chokko'},
@@ -501,7 +505,9 @@ var DASHBOARD_WIDGETS_DEFAULT = [
   {id:'w_alerts'}
 ];
 var WIDGET_TITLES = {
-  w_score:'Score de conformité', w_planning:"Planning échéances",
+  w_score:'Score de conformité', w_conformite_pie:'Conformité des pièces (camembert)',
+  w_chokko_trend:'Tendance CHOKKO (courbe)', w_causes_bar:'Causes de non-conformité (barres)',
+  w_planning:"Planning échéances",
   w_indicateurs:'Indicateurs (métrologie, ATEQ, propreté, perf)',
   w_chokko:'Suivi CHOKKO', w_production:'Production du secteur', w_cicl:'Formations CI/CL',
   w_esd:'Formations ESD', w_srem:'Formations SREM',
@@ -4428,6 +4434,9 @@ function render(){
     renderTrendChart();
     renderScoreHistoryChart();
     renderGlobalGauge(lastGlobalScore);
+    renderConformitePieChart();
+    renderChokkoTrendChart();
+    renderCausesBarChart();
   }
   if(currentTab==='dashboard' && currentSecteur!=='MCU'){
     renderGlobalGauge(secteurGaugeScore);
@@ -4786,6 +4795,24 @@ RENDERERS.dashboard = function(){
     return '<div class="eyebrow" style="margin-bottom:8px;">Couverture CI/CL</div><div class="grid grid-1" style="max-width:220px;">'+
       '<div class="statcard'+(total?' s-danger':' s-ok')+'"><div class="eyebrow">Postes sans personne à jour</div><div class="val">'+total+'</div></div>'+
     '</div>';
+  })();
+
+  W.w_conformite_pie = (function(){
+    if(currentSecteur!=='MCU') return '<div class="eyebrow">Conformité des pièces</div><div class="tiny" style="margin-top:6px; color:var(--text-faint);">Disponible pour le secteur MCU (données CHOKKO).</div>';
+    return '<div class="eyebrow" style="margin-bottom:8px;">Conformité des pièces (mois en cours)</div>'+
+      '<div class="chart-box" style="height:200px;"><canvas id="chart-conformite-pie"></canvas></div>';
+  })();
+
+  W.w_chokko_trend = (function(){
+    if(currentSecteur!=='MCU') return '<div class="eyebrow">Tendance CHOKKO</div><div class="tiny" style="margin-top:6px; color:var(--text-faint);">Disponible pour le secteur MCU.</div>';
+    return '<div class="eyebrow" style="margin-bottom:8px;">Tendance CHOKKO (8 dernières semaines)</div>'+
+      '<div class="chart-box" style="height:200px;"><canvas id="chart-chokko-trend"></canvas></div>';
+  })();
+
+  W.w_causes_bar = (function(){
+    if(currentSecteur!=='MCU') return '<div class="eyebrow">Causes de non-conformité</div><div class="tiny" style="margin-top:6px; color:var(--text-faint);">Disponible pour le secteur MCU.</div>';
+    return '<div class="eyebrow" style="margin-bottom:8px;">Principales causes de non-conformité (mois en cours)</div>'+
+      '<div class="chart-box" style="height:220px;"><canvas id="chart-causes-bar"></canvas></div>';
   })();
 
   W.w_production = (function(){
@@ -6399,6 +6426,99 @@ function renderGlobalGauge(score){
   }catch(err){ console.error('chart error', err); }
 }
 var chartTrend=null;
+var chartConformitePie=null;
+function renderConformitePieChart(){
+  if(typeof Chart==='undefined') return;
+  var ctx = document.getElementById('chart-conformite-pie');
+  if(!ctx) return;
+  if(chartConformitePie){ chartConformitePie.destroy(); chartConformitePie=null; }
+  try{
+    var today = new Date();
+    var y = today.getFullYear(), m = today.getMonth();
+    var lignes = ['MCU1','MCU2','MCU3'];
+    var totalProd = 0, totalNC = 0;
+    lignes.forEach(function(l){
+      var nb = daysInMonth(y, m);
+      for(var d=1; d<=nb; d++){
+        var dateStr = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+        var t = chokkoDayTotals(l, dateStr);
+        totalProd += t.totalProd; totalNC += t.totalNC;
+      }
+    });
+    var bon = Math.max(0, totalProd-totalNC);
+    if(totalProd===0){
+      ctx.parentElement.innerHTML = '<div class="empty" style="height:100%; display:flex; align-items:center; justify-content:center;">Aucune donnée ce mois-ci</div>';
+      return;
+    }
+    chartConformitePie = new Chart(ctx, {
+      type:'pie',
+      data:{labels:['Conforme','Non-conforme'], datasets:[{data:[bon, totalNC], backgroundColor:['#2E7D4F','#B23B2E'], borderWidth:2, borderColor:'#fff'}]},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:12, font:{size:11}}}}}
+    });
+  }catch(err){ console.error('conformite pie error', err); }
+}
+var chartChokkoTrend=null;
+function renderChokkoTrendChart(){
+  if(typeof Chart==='undefined') return;
+  var ctx = document.getElementById('chart-chokko-trend');
+  if(!ctx) return;
+  if(chartChokkoTrend){ chartChokkoTrend.destroy(); chartChokkoTrend=null; }
+  try{
+    var lignes = ['MCU1','MCU2','MCU3'];
+    var weeks = []; // {label, avg}
+    for(var w=7; w>=0; w--){
+      var d = new Date(); d.setDate(d.getDate() - w*7);
+      var wk = isoWeekInfo(d.toISOString().slice(0,10));
+      var vals = [];
+      lignes.forEach(function(l){
+        for(var i=0;i<7;i++){
+          var dd = new Date(d); dd.setDate(dd.getDate()-dd.getDay()+1+i);
+          var dateStr = dd.toISOString().slice(0,10);
+          var t = chokkoDayTotals(l, dateStr);
+          if(t.pct!==null) vals.push(t.pct);
+        }
+      });
+      weeks.push({label:'S'+wk.week, avg: vals.length? vals.reduce(function(a,b){return a+b;},0)/vals.length : null});
+    }
+    chartChokkoTrend = new Chart(ctx, {
+      type:'line',
+      data:{labels:weeks.map(function(w){return w.label;}), datasets:[{label:'% Chokko', data:weeks.map(function(w){return w.avg;}), borderColor:'#1F5C5C', backgroundColor:'#1F5C5C22', fill:true, tension:0.3, spanGaps:true, pointRadius:3}]},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{min:80, max:100, ticks:{callback:function(v){return v+'%';}}}}}
+    });
+  }catch(err){ console.error('chokko trend error', err); }
+}
+var chartCausesBar=null;
+function renderCausesBarChart(){
+  if(typeof Chart==='undefined') return;
+  var ctx = document.getElementById('chart-causes-bar');
+  if(!ctx) return;
+  if(chartCausesBar){ chartCausesBar.destroy(); chartCausesBar=null; }
+  try{
+    var today = new Date();
+    var y = today.getFullYear(), m = today.getMonth();
+    var totals = {}; // posteId -> {count, label}
+    ['MCU1','MCU2','MCU3'].forEach(function(l){
+      chokkoPostes(l).forEach(function(p){
+        var days = chokkoMonthDays(l, y, m);
+        var sum = days.reduce(function(s,d){ var e=chokkoEntry(l,d.date); return s+(e?Number(e.defects[p[0]]||0):0); },0);
+        if(sum>0){
+          var key = l+' '+p[0];
+          totals[key] = {count:sum, label:l+' - '+p[0]+' ('+p[1]+')'};
+        }
+      });
+    });
+    var sorted = Object.values(totals).sort(function(a,b){return b.count-a.count;}).slice(0,6);
+    if(!sorted.length){
+      ctx.parentElement.innerHTML = '<div class="empty" style="height:100%; display:flex; align-items:center; justify-content:center;">Aucun défaut ce mois-ci</div>';
+      return;
+    }
+    chartCausesBar = new Chart(ctx, {
+      type:'bar',
+      data:{labels:sorted.map(function(s){return s.label;}), datasets:[{data:sorted.map(function(s){return s.count;}), backgroundColor:'#B2764A'}]},
+      options:{indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, title:{display:true, text:'Nombre de défauts'}}}}
+    });
+  }catch(err){ console.error('causes bar error', err); }
+}
 function renderTrendChart(){
   if(typeof Chart==='undefined') return;
   var ctx = document.getElementById('chart-trend');
@@ -7492,6 +7612,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
