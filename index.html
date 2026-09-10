@@ -438,6 +438,8 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
+
 (function(){
 "use strict";
 
@@ -486,7 +488,6 @@ function t(key, fallback){
 // ============ DASHBOARD PERSONNALISABLE (widgets) ============
 var DASHBOARD_WIDGETS_DEFAULT = [
   {id:'w_score'},
-  {id:'w_conformite_pie'},
   {id:'w_chokko_trend'},
   {id:'w_causes_bar'},
   {id:'w_planning'},
@@ -2639,12 +2640,19 @@ RENDERERS.esd = function(){
   var ok = list.filter(function(p){ return esdStatus(p).level==='ok'; }).length;
 
   var html = '<div class="section">';
-  html += '<div class="grid grid-4" style="margin-bottom:18px;">'+
+  html += '<div class="grid grid-4" style="margin-bottom:8px;">'+
     '<div class="statcard s-danger"><div class="eyebrow">Expirées</div><div class="val">'+expired+'</div></div>'+
     '<div class="statcard s-urgent"><div class="eyebrow">Expire ce mois</div><div class="val">'+thisMonth+'</div></div>'+
     '<div class="statcard s-warn"><div class="eyebrow">À renouveler (&lt;60j)</div><div class="val">'+soon+'</div></div>'+
     '<div class="statcard"><div class="eyebrow">À jour</div><div class="val">'+ok+'</div></div>'+
   '</div>';
+  var nextEsd = list.filter(function(p){ return esdEcheance(p) && esdStatus(p).level!=='danger'; })
+    .sort(function(a,b){ return esdEcheance(a).localeCompare(esdEcheance(b)); })[0];
+  if(nextEsd){
+    html += '<p class="tiny" style="margin-bottom:18px;">Prochaine échéance : <b>'+esc(nextEsd.nom)+'</b> le '+fmtDate(esdEcheance(nextEsd))+'</p>';
+  } else {
+    html += '<div style="margin-bottom:10px;"></div>';
+  }
 
   html += '<div class="toolbar"><div class="left">'+
     '<input type="text" id="esd-search" placeholder="Rechercher un nom…" value="'+esc(esdSearch)+'" style="width:220px;">'+
@@ -2937,6 +2945,11 @@ function ciclRecapView(){
       '<div class="statcard s-warn"><div class="eyebrow">A renouveler</div><div class="val">'+warn+'</div></div>'+
       '<div class="statcard'+(uncovered.length?' s-danger':'')+'"><div class="eyebrow">Postes non couverts</div><div class="val">'+uncovered.length+'</div></div>'+
     '</div>';
+    var nextExp = allRecords.filter(function(p){ return ciclEcheance(p) && ciclStatus(p).level!=='danger'; })
+      .sort(function(a,b){ return ciclEcheance(a).localeCompare(ciclEcheance(b)); })[0];
+    if(nextExp){
+      html += '<p class="tiny" style="margin-top:8px;">Prochaine expiration : <b>'+esc(nextExp.nom)+'</b> ('+esc(nextExp.poste)+') le '+fmtDate(ciclEcheance(nextExp))+'</p>';
+    }
     if(uncovered.length){
       html += '<p class="tiny" style="margin-top:8px; color:var(--danger);">Aucun regleur a jour sur : '+uncovered.map(esc).join(', ')+'</p>';
     }
@@ -3776,6 +3789,16 @@ function chokkoWizardStepModal(){
     '</div></div>';
 }
 
+function chokkoLastEntryDate(ligne){
+  var entries = DATA.chokko.filter(function(e){ return e.ligne===ligne && (Object.keys(e.defects||{}).length || Object.keys(e.prod||{}).length); });
+  if(!entries.length) return null;
+  return entries.map(function(e){return e.date;}).sort().pop();
+}
+function chokkoSaisieDelay(ligne){
+  var last = chokkoLastEntryDate(ligne);
+  if(!last) return null;
+  return daysBetween(last, todayStr());
+}
 function chokkoSaisieView(){
   var ligne = chokkoLigne;
   var postes = chokkoPostes(ligne);
@@ -3783,7 +3806,19 @@ function chokkoSaisieView(){
   var weeks = chokkoWeekGroups(days);
   var monthAvg = chokkoMonthAverage(ligne, chokkoYear, chokkoMonth);
 
-  var html = '<div class="toolbar"><div class="left">'+
+  var staleLines = ['MCU1','MCU2','MCU3'].map(function(l){ return {ligne:l, delay:chokkoSaisieDelay(l)}; })
+    .filter(function(s){ return s.delay===null || s.delay>=2; });
+  var html = '';
+  if(staleLines.length){
+    html += '<div class="card" style="background:var(--warn-bg,#FBEEDC); border-color:var(--warn-border,#E8C088); margin-bottom:14px; display:flex; align-items:center; gap:10px;">'+
+      '<span style="font-size:18px;">⚠</span><div class="tiny">'+
+      staleLines.map(function(s){
+        return '<b>'+s.ligne+'</b> : '+(s.delay===null? 'aucune saisie enregistrée' : 'dernière saisie il y a '+s.delay+' jour'+(s.delay>1?'s':''));
+      }).join(' &nbsp;·&nbsp; ')+
+      '</div></div>';
+  }
+
+  html += '<div class="toolbar"><div class="left">'+
     '<label class="field" style="flex-direction:row; align-items:center; gap:8px;">Mois<select id="chokko-mois">'+MONTHS_FR.map(function(m,i){return '<option value="'+i+'"'+(i===chokkoMonth?' selected':'')+'>'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>';}).join('')+'</select></label>'+
     '<label class="field" style="flex-direction:row; align-items:center; gap:8px;">Année<input type="number" id="chokko-annee" value="'+chokkoYear+'" style="width:80px;"></label>'+
     '</div>'+
@@ -3938,6 +3973,23 @@ function chokkoColorSwatches(idPrefix, activeColor){
   '</div>';
 }
 
+function secteurConformiteStats(){
+  var today = new Date();
+  var y = today.getFullYear(), m = today.getMonth();
+  var lignes = ['MCU1','MCU2','MCU3'];
+  var totalProd = 0, totalNC = 0;
+  lignes.forEach(function(l){
+    var nb = daysInMonth(y, m);
+    for(var d=1; d<=nb; d++){
+      var dateStr = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      var t = chokkoDayTotals(l, dateStr);
+      totalProd += t.totalProd; totalNC += t.totalNC;
+    }
+  });
+  var bon = Math.max(0, totalProd-totalNC);
+  var pct = totalProd>0 ? (bon/totalProd*100) : null;
+  return {totalProd:totalProd, totalNC:totalNC, bon:bon, pct:pct};
+}
 function chokkoPosteColor(ligne, posteId){
   if(DATA.chokkoColors[ligne] && DATA.chokkoColors[ligne][posteId]) return DATA.chokkoColors[ligne][posteId];
   return posteBadgeColor(posteId).fg;
@@ -4457,6 +4509,33 @@ function render(){
 
 // Dashboard des secteurs hors MCU : perf + métro + actions + planning
 var secteurGaugeScore = null;
+function renderTodayBanner(){
+  var yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+  var yStr = yesterday.toISOString().slice(0,10);
+  var lignes = ['MCU1','MCU2','MCU3'];
+  var prodYesterday = lignes.reduce(function(s,l){ return s+chokkoDayTotals(l, yStr).totalProd; },0);
+
+  var pctsToday = lignes.map(function(l){ return chokkoDayTotals(l, todayStr()).pct; }).filter(function(v){return v!==null;});
+  var chokkoToday = pctsToday.length? pctsToday.reduce(function(a,b){return a+b;},0)/pctsToday.length : null;
+  var chokkoLvl = chokkoToday!==null ? chokkoLevel(chokkoToday) : 'neutral';
+
+  // Compteur d'alertes actives, tous domaines confondus
+  var nbAlerts = 0;
+  nbAlerts += DATA.actions.filter(isActionLate).length;
+  nbAlerts += DATA.esd.filter(function(p){ return esdStatus(p).level==='danger'; }).length;
+  nbAlerts += bySecteur(DATA.formations).filter(function(p){ return formationEcheance(p) && formationEcheance(p)<todayStr(); }).length;
+  DATA.cicl.forEach(function(rec){ if(ciclStatus(rec).level==='danger') nbAlerts++; });
+  nbAlerts += DATA.vidange.filter(function(v){ return vidangeStatus(v).level==='danger'; }).length;
+  nbAlerts += DATA.contamination.filter(function(c){ return c.statut==='collected'; }).length;
+  lignes.forEach(function(l){ var d = chokkoSaisieDelay(l); if(d===null || d>=2) nbAlerts++; });
+
+  return '<div class="card" style="margin-bottom:16px; display:flex; align-items:center; gap:28px; flex-wrap:wrap; padding:14px 20px;">'+
+    '<div class="tiny" style="font-weight:700; text-transform:uppercase; letter-spacing:0.03em; color:var(--text-faint);">Aujourd\'hui</div>'+
+    '<div><span class="tiny">Production hier</span> <b style="font-family:var(--mono); font-size:16px;">'+prodYesterday.toLocaleString('fr-FR')+'</b> <span class="tiny">pièces</span></div>'+
+    '<div><span class="tiny">Chokko aujourd\'hui</span> <b style="font-family:var(--mono); font-size:16px; color:var(--'+chokkoLvl+');">'+(chokkoToday!==null?chokkoToday.toFixed(1)+'%':'—')+'</b></div>'+
+    '<div><span class="tiny">Alertes actives</span> <b style="font-family:var(--mono); font-size:16px; color:'+(nbAlerts?'var(--danger)':'var(--ok)')+';">'+nbAlerts+'</b></div>'+
+  '</div>';
+}
 function renderSecteurDashboard(){
   var sec = getSecteur(currentSecteur);
   var lines = secteurLines();
@@ -4619,13 +4698,28 @@ RENDERERS.dashboard = function(){
     } else {
       deltaHtml = '<div class="tiny" style="margin-top:4px; color:var(--text-faint);">Pas encore de comparaison disponible (historique en cours de constitution)</div>';
     }
+    var cs = currentSecteur==='MCU' ? secteurConformiteStats() : null;
+    var pieHtml = '';
+    if(cs && cs.totalProd>0){
+      var pieLvl = chokkoLevel(cs.pct);
+      pieHtml = '<div style="display:flex; align-items:center; gap:14px; padding-left:24px; margin-left:24px; border-left:1px solid var(--border);">'+
+        '<div style="position:relative; width:76px; height:76px; flex-shrink:0;"><canvas id="chart-conformite-pie-mini"></canvas>'+
+          '<div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:700; font-size:14px; color:var(--'+pieLvl+');">'+cs.pct.toFixed(1)+'%</div>'+
+        '</div>'+
+        '<div>'+
+          '<div class="tiny" style="font-weight:700; margin-bottom:3px;">Conformité pièces</div>'+
+          '<div class="tiny"><span style="display:inline-block; width:8px; height:8px; border-radius:2px; background:#2E7D4F; margin-right:4px;"></span>'+cs.bon.toLocaleString('fr-FR')+' conf.</div>'+
+          '<div class="tiny"><span style="display:inline-block; width:8px; height:8px; border-radius:2px; background:#B23B2E; margin-right:4px;"></span>'+cs.totalNC.toLocaleString('fr-FR')+' NC</div>'+
+        '</div></div>';
+    }
     return '<div class="eyebrow" style="text-align:center; margin-bottom:14px; position:relative;">'+esc(t('title_score','Score de conformité - secteur '+currentSecteur))+
       '<button class="btn small" data-action="score-settings-open" style="position:absolute; right:0; top:-4px;" title="Choisir ce qui compte dans le score">⚙</button></div>'+
-      '<div style="display:flex; justify-content:center;">'+
+      '<div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap;">'+
         '<div style="position:relative; width:200px; height:200px;"><canvas id="chart-global-gauge"></canvas>'+
         '<div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">'+
           '<div style="font-family:var(--mono); font-weight:700; font-size:42px; color:var(--'+glvl+');">'+gs.score+'%</div>'+
         '</div></div>'+
+        pieHtml+
       '</div>'+
       '<div style="text-align:center; margin:6px 0 20px;">'+deltaHtml+'</div>'+
       '<div style="display:flex; gap:28px; flex-wrap:wrap; justify-content:center;">'+gs.detail.map(function(d){
@@ -4733,7 +4827,9 @@ RENDERERS.dashboard = function(){
       var lvl = chokkoLevel(avg);
       return '<div class="statcard s-'+lvl+'"><div class="eyebrow">'+l+'</div><div class="val">'+(avg!==null?avg.toFixed(0)+'%':'-')+'</div><div class="lbl">ce mois</div></div>';
     }).join('');
-    return '<div class="eyebrow" style="margin-bottom:8px;">'+esc(t('title_chokko','Suivi CHOKKO'))+'</div><div class="grid grid-3">'+cards+'</div>';
+    var stale = lignes.map(function(l){ return {ligne:l, delay:chokkoSaisieDelay(l)}; }).filter(function(s){ return s.delay===null || s.delay>=2; });
+    var staleHtml = stale.length? '<div class="tiny" style="margin-top:8px; color:var(--warn); font-weight:600;">⚠ '+stale.map(function(s){ return s.ligne+' : '+(s.delay===null?'aucune saisie':'retard '+s.delay+'j'); }).join(' · ')+'</div>' : '';
+    return '<div class="eyebrow" style="margin-bottom:8px;">'+esc(t('title_chokko','Suivi CHOKKO'))+'</div><div class="grid grid-3">'+cards+'</div>'+staleHtml;
   })();
 
   W.w_cicl = (function(){
@@ -4927,6 +5023,7 @@ RENDERERS.dashboard = function(){
   // ===== Assemblage avec disposition personnalisable =====
   var layout = getDashboardLayout().filter(function(w){ return !w.hidden; }); // "hidden" = supprimé du modèle
   var html = '';
+  html += renderTodayBanner();
   if(userSecteurs().length>1) html += renderMultiSecteurBanner();
 
   html += '<div id="dashboard-canvas">';
@@ -5014,6 +5111,9 @@ RENDERERS.planning = function(){
   }).join('')+'</select>';
   html += '<select id="flt-planning-type"><option value="">Tous les types</option>'+PLAN_TYPES.map(function(t){return '<option value="'+t[0]+'"'+(t[0]===planningTypeFilter?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select>';
   html += '<select id="flt-planning-ligne"><option value="">Toutes les lignes</option>'+secteurLines().map(function(l){return '<option value="'+l+'"'+(l===planningLigneFilter?' selected':'')+'>'+l+'</option>';}).join('')+'</select>';
+  html += '<button class="btn small'+(planningQuickFilter==='week'?' primary':'')+'" data-action="planning-quick-filter" data-quick="week">Cette semaine</button>';
+  html += '<button class="btn small'+(planningQuickFilter==='late'?' primary':'')+'" data-action="planning-quick-filter" data-quick="late">En retard</button>';
+  if(planningQuickFilter) html += '<button class="btn small" data-action="planning-quick-filter" data-quick="">✕ Filtre rapide</button>';
   html += '</div><div style="display:flex; gap:8px;"><button class="btn" data-action="planning-recur-open">🔁 Créer une récurrence</button><button class="btn primary" data-toggle-form="planning">+ Ajouter une échéance</button></div></div>';
 
   html += '<form class="entryform" id="form-planning" style="display:none">'+
@@ -5123,7 +5223,7 @@ function planningRow(p){
       '<button class="btn small" data-action="cancel-planning-edit">Annuler</button></td></tr>';
   }
   var resultCell = (p.resultatPct!==undefined && p.resultatPct!==null && p.resultatPct!=='') ? badge(scoreLevel(p.resultatPct), p.resultatPct+'%') : '-';
-  return '<tr data-row-ligne="'+p.ligne+'" data-row-type="'+p.type+'" data-row-mois="'+(p.echeance?p.echeance.slice(0,7):'')+'">'+
+  return '<tr data-row-ligne="'+p.ligne+'" data-row-type="'+p.type+'" data-row-mois="'+(p.echeance?p.echeance.slice(0,7):'')+'" data-row-echeance="'+(p.echeance||'')+'" data-row-done="'+(p.realisation?'1':'0')+'">'+
     '<td>'+badge(s.level,s.label)+'</td><td>'+ligneLabel+'</td><td>'+esc(typeLabel)+'</td><td>'+esc(val(p.mois))+'</td>'+
     '<td class="num">'+fmtDate(p.echeance)+'</td><td class="num">'+fmtDate(p.realisation)+'</td><td>'+resultCell+'</td><td>'+esc(val(p.responsable))+'</td>'+
     '<td>'+(p.realisation? '' : '<button class="btn small" data-action="mark-done" data-module="planning" data-id="'+p.id+'">Marquer réalisé</button>')+
@@ -5135,7 +5235,16 @@ function planningRow(p){
 RENDERERS.metro = function(){
   var METRO_SECT = bySecteur(DATA.metro);
   var rows = METRO_SECT.slice().sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
-  var html = '<div class="section"><div class="toolbar"><div class="left">';
+  var overall = metroOverall(secteurLines());
+  var html = '<div class="section">';
+  if(METRO_SECT.length){
+    html += '<div class="card" style="margin-bottom:14px; display:flex; align-items:center; gap:20px; flex-wrap:wrap;">'+
+      '<div>'+badge(overall.level, overall.label)+'</div>'+
+      '<div class="tiny">'+overall.late+' en retard · '+overall.urgent+' expire ce mois · '+overall.warn+' à prévoir sur '+METRO_SECT.length+' instrument(s)</div>'+
+      (overall.worstItem? '<div class="tiny">Le plus urgent : <b>'+esc(overall.worstItem.designation)+'</b> ('+esc(overall.worstItem.ligne)+', échéance '+fmtDate(overall.worstItem.echeance)+(overall.worstLabel?' - '+overall.worstLabel.text:'')+')</div>' : '')+
+    '</div>';
+  }
+  html += '<div class="toolbar"><div class="left">';
   html += '<select id="flt-metro-ligne"><option value="">Toutes les lignes</option>'+secteurLines().map(function(l){return '<option value="'+l+'">'+l+'</option>';}).join('')+'</select>';
   html += '</div><div style="display:flex; gap:8px;"><button class="btn" data-action="export" data-module="metro">Envoyer un mail de rappel</button><button class="btn primary" data-toggle-form="metro">+ Ajouter un instrument</button></div></div>';
 
@@ -5591,6 +5700,7 @@ var alertFilterModule = '';
 var planningMoisFilter;
 var planningTypeFilter = '';
 var planningLigneFilter = '';
+var planningQuickFilter = ''; // '' | 'week' | 'late'
 
 function computeAlerts(){
   var alerts = [];
@@ -6524,32 +6634,35 @@ function renderGlobalGauge(score){
 }
 var chartTrend=null;
 var chartConformitePie=null;
+var chartConformitePieMini=null;
 function renderConformitePieChart(){
   if(typeof Chart==='undefined') return;
-  var ctx = document.getElementById('chart-conformite-pie');
-  if(!ctx) return;
-  if(chartConformitePie){ chartConformitePie.destroy(); chartConformitePie=null; }
-  try{
-    var today = new Date();
-    var y = today.getFullYear(), m = today.getMonth();
-    var lignes = ['MCU1','MCU2','MCU3'];
-    var totalProd = 0, totalNC = 0;
-    lignes.forEach(function(l){
-      var nb = daysInMonth(y, m);
-      for(var d=1; d<=nb; d++){
-        var dateStr = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-        var t = chokkoDayTotals(l, dateStr);
-        totalProd += t.totalProd; totalNC += t.totalNC;
-      }
-    });
-    if(totalProd===0) return; // le HTML affiche déjà "Aucune donnée" dans ce cas, rien à dessiner
-    var bon = Math.max(0, totalProd-totalNC);
-    chartConformitePie = new Chart(ctx, {
-      type:'doughnut',
-      data:{datasets:[{data:[bon, totalNC], backgroundColor:['#2E7D4F','#B23B2E'], borderWidth:2, borderColor:'#fff'}]},
-      options:{responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{legend:{display:false}, tooltip:{enabled:true}}}
-    });
-  }catch(err){ console.error('conformite pie error', err); }
+  var cs = secteurConformiteStats();
+  if(cs.totalProd===0) return; // le HTML affiche déjà "Aucune donnée" dans ce cas, rien à dessiner
+
+  var ctxOld = document.getElementById('chart-conformite-pie');
+  if(ctxOld){
+    if(chartConformitePie){ chartConformitePie.destroy(); chartConformitePie=null; }
+    try{
+      chartConformitePie = new Chart(ctxOld, {
+        type:'doughnut',
+        data:{datasets:[{data:[cs.bon, cs.totalNC], backgroundColor:['#2E7D4F','#B23B2E'], borderWidth:2, borderColor:'#fff'}]},
+        options:{responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{legend:{display:false}, tooltip:{enabled:true}}}
+      });
+    }catch(err){ console.error('conformite pie error', err); }
+  }
+
+  var ctxMini = document.getElementById('chart-conformite-pie-mini');
+  if(ctxMini){
+    if(chartConformitePieMini){ chartConformitePieMini.destroy(); chartConformitePieMini=null; }
+    try{
+      chartConformitePieMini = new Chart(ctxMini, {
+        type:'doughnut',
+        data:{datasets:[{data:[cs.bon, cs.totalNC], backgroundColor:['#2E7D4F','#B23B2E'], borderWidth:2, borderColor:'#fff'}]},
+        options:{responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{legend:{display:false}, tooltip:{enabled:true}}}
+      });
+    }catch(err){ console.error('conformite pie mini error', err); }
+  }
 }
 var chartChokkoTrend=null;
 function renderChokkoTrendChart(){
@@ -7245,6 +7358,8 @@ app.addEventListener('click', async function(e){
   }
   if(e.target.closest('[data-action="chokko-import-open"]')){ chokkoImportOpen = true; chokkoImportSummary = null; render(); return; }
   if(e.target.closest('[data-action="planning-recur-open"]')){ planningRecurOpen = true; planningRecurSummary = null; render(); return; }
+  var quickFilterBtn = e.target.closest('[data-action="planning-quick-filter"]');
+  if(quickFilterBtn){ planningQuickFilter = quickFilterBtn.dataset.quick; render(); return; }
   if(e.target.closest('[data-action="planning-recur-cancel"]')){ planningRecurOpen = false; render(); return; }
   if(e.target.classList && e.target.classList.contains('planning-recur-backdrop')){ planningRecurOpen = false; render(); return; }
   if(e.target.closest('[data-action="planning-recur-generate"]')){
@@ -7587,8 +7702,18 @@ function applyPlanningFilter(){
   var t = document.getElementById('flt-planning-type').value;
   var l = document.getElementById('flt-planning-ligne').value;
   var m = document.getElementById('flt-planning-mois').value;
+  var today = todayStr();
+  var wk = isoWeekInfo(today);
   Array.prototype.forEach.call(document.querySelectorAll('#planning-rows tr[data-row-ligne]'), function(tr){
-    var show = (!t || tr.dataset.rowType===t) && (!l || tr.dataset.rowLigne===l) && (!m || tr.dataset.rowMois===m);
+    var show = (!t || tr.dataset.rowType===t) && (!l || tr.dataset.rowLigne===l);
+    if(planningQuickFilter==='late'){
+      show = show && tr.dataset.rowDone==='0' && tr.dataset.rowEcheance && tr.dataset.rowEcheance<today;
+    } else if(planningQuickFilter==='week'){
+      var ech = tr.dataset.rowEcheance;
+      show = show && !!ech && isoWeekInfo(ech).week===wk.week && isoWeekInfo(ech).year===wk.year;
+    } else {
+      show = show && (!m || tr.dataset.rowMois===m);
+    }
     tr.style.display = show? '' : 'none';
   });
 }
@@ -7724,6 +7849,8 @@ async function init(){
 init();
 
 })();
+
+
 
 
 
