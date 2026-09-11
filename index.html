@@ -448,6 +448,9 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
+
+
 (function(){
 "use strict";
 
@@ -1085,6 +1088,29 @@ function field(type, name, label, options, noDefault){
   }
   var v = (type==='date' && !noDefault) ? ' value="'+todayStr()+'"' : '';
   return '<label class="field">'+esc(label)+'<input type="'+type+'" name="'+name+'"'+v+'></label>';
+}
+
+// Champ responsable reutilisable : liste des comptes existants + option "Autre" (personne hors application).
+// idPrefix sert a generer des ids uniques par formulaire (ex: 'metro', 'aa', 'pr').
+function responsableField(idPrefix, selectName, autreName, label, allowEmpty){
+  var accountsSorted = DATA.accounts.filter(function(a){ return a.displayName!=='Administrateur'; })
+    .sort(function(a,b){return a.displayName.localeCompare(b.displayName,'fr',{sensitivity:'base'});});
+  return '<label class="field">'+esc(label||'Responsable')+'<select name="'+selectName+'" class="responsable-select-autre" id="'+idPrefix+'-responsable-select" data-wrap="'+idPrefix+'-responsable-autre-wrap">'+
+      (allowEmpty? '<option value="">— Non assigné —</option>' : '')+
+      accountsSorted.map(function(a){return '<option value="'+esc(a.displayName)+'">'+esc(a.displayName)+'</option>';}).join('')+
+      '<option value="__autre__">Autre (personne hors application)…</option>'+
+    '</select></label>'+
+    '<label class="field" id="'+idPrefix+'-responsable-autre-wrap" style="display:none;">Nom du responsable<input type="text" name="'+autreName+'" id="'+idPrefix+'-responsable-autre"></label>';
+}
+// Resout la valeur finale a partir d'un couple select/texte "Autre" (utilise hors des formulaires generiques)
+function resolveResponsableFromInputs(selectId, autreId){
+  var sel = document.getElementById(selectId);
+  if(!sel) return '';
+  if(sel.value==='__autre__'){
+    var autre = document.getElementById(autreId);
+    return autre ? autre.value.trim() : '';
+  }
+  return sel.value;
 }
 
 // ---------- PROPRETE ----------
@@ -2591,11 +2617,7 @@ RENDERERS.actions = function(){
   html += '<form class="entryform" id="form-actions" style="display:none">'+
     field('text','description','Description de l\'action') +
     field('select','ligne','Ligne', secteurLines().map(function(l){return [l,l];})) +
-    '<label class="field">Responsable<select name="responsable" id="af-responsable-select">'+
-      DATA.accounts.slice().sort(function(a,b){return a.displayName.localeCompare(b.displayName,'fr',{sensitivity:'base'});}).map(function(a){return '<option value="'+esc(a.displayName)+'">'+esc(a.displayName)+'</option>';}).join('')+
-      '<option value="__autre__">Autre (personne hors application)…</option>'+
-    '</select></label>'+
-    '<label class="field" id="af-responsable-autre-wrap" style="display:none;">Nom du responsable<input type="text" name="responsableAutre" id="af-responsable-autre"></label>'+
+    responsableField('af','responsable','responsableAutre') +
     field('date','echeance','Échéance') +
     field('select','statut','Statut', ACTION_STATUSES) +
     '<div class="actions-row"><button type="button" class="btn" data-cancel-form="actions">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'+
@@ -5172,7 +5194,7 @@ RENDERERS.planning = function(){
     field('text','mois','Mois (libellé)') +
     field('date','echeance','Date échéance') +
     field('date','realisation','Date de réalisation (si fait)', null, true) +
-    field('text','responsable','Responsable') +
+    responsableField('plf','responsable','responsableAutre') +
     field('number','resultatPct','Résultat (%) - pour audits de perf', null, true) +
     '<div class="actions-row"><button type="button" class="btn" data-cancel-form="planning">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'+
   '</form>';
@@ -5210,7 +5232,7 @@ function planningRecurModal(){
       '<label class="field">Première échéance<input type="date" id="pr-start" value="'+todayStr()+'"></label>'+
       '<label class="field">Nombre d\'occurrences<input type="number" id="pr-count" min="1" max="52" value="12" style="width:100px;"></label>'+
     '</div>'+
-    '<label class="field" style="margin-bottom:14px;">Responsable <span class="tiny">(optionnel)</span><input type="text" id="pr-responsable"></label>'+
+    responsableField('pr','pr-responsable-name','pr-responsable-autre-name','Responsable (optionnel)', true)+
     (planningRecurSummary? '<div class="card" style="background:var(--ok-bg); border-color:var(--ok-border); margin-bottom:12px; font-size:12.5px;">'+esc(planningRecurSummary)+'</div>' : '')+
     '<div class="actions-row"><button class="btn" data-action="planning-recur-cancel">Fermer</button><button class="btn primary" data-action="planning-recur-generate">Générer les échéances</button></div>'+
     '</div></div>';
@@ -5224,7 +5246,7 @@ async function handlePlanningRecurGenerate(){
   var interval = freqSel==='custom' ? Math.max(1, Number(document.getElementById('pr-custom-days').value)||7) : Number(freqSel);
   var start = document.getElementById('pr-start').value || todayStr();
   var count = Math.max(1, Math.min(52, Number(document.getElementById('pr-count').value)||1));
-  var responsable = document.getElementById('pr-responsable').value.trim();
+  var responsable = resolveResponsableFromInputs('pr-responsable-select','pr-responsable-autre');
   var refVal = type==='labo' ? document.getElementById('pr-ref').value : null;
 
   var dates = [];
@@ -5527,7 +5549,7 @@ function ateqActionForm(){
     '<label class="field">Ligne<select id="aa-ligne">'+['MCU1','MCU2'].map(function(l){return '<option value="'+l+'">'+l+'</option>';}).join('')+'</select></label>'+
     '<label class="field">Date de la crise (jour du pic de défauts)<input type="date" id="aa-dateCrise" value="'+todayStr()+'"></label>'+
     '<label class="field" style="grid-column:1/-1;">Description de l\'action corrective<textarea id="aa-description" rows="2" placeholder="Ex. : confinement et tri des pièces produites depuis 06h, alerte responsable ligne..."></textarea></label>'+
-    '<label class="field">Responsable<input type="text" id="aa-responsable"></label>'+
+    responsableField('aa','aa-responsable-name','aa-responsable-autre-name')+
     '<label class="field">Échéance<input type="date" id="aa-echeance" value="'+todayStr()+'"></label>'+
     '</div><div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="cancel-ateq-action">Annuler</button><button class="btn primary" data-action="save-ateq-action">Enregistrer l\'action</button></div></div>';
 }
@@ -5537,7 +5559,7 @@ async function handleSaveAteqAction(){
   var entry = {
     id: uid('act'), origine:'ATEQ', secteur:currentSecteur, description:description,
     ligne: document.getElementById('aa-ligne').value,
-    responsable: document.getElementById('aa-responsable').value,
+    responsable: resolveResponsableFromInputs('aa-responsable-select','aa-responsable-autre'),
     echeance: document.getElementById('aa-echeance').value || null,
     dateCrise: document.getElementById('aa-dateCrise').value || todayStr(),
     statut:'planifiee', dateCreation: todayStr()
@@ -5856,7 +5878,7 @@ function renderPostitModal(){
       '<label class="field">Échéance <span class="tiny">(optionnel)</span><input type="date" id="pm-duedate" value="'+esc(dueDate)+'"></label>'+
     '</div>'+
     '<datalist id="pm-assigned-list">'+
-      DATA.accounts.map(function(a){ return '<option value="'+esc(a.displayName)+'">'; }).join('')+
+      DATA.accounts.filter(function(a){ return a.displayName!=='Administrateur'; }).map(function(a){ return '<option value="'+esc(a.displayName)+'">'; }).join('')+
     '</datalist>'+
     '<label class="field" style="margin-bottom:4px;">Couleur</label>'+
     '<div style="display:flex; gap:8px; margin-bottom:18px;" id="pm-color-row" data-selected="'+color+'">'+
@@ -6282,9 +6304,8 @@ function renderLoginOverlay(error){
   var sidebarColor = (DATA.uiSettings && DATA.uiSettings.sidebarColor) || null;
   var leftStyle = sidebarColor ? 'background:'+sidebarColor+'; color:'+contrastTextColor(sidebarColor)+';' : '';
 
-  var lastAccId = null;
-  try{ lastAccId = localStorage.getItem('mcu_last_account_v1'); }catch(e){}
-  var accountsSorted = DATA.accounts.slice().sort(function(a,b){ return a.displayName.localeCompare(b.displayName,'fr',{sensitivity:'base'}); });
+  var lastUsername = '';
+  try{ lastUsername = localStorage.getItem('mcu_last_username_v1') || ''; }catch(e){}
 
   el.innerHTML =
     '<div class="login-card">'+
@@ -6294,7 +6315,7 @@ function renderLoginOverlay(error){
     '</div>'+
     '<div class="login-box"><h1>Connexion</h1><div class="sub">Connectez-vous pour continuer</div>'+
     '<div class="login-error">'+(error?esc(error):'')+'</div>'+
-    '<label class="field">Compte<select id="login-username">'+accountsSorted.map(function(a){return '<option value="'+a.id+'"'+(a.id===lastAccId?' selected':'')+'>'+esc(a.displayName)+' ('+esc(a.username)+')</option>';}).join('')+'</select></label>'+
+    '<label class="field">Identifiant<input type="text" id="login-username" autocomplete="username" value="'+esc(lastUsername)+'"></label>'+
     '<label class="field">Mot de passe'+
       '<div class="login-pwd-wrap">'+
         '<input type="password" id="login-password">'+
@@ -6314,13 +6335,13 @@ document.addEventListener('click', function(e){
   }
 });
 async function handleLogin(){
-  var accId = document.getElementById('login-username').value;
+  var username = document.getElementById('login-username').value.trim();
   var pwd = document.getElementById('login-password').value;
   var btn = document.getElementById('login-submit');
   await withBtnLoading(btn, async function(){
-    var acc = DATA.accounts.find(function(a){ return a.id===accId; });
-    if(!acc || acc.password!==pwd){ renderLoginOverlay('Mot de passe incorrect.'); return; }
-    try{ localStorage.setItem('mcu_last_account_v1', accId); }catch(e){}
+    var acc = DATA.accounts.find(function(a){ return a.username.toLowerCase()===username.toLowerCase(); });
+    if(!acc || acc.password!==pwd){ renderLoginOverlay('Identifiant ou mot de passe incorrect.'); return; }
+    try{ localStorage.setItem('mcu_last_username_v1', acc.username); }catch(e){}
     currentUser = acc;
     setSession(acc.id);
     document.getElementById('login-overlay').classList.add('hidden');
@@ -6951,7 +6972,7 @@ async function handleFormSubmit(form){
     }catch(err){ alert(err.message); return; }
   }
   if(mod==='ateq'){ entry.nbDefauts = parseInt(entry.nbDefauts||0,10); entry.nb2nd = parseInt(entry.nb2nd||0,10); }
-  if(mod==='actions' && entry.responsable==='__autre__'){
+  if(['actions','planning','metro'].indexOf(mod)>=0 && entry.responsable==='__autre__'){
     entry.responsable = (entry.responsableAutre||'').trim() || 'Non précisé';
   }
   delete entry.responsableAutre;
@@ -7644,8 +7665,8 @@ app.addEventListener('change', async function(e){
     ciclApplyDates[e.target.dataset.id] = e.target.value;
     return;
   }
-  if(e.target.id==='af-responsable-select'){
-    var autreWrap = document.getElementById('af-responsable-autre-wrap');
+  if(e.target.classList && e.target.classList.contains('responsable-select-autre')){
+    var autreWrap = document.getElementById(e.target.dataset.wrap);
     if(autreWrap) autreWrap.style.display = (e.target.value==='__autre__') ? '' : 'none';
     return;
   }
@@ -7986,106 +8007,6 @@ async function init(){
 init();
 
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 </script>
