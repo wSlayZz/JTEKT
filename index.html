@@ -451,6 +451,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -4656,52 +4657,78 @@ function renderSecteurDashboard(){
 }
 
 // Bannière consolidée pour les utilisateurs multi-secteurs (responsable qualité)
+function secteurPropreteScore(sid, curY, curM){
+  if(sid!=='MCU') return {score:null, label:'propreté'};
+  var rs = DATA.resultats.filter(function(r){ return r.resultatPct!==null && r.resultatPct!==undefined; });
+  var moisLabel = MONTHS_FR[curM].charAt(0).toUpperCase()+MONTHS_FR[curM].slice(1);
+  var monthScores = rs.filter(function(r){ return r.mois===moisLabel && (r.annee===curY || r.annee===undefined); });
+  if(monthScores.length){
+    return {score:Math.round(monthScores.reduce(function(s,r){return s+r.resultatPct;},0)/monthScores.length), label:'propreté du mois'};
+  }
+  var sorted = rs.slice().sort(function(a,b){
+    var ay=a.annee||curY, by=b.annee||curY, am=MONTHS_FR.indexOf(a.mois.toLowerCase()), bm=MONTHS_FR.indexOf(b.mois.toLowerCase());
+    return (by*12+bm)-(ay*12+am);
+  });
+  if(sorted.length){
+    var lastMois = sorted[0].mois, lastAnnee = sorted[0].annee||curY;
+    var lastScores = rs.filter(function(r){ return r.mois===lastMois && (r.annee||curY)===lastAnnee; });
+    return {score:Math.round(lastScores.reduce(function(s,r){return s+r.resultatPct;},0)/lastScores.length), label:'propreté - '+lastMois};
+  }
+  return {score:null, label:'propreté'};
+}
+function secteurPerfScore(sid, curY, curM){
+  var perfAll = DATA.perf.filter(function(r){ return (r.secteur||'')===sid && r.resultatPct!==null && r.resultatPct!==undefined; });
+  var perfM = perfAll.filter(function(r){ return r.annee===curY && r.mois===curM; });
+  if(perfM.length){
+    return {score:Math.round(perfM.reduce(function(s,r){return s+r.resultatPct;},0)/perfM.length), label:'perf du mois'};
+  }
+  if(perfAll.length){
+    var sortedP = perfAll.slice().sort(function(a,b){ return (b.annee*12+b.mois)-(a.annee*12+a.mois); });
+    var lastY = sortedP[0].annee, lastM = sortedP[0].mois;
+    var lastP = perfAll.filter(function(r){ return r.annee===lastY && r.mois===lastM; });
+    return {score:Math.round(lastP.reduce(function(s,r){return s+r.resultatPct;},0)/lastP.length), label:'perf - '+(MONTHS_FR[lastM].charAt(0).toUpperCase()+MONTHS_FR[lastM].slice(1))};
+  }
+  return {score:null, label:'perf'};
+}
+function secteurMetroScore(sid){
+  var metroSect = DATA.metro.filter(function(e){ return (e.secteur||'MCU')===sid; });
+  if(!metroSect.length) return {score:null, label:'métrologie'};
+  var late = metroSect.filter(function(e){ return metroStatus(e).level==='danger'; }).length;
+  return {score:Math.round((1-late/metroSect.length)*100), label:'métro. à jour'};
+}
+function secteurAllScore(sid, curY, curM){
+  var parts = [];
+  [secteurPropreteScore(sid,curY,curM), secteurPerfScore(sid,curY,curM), secteurMetroScore(sid)].forEach(function(r){
+    if(r.score!==null) parts.push(r.score);
+  });
+  if(!parts.length) return {score:null, label:'aucune donnée'};
+  return {score:Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length), label:'score global'};
+}
+var MULTISECTEUR_METRIC_OPTIONS = [['auto','Automatique (propreté MCU, perf ailleurs)'],['propr','Propreté'],['perf','Perf'],['metro','Métrologie'],['all','Tout (moyenne)']];
 function renderMultiSecteurBanner(){
   var us = userSecteurs();
   var curY = Number(todayStr().split('-')[0]);
   var curM = Number(todayStr().split('-')[1])-1;
+  var metric = (DATA.uiSettings && DATA.uiSettings.multiSecteurMetric) || 'auto';
   var html = '<div class="section card" style="margin-bottom:18px; border:2px solid var(--ok);">';
-  html += '<div class="eyebrow" style="margin-bottom:10px;">Tous les secteurs</div>';
+  html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">'+
+    '<div class="eyebrow">Tous les secteurs</div>'+
+    '<label class="tiny" style="display:flex; align-items:center; gap:6px;">Indicateur affiché<select id="multisecteur-metric-select" style="font-size:12px; padding:3px 6px;">'+
+      MULTISECTEUR_METRIC_OPTIONS.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===metric?' selected':'')+'>'+o[1]+'</option>';}).join('')+
+    '</select></label>'+
+  '</div>';
   html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:10px;">';
   us.forEach(function(sid){
     var sec = getSecteur(sid);
     if(!sec) return;
-    var score = null, label = '', periodLabel = '';
-    if(sid==='MCU'){
-      // Score propreté : mois en cours, sinon le mois le plus récent disponible
-      var rs = DATA.resultats.filter(function(r){ return r.resultatPct!==null && r.resultatPct!==undefined; });
-      var moisLabel = MONTHS_FR[curM].charAt(0).toUpperCase()+MONTHS_FR[curM].slice(1);
-      var monthScores = rs.filter(function(r){ return r.mois===moisLabel && (r.annee===curY || r.annee===undefined); });
-      if(monthScores.length){
-        score = Math.round(monthScores.reduce(function(s,r){return s+r.resultatPct;},0)/monthScores.length);
-        periodLabel = 'propreté du mois';
-      } else {
-        var sorted = rs.slice().sort(function(a,b){
-          var ay=a.annee||curY, by=b.annee||curY, am=MONTHS_FR.indexOf(a.mois.toLowerCase()), bm=MONTHS_FR.indexOf(b.mois.toLowerCase());
-          return (by*12+bm)-(ay*12+am);
-        });
-        if(sorted.length){
-          var lastMois = sorted[0].mois, lastAnnee = sorted[0].annee||curY;
-          var lastScores = rs.filter(function(r){ return r.mois===lastMois && (r.annee||curY)===lastAnnee; });
-          score = Math.round(lastScores.reduce(function(s,r){return s+r.resultatPct;},0)/lastScores.length);
-          periodLabel = 'propreté - '+lastMois;
-        }
-      }
-    } else {
-      var perfAll = DATA.perf.filter(function(r){ return (r.secteur||'')===sid && r.resultatPct!==null && r.resultatPct!==undefined; });
-      var perfM = perfAll.filter(function(r){ return r.annee===curY && r.mois===curM; });
-      if(perfM.length){
-        score = Math.round(perfM.reduce(function(s,r){return s+r.resultatPct;},0)/perfM.length);
-        periodLabel = 'perf du mois';
-      } else if(perfAll.length){
-        var sortedP = perfAll.slice().sort(function(a,b){ return (b.annee*12+b.mois)-(a.annee*12+a.mois); });
-        var lastY = sortedP[0].annee, lastM = sortedP[0].mois;
-        var lastP = perfAll.filter(function(r){ return r.annee===lastY && r.mois===lastM; });
-        score = Math.round(lastP.reduce(function(s,r){return s+r.resultatPct;},0)/lastP.length);
-        periodLabel = 'perf - '+(MONTHS_FR[lastM].charAt(0).toUpperCase()+MONTHS_FR[lastM].slice(1));
-      }
-    }
-    if(!periodLabel) periodLabel = sid==='MCU' ? 'propreté' : 'perf';
+    var result;
+    if(metric==='auto'){
+      result = sid==='MCU' ? secteurPropreteScore(sid,curY,curM) : secteurPerfScore(sid,curY,curM);
+    } else if(metric==='propr'){ result = secteurPropreteScore(sid,curY,curM); }
+    else if(metric==='perf'){ result = secteurPerfScore(sid,curY,curM); }
+    else if(metric==='metro'){ result = secteurMetroScore(sid); }
+    else { result = secteurAllScore(sid,curY,curM); }
+    var score = result.score, periodLabel = result.label;
     var metroLate = DATA.metro.filter(function(e){ return (e.secteur||'MCU')===sid && e.echeance && e.echeance.slice(0,7) < todayStr().slice(0,7); }).length;
     var actLate = DATA.actions.filter(function(a){ return (a.secteur||'MCU')===sid && isActionLate(a); }).length;
     var lvl = score===null? 'neutral' : scoreLevel(score);
@@ -7670,6 +7697,13 @@ app.addEventListener('change', async function(e){
     if(autreWrap) autreWrap.style.display = (e.target.value==='__autre__') ? '' : 'none';
     return;
   }
+  if(e.target.id==='multisecteur-metric-select'){
+    if(!DATA.uiSettings) DATA.uiSettings = {sidebarColor:null, iconStyle:'svg'};
+    DATA.uiSettings.multiSecteurMetric = e.target.value;
+    await save('uiSettings');
+    render();
+    return;
+  }
   if(e.target.id==='pr-type'){
     var refWrap = document.getElementById('pr-ref-wrap');
     if(refWrap) refWrap.style.display = (e.target.value==='labo') ? '' : 'none';
@@ -8007,6 +8041,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
