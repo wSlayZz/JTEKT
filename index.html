@@ -447,6 +447,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -2590,7 +2591,11 @@ RENDERERS.actions = function(){
   html += '<form class="entryform" id="form-actions" style="display:none">'+
     field('text','description','Description de l\'action') +
     field('select','ligne','Ligne', secteurLines().map(function(l){return [l,l];})) +
-    field('text','responsable','Responsable') +
+    '<label class="field">Responsable<select name="responsable" id="af-responsable-select">'+
+      DATA.accounts.slice().sort(function(a,b){return a.displayName.localeCompare(b.displayName,'fr',{sensitivity:'base'});}).map(function(a){return '<option value="'+esc(a.displayName)+'">'+esc(a.displayName)+'</option>';}).join('')+
+      '<option value="__autre__">Autre (personne hors application)…</option>'+
+    '</select></label>'+
+    '<label class="field" id="af-responsable-autre-wrap" style="display:none;">Nom du responsable<input type="text" name="responsableAutre" id="af-responsable-autre"></label>'+
     field('date','echeance','Échéance') +
     field('select','statut','Statut', ACTION_STATUSES) +
     '<div class="actions-row"><button type="button" class="btn" data-cancel-form="actions">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'+
@@ -3834,7 +3839,7 @@ function chokkoSaisieView(){
     '</div>'+
     '<div style="display:flex; gap:12px; margin-left:auto;">'+
       '<div class="statcard" style="padding:8px 14px;"><div class="tiny">Chokko du mois</div><div id="chokko-month-avg" style="font-family:var(--mono); font-weight:700; font-size:20px; color:var(--'+chokkoLevel(monthAvg)+');">'+(monthAvg!==null?monthAvg.toFixed(1)+'%':'-')+'</div></div>'+
-      '<div class="statcard" style="padding:8px 14px;"><div class="tiny">Coût par pièce</div><div style="display:flex; align-items:baseline; gap:4px;"><input type="number" id="chokko-unit-cost" min="0" step="0.01" placeholder="0.00" value="'+unitCost+'" style="width:75px; font-family:var(--mono); font-weight:700; font-size:20px; border:none; background:transparent; padding:0;"><span class="tiny">€</span></div></div>'+
+      '<div class="statcard" style="padding:8px 14px;"><div class="tiny">Coût par pièce</div><div style="display:flex; align-items:baseline; gap:4px;"><input type="number" id="chokko-unit-cost" min="0" step="0.01" placeholder="0.00" value="'+unitCost+'" style="width:75px; font-family:var(--mono); font-weight:700; font-size:20px; border:none; background:transparent; padding:0; color:var(--danger);"><span class="tiny" style="color:var(--danger);">€</span></div></div>'+
     '</div>'+
   '</div>';
 
@@ -3859,7 +3864,8 @@ function chokkoSaisieView(){
       '</td>';
     html += days.map(function(d){
       var e = chokkoEntry(ligne, d.date);
-      var v = e && e.defects[posteId]!==undefined ? e.defects[posteId] : '';
+      var vRaw = e && e.defects[posteId]!==undefined ? e.defects[posteId] : '';
+      var v = vRaw===0 ? '' : vRaw;
       var hl = DATA.chokkoHighlights[ligne] && DATA.chokkoHighlights[ligne][d.date+'_'+posteId];
       var textColor = hl? contrastTextColor(hl) : '';
       var tdStyle = hl? 'background:'+hl+';' : '';
@@ -4123,7 +4129,8 @@ function refreshChokkoTotals(ligne, excludeElId){
 }
 async function handleChokkoDefectChange(ligne, date, poste, val){
   var e = chokkoGetOrCreate(ligne, date);
-  if(val===''){ delete e.defects[poste]; } else { e.defects[poste] = Math.max(0, parseInt(val,10)||0); }
+  var num = parseInt(val,10);
+  if(val==='' || !num){ delete e.defects[poste]; } else { e.defects[poste] = Math.max(0, num); }
   await save('chokko');
   refreshChokkoTotals(ligne);
   // Le poste OP1120 "Contrôle ATEQ" alimente directement l'onglet ATEQ (évite une double saisie).
@@ -6944,6 +6951,10 @@ async function handleFormSubmit(form){
     }catch(err){ alert(err.message); return; }
   }
   if(mod==='ateq'){ entry.nbDefauts = parseInt(entry.nbDefauts||0,10); entry.nb2nd = parseInt(entry.nb2nd||0,10); }
+  if(mod==='actions' && entry.responsable==='__autre__'){
+    entry.responsable = (entry.responsableAutre||'').trim() || 'Non précisé';
+  }
+  delete entry.responsableAutre;
   if(mod==='resultats'){ entry.resultatPct = parseFloat(entry.resultatPct||0); entry.semaine = entry.semaine? Number(entry.semaine) : null; entry.annee = resultsYear; }
   if(mod==='planning'){ entry.resultatPct = (entry.resultatPct!==undefined && entry.resultatPct!=='') ? parseFloat(entry.resultatPct) : null; }
   // Pour type=labo : lire la ref sélectionnée et forcer la ligne correspondante
@@ -7633,6 +7644,11 @@ app.addEventListener('change', async function(e){
     ciclApplyDates[e.target.dataset.id] = e.target.value;
     return;
   }
+  if(e.target.id==='af-responsable-select'){
+    var autreWrap = document.getElementById('af-responsable-autre-wrap');
+    if(autreWrap) autreWrap.style.display = (e.target.value==='__autre__') ? '' : 'none';
+    return;
+  }
   if(e.target.id==='pr-type'){
     var refWrap = document.getElementById('pr-ref-wrap');
     if(refWrap) refWrap.style.display = (e.target.value==='labo') ? '' : 'none';
@@ -7692,7 +7708,11 @@ app.addEventListener('change', async function(e){
     return;
   }
   var chokkoDefectInput = e.target.closest('.chokko-defect-cell');
-  if(chokkoDefectInput){ await handleChokkoDefectChange(chokkoDefectInput.dataset.ligne, chokkoDefectInput.dataset.date, chokkoDefectInput.dataset.poste, chokkoDefectInput.value); return; }
+  if(chokkoDefectInput){
+    await handleChokkoDefectChange(chokkoDefectInput.dataset.ligne, chokkoDefectInput.dataset.date, chokkoDefectInput.dataset.poste, chokkoDefectInput.value);
+    if(chokkoDefectInput.value==='0') chokkoDefectInput.value = '';
+    return;
+  }
   var chokkoProdInput = e.target.closest('.chokko-prod-cell');
   if(chokkoProdInput){ await handleChokkoProdChange(chokkoProdInput.dataset.ligne, chokkoProdInput.dataset.date, chokkoProdInput.dataset.team, chokkoProdInput.value); return; }
   var chokkoProdTotalInput = e.target.closest('.chokko-prodtotal-cell');
@@ -7966,6 +7986,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
