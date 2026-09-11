@@ -4704,7 +4704,7 @@ function secteurAllScore(sid, curY, curM){
   if(!parts.length) return {score:null, label:'aucune donnée'};
   return {score:Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length), label:'score global'};
 }
-var MULTISECTEUR_METRIC_OPTIONS = [['auto','Automatique (propreté MCU, perf ailleurs)'],['propr','Propreté'],['perf','Perf'],['metro','Métrologie'],['all','Tout (moyenne)']];
+var MULTISECTEUR_METRIC_OPTIONS = [['auto','Automatique'],['propr','Propreté'],['perf','Perf'],['metro','Métrologie'],['all','Tout']];
 function renderMultiSecteurBanner(){
   var us = userSecteurs();
   var curY = Number(todayStr().split('-')[0]);
