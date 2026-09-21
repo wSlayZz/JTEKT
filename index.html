@@ -454,6 +454,8 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
+
 (function(){
 "use strict";
 
@@ -3501,6 +3503,22 @@ function chokkoLevel(pct){
   if(pct>=CHOKKO_DANGER) return 'warn';
   return 'danger';
 }
+function chokkoObjectif(ligne){ return ligne==='MCU3' ? 98 : 99; }
+function chokkoLevelVsObjectif(pct, ligne){
+  if(pct===null || pct===undefined) return 'neutral';
+  var obj = chokkoObjectif(ligne);
+  if(pct>=obj) return 'ok';
+  if(pct>=obj-2) return 'warn';
+  return 'danger';
+}
+function chokkoCostObjectif(ligne){ return ligne==='MCU3' ? 0.050 : 0.035; }
+function chokkoCostLevel(cost, ligne){
+  if(cost===null || cost===undefined || cost==='' || isNaN(cost)) return 'neutral';
+  var obj = chokkoCostObjectif(ligne);
+  if(cost<=obj) return 'ok';
+  if(cost<=obj*1.15) return 'warn';
+  return 'danger';
+}
 function chokkoMonthDays(ligne, year, monthIdx){
   var nb = daysInMonth(year, monthIdx);
   var days = [];
@@ -3546,17 +3564,18 @@ RENDERERS.chokko = function(){
     '<button class="btn small'+(chokkoView==='recap'?' primary':'')+'" data-action="chokko-view" data-view="recap">Récapitulatif annuel</button>'+
     '</div>'+
     '<div style="display:flex; gap:8px; align-items:center; position:relative;">'+
+    '<button class="btn" data-action="add-postit" data-page="chokko" title="Ajouter un post-it sur cet onglet">📝</button>'+
     '<button class="btn primary" data-action="chokko-wizard-open">✏️ Saisir les résultats</button>'+
-    '<button class="btn" data-action="chokko-manage-postes-open">⚙ Gérer les postes</button>'+
-    '<button class="btn'+(chokkoTotalsLocked?'':' primary')+'" data-action="chokko-toggle-totals-lock" title="'+(chokkoTotalsLocked?'Les totaux production sont verrouillés':'Les totaux production sont déverrouillés, modifiables')+'">'+(chokkoTotalsLocked?'🔒 Totaux verrouillés':'🔓 Totaux déverrouillés')+'</button>'+
+    '<button class="btn" data-action="chokko-manage-postes-open" title="Gérer les postes">⚙</button>'+
+    '<button class="btn'+(chokkoTotalsLocked?'':' primary')+'" data-action="chokko-toggle-totals-lock" title="'+(chokkoTotalsLocked?'Totaux verrouillés - cliquer pour déverrouiller':'Totaux déverrouillés - cliquer pour reverrouiller')+'">'+(chokkoTotalsLocked?'🔒':'🔓')+'</button>'+
     '<button class="btn chokko-paint-btn" data-action="chokko-paint-toggle">'+
       (chokkoPaintMode? '<span class="chokko-paint-swatch" style="background:'+chokkoPaintMode+';"></span>Cliquez sur une case...' : '🖌️ Colorier une case')+
     '</button>'+
     (chokkoPaintMode? '<button class="btn small" data-action="chokko-paint-stop">Terminer</button>' : '')+
     '<button class="btn" data-action="chokko-print">🖨️ Exporter en PDF</button>'+
-    '<button class="btn" data-action="chokko-import-open">📤 Importer un historique Excel</button>'+
     (chokkoPaintPickerOpen? chokkoPaintPickerPanel() : '')+
     '</div></div>';
+  html += '<div id="chokko-postit-canvas" style="position:relative;">'+renderPostits('chokko')+'</div>';
   html += chokkoView==='saisie' ? chokkoSaisieView() : chokkoRecapView();
   html += '</div>';
   if(chokkoWizardOpen) html += chokkoWizardPickerModal();
@@ -3924,8 +3943,14 @@ function chokkoSaisieView(){
     '<label class="field" style="flex-direction:row; align-items:center; gap:8px;">Année<input type="number" id="chokko-annee" value="'+chokkoYear+'" style="width:80px;"></label>'+
     '</div>'+
     '<div style="display:flex; gap:12px; margin-left:auto;">'+
-      '<div class="statcard" style="padding:8px 14px;"><div class="tiny">Chokko du mois</div><div id="chokko-month-avg" style="font-family:var(--mono); font-weight:700; font-size:20px; color:var(--'+chokkoLevel(monthAvg)+');">'+(monthAvg!==null?monthAvg.toFixed(1)+'%':'-')+'</div></div>'+
-      '<div class="statcard" style="padding:8px 14px;"><div class="tiny">Coût par pièce</div><div style="display:flex; align-items:baseline; gap:4px;"><input type="number" id="chokko-unit-cost" min="0" step="0.01" placeholder="0.00" value="'+unitCost+'" style="width:75px; font-family:var(--mono); font-weight:700; font-size:20px; border:none; background:transparent; padding:0; color:var(--danger);"><span class="tiny" style="color:var(--danger);">€</span></div></div>'+
+      '<div class="statcard" style="padding:12px 20px; min-width:150px;"><div class="tiny">Chokko du mois</div>'+
+        '<div id="chokko-month-avg" style="font-family:var(--mono); font-weight:700; font-size:28px; color:var(--'+chokkoLevelVsObjectif(monthAvg, ligne)+');">'+(monthAvg!==null?monthAvg.toFixed(1)+'%':'-')+'</div>'+
+        '<div class="tiny" id="chokko-month-objectif" style="margin-top:2px; color:var(--text-faint);">Objectif : ≥ '+chokkoObjectif(ligne)+'%</div>'+
+      '</div>'+
+      '<div class="statcard" style="padding:12px 20px; min-width:150px;"><div class="tiny">Coût par pièce</div>'+
+        '<div style="display:flex; align-items:baseline; gap:4px;"><input type="number" id="chokko-unit-cost" min="0" step="0.001" placeholder="0.000" value="'+unitCost+'" style="width:95px; font-family:var(--mono); font-weight:700; font-size:28px; border:none; background:transparent; padding:0; color:var(--'+chokkoCostLevel(unitCost===''?null:Number(unitCost), ligne)+');"><span class="tiny" id="chokko-cost-euro" style="color:var(--'+chokkoCostLevel(unitCost===''?null:Number(unitCost), ligne)+');">€</span></div>'+
+        '<div class="tiny" style="margin-top:2px; color:var(--text-faint);">Objectif : &lt; '+chokkoCostObjectif(ligne).toFixed(3).replace('.',',')+' €</div>'+
+      '</div>'+
     '</div>'+
   '</div>';
 
@@ -4211,7 +4236,7 @@ function refreshChokkoTotals(ligne, excludeElId){
   var avgEl = document.getElementById('chokko-month-avg');
   if(avgEl){
     avgEl.textContent = monthAvg!==null? monthAvg.toFixed(1)+'%' : '-';
-    avgEl.style.color = 'var(--'+chokkoLevel(monthAvg)+')';
+    avgEl.style.color = 'var(--'+chokkoLevelVsObjectif(monthAvg, ligne)+')';
   }
   if(chokkoView==='saisie') renderChokkoPostesChart();
 }
@@ -5189,7 +5214,7 @@ RENDERERS.dashboard = function(){
   html += '<div id="dashboard-canvas">';
   html += renderPostits();
   html += '<div class="section dash-actions-noprint" style="display:flex; gap:8px; justify-content:flex-end; margin-bottom:10px; flex-wrap:wrap;">';
-  html += '<button class="btn" data-action="add-postit">+ Post-it</button>';
+  html += '<button class="btn" data-action="add-postit" data-page="dashboard">+ Post-it</button>';
   html += '<button class="btn'+(dashboardCustomizing?' primary':'')+'" data-action="toggle-customize">'+(dashboardCustomizing?'Terminer la personnalisation':'Personnaliser mon tableau de bord')+'</button>';
   html += '<button class="btn" data-action="weekly-digest">Générer le résumé hebdomadaire</button>';
   html += '<button class="btn primary" data-action="print-dashboard">Exporter le tableau de bord en PDF</button>';
@@ -5912,9 +5937,11 @@ function daysLabel(echeance){
   return {d:d, text:'Dans '+d+' j'};
 }
 var postitModalOpen = false; // false | 'new' | id du post-it en édition
-function renderPostits(){
+var postitModalPage = 'dashboard'; // page dans laquelle le nouveau post-it doit être créé
+function renderPostits(page){
+  page = page || 'dashboard';
   if(!currentUser) return ''; // jamais de post-it affiché hors session (corrige le bug écran de connexion)
-  var mine = DATA.postits.filter(function(p){ return (p.secteur||'MCU')===currentSecteur; });
+  var mine = DATA.postits.filter(function(p){ return (p.secteur||'MCU')===currentSecteur && (p.page||'dashboard')===page; });
   var html = '';
   if(mine.length){
     var sorted = mine.slice().sort(function(a,b){ return (a.pinned?1:0)-(b.pinned?1:0); });
@@ -5984,9 +6011,10 @@ function renderPostitModal(){
     '</div></div></div>';
 }
 
-async function handleAddPostit(){
+async function handleAddPostit(page){
   if(!currentUser) return;
   postitModalOpen = 'new';
+  postitModalPage = page || 'dashboard';
   render();
 }
 async function handleEditPostit(id){
@@ -6018,7 +6046,7 @@ async function handleSavePostitModal(existingId){
       secteur: currentSecteur, author: currentUser.displayName, createdAt: todayStr(),
       assignedTo: assignedTo? assignedTo.slice(0,60) : null,
       dueDate: dueDate || null,
-      pinned: false, done: false
+      pinned: false, done: false, page: postitModalPage
     });
     await save('postits');
     toast('Post-it ajouté.');
@@ -7732,7 +7760,7 @@ app.addEventListener('click', async function(e){
     return;
   }
 
-  if(e.target.closest('[data-action="add-postit"]')){ await handleAddPostit(); return; }
+  if(e.target.closest('[data-action="add-postit"]')){ await handleAddPostit(e.target.closest('[data-action="add-postit"]').dataset.page); return; }
   var editPostitBtn = e.target.closest('[data-action="edit-postit"]');
   if(editPostitBtn){ await handleEditPostit(editPostitBtn.dataset.id); return; }
   if(e.target.classList && e.target.classList.contains('postit-modal-backdrop')){ postitModalOpen = false; render(); return; }
@@ -8171,6 +8199,8 @@ async function init(){
 init();
 
 })();
+
+
 
 
 
