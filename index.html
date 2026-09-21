@@ -453,6 +453,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -484,9 +485,9 @@ var KEYS = {
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
   esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1',
-  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', uiSettings:'app_ui_settings_v1'
+  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', chokkoPosteConfig:'mcu_chokko_poste_config_v1', uiSettings:'app_ui_settings_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, uiSettings:{sidebarColor:null, iconStyle:'svg'}};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, uiSettings:{sidebarColor:null, iconStyle:'svg'}};
 var RENDERERS = {};
 var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
@@ -3421,6 +3422,7 @@ var chokkoWizardStep = 0; // index dans la séquence postes puis équipes
 var chokkoColorsPanelOpen = false;
 var chokkoPaintMode = false; // false | couleur hex active du pinceau
 var chokkoTotalsLocked = true; // verrouille les cellules TOTAL PROD par défaut (évite une modification accidentelle)
+var chokkoManagePostesOpen = false;
 var chokkoPaintPickerOpen = false;
 var chokkoImportOpen = false;
 var chokkoImportSummary = null; // resultat du dernier import (pour affichage)
@@ -3447,7 +3449,9 @@ async function handleDeleteChokkoPosteRow(ligne, poste){
   render();
 }
 function chokkoPostes(ligne){
-  var base = CHOKKO_CONFIG[ligne]||[];
+  // La configuration personnalisee (ordre, libelles, ajouts/suppressions) prime sur la config d'origine.
+  // Tant que l'utilisateur n'a rien personnalise pour cette ligne, on repart de CHOKKO_CONFIG telle quelle.
+  var base = (DATA.chokkoPosteConfig && DATA.chokkoPosteConfig[ligne]) || CHOKKO_CONFIG[ligne] || [];
   var baseIds = base.map(function(p){return p[0];});
   var extra = [];
   var extraLabels = (DATA.chokkoPosteLabels && DATA.chokkoPosteLabels[ligne]) || {};
@@ -3459,6 +3463,14 @@ function chokkoPostes(ligne){
   });
   extra.sort();
   return base.concat(extra.map(function(pid){ return [pid, extraLabels[pid] || '(poste historique, hors config actuelle)']; }));
+}
+function chokkoPosteConfigFor(ligne){
+  // Retourne (et initialise si besoin) la config editable en memoire pour cette ligne, copie de l'original au premier usage
+  if(!DATA.chokkoPosteConfig) DATA.chokkoPosteConfig = {};
+  if(!DATA.chokkoPosteConfig[ligne]){
+    DATA.chokkoPosteConfig[ligne] = (CHOKKO_CONFIG[ligne]||[]).map(function(p){ return [p[0], p[1]]; });
+  }
+  return DATA.chokkoPosteConfig[ligne];
 }
 function daysInMonth(year, monthIdx){ return new Date(year, monthIdx+1, 0).getDate(); }
 function chokkoEntry(ligne, dateStr){
@@ -3535,6 +3547,7 @@ RENDERERS.chokko = function(){
     '</div>'+
     '<div style="display:flex; gap:8px; align-items:center; position:relative;">'+
     '<button class="btn primary" data-action="chokko-wizard-open">✏️ Saisir les résultats</button>'+
+    '<button class="btn" data-action="chokko-manage-postes-open">⚙ Gérer les postes</button>'+
     '<button class="btn'+(chokkoTotalsLocked?'':' primary')+'" data-action="chokko-toggle-totals-lock" title="'+(chokkoTotalsLocked?'Les totaux production sont verrouillés':'Les totaux production sont déverrouillés, modifiables')+'">'+(chokkoTotalsLocked?'🔒 Totaux verrouillés':'🔓 Totaux déverrouillés')+'</button>'+
     '<button class="btn chokko-paint-btn" data-action="chokko-paint-toggle">'+
       (chokkoPaintMode? '<span class="chokko-paint-swatch" style="background:'+chokkoPaintMode+';"></span>Cliquez sur une case...' : '🖌️ Colorier une case')+
@@ -3548,10 +3561,36 @@ RENDERERS.chokko = function(){
   html += '</div>';
   if(chokkoWizardOpen) html += chokkoWizardPickerModal();
   if(chokkoImportOpen) html += chokkoImportModal();
+  if(chokkoManagePostesOpen) html += chokkoManagePostesModal(chokkoLigne);
   if(chokkoWizardActive) html += chokkoWizardStepModal();
   return html;
 };
 
+function chokkoManagePostesModal(ligne){
+  var config = chokkoPosteConfigFor(ligne);
+  return '<div class="modal-overlay chokko-manage-postes-backdrop">'+
+    '<div class="modal-box" style="max-width:560px; max-height:85vh; overflow-y:auto;">'+
+    '<h3>Gérer les postes - '+esc(ligne)+'</h3>'+
+    '<p class="tiny" style="margin-bottom:14px;">Renommez, réordonnez (▲▼), ou supprimez un poste. Le code (ex. OP1010) reste fixe pour ne pas perdre l\'historique déjà saisi - seul le libellé est modifiable.</p>'+
+    '<div style="display:flex; flex-direction:column; gap:6px;">'+
+    config.map(function(p, idx){
+      return '<div style="display:flex; align-items:center; gap:6px; padding:6px 8px; border:1px solid var(--border); border-radius:var(--radius-sm);">'+
+        '<span style="font-family:var(--mono); font-weight:700; min-width:64px; font-size:12.5px;">'+esc(p[0])+'</span>'+
+        '<input type="text" class="chokko-poste-label-input" data-ligne="'+ligne+'" data-index="'+idx+'" value="'+esc(p[1])+'" style="flex:1; font-size:13px; padding:4px 6px;">'+
+        '<button class="btn small" data-action="chokko-poste-move" data-ligne="'+ligne+'" data-index="'+idx+'" data-dir="-1" '+(idx===0?'disabled':'')+' title="Monter">▲</button>'+
+        '<button class="btn small" data-action="chokko-poste-move" data-ligne="'+ligne+'" data-index="'+idx+'" data-dir="1" '+(idx===config.length-1?'disabled':'')+' title="Descendre">▼</button>'+
+        '<button class="btn small" data-action="chokko-poste-remove" data-ligne="'+ligne+'" data-index="'+idx+'" title="Supprimer ce poste" style="color:var(--danger);">✕</button>'+
+      '</div>';
+    }).join('')+
+    '</div>'+
+    '<div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border); display:flex; gap:8px; align-items:flex-end;">'+
+      '<label class="field" style="flex:0 0 110px;">Code<input type="text" id="chokko-new-poste-code" placeholder="OP1234"></label>'+
+      '<label class="field" style="flex:1;">Libellé<input type="text" id="chokko-new-poste-label" placeholder="Nom du poste"></label>'+
+      '<button class="btn primary" data-action="chokko-poste-add" data-ligne="'+ligne+'">+ Ajouter</button>'+
+    '</div>'+
+    '<div class="actions-row" style="margin-top:18px;"><button class="btn primary" data-action="chokko-manage-postes-close">Fermer</button></div>'+
+    '</div></div>';
+}
 function chokkoImportModal(){
   return '<div class="modal-overlay chokko-import-backdrop">'+
     '<div class="modal-box" style="max-width:460px;">'+
@@ -3899,7 +3938,7 @@ function chokkoSaisieView(){
 
   postes.forEach(function(poste){
     var posteId = poste[0], posteLabel = poste[1];
-    var isOutOfConfig = (CHOKKO_CONFIG[ligne]||[]).map(function(p){return p[0];}).indexOf(posteId)<0;
+    var isOutOfConfig = ((DATA.chokkoPosteConfig && DATA.chokkoPosteConfig[ligne]) || CHOKKO_CONFIG[ligne] || []).map(function(p){return p[0];}).indexOf(posteId)<0;
     var totalPoste = days.reduce(function(s,d){ var e=chokkoEntry(ligne,d.date); return s+(e?Number(e.defects[posteId]||0):0); },0);
     var note = chokkoNote(ligne, posteId, chokkoYear, chokkoMonth);
     html += '<tr>';
@@ -4115,8 +4154,8 @@ function buildChokkoPostesChartConfig(ligne, year, monthIdx){
       },
       scales:{
         x:{stacked:true},
-        y:{stacked:true, beginAtZero:true, position:'left', title:{display:true, text:'Nombre de défauts'}},
-        y1:{min:80, max:100, position:'right', grid:{drawOnChartArea:false}, title:{display:true, text:'% Chokko'}}
+        y:{stacked:true, beginAtZero:true, max:100, position:'left', title:{display:true, text:'Nombre de défauts'}},
+        y1:{min:90, max:100, position:'right', grid:{drawOnChartArea:false}, title:{display:true, text:'% Chokko'}}
       }
     }
   };
@@ -7534,6 +7573,47 @@ app.addEventListener('click', async function(e){
     return;
   }
   if(e.target.closest('[data-action="chokko-import-open"]')){ chokkoImportOpen = true; chokkoImportSummary = null; render(); return; }
+  if(e.target.closest('[data-action="chokko-manage-postes-open"]')){ chokkoManagePostesOpen = true; render(); return; }
+  if(e.target.closest('[data-action="chokko-manage-postes-close"]')){ chokkoManagePostesOpen = false; render(); return; }
+  if(e.target.classList && e.target.classList.contains('chokko-manage-postes-backdrop')){ chokkoManagePostesOpen = false; render(); return; }
+  var posteMoveBtn = e.target.closest('[data-action="chokko-poste-move"]');
+  if(posteMoveBtn){
+    var mvLigne = posteMoveBtn.dataset.ligne, mvIdx = Number(posteMoveBtn.dataset.index), mvDir = Number(posteMoveBtn.dataset.dir);
+    var mvConfig = chokkoPosteConfigFor(mvLigne);
+    var mvTarget = mvIdx+mvDir;
+    if(mvTarget>=0 && mvTarget<mvConfig.length){
+      var tmp = mvConfig[mvIdx]; mvConfig[mvIdx] = mvConfig[mvTarget]; mvConfig[mvTarget] = tmp;
+      await save('chokkoPosteConfig');
+      render();
+    }
+    return;
+  }
+  var posteRemoveBtn = e.target.closest('[data-action="chokko-poste-remove"]');
+  if(posteRemoveBtn){
+    var rmLigne = posteRemoveBtn.dataset.ligne, rmIdx = Number(posteRemoveBtn.dataset.index);
+    var rmConfig = chokkoPosteConfigFor(rmLigne);
+    var rmPoste = rmConfig[rmIdx];
+    if(confirm('Supprimer définitivement le poste "'+rmPoste[0]+' - '+rmPoste[1]+'" et toutes ses valeurs saisies sur '+rmLigne+' ?\n\nCette action est irréversible.')){
+      rmConfig.splice(rmIdx, 1);
+      await save('chokkoPosteConfig');
+      await handleDeleteChokkoPosteRow(rmLigne, rmPoste[0]);
+    }
+    return;
+  }
+  if(e.target.closest('[data-action="chokko-poste-add"]')){
+    var addLigne = e.target.closest('[data-action="chokko-poste-add"]').dataset.ligne;
+    var newCode = document.getElementById('chokko-new-poste-code').value.trim().toUpperCase();
+    var newLabel = document.getElementById('chokko-new-poste-label').value.trim();
+    if(!newCode || !newLabel){ toast('Merci de renseigner le code et le libellé.', 'error'); return; }
+    var addConfig = chokkoPosteConfigFor(addLigne);
+    if(addConfig.some(function(p){return p[0]===newCode;})){ toast('Ce code de poste existe déjà sur cette ligne.', 'error'); return; }
+    addConfig.push([newCode, newLabel]);
+    await save('chokkoPosteConfig');
+    logChange('CHOKKO', 'Poste ajouté', addLigne+' - '+newCode+' ('+newLabel+')');
+    toast('Poste "'+newCode+'" ajouté.');
+    render();
+    return;
+  }
   if(e.target.closest('[data-action="planning-recur-open"]')){ planningRecurOpen = true; planningRecurSummary = null; render(); return; }
   var quickFilterBtn = e.target.closest('[data-action="planning-quick-filter"]');
   if(quickFilterBtn){ planningQuickFilter = quickFilterBtn.dataset.quick; render(); return; }
@@ -7813,6 +7893,17 @@ app.addEventListener('change', async function(e){
   }
   if(e.target.id==='chokko-mois'){ chokkoMonth = Number(e.target.value); render(); return; }
   if(e.target.id==='chokko-annee'){ chokkoYear = Number(e.target.value)||chokkoYear; render(); return; }
+  if(e.target.classList && e.target.classList.contains('chokko-poste-label-input')){
+    var lblLigne = e.target.dataset.ligne, lblIdx = Number(e.target.dataset.index);
+    var lblConfig = chokkoPosteConfigFor(lblLigne);
+    var newLbl = e.target.value.trim();
+    if(newLbl && lblConfig[lblIdx]){
+      lblConfig[lblIdx][1] = newLbl;
+      await save('chokkoPosteConfig');
+      toast('Libellé mis à jour.');
+    }
+    return;
+  }
   if(e.target.id==='chokko-unit-cost'){
     if(!DATA.chokkoUnitCost) DATA.chokkoUnitCost = {};
     DATA.chokkoUnitCost[chokkoLigne] = Math.max(0, Number(e.target.value)||0);
@@ -8080,6 +8171,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
