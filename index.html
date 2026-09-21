@@ -452,6 +452,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -3419,10 +3420,32 @@ var chokkoWizardDate = null;
 var chokkoWizardStep = 0; // index dans la séquence postes puis équipes
 var chokkoColorsPanelOpen = false;
 var chokkoPaintMode = false; // false | couleur hex active du pinceau
+var chokkoTotalsLocked = true; // verrouille les cellules TOTAL PROD par défaut (évite une modification accidentelle)
 var chokkoPaintPickerOpen = false;
 var chokkoImportOpen = false;
 var chokkoImportSummary = null; // resultat du dernier import (pour affichage)
 
+async function handleDeleteChokkoPosteRow(ligne, poste){
+  var nbTouched = 0;
+  DATA.chokko.forEach(function(e){
+    if(e.ligne===ligne && e.defects && e.defects[poste]!==undefined){
+      delete e.defects[poste];
+      nbTouched++;
+    }
+  });
+  if(DATA.chokkoPosteLabels[ligne] && DATA.chokkoPosteLabels[ligne][poste]){
+    delete DATA.chokkoPosteLabels[ligne][poste];
+    await save('chokkoPosteLabels');
+  }
+  if(DATA.chokkoColors[ligne] && DATA.chokkoColors[ligne][poste]){
+    delete DATA.chokkoColors[ligne][poste];
+    await save('chokkoColors');
+  }
+  await save('chokko');
+  logChange('CHOKKO', 'Poste hors config supprimé', ligne+' - '+poste+' ('+nbTouched+' jour(s) concerné(s))');
+  toast('Ligne "'+poste+'" supprimée ('+nbTouched+' valeur(s) effacée(s)).');
+  render();
+}
 function chokkoPostes(ligne){
   var base = CHOKKO_CONFIG[ligne]||[];
   var baseIds = base.map(function(p){return p[0];});
@@ -3512,6 +3535,7 @@ RENDERERS.chokko = function(){
     '</div>'+
     '<div style="display:flex; gap:8px; align-items:center; position:relative;">'+
     '<button class="btn primary" data-action="chokko-wizard-open">✏️ Saisir les résultats</button>'+
+    '<button class="btn'+(chokkoTotalsLocked?'':' primary')+'" data-action="chokko-toggle-totals-lock" title="'+(chokkoTotalsLocked?'Les totaux production sont verrouillés':'Les totaux production sont déverrouillés, modifiables')+'">'+(chokkoTotalsLocked?'🔒 Totaux verrouillés':'🔓 Totaux déverrouillés')+'</button>'+
     '<button class="btn chokko-paint-btn" data-action="chokko-paint-toggle">'+
       (chokkoPaintMode? '<span class="chokko-paint-swatch" style="background:'+chokkoPaintMode+';"></span>Cliquez sur une case...' : '🖌️ Colorier une case')+
     '</button>'+
@@ -3875,6 +3899,7 @@ function chokkoSaisieView(){
 
   postes.forEach(function(poste){
     var posteId = poste[0], posteLabel = poste[1];
+    var isOutOfConfig = (CHOKKO_CONFIG[ligne]||[]).map(function(p){return p[0];}).indexOf(posteId)<0;
     var totalPoste = days.reduce(function(s,d){ var e=chokkoEntry(ligne,d.date); return s+(e?Number(e.defects[posteId]||0):0); },0);
     var note = chokkoNote(ligne, posteId, chokkoYear, chokkoMonth);
     html += '<tr>';
@@ -3884,6 +3909,7 @@ function chokkoSaisieView(){
     var labelPaintClass = chokkoPaintMode? ' chokko-paintable' : '';
     html += '<td class="chk-label chk-sticky'+labelPaintClass+'" style="'+labelStyle+'" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-labelcell="1">'+esc(posteId)+' - '+esc(posteLabel)+
       (ateqLinked? ' <span class="tiny" title="Alimente automatiquement l\'onglet ATEQ" style="color:var(--accent);">⇄ ATEQ</span>' : '')+
+      (isOutOfConfig? ' <button class="postit-del" data-action="chokko-delete-poste-row" data-ligne="'+ligne+'" data-poste="'+posteId+'" title="Supprimer cette ligne hors config" style="color:var(--danger);">✕</button>' : '')+
       '</td>';
     html += days.map(function(d){
       var e = chokkoEntry(ligne, d.date);
@@ -3915,7 +3941,7 @@ function chokkoSaisieView(){
   // TOTAL PROD : modifiable manuellement (ecrase la somme des equipes si renseigne)
   html += '<tr class="chk-total-row"><td class="chk-label-bold chk-sticky">TOTAL PROD</td>'+
     days.map(function(d){
-      return '<td><input type="number" min="0" class="chk-cell chokko-prodtotal-cell" id="chokko-total-prod-'+d.date+'" data-ligne="'+ligne+'" data-date="'+d.date+'" value="'+(d.totals.totalProd||'')+'" style="font-weight:700; color:#548235;"></td>';
+      return '<td><input type="number" min="0" class="chk-cell chokko-prodtotal-cell" id="chokko-total-prod-'+d.date+'" data-ligne="'+ligne+'" data-date="'+d.date+'" value="'+(d.totals.totalProd||'')+'" style="font-weight:700; color:#548235; '+(chokkoTotalsLocked?'background:var(--neutral-bg); cursor:not-allowed;':'')+'" '+(chokkoTotalsLocked?'readonly title="Verrouillé - cliquez sur 🔓 dans la barre d\'outils pour modifier"':'')+'></td>';
     }).join('')+'<td></td><td></td></tr>';
   // TOTAL NC : calcule automatiquement (lecture seule)
   html += '<tr class="chk-total-row"><td class="chk-label-bold chk-sticky">TOTAL NC</td>'+
@@ -4068,13 +4094,13 @@ function buildChokkoPostesChartConfig(ligne, year, monthIdx){
   var datasets = postes.map(function(p, i){
     var color = chokkoPosteColor(ligne, p[0]);
     return {
-      type:'bar', stack:'defauts', label:p[0]+' - '+p[1], yAxisID:'y',
+      type:'bar', stack:'defauts', label:p[0]+' - '+p[1], yAxisID:'y', order:2,
       backgroundColor:color, borderWidth:0,
       data:days.map(function(d){ var e=chokkoEntry(ligne,d.date); return e&&e.defects[p[0]]!==undefined? Number(e.defects[p[0]]) : 0; })
     };
   });
   datasets.push({
-    type:'line', label:'CHOKKO DU JOUR', yAxisID:'y1',
+    type:'line', label:'CHOKKO DU JOUR', yAxisID:'y1', order:1,
     data:days.map(function(d){ return d.totals.pct; }),
     borderColor:'#3A7CA5', backgroundColor:'#3A7CA5', borderWidth:2.5, pointRadius:0, spanGaps:true, tension:0.15
   });
@@ -4704,7 +4730,7 @@ function secteurAllScore(sid, curY, curM){
   if(!parts.length) return {score:null, label:'aucune donnée'};
   return {score:Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length), label:'score global'};
 }
-var MULTISECTEUR_METRIC_OPTIONS = [['auto','Automatique'],['propr','Propreté'],['perf','Perf'],['metro','Métrologie'],['all','Tout']];
+var MULTISECTEUR_METRIC_OPTIONS = [['auto','Automatique (propreté MCU, perf ailleurs)'],['propr','Propreté'],['perf','Perf'],['metro','Métrologie'],['all','Tout (moyenne)']];
 function renderMultiSecteurBanner(){
   var us = userSecteurs();
   var curY = Number(todayStr().split('-')[0]);
@@ -7526,6 +7552,7 @@ app.addEventListener('click', async function(e){
     return;
   }
   if(e.target.closest('[data-action="chokko-wizard-open"]')){ chokkoWizardOpen = true; render(); return; }
+  if(e.target.closest('[data-action="chokko-toggle-totals-lock"]')){ chokkoTotalsLocked = !chokkoTotalsLocked; render(); return; }
   if(e.target.closest('[data-action="chokko-paint-toggle"]')){ chokkoPaintPickerOpen = !chokkoPaintPickerOpen; render(); return; }
   if(e.target.closest('[data-action="chokko-paint-stop"]')){ chokkoPaintMode = false; chokkoPaintPickerOpen = false; render(); return; }
   var swatchBtn = e.target.closest('.chokko-swatch');
@@ -7555,6 +7582,14 @@ app.addEventListener('click', async function(e){
       applyStatusColorSettings();
     }
     render();
+    return;
+  }
+  var deletePosteRowBtn = e.target.closest('[data-action="chokko-delete-poste-row"]');
+  if(deletePosteRowBtn){
+    var dpLigne = deletePosteRowBtn.dataset.ligne, dpPoste = deletePosteRowBtn.dataset.poste;
+    if(confirm('Supprimer définitivement la ligne "'+dpPoste+'" (poste hors configuration actuelle) et toutes ses valeurs saisies sur '+dpLigne+' ?\n\nCette action est irréversible.')){
+      await handleDeleteChokkoPosteRow(dpLigne, dpPoste);
+    }
     return;
   }
   var paintableCell = e.target.closest('td.chokko-paintable');
@@ -7771,7 +7806,11 @@ app.addEventListener('change', async function(e){
   var chokkoProdInput = e.target.closest('.chokko-prod-cell');
   if(chokkoProdInput){ await handleChokkoProdChange(chokkoProdInput.dataset.ligne, chokkoProdInput.dataset.date, chokkoProdInput.dataset.team, chokkoProdInput.value); return; }
   var chokkoProdTotalInput = e.target.closest('.chokko-prodtotal-cell');
-  if(chokkoProdTotalInput){ await handleChokkoProdTotalChange(chokkoProdTotalInput.dataset.ligne, chokkoProdTotalInput.dataset.date, chokkoProdTotalInput.value); return; }
+  if(chokkoProdTotalInput){
+    if(chokkoTotalsLocked){ render(); return; } // filet de sécurité si l'attribut readonly a été contourné
+    await handleChokkoProdTotalChange(chokkoProdTotalInput.dataset.ligne, chokkoProdTotalInput.dataset.date, chokkoProdTotalInput.value);
+    return;
+  }
   if(e.target.id==='chokko-mois'){ chokkoMonth = Number(e.target.value); render(); return; }
   if(e.target.id==='chokko-annee'){ chokkoYear = Number(e.target.value)||chokkoYear; render(); return; }
   if(e.target.id==='chokko-unit-cost'){
@@ -8041,6 +8080,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
