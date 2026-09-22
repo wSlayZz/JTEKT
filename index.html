@@ -460,6 +460,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -2584,6 +2585,7 @@ var RELEVES_BAINS = ['Bain 1','Bain 2'];
 function chlorureStatus(r){
   var okConc = r.concentration!==null && r.concentration!==undefined && r.concentration>=1.5 && r.concentration<=3.5;
   var okCl = r.chlorureMg!==null && r.chlorureMg!==undefined && r.chlorureMg<=200;
+  if(r.concentration===null || r.concentration===undefined || r.chlorureMg===null || r.chlorureMg===undefined) return {level:'neutral', label:'-'};
   if(okConc && okCl) return {level:'ok', label:'Conforme'};
   return {level:'danger', label:'Non conforme'};
 }
@@ -2591,84 +2593,101 @@ function masseStatus(r){
   if(r.masseMg===null || r.masseMg===undefined) return {level:'neutral', label:'-'};
   return r.masseMg<7.5 ? {level:'ok', label:'Conforme'} : {level:'danger', label:'Non conforme'};
 }
-var releveChlorureFormOpen = false, releveMasseFormOpen = false;
-function proprReleves(){
-  var chlorures = bySecteur(DATA.releves).filter(function(r){ return r.type==='chlorure'; }).sort(function(a,b){ return b.date.localeCompare(a.date); });
-  var masses = bySecteur(DATA.releves).filter(function(r){ return r.type==='masse'; }).sort(function(a,b){ return b.date.localeCompare(a.date); });
-
-  var html = '<div class="card" style="margin-bottom:18px;">'+
-    '<div class="toolbar"><div class="eyebrow">Concentration chlorure (relevé hebdomadaire - 2 bains)</div>'+
-    '<button class="btn small primary" data-action="toggle-releve-chlorure-form">'+(releveChlorureFormOpen?'Annuler':'+ Ajouter un relevé')+'</button></div>'+
-    '<p class="tiny" style="margin:-6px 0 10px;">Seuils : concentration entre 1,5% et 3,5%, chlorure ≤ 200mg.</p>';
-  if(releveChlorureFormOpen){
-    html += '<div class="entryform cols2" style="margin-bottom:14px;">'+
-      '<label class="field">Bain<select id="rc-bain">'+RELEVES_BAINS.map(function(b){return '<option value="'+b+'">'+b+'</option>';}).join('')+'</select></label>'+
-      '<label class="field">Date<input type="date" id="rc-date" value="'+todayStr()+'"></label>'+
-      '<label class="field">Concentration (%)<input type="number" id="rc-concentration" min="0" step="0.1"></label>'+
-      '<label class="field">Chlorure (mg)<input type="number" id="rc-chlorure" min="0" step="1"></label>'+
-      '<div class="actions-row" style="grid-column:1/-1;"><button class="btn primary" data-action="save-releve-chlorure">Enregistrer</button></div>'+
-    '</div>';
+function mondaysOfYear(year){
+  var out = [];
+  var d = new Date(Date.UTC(year,0,1));
+  while(d.getUTCDay()!==1) d.setUTCDate(d.getUTCDate()+1);
+  while(d.getUTCFullYear()===year){
+    out.push(d.toISOString().slice(0,10));
+    d.setUTCDate(d.getUTCDate()+7);
   }
-  html += '<div class="table-wrap"><table><thead><tr><th>Statut</th><th>Bain</th><th>Date</th><th>Concentration</th><th>Chlorure</th><th></th></tr></thead><tbody>';
-  html += chlorures.map(function(r){
-    var s = chlorureStatus(r);
-    return '<tr><td>'+badge(s.level,s.label)+'</td><td>'+esc(r.bain)+'</td><td class="num">'+fmtDate(r.date)+'</td>'+
-      '<td class="num">'+(r.concentration!==null?r.concentration+' %':'-')+'</td><td class="num">'+(r.chlorureMg!==null?r.chlorureMg+' mg':'-')+'</td>'+
-      '<td><button class="btn small danger-outline" data-action="delete" data-module="releves" data-id="'+r.id+'">Suppr.</button></td></tr>';
-  }).join('') || '<tr><td colspan="6">'+emptyState('Aucun relevé de chlorure')+'</td></tr>';
+  return out;
+}
+function releveFind(type, bain, date){
+  return DATA.releves.find(function(x){ return x.type===type && x.bain===bain && x.date===date && (x.secteur||'MCU')===currentSecteur; });
+}
+var releveYear = null;
+function proprReleves(){
+  if(releveYear===null) releveYear = Number(todayStr().split('-')[0]);
+  var year = releveYear;
+
+  var html = '<div class="toolbar"><div class="left"><label class="field" style="flex-direction:row; align-items:center; gap:8px;">Année<input type="number" id="releve-annee" value="'+year+'" style="width:90px;"></label></div></div>';
+
+  // ---- Concentration chlorure (hebdomadaire) ----
+  html += '<div class="card" style="margin-bottom:18px;">'+
+    '<div class="eyebrow" style="margin-bottom:6px;">Concentration chlorure - relevé hebdomadaire</div>'+
+    '<p class="tiny" style="margin-bottom:10px;">Seuils : concentration entre 1,5% et 3,5%, chlorure ≤ 200mg.</p>';
+  var mondays = mondaysOfYear(year);
+  html += '<div class="table-wrap"><table><thead><tr><th rowspan="2">Semaine</th>'+
+    RELEVES_BAINS.map(function(b){return '<th colspan="2" style="text-align:center;">'+esc(b)+'</th>';}).join('')+
+    '</tr><tr>'+
+    RELEVES_BAINS.map(function(){return '<th>Concentration (%)</th><th>Chlorure (mg)</th>';}).join('')+
+    '</tr></thead><tbody>';
+  mondays.forEach(function(dateStr){
+    var wk = isoWeekInfo(dateStr).week;
+    html += '<tr><td class="tiny">S'+wk+' <span style="color:var(--text-faint);">('+fmtDate(dateStr)+')</span></td>';
+    RELEVES_BAINS.forEach(function(bain){
+      var r = releveFind('chlorure', bain, dateStr);
+      var s = r? chlorureStatus(r) : null;
+      var cellStyle = s && s.level!=='neutral' ? (s.level==='danger'? 'background:var(--danger-bg);' : 'background:var(--ok-bg);') : '';
+      html += '<td style="'+cellStyle+'"><input type="number" step="0.1" min="0" class="chk-cell releve-chlorure-conc" data-bain="'+bain+'" data-date="'+dateStr+'" value="'+(r&&r.concentration!==null&&r.concentration!==undefined?r.concentration:'')+'" style="width:64px;"></td>'+
+        '<td style="'+cellStyle+'"><input type="number" step="1" min="0" class="chk-cell releve-chlorure-cl" data-bain="'+bain+'" data-date="'+dateStr+'" value="'+(r&&r.chlorureMg!==null&&r.chlorureMg!==undefined?r.chlorureMg:'')+'" style="width:64px;"></td>';
+    });
+    html += '</tr>';
+  });
   html += '</tbody></table></div></div>';
 
+  // ---- Masses polluantes (mensuel) ----
   html += '<div class="card">'+
-    '<div class="toolbar"><div class="eyebrow">Masses polluantes (relevé mensuel - 2 bains)</div>'+
-    '<button class="btn small primary" data-action="toggle-releve-masse-form">'+(releveMasseFormOpen?'Annuler':'+ Ajouter un relevé')+'</button></div>'+
-    '<p class="tiny" style="margin:-6px 0 10px;">Seuil : masse polluante &lt; 7,5mg.</p>';
-  if(releveMasseFormOpen){
-    html += '<div class="entryform cols2" style="margin-bottom:14px;">'+
-      '<label class="field">Bain<select id="rm-bain">'+RELEVES_BAINS.map(function(b){return '<option value="'+b+'">'+b+'</option>';}).join('')+'</select></label>'+
-      '<label class="field">Date<input type="date" id="rm-date" value="'+todayStr()+'"></label>'+
-      '<label class="field">Masse polluante (mg)<input type="number" id="rm-masse" min="0" step="0.1"></label>'+
-      '<div class="actions-row" style="grid-column:1/-1;"><button class="btn primary" data-action="save-releve-masse">Enregistrer</button></div>'+
-    '</div>';
+    '<div class="eyebrow" style="margin-bottom:6px;">Masses polluantes - relevé mensuel</div>'+
+    '<p class="tiny" style="margin-bottom:10px;">Seuil : masse polluante &lt; 7,5mg.</p>'+
+    '<div class="table-wrap"><table><thead><tr><th>Mois</th>'+
+    RELEVES_BAINS.map(function(b){return '<th>'+esc(b)+' (mg)</th>';}).join('')+
+    '</tr></thead><tbody>';
+  for(var m=0; m<12; m++){
+    var monthDate = year+'-'+String(m+1).padStart(2,'0')+'-01';
+    html += '<tr><td class="tiny">'+MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1)+'</td>';
+    RELEVES_BAINS.forEach(function(bain){
+      var r = releveFind('masse', bain, monthDate);
+      var s = r? masseStatus(r) : null;
+      var cellStyle = s && s.level!=='neutral' ? (s.level==='danger'? 'background:var(--danger-bg);' : 'background:var(--ok-bg);') : '';
+      html += '<td style="'+cellStyle+'"><input type="number" step="0.1" min="0" class="chk-cell releve-masse" data-bain="'+bain+'" data-date="'+monthDate+'" value="'+(r&&r.masseMg!==null&&r.masseMg!==undefined?r.masseMg:'')+'" style="width:74px;"></td>';
+    });
+    html += '</tr>';
   }
-  html += '<div class="table-wrap"><table><thead><tr><th>Statut</th><th>Bain</th><th>Date</th><th>Masse polluante</th><th></th></tr></thead><tbody>';
-  html += masses.map(function(r){
-    var s = masseStatus(r);
-    return '<tr><td>'+badge(s.level,s.label)+'</td><td>'+esc(r.bain)+'</td><td class="num">'+fmtDate(r.date)+'</td>'+
-      '<td class="num">'+(r.masseMg!==null?r.masseMg+' mg':'-')+'</td>'+
-      '<td><button class="btn small danger-outline" data-action="delete" data-module="releves" data-id="'+r.id+'">Suppr.</button></td></tr>';
-  }).join('') || '<tr><td colspan="5">'+emptyState('Aucun relevé de masse')+'</td></tr>';
   html += '</tbody></table></div></div>';
   return html;
 }
-async function handleSaveReleveChlorure(){
-  var concStr = document.getElementById('rc-concentration').value;
-  var clStr = document.getElementById('rc-chlorure').value;
-  if(concStr==='' || clStr===''){ toast('Merci de renseigner la concentration et le chlorure.', 'error'); return; }
-  DATA.releves.push({
-    id: uid('releve'), type:'chlorure', secteur:currentSecteur,
-    bain: document.getElementById('rc-bain').value,
-    date: document.getElementById('rc-date').value || todayStr(),
-    concentration: parseFloat(concStr), chlorureMg: parseFloat(clStr)
-  });
+async function handleReleveChlorureChange(field, bain, date, val){
+  var r = releveFind('chlorure', bain, date);
+  var num = val===''? null : parseFloat(val);
+  if(!r){
+    if(num===null) return; // rien a faire, rien a creer
+    r = {id: uid('releve'), type:'chlorure', secteur:currentSecteur, bain:bain, date:date, concentration:null, chlorureMg:null};
+    DATA.releves.push(r);
+  }
+  r[field] = num;
+  if(r.concentration===null && r.chlorureMg===null){
+    DATA.releves = DATA.releves.filter(function(x){ return x.id!==r.id; });
+  }
   await save('releves');
-  logChange('Propreté', 'Relevé chlorure', document.getElementById('rc-bain').value);
-  toast('Relevé chlorure enregistré.');
-  releveChlorureFormOpen = false;
+  logChange('Propreté', 'Relevé chlorure', bain+' - '+fmtDate(date));
   render();
 }
-async function handleSaveReleveMasse(){
-  var masseStr = document.getElementById('rm-masse').value;
-  if(masseStr===''){ toast('Merci de renseigner la masse polluante.', 'error'); return; }
-  DATA.releves.push({
-    id: uid('releve'), type:'masse', secteur:currentSecteur,
-    bain: document.getElementById('rm-bain').value,
-    date: document.getElementById('rm-date').value || todayStr(),
-    masseMg: parseFloat(masseStr)
-  });
+async function handleReleveMasseChange(bain, date, val){
+  var r = releveFind('masse', bain, date);
+  var num = val===''? null : parseFloat(val);
+  if(!r){
+    if(num===null) return;
+    r = {id: uid('releve'), type:'masse', secteur:currentSecteur, bain:bain, date:date, masseMg:null};
+    DATA.releves.push(r);
+  }
+  r.masseMg = num;
+  if(r.masseMg===null){
+    DATA.releves = DATA.releves.filter(function(x){ return x.id!==r.id; });
+  }
   await save('releves');
-  logChange('Propreté', 'Relevé masse polluante', document.getElementById('rm-bain').value);
-  toast('Relevé masse enregistré.');
-  releveMasseFormOpen = false;
+  logChange('Propreté', 'Relevé masse polluante', bain+' - '+fmtDate(date));
   render();
 }
 function proprVidange(){
@@ -6239,7 +6258,7 @@ function applyAlertFilters(){
 // ---------- AUTHENTIFICATION & COMPTES ----------
 // ---------- HISTORIQUE DES MODIFICATIONS ----------
 var MODULE_LABELS = {metro:'Métrologie', planning:'Planning', ateq:'Défauts ATEQ', actions:"Plan d'actions",
-  resultats:'Résultats propreté', releves:'Relevés produits', contamination:'Contamination', vidange:'Vidange', particules:'Relevés particules',
+  resultats:'Résultats propreté', releves:'Relevés bains MCU0', contamination:'Contamination', vidange:'Vidange', particules:'Relevés particules',
   accounts:'Comptes', roles:'Profils'};
 function logChange(module, action, summary, detail){
   DATA.changelog.unshift({id:uid('log'), date:new Date().toISOString(), user: currentUser? currentUser.displayName : '?', module:module, action:action, summary:summary, detail:detail||''});
@@ -7440,10 +7459,6 @@ app.addEventListener('click', async function(e){
     if(vItem){ vItem.derniereVidange = todayStr(); await save('vidange'); render(); }
     return;
   }
-  if(e.target.closest('[data-action="toggle-releve-chlorure-form"]')){ releveChlorureFormOpen = !releveChlorureFormOpen; render(); return; }
-  if(e.target.closest('[data-action="toggle-releve-masse-form"]')){ releveMasseFormOpen = !releveMasseFormOpen; render(); return; }
-  if(e.target.closest('[data-action="save-releve-chlorure"]')){ await handleSaveReleveChlorure(); return; }
-  if(e.target.closest('[data-action="save-releve-masse"]')){ await handleSaveReleveMasse(); return; }
 
   // Filtres graphiques propreté
   var toggleProprLigne = e.target.closest('[data-action="toggle-propr-ligne"]');
@@ -8023,6 +8038,19 @@ app.addEventListener('change', async function(e){
   }
   if(e.target.id==='chokko-mois'){ chokkoMonth = Number(e.target.value); render(); return; }
   if(e.target.id==='chokko-annee'){ chokkoYear = Number(e.target.value)||chokkoYear; render(); return; }
+  if(e.target.id==='releve-annee'){ releveYear = Number(e.target.value)||releveYear; render(); return; }
+  if(e.target.classList && e.target.classList.contains('releve-chlorure-conc')){
+    await handleReleveChlorureChange('concentration', e.target.dataset.bain, e.target.dataset.date, e.target.value);
+    return;
+  }
+  if(e.target.classList && e.target.classList.contains('releve-chlorure-cl')){
+    await handleReleveChlorureChange('chlorureMg', e.target.dataset.bain, e.target.dataset.date, e.target.value);
+    return;
+  }
+  if(e.target.classList && e.target.classList.contains('releve-masse')){
+    await handleReleveMasseChange(e.target.dataset.bain, e.target.dataset.date, e.target.value);
+    return;
+  }
   if(e.target.classList && e.target.classList.contains('chokko-poste-label-input')){
     var lblLigne = e.target.dataset.ligne, lblIdx = Number(e.target.dataset.index);
     var lblConfig = chokkoPosteConfigFor(lblLigne);
@@ -8301,6 +8329,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
