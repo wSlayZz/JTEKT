@@ -463,6 +463,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -4134,7 +4135,10 @@ function chokkoSaisieView(){
       var cellClass = chokkoPaintMode? ' chokko-paintable' : '';
       return '<td class="'+cellClass.trim()+'" style="'+tdStyle+'" data-ligne="'+ligne+'" data-date="'+d.date+'" data-poste="'+posteId+'"><input type="number" min="0" class="chk-cell chokko-defect-cell" data-ligne="'+ligne+'" data-date="'+d.date+'" data-poste="'+posteId+'" value="'+v+'" style="'+(chokkoPaintMode?'pointer-events:none;':'')+(textColor?'color:'+textColor+';':'')+'"></td>';
     }).join('');
-    html += '<td id="chokko-poste-total-'+posteId+'" style="font-weight:700;">'+totalPoste+'</td>';
+    var rowTotalHl = DATA.chokkoHighlights[ligne] && DATA.chokkoHighlights[ligne]['rowtotal_'+posteId];
+    var rowTotalStyle = rowTotalHl? 'background:'+rowTotalHl+'; color:'+contrastTextColor(rowTotalHl)+'; font-weight:700;' : 'font-weight:700;';
+    var rowTotalClass = chokkoPaintMode? ' chokko-paintable' : '';
+    html += '<td id="chokko-poste-total-'+posteId+'" class="'+rowTotalClass.trim()+'" style="'+rowTotalStyle+'" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-rowtotal="1">'+totalPoste+'</td>';
     html += '<td style="text-align:left;"><textarea class="chk-note chokko-note" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-annee="'+chokkoYear+'" data-mois="'+chokkoMonth+'" rows="1" placeholder="Actions menées ce mois...">'+esc(note?note.texte:'')+'</textarea></td>';
     html += '</tr>';
   });
@@ -7888,7 +7892,10 @@ app.addEventListener('click', async function(e){
   var paintableCell = e.target.closest('td.chokko-paintable');
   if(paintableCell && chokkoPaintMode){
     var plLigne = paintableCell.dataset.ligne, plPoste = paintableCell.dataset.poste;
-    var key = paintableCell.dataset.totalnc ? 'totalnc_'+paintableCell.dataset.date : paintableCell.dataset.labelcell ? 'label_'+plPoste : paintableCell.dataset.date+'_'+plPoste;
+    var key = paintableCell.dataset.totalnc ? 'totalnc_'+paintableCell.dataset.date
+      : paintableCell.dataset.rowtotal ? 'rowtotal_'+plPoste
+      : paintableCell.dataset.labelcell ? 'label_'+plPoste
+      : paintableCell.dataset.date+'_'+plPoste;
     if(!DATA.chokkoHighlights[plLigne]) DATA.chokkoHighlights[plLigne] = {};
     if(DATA.chokkoHighlights[plLigne][key]===chokkoPaintMode){ delete DATA.chokkoHighlights[plLigne][key]; }
     else { DATA.chokkoHighlights[plLigne][key] = chokkoPaintMode; }
@@ -8411,6 +8418,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
