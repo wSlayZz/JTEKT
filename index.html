@@ -462,6 +462,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -4157,7 +4158,12 @@ function chokkoSaisieView(){
     }).join('')+'<td></td><td></td></tr>';
   // TOTAL NC : calcule automatiquement (lecture seule)
   html += '<tr class="chk-total-row"><td class="chk-label-bold chk-sticky">TOTAL NC</td>'+
-    days.map(function(d){ return '<td id="chokko-total-nc-'+d.date+'">'+(d.totals.totalNC||'-')+'</td>'; }).join('')+'<td></td><td></td></tr>';
+    days.map(function(d){
+      var tncHl = DATA.chokkoHighlights[ligne] && DATA.chokkoHighlights[ligne]['totalnc_'+d.date];
+      var tncStyle = tncHl? 'background:'+tncHl+'; color:'+contrastTextColor(tncHl)+';' : '';
+      var tncClass = chokkoPaintMode? ' chokko-paintable' : '';
+      return '<td id="chokko-total-nc-'+d.date+'" class="'+tncClass.trim()+'" style="'+tncStyle+'" data-ligne="'+ligne+'" data-date="'+d.date+'" data-totalnc="1">'+(d.totals.totalNC||'-')+'</td>';
+    }).join('')+'<td></td><td></td></tr>';
   // CHOKKO DU JOUR : calcule automatiquement
   html += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky" style="background:#E2EFDA;">CHOKKO DU JOUR</td>'+
     days.map(function(d){
@@ -7882,7 +7888,7 @@ app.addEventListener('click', async function(e){
   var paintableCell = e.target.closest('td.chokko-paintable');
   if(paintableCell && chokkoPaintMode){
     var plLigne = paintableCell.dataset.ligne, plPoste = paintableCell.dataset.poste;
-    var key = paintableCell.dataset.labelcell ? 'label_'+plPoste : paintableCell.dataset.date+'_'+plPoste;
+    var key = paintableCell.dataset.totalnc ? 'totalnc_'+paintableCell.dataset.date : paintableCell.dataset.labelcell ? 'label_'+plPoste : paintableCell.dataset.date+'_'+plPoste;
     if(!DATA.chokkoHighlights[plLigne]) DATA.chokkoHighlights[plLigne] = {};
     if(DATA.chokkoHighlights[plLigne][key]===chokkoPaintMode){ delete DATA.chokkoHighlights[plLigne][key]; }
     else { DATA.chokkoHighlights[plLigne][key] = chokkoPaintMode; }
@@ -8284,6 +8290,32 @@ app.addEventListener('keydown', function(e){
     var nextBtn = document.querySelector('[data-action="chokko-wizard-next"]');
     if(nextBtn) nextBtn.click();
   }
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.key)>=0 && e.target.classList && (e.target.classList.contains('chokko-defect-cell') || e.target.classList.contains('chokko-prodtotal-cell'))){
+    e.preventDefault();
+    var td = e.target.closest('td');
+    var tr = td && td.closest('tr');
+    if(!tr) return;
+    if(e.key==='ArrowLeft' || e.key==='ArrowRight'){
+      var sib = e.key==='ArrowLeft' ? td.previousElementSibling : td.nextElementSibling;
+      while(sib){
+        var inp = sib.querySelector('input.chokko-defect-cell, input.chokko-prodtotal-cell');
+        if(inp){ inp.focus(); inp.select(); return; }
+        sib = e.key==='ArrowLeft' ? sib.previousElementSibling : sib.nextElementSibling;
+      }
+      return;
+    }
+    // ArrowUp / ArrowDown : meme colonne (cellIndex), ligne de saisie suivante/precedente
+    var idx = Array.prototype.indexOf.call(tr.children, td);
+    var rowSib = e.key==='ArrowUp' ? tr.previousElementSibling : tr.nextElementSibling;
+    while(rowSib){
+      var targetTd = rowSib.children[idx];
+      if(targetTd){
+        var inp2 = targetTd.querySelector('input.chokko-defect-cell, input.chokko-prodtotal-cell');
+        if(inp2){ inp2.focus(); inp2.select(); return; }
+      }
+      rowSib = e.key==='ArrowUp' ? rowSib.previousElementSibling : rowSib.nextElementSibling;
+    }
+  }
 });
 app.addEventListener('input', function(e){
   if(e.target.id==='esd-search'){ esdSearch = e.target.value; render(); }
@@ -8379,6 +8411,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
