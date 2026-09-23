@@ -471,6 +471,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -3062,21 +3063,34 @@ function ciclPrintSummary(){
       html += '<p class="tiny">Aucun regleur forme sur cette ligne.</p>';
     } else {
       html += '<table style="width:100%; border-collapse:collapse;"><thead><tr>'+
-        '<th style="text-align:left; border-bottom:2px solid #333; padding:4px 6px;">Nom</th>'+
-        '<th style="text-align:left; border-bottom:2px solid #333; padding:4px 6px;">Postes et dates de formation</th>'+
-        '<th style="text-align:left; border-bottom:2px solid #333; padding:4px 6px;">Statut le plus urgent</th>'+
+        '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Nom</th>'+
+        '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Lignes concernees</th>'+
+        '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Derniere formation</th>'+
+        '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Echeance</th>'+
+        '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Statut</th>'+
       '</tr></thead><tbody>';
       names.forEach(function(nom){
-        var recs = byName[nom].slice().sort(function(a,b){return a.poste.localeCompare(b.poste);});
-        var datesText = recs.map(function(r){ return r.poste+' : '+(r.dateFormation?fmtDate(r.dateFormation):'-'); }).join('  •  ');
+        var recs = byName[nom];
+        // Lignes concernees : toutes les lignes touchees par les references de cette personne (utile si reference partagee)
+        var lignesSet = {};
+        recs.forEach(function(r){ (REF_CICL_LIGNES[r.ref]||[]).forEach(function(l){ lignesSet[l] = true; }); });
+        var lignesText = Object.keys(lignesSet).sort().join(', ');
+        // Derniere formation : la plus recente parmi ses postes sur cette ligne
+        var lastDate = recs.reduce(function(acc,r){ return (r.dateFormation && (!acc || r.dateFormation>acc)) ? r.dateFormation : acc; }, null);
+        // Echeance : la plus proche/urgente parmi ses postes sur cette ligne
         var worst = recs.reduce(function(acc,r){
           var lvl = ciclStatus(r).level;
           return (!acc || CICL_STATUS_ORDER[lvl]<CICL_STATUS_ORDER[ciclStatus(acc).level]) ? r : acc;
         }, null);
         var ws = worst? ciclStatus(worst) : {level:'neutral', label:'-'};
-        html += '<tr><td style="padding:4px 6px; border-bottom:1px solid #ddd; font-weight:600;">'+esc(nom)+'</td>'+
-          '<td style="padding:4px 6px; border-bottom:1px solid #ddd; font-size:10px;">'+esc(datesText)+'</td>'+
-          '<td style="padding:4px 6px; border-bottom:1px solid #ddd;">'+esc(ws.label)+'</td></tr>';
+        var worstEch = worst? ciclEcheance(worst) : null;
+        html += '<tr>'+
+          '<td style="padding:5px 8px; border-bottom:1px solid #ddd; font-weight:600;">'+esc(nom)+'</td>'+
+          '<td style="padding:5px 8px; border-bottom:1px solid #ddd;">'+esc(lignesText||'-')+'</td>'+
+          '<td style="padding:5px 8px; border-bottom:1px solid #ddd;">'+(lastDate?fmtDate(lastDate):'-')+'</td>'+
+          '<td style="padding:5px 8px; border-bottom:1px solid #ddd;">'+(worstEch?fmtDate(worstEch):'-')+'</td>'+
+          '<td style="padding:5px 8px; border-bottom:1px solid #ddd;">'+esc(ws.label)+'</td>'+
+        '</tr>';
       });
       html += '</tbody></table>';
     }
@@ -8483,6 +8497,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
