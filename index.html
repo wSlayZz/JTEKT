@@ -464,6 +464,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -2847,7 +2848,7 @@ RENDERERS.esd = function(){
 
   html += '<div class="toolbar"><div class="left">'+
     '<input type="text" id="esd-search" placeholder="Rechercher un nom…" value="'+esc(esdSearch)+'" style="width:220px;">'+
-    '</div><button class="btn primary" data-action="new-esd">+ Ajouter une personne</button></div>';
+    '</div><div style="display:flex; gap:8px;"><button class="btn" data-action="esd-print" title="Exporter en PDF">🖨️ Exporter en PDF</button><button class="btn primary" data-action="new-esd">+ Ajouter une personne</button></div></div>';
 
   if(esdFormOpen) html += esdForm();
 
@@ -3476,7 +3477,7 @@ RENDERERS.formations = function(){
     '<div class="statcard"><div class="eyebrow">À jour</div><div class="val">'+okC+'</div></div>'+
   '</div>';
   html += '<div class="toolbar"><div class="left"><input type="text" id="formation-search" placeholder="Rechercher…" value="'+esc(formationSearch)+'" style="width:220px;"></div>'+
-    '<button class="btn primary" data-action="new-formation">+ Ajouter une personne</button></div>';
+    '<div style="display:flex; gap:8px;"><button class="btn" data-action="formations-print" title="Exporter en PDF">🖨️ Exporter en PDF</button><button class="btn primary" data-action="new-formation">+ Ajouter une personne</button></div></div>';
   if(formationFormOpen){
     html += '<div class="card" style="max-width:460px; margin-bottom:16px;"><div class="entryform cols2">'+
       '<label class="field" style="grid-column:1/-1;">Nom complet<input type="text" id="ff-nom"></label>'+
@@ -7784,6 +7785,8 @@ app.addEventListener('click', async function(e){
   var chokkoViewBtn = e.target.closest('[data-action="chokko-view"]');
   if(chokkoViewBtn){ chokkoView = chokkoViewBtn.dataset.view; render(); return; }
   if(e.target.closest('[data-action="chokko-print"]')){ printWithPageSize('A3 landscape'); return; }
+  if(e.target.closest('[data-action="esd-print"]')){ printWithPageSize('A4 portrait'); return; }
+  if(e.target.closest('[data-action="formations-print"]')){ printWithPageSize('A4 portrait'); return; }
   if(e.target.closest('[data-action="chokko-export"]')){
     var exportBtn = e.target.closest('[data-action="chokko-export"]');
     await withBtnLoading(exportBtn, handleExportChokkoExcel);
@@ -8418,6 +8421,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
