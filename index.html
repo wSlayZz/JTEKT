@@ -473,6 +473,8 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
+
 (function(){
 "use strict";
 
@@ -3044,6 +3046,17 @@ function ciclStatus(p){
 function ciclRecordsForRef(ref){
   return DATA.cicl.filter(function(r){ return r.ref===ref; });
 }
+// Une reference peut etre partagee entre deux lignes (ex. 143X-144P sur MCU1+MCU2).
+// Un régleur n'apparait sur cette ligne que si elle fait partie de ses lignes assignees ;
+// un pilote (qualifie sur toutes les lignes) reste toujours affiche, quelle que soit la ligne.
+function ciclFilterRecordsForLigne(records, ligne){
+  return records.filter(function(r){
+    var personRecord = DATA.ciclPersons.find(function(p){ return p.nom===r.nom; });
+    if(!personRecord) return true; // pas de fiche Personnel associee : on garde par defaut
+    if(personRecord.role==='pilote') return true;
+    return (personRecord.lignes||[]).indexOf(ligne)>=0;
+  });
+}
 var CICL_STATUS_ORDER = {danger:0, urgent:1, warn:2, ok:3, neutral:4};
 function ciclPrintSummary(){
   var lignes = ['MCU1','MCU2','MCU3'];
@@ -3052,6 +3065,7 @@ function ciclPrintSummary(){
     var refs = CICL_LIGNE_REFS[ligne];
     var allRecords = [];
     refs.forEach(function(ref){ allRecords = allRecords.concat(ciclRecordsForRef(ref)); });
+    allRecords = ciclFilterRecordsForLigne(allRecords, ligne);
     var byName = {};
     allRecords.forEach(function(r){
       if(!byName[r.nom]) byName[r.nom] = [];
@@ -3179,7 +3193,7 @@ function ciclUncoveredPostes(ligne){
   var uncovered = [];
   refs.forEach(function(ref){
     REF_CICL_POSTES[ref].forEach(function(poste){
-      var recs = ciclRecordsForRef(ref).filter(function(r){ return r.poste===poste; });
+      var recs = ciclFilterRecordsForLigne(ciclRecordsForRef(ref).filter(function(r){ return r.poste===poste; }), ligne);
       var hasValid = recs.some(function(r){ return ciclStatus(r).level==='ok' || ciclStatus(r).level==='warn' || ciclStatus(r).level==='urgent'; });
       if(!hasValid) uncovered.push(ref+' / '+poste);
     });
@@ -3192,6 +3206,7 @@ function ciclRecapView(){
     var refs = CICL_LIGNE_REFS[ligne];
     var allRecords = [];
     refs.forEach(function(ref){ allRecords = allRecords.concat(ciclRecordsForRef(ref)); });
+    allRecords = ciclFilterRecordsForLigne(allRecords, ligne);
     var expired = allRecords.filter(function(p){ return ciclStatus(p).level==='danger'; }).length;
     var urgent = allRecords.filter(function(p){ return ciclStatus(p).level==='urgent'; }).length;
     var warn = allRecords.filter(function(p){ return ciclStatus(p).level==='warn'; }).length;
@@ -3249,7 +3264,7 @@ function ciclLigneView(ligne){
   var html = '';
   refs.forEach(function(ref){
     var partage = REF_CICL_LIGNES[ref].length>1;
-    var records = ciclRecordsForRef(ref).slice().sort(function(a,b){
+    var records = ciclFilterRecordsForLigne(ciclRecordsForRef(ref), ligne).slice().sort(function(a,b){
       if(a.poste!==b.poste) return a.poste.localeCompare(b.poste);
       var ea = ciclEcheance(a), eb = ciclEcheance(b);
       if(!ea && !eb) return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'});
@@ -8496,6 +8511,8 @@ async function init(){
 init();
 
 })();
+
+
 
 
 
