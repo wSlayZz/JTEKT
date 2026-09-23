@@ -472,6 +472,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -3064,17 +3065,15 @@ function ciclPrintSummary(){
     } else {
       html += '<table style="width:100%; border-collapse:collapse;"><thead><tr>'+
         '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Nom</th>'+
-        '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Lignes concernees</th>'+
+        '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Role</th>'+
         '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Derniere formation</th>'+
         '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Echeance</th>'+
         '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Statut</th>'+
       '</tr></thead><tbody>';
       names.forEach(function(nom){
         var recs = byName[nom];
-        // Lignes concernees : toutes les lignes touchees par les references de cette personne (utile si reference partagee)
-        var lignesSet = {};
-        recs.forEach(function(r){ (REF_CICL_LIGNES[r.ref]||[]).forEach(function(l){ lignesSet[l] = true; }); });
-        var lignesText = Object.keys(lignesSet).sort().join(', ');
+        var personRecord = DATA.ciclPersons.find(function(p){ return p.nom===nom; });
+        var roleText = personRecord? (personRecord.role==='pilote'?'Pilote':'Regleur') : '-';
         // Derniere formation : la plus recente parmi ses postes sur cette ligne
         var lastDate = recs.reduce(function(acc,r){ return (r.dateFormation && (!acc || r.dateFormation>acc)) ? r.dateFormation : acc; }, null);
         // Echeance : la plus proche/urgente parmi ses postes sur cette ligne
@@ -3086,7 +3085,7 @@ function ciclPrintSummary(){
         var worstEch = worst? ciclEcheance(worst) : null;
         html += '<tr>'+
           '<td style="padding:5px 8px; border-bottom:1px solid #ddd; font-weight:600;">'+esc(nom)+'</td>'+
-          '<td style="padding:5px 8px; border-bottom:1px solid #ddd;">'+esc(lignesText||'-')+'</td>'+
+          '<td style="padding:5px 8px; border-bottom:1px solid #ddd;">'+esc(roleText)+'</td>'+
           '<td style="padding:5px 8px; border-bottom:1px solid #ddd;">'+(lastDate?fmtDate(lastDate):'-')+'</td>'+
           '<td style="padding:5px 8px; border-bottom:1px solid #ddd;">'+(worstEch?fmtDate(worstEch):'-')+'</td>'+
           '<td style="padding:5px 8px; border-bottom:1px solid #ddd;">'+esc(ws.label)+'</td>'+
@@ -8497,6 +8496,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
