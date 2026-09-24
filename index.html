@@ -475,6 +475,9 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
+
+
 (function(){
 "use strict";
 
@@ -636,7 +639,7 @@ var currentUser = null;
 
 // ============ SECTEURS ============
 var SECTEURS_DEFAULT = [
-  {id:'MCU', nom:'MCU', lignes:['MCU1','MCU2','MCU3'], tabs:['dashboard','proprete','metro','ateq','chokko','actions','planning','esd','cicl','formations','archives']},
+  {id:'MCU', nom:'MCU', lignes:['MCU1','MCU2','MCU3'], tabs:['dashboard','proprete','perf','metro','ateq','chokko','actions','planning','esd','cicl','formations','archives']},
   {id:'PV',  nom:'PV',  lignes:['PV01','PV02','PV03','PV04'], tabs:['dashboard','perf','metro','actions','planning','archives']},
   {id:'CR',  nom:'CR',  lignes:['CR03','CR05','CR06','CR08','CR09','CR10'], tabs:['dashboard','perf','metro','actions','planning','archives']},
   {id:'KA',  nom:'KA',  lignes:['KA03','KA04/05','KA06/07/09','KA14/15/16'], tabs:['dashboard','perf','metro','actions','planning','archives']},
@@ -657,6 +660,7 @@ function secteurTabs(){
   // ne le contiennent pas encore. On le rajoute systématiquement pour ce secteur, sans dépendre d'une
   // migration de données côté Supabase.
   if(currentSecteur==='MCU' && tabs.indexOf('formations')<0) tabs.push('formations');
+  if(currentSecteur==='MCU' && tabs.indexOf('perf')<0) tabs.push('perf');
   return tabs;
 }
 // Filtre par secteur : les enregistrements sans champ secteur appartiennent à MCU (données historiques)
@@ -4921,7 +4925,7 @@ function renderSecteurDashboard(){
   var sec = getSecteur(currentSecteur);
   var lines = secteurLines();
   var html = '';
-  if(userSecteurs().length>1) html += renderMultiSecteurBanner();
+  if(userSecteurs().length>1) html += renderPerfAuditProgress()+renderMultiSecteurBanner();
 
   var curM = Number(todayStr().split('-')[1])-1;
   var curY = Number(todayStr().split('-')[0]);
@@ -5042,12 +5046,50 @@ function secteurAllScore(sid, curY, curM){
   if(!parts.length) return {score:null, label:'aucune donnée'};
   return {score:Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length), label:'score global'};
 }
-var MULTISECTEUR_METRIC_OPTIONS = [['auto','Automatique (propreté MCU, perf ailleurs)'],['propr','Propreté'],['perf','Perf'],['metro','Métrologie'],['all','Tout (moyenne)']];
+var MULTISECTEUR_METRIC_OPTIONS = [['all','Score de conformité'],['propr','Propreté'],['perf','Perf'],['metro','Métrologie'],['auto','Automatique (propreté MCU, perf ailleurs)']];
+var perfProgressYear = null, perfProgressMonth = null;
+function renderPerfAuditProgress(){
+  if(perfProgressYear===null){ perfProgressYear = Number(todayStr().split('-')[0]); perfProgressMonth = Number(todayStr().split('-')[1])-1; }
+  var y = perfProgressYear, m = perfProgressMonth;
+  var secteursList = ((DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT).filter(function(s){ return (s.tabs||[]).indexOf('perf')>=0 || s.id==='MCU'; });
+  var totalLignes = 0, doneLignes = 0;
+  var html = '<div class="section card" style="margin-bottom:18px;">';
+  html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">'+
+    '<div class="eyebrow">Avancement des audits de perf</div>'+
+    '<label class="tiny" style="display:flex; align-items:center; gap:6px;">Mois'+
+      '<select id="perf-progress-mois">'+MONTHS_FR.map(function(mm,i){return '<option value="'+i+'"'+(i===m?' selected':'')+'>'+mm.charAt(0).toUpperCase()+mm.slice(1)+'</option>';}).join('')+'</select>'+
+      '<input type="number" id="perf-progress-annee" value="'+y+'" style="width:75px;">'+
+    '</label>'+
+  '</div>';
+  html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:12px;">';
+  secteursList.forEach(function(s){
+    var lignes = (s.lignes||[]).map(function(l){
+      var entry = DATA.perf.find(function(p){ return (p.secteur||'')===s.id && p.ligne===l && p.annee===y && p.mois===m; });
+      totalLignes++;
+      if(entry) doneLignes++;
+      return {ligne:l, done: !!entry, pct: entry? entry.resultatPct : null};
+    });
+    var doneCount = lignes.filter(function(l){return l.done;}).length;
+    html += '<div style="border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; cursor:pointer;" data-action="perf-progress-goto" data-id="'+s.id+'">'+
+      '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;"><b>'+esc(s.nom)+'</b><span class="tiny" style="color:'+(doneCount===lignes.length?'var(--ok)':'var(--text-faint)')+';">'+doneCount+'/'+lignes.length+'</span></div>'+
+      '<div style="display:flex; flex-wrap:wrap; gap:5px;">'+
+        lignes.map(function(l){
+          var lvl = l.done? (l.pct!==null? scoreLevel(l.pct) : 'ok') : 'danger';
+          var label = l.done? (l.pct!==null? esc(l.ligne)+' '+l.pct+'%' : esc(l.ligne)+' ✓') : esc(l.ligne)+' ✕';
+          return '<span class="badge b-'+lvl+'" title="'+(l.done? (l.pct!==null? l.pct+'%' : 'Fait') : 'Audit manquant')+'">'+label+'</span>';
+        }).join('')+
+      '</div></div>';
+  });
+  html += '</div>';
+  html += '<p class="tiny" style="margin-top:10px; color:var(--text-faint);">'+doneLignes+' / '+totalLignes+' ligne(s) auditee(s) ce mois, tous secteurs confondus.</p>';
+  html += '</div>';
+  return html;
+}
 function renderMultiSecteurBanner(){
   var us = userSecteurs();
   var curY = Number(todayStr().split('-')[0]);
   var curM = Number(todayStr().split('-')[1])-1;
-  var metric = (DATA.uiSettings && DATA.uiSettings.multiSecteurMetric) || 'auto';
+  var metric = (DATA.uiSettings && DATA.uiSettings.multiSecteurMetric) || 'all';
   var html = '<div class="section card" style="margin-bottom:18px; border:2px solid var(--ok);">';
   html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">'+
     '<div class="eyebrow">Tous les secteurs</div>'+
@@ -5066,16 +5108,12 @@ function renderMultiSecteurBanner(){
     else if(metric==='perf'){ result = secteurPerfScore(sid,curY,curM); }
     else if(metric==='metro'){ result = secteurMetroScore(sid); }
     else { result = secteurAllScore(sid,curY,curM); }
-    var score = result.score, periodLabel = result.label;
-    var metroLate = DATA.metro.filter(function(e){ return (e.secteur||'MCU')===sid && e.echeance && e.echeance.slice(0,7) < todayStr().slice(0,7); }).length;
-    var actLate = DATA.actions.filter(function(a){ return (a.secteur||'MCU')===sid && isActionLate(a); }).length;
+    var score = result.score;
     var lvl = score===null? 'neutral' : scoreLevel(score);
     var isCur = sid===currentSecteur;
-    html += '<div style="padding:10px; border-radius:var(--radius-sm); border:1.5px solid '+(isCur?'var(--ok)':'var(--border)')+'; background:'+(isCur?'var(--ok-bg)':'var(--card)')+'; cursor:pointer;" data-action="switch-secteur" data-id="'+sid+'">'+
-      '<div style="font-weight:700; font-size:13px; margin-bottom:4px;">'+esc(sec.nom)+'</div>'+
-      '<div style="font-family:var(--mono); font-size:20px; font-weight:700; color:var(--'+lvl+');">'+(score!==null?score+'%':'-')+'</div>'+
-      '<div class="tiny">'+esc(periodLabel)+'</div>'+
-      (metroLate||actLate? '<div class="tiny" style="color:var(--danger); margin-top:3px;">'+(metroLate?metroLate+' métro. retard':'')+(metroLate&&actLate?' - ':'')+(actLate?actLate+' act. retard':'')+'</div>' : '<div class="tiny" style="color:var(--ok); margin-top:3px;">RAS</div>')+
+    html += '<div style="padding:16px 10px; border-radius:var(--radius-sm); border:1.5px solid '+(isCur?'var(--ok)':'var(--border)')+'; background:'+(isCur?'var(--ok-bg)':'var(--card)')+'; cursor:pointer; text-align:center;" data-action="switch-secteur" data-id="'+sid+'">'+
+      '<div style="font-weight:700; font-size:14px; margin-bottom:8px;">'+esc(sec.nom)+'</div>'+
+      '<div style="font-family:var(--mono); font-size:32px; font-weight:700; color:var(--'+lvl+');">'+(score!==null?score+'%':'-')+'</div>'+
     '</div>';
   });
   html += '</div></div>';
@@ -5457,7 +5495,7 @@ RENDERERS.dashboard = function(){
   var layout = getDashboardLayout().filter(function(w){ return !w.hidden; }); // "hidden" = supprimé du modèle
   var html = '';
   html += renderTodayBanner();
-  if(userSecteurs().length>1) html += renderMultiSecteurBanner();
+  if(userSecteurs().length>1) html += renderPerfAuditProgress()+renderMultiSecteurBanner();
 
   html += '<div id="dashboard-canvas">';
   html += renderPostits();
@@ -7762,6 +7800,8 @@ app.addEventListener('click', async function(e){
 
   var switchSecteurBtn = e.target.closest('[data-action="switch-secteur"]');
   if(switchSecteurBtn){ currentSecteur = switchSecteurBtn.dataset.id; renderNav(); render(); return; }
+  var perfProgressGoto = e.target.closest('[data-action="perf-progress-goto"]');
+  if(perfProgressGoto){ currentSecteur = perfProgressGoto.dataset.id; currentTab = 'perf'; renderNav(); render(); return; }
   if(e.target.closest('[data-action="new-secteur"]')){ await ensureSecteursData(); secteurFormState = {id:null, nom:'', lignes:[]}; render(); return; }
   if(e.target.closest('[data-action="cancel-secteur"]')){ secteurFormState = null; render(); return; }
   if(e.target.closest('[data-action="save-secteur"]')){ await handleSaveSecteur(); return; }
@@ -8125,6 +8165,8 @@ app.addEventListener('change', async function(e){
     if(autreWrap) autreWrap.style.display = (e.target.value==='__autre__') ? '' : 'none';
     return;
   }
+  if(e.target.id==='perf-progress-mois'){ perfProgressMonth = Number(e.target.value); render(); return; }
+  if(e.target.id==='perf-progress-annee'){ perfProgressYear = Number(e.target.value)||perfProgressYear; render(); return; }
   if(e.target.id==='multisecteur-metric-select'){
     if(!DATA.uiSettings) DATA.uiSettings = {sidebarColor:null, iconStyle:'svg'};
     DATA.uiSettings.multiSecteurMetric = e.target.value;
@@ -8511,6 +8553,9 @@ async function init(){
 init();
 
 })();
+
+
+
 
 
 
