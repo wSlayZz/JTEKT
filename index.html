@@ -478,6 +478,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -4925,7 +4926,7 @@ function renderSecteurDashboard(){
   var sec = getSecteur(currentSecteur);
   var lines = secteurLines();
   var html = '';
-  if(userSecteurs().length>1) html += renderPerfAuditProgress()+renderMultiSecteurBanner();
+  if(userSecteurs().length>1) html += renderMultiSecteurBanner()+renderPerfAuditProgress();
 
   var curM = Number(todayStr().split('-')[1])-1;
   var curY = Number(todayStr().split('-')[0]);
@@ -5070,15 +5071,16 @@ function renderPerfAuditProgress(){
       return {ligne:l, done: !!entry, pct: entry? entry.resultatPct : null};
     });
     var doneCount = lignes.filter(function(l){return l.done;}).length;
-    html += '<div style="border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; cursor:pointer;" data-action="perf-progress-goto" data-id="'+s.id+'">'+
-      '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;"><b>'+esc(s.nom)+'</b><span class="tiny" style="color:'+(doneCount===lignes.length?'var(--ok)':'var(--text-faint)')+';">'+doneCount+'/'+lignes.length+'</span></div>'+
-      '<div style="display:flex; flex-wrap:wrap; gap:5px;">'+
-        lignes.map(function(l){
-          var lvl = l.done? (l.pct!==null? scoreLevel(l.pct) : 'ok') : 'danger';
-          var label = l.done? (l.pct!==null? esc(l.ligne)+' '+l.pct+'%' : esc(l.ligne)+' ✓') : esc(l.ligne)+' ✕';
-          return '<span class="badge b-'+lvl+'" title="'+(l.done? (l.pct!==null? l.pct+'%' : 'Fait') : 'Audit manquant')+'">'+label+'</span>';
-        }).join('')+
-      '</div></div>';
+    var pct = lignes.length? Math.round(doneCount/lignes.length*100) : 0;
+    var lvl = pct===100? 'ok' : pct===0? 'danger' : 'warn';
+    html += '<div style="border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; cursor:pointer;" data-action="perf-progress-goto" data-id="'+s.id+'">'+
+      '<div style="font-weight:700; margin-bottom:6px;">'+esc(s.nom)+'</div>'+
+      '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">'+
+        '<span style="font-family:var(--mono); font-size:22px; font-weight:700; color:var(--'+lvl+');">'+pct+'%</span>'+
+        '<span class="tiny" style="color:var(--text-faint);">'+doneCount+'/'+lignes.length+' lignes</span>'+
+      '</div>'+
+      '<div style="height:8px; border-radius:4px; background:var(--neutral-bg); overflow:hidden;"><div style="height:100%; width:'+pct+'%; background:var(--'+lvl+');"></div></div>'+
+    '</div>';
   });
   html += '</div>';
   html += '<p class="tiny" style="margin-top:10px; color:var(--text-faint);">'+doneLignes+' / '+totalLignes+' ligne(s) auditee(s) ce mois, tous secteurs confondus.</p>';
@@ -5090,13 +5092,15 @@ function renderMultiSecteurBanner(){
   var curY = Number(todayStr().split('-')[0]);
   var curM = Number(todayStr().split('-')[1])-1;
   var metric = (DATA.uiSettings && DATA.uiSettings.multiSecteurMetric) || 'all';
+  var metricLabel = (MULTISECTEUR_METRIC_OPTIONS.find(function(o){return o[0]===metric;})||[])[1] || '';
   var html = '<div class="section card" style="margin-bottom:18px; border:2px solid var(--ok);">';
-  html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">'+
+  html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;">'+
     '<div class="eyebrow">Tous les secteurs</div>'+
     '<label class="tiny" style="display:flex; align-items:center; gap:6px;">Indicateur affiché<select id="multisecteur-metric-select" style="font-size:12px; padding:3px 6px;">'+
       MULTISECTEUR_METRIC_OPTIONS.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===metric?' selected':'')+'>'+o[1]+'</option>';}).join('')+
     '</select></label>'+
   '</div>';
+  html += '<div style="font-size:20px; font-weight:700; text-align:center; margin-bottom:14px;">'+esc(metricLabel)+'</div>';
   html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:10px;">';
   us.forEach(function(sid){
     var sec = getSecteur(sid);
@@ -5495,7 +5499,7 @@ RENDERERS.dashboard = function(){
   var layout = getDashboardLayout().filter(function(w){ return !w.hidden; }); // "hidden" = supprimé du modèle
   var html = '';
   html += renderTodayBanner();
-  if(userSecteurs().length>1) html += renderPerfAuditProgress()+renderMultiSecteurBanner();
+  if(userSecteurs().length>1) html += renderMultiSecteurBanner()+renderPerfAuditProgress();
 
   html += '<div id="dashboard-canvas">';
   html += renderPostits();
@@ -8553,6 +8557,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
