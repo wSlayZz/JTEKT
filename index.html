@@ -480,6 +480,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -2611,10 +2612,14 @@ function renderParticulesCharts(){
 }
 
 var RELEVES_BAINS = ['Bain 1','Bain 2'];
+function chlorureConcentrationRange(bain){
+  return bain==='Bain 2' ? {min:1, max:3} : {min:1.5, max:3.5};
+}
 function chlorureStatus(r){
-  var okConc = r.concentration!==null && r.concentration!==undefined && r.concentration>=1.5 && r.concentration<=3.5;
-  var okCl = r.chlorureMg!==null && r.chlorureMg!==undefined && r.chlorureMg<=200;
   if(r.concentration===null || r.concentration===undefined || r.chlorureMg===null || r.chlorureMg===undefined) return {level:'neutral', label:'-'};
+  var range = chlorureConcentrationRange(r.bain);
+  var okConc = r.concentration>=range.min && r.concentration<=range.max;
+  var okCl = r.chlorureMg<=200;
   if(okConc && okCl) return {level:'ok', label:'Conforme'};
   return {level:'danger', label:'Non conforme'};
 }
@@ -2671,7 +2676,7 @@ function proprReleves(){
   html += '</tbody></table></div>';
 
   // ── CONCENTRATION CHLORURE : tableau de suivi annuel (hebdomadaire) ──
-  html += '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;"><div class="eyebrow">Concentration chlorure - Tableau de suivi '+year+' (1-3,0% et ≤200mg)</div><button class="btn small" data-action="add-releve-direct" data-type="chlorure">+ Saisie directe</button></div>';
+  html += '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;"><div class="eyebrow">Concentration chlorure - Tableau de suivi '+year+' (Bain 1 : 1,5-3,5% · Bain 2 : 1-3% · chlorure ≤200mg)</div><button class="btn small" data-action="add-releve-direct" data-type="chlorure">+ Saisie directe</button></div>';
   if(releveDirectFormOpen==='chlorure') html += releveDirectForm('chlorure');
   html += '<div class="table-wrap"><table class="annual-table"><thead><tr><th>Semaine</th>'+RELEVES_BAINS.map(function(b){return '<th>'+esc(b)+'</th>';}).join('')+'</tr></thead><tbody>';
   mondaysOfYear(year).forEach(function(dateStr){
@@ -8610,6 +8615,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
