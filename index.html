@@ -479,6 +479,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -510,11 +511,11 @@ var KEYS = {
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
   esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1',
-  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', chokkoPosteConfig:'mcu_chokko_poste_config_v1', uiSettings:'app_ui_settings_v1'
+  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', chokkoPosteConfig:'mcu_chokko_poste_config_v1', bibliotheque:'app_bibliotheque_v1', uiSettings:'app_ui_settings_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, uiSettings:{sidebarColor:null, iconStyle:'svg'}};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, bibliotheque:[], uiSettings:{sidebarColor:null, iconStyle:'svg'}};
 var RENDERERS = {};
-var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['archives','Archives']];
+var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['bibliotheque','Bibliothèque'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
 
 // ============ LABELS PERSONNALISABLES ============
@@ -662,6 +663,7 @@ function secteurTabs(){
   // migration de données côté Supabase.
   if(currentSecteur==='MCU' && tabs.indexOf('formations')<0) tabs.push('formations');
   if(currentSecteur==='MCU' && tabs.indexOf('perf')<0) tabs.push('perf');
+  if(tabs.indexOf('bibliotheque')<0) tabs.push('bibliotheque');
   return tabs;
 }
 // Filtre par secteur : les enregistrements sans champ secteur appartiennent à MCU (données historiques)
@@ -3545,6 +3547,53 @@ function formationEcheance(p){
   var d = new Date(p.dateFormation+'T00:00:00');
   d.setFullYear(d.getFullYear()+1);
   return d.toISOString().slice(0,10);
+}
+var biblioFormOpen = false;
+RENDERERS.bibliotheque = function(){
+  var links = DATA.bibliotheque.slice().sort(function(a,b){ return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'}); });
+  var html = '<div class="section">';
+  html += '<div class="toolbar"><div class="left"><p class="tiny" style="max-width:520px;">Liens vers d\'autres outils utiles (site externe, application, document partagé...).</p></div>'+
+    '<button class="btn primary" data-action="toggle-biblio-form">'+(biblioFormOpen?'Annuler':'+ Ajouter un lien')+'</button></div>';
+  if(biblioFormOpen){
+    html += '<div class="entryform cols2" style="margin-bottom:16px;">'+
+      '<label class="field">Nom<input type="text" id="bib-nom" placeholder="Ex. Portail RH"></label>'+
+      '<label class="field">Lien (URL)<input type="text" id="bib-url" placeholder="https://…"></label>'+
+      '<label class="field full">Description <span class="tiny">(optionnel)</span><input type="text" id="bib-desc"></label>'+
+      '<div class="actions-row" style="grid-column:1/-1;"><button class="btn primary" data-action="save-biblio">Enregistrer</button></div>'+
+    '</div>';
+  }
+  if(!links.length){
+    html += emptyState('Aucun lien enregistré pour le moment.');
+  } else {
+    html += '<div class="grid grid-3">'+links.map(function(l){
+      return '<div class="card" style="position:relative;">'+
+        '<a href="'+esc(l.url)+'" target="_blank" rel="noopener" style="font-weight:700; text-decoration:none; color:var(--accent); display:block; margin-bottom:4px;">🔗 '+esc(l.nom)+'</a>'+
+        (l.description? '<div class="tiny" style="color:var(--text-faint); margin-bottom:8px;">'+esc(l.description)+'</div>' : '')+
+        '<button class="btn small danger-outline" data-action="delete-biblio" data-id="'+l.id+'" style="position:absolute; top:10px; right:10px;">Suppr.</button>'+
+      '</div>';
+    }).join('')+'</div>';
+  }
+  html += '</div>';
+  return html;
+};
+async function handleSaveBiblio(){
+  var nom = document.getElementById('bib-nom').value.trim();
+  var url = document.getElementById('bib-url').value.trim();
+  var desc = document.getElementById('bib-desc').value.trim();
+  if(!nom || !url){ toast('Merci de renseigner un nom et un lien.', 'error'); return; }
+  if(!/^https?:\/\//i.test(url)) url = 'https://'+url;
+  DATA.bibliotheque.push({id:uid('biblio'), nom:nom, url:url, description:desc||null});
+  await save('bibliotheque');
+  toast('Lien ajouté.');
+  biblioFormOpen = false;
+  render();
+}
+async function handleDeleteBiblio(id){
+  if(!confirm('Supprimer ce lien ?')) return;
+  DATA.bibliotheque = DATA.bibliotheque.filter(function(l){ return l.id!==id; });
+  await save('bibliotheque');
+  toast('Lien supprimé.');
+  render();
 }
 RENDERERS.formations = function(){
   var list = bySecteur(DATA.formations).slice().sort(function(a,b){ return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'}); });
@@ -6540,14 +6589,14 @@ var SVG_ICONS = {
 };
 var EMOJI_ICONS = {
   dashboard:'📊', proprete:'🧼', metro:'📏', ateq:'⚠️', chokko:'🏭', perf:'📈',
-  actions:'✅', planning:'🗓️', archives:'🗄️',
+  actions:'✅', planning:'🗓️', bibliotheque:'📚', archives:'🗄️',
   esd:'🎓', cicl:'🔧', formations:'🎓', comptes:'⚙️',
   production:'📦', qualite:'📋', admin:'⚙️'
 };
 function currentIconSet(){ return (DATA.uiSettings && DATA.uiSettings.iconStyle==='emoji') ? EMOJI_ICONS : SVG_ICONS; }
 var TAB_GROUPS_DEF = [
   {id:'production', label:'Production', tabs:['proprete','metro','ateq','chokko','perf']},
-  {id:'qualite',    label:'Qualite',    tabs:['actions','planning','archives']},
+  {id:'qualite',    label:'Qualite',    tabs:['actions','planning','bibliotheque','archives']},
   {id:'formations', label:'Formations', tabs:['esd','cicl','formations']},
   {id:'admin',      label:'Admin',      tabs:['comptes']}
 ];
@@ -7734,6 +7783,10 @@ app.addEventListener('click', async function(e){
   if(perfDelBtn){ await handleDeletePerfCell(perfDelBtn.dataset.id); return; }
   // FORMATIONS SREM
   if(e.target.closest('[data-action="new-formation"]')){ formationFormOpen = true; render(); return; }
+  if(e.target.closest('[data-action="toggle-biblio-form"]')){ biblioFormOpen = !biblioFormOpen; render(); return; }
+  if(e.target.closest('[data-action="save-biblio"]')){ await handleSaveBiblio(); return; }
+  var deleteBiblioBtn = e.target.closest('[data-action="delete-biblio"]');
+  if(deleteBiblioBtn){ await handleDeleteBiblio(deleteBiblioBtn.dataset.id); return; }
   if(e.target.closest('[data-action="cancel-formation"]')){ formationFormOpen = false; render(); return; }
   if(e.target.closest('[data-action="save-formation"]')){ await handleSaveFormation(); return; }
   var formEditBtn = e.target.closest('[data-action="formation-edit"]');
@@ -8557,6 +8610,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
