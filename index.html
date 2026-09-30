@@ -312,6 +312,23 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .prison-detail table td{padding:2px 6px;}
 .prison-detail table input, .prison-detail table select{height:26px; padding:1px 6px; font-size:12.5px;}
 .prison-detail .table-wrap{margin:0;}
+@media print{
+  body.print-prison header.top{display:none !important;}
+  .prison-print{font-family:Arial, Helvetica, sans-serif; color:#000;}
+  .pp-head{display:flex; justify-content:space-between; align-items:center; background:#1F3864; color:#fff; padding:5px 10px; margin-bottom:6px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .pp-title{font-size:20px; font-weight:700; letter-spacing:.03em;}
+  .pp-date{font-size:13px; font-weight:700;}
+  .pp-table{border-collapse:collapse; width:100%; font-size:11px;}
+  .pp-table th, .pp-table td{border:1px solid #9aa3b2; padding:2px 5px; line-height:1.3;}
+  .pp-table th{background:#D9E1F2; color:#000 !important; text-transform:none !important; letter-spacing:0 !important; font-size:11px !important; font-weight:700; text-align:left; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .pp-table tfoot td{font-weight:700; background:#F2F2F2; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .pp-num{text-align:center;}
+  .pp-strong{font-weight:700;}
+  .pp-summary{margin-bottom:10px; font-size:12px;}
+  .pp-details{column-count:4; column-gap:10px;}
+  .pp-detail{break-inside:avoid; display:inline-block; width:100%; margin:0 0 8px;}
+  .pp-detail-title{font-size:11.5px; font-weight:700; text-transform:uppercase; background:#1F3864; color:#fff; padding:2px 4px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+}
 .chokko-paint-swatch{width:16px; height:16px; border-radius:4px; border:1.5px solid rgba(0,0,0,0.2); flex-shrink:0;}
 .chokko-grid input.chk-cell{width:100%; min-width:32px; border:none; background:transparent; text-align:center; font-family:inherit; font-size:11px; padding:2px 1px;}
 .chokko-grid input.chk-cell::-webkit-outer-spin-button, .chokko-grid input.chk-cell::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
@@ -3680,6 +3697,45 @@ function prisonDetailCard(lot){
   '</div>';
   return html;
 }
+// Version imprimable (A3 paysage, une seule page) calquée sur la feuille papier
+function prisonPrintDetail(lot){
+  var lignes = lot.lignes||[];
+  var cols = PRISON_QTY_COLS.filter(function(c){ return lignes.some(function(l){ return Number(l[c[0]])>0; }); });
+  if(!cols.length) cols = [PRISON_QTY_COLS[0]];
+  var showLigne = lignes.some(function(l){ return l.ligne; });
+  var h = '<div class="pp-detail"><div class="pp-detail-title">'+esc(lot.defaut)+(lot.type?' · '+esc(lot.type):'')+'</div>'+
+    '<table class="pp-table"><thead><tr>'+(showLigne?'<th>Ligne</th>':'')+'<th>Réf.</th>'+cols.map(function(c){return '<th>'+c[1]+'</th>';}).join('')+'</tr></thead><tbody>';
+  var prevLigne = null;
+  lignes.forEach(function(l){
+    h += '<tr>'+(showLigne?'<td>'+(l.ligne!==prevLigne?esc(l.ligne||'-'):'')+'</td>':'')+'<td>'+esc(l.ref||'')+'</td>'+
+      cols.map(function(c){ var v = Number(l[c[0]])||0; return '<td class="pp-num">'+(v||'')+'</td>'; }).join('')+'</tr>';
+    prevLigne = l.ligne;
+  });
+  if(!lignes.length) h += '<tr><td colspan="'+(cols.length+(showLigne?2:1))+'">Non détaillé</td></tr>';
+  h += '</tbody><tfoot><tr><td'+(showLigne?' colspan="2"':'')+'>Total '+prisonLotTotal(lot)+'</td>'+
+    cols.map(function(c){ return '<td class="pp-num">'+lignes.reduce(function(s,l){ return s+(Number(l[c[0]])||0); },0)+'</td>'; }).join('')+'</tr></tfoot></table></div>';
+  return h;
+}
+function prisonPrintView(lots){
+  var total = lots.reduce(function(s,l){ return s+prisonLotTotal(l); },0);
+  var prev = prisonPreviousSnapshot();
+  var lastUpd = prisonLastUpdate();
+  var h = '<div class="print-only prison-print">'+
+    '<div class="pp-head"><div class="pp-title">SYNTHÈSE DU STOCK DE MCU EN PRISON QUALITÉ'+(prisonZoneFilter?' - '+esc(prisonZoneFilter):'')+'</div>'+
+      '<div class="pp-date">'+(lastUpd?'Mis à jour le '+fmtDate(lastUpd):'')+'</div></div>'+
+    '<table class="pp-table pp-summary"><thead><tr><th>Défaut</th><th>Type</th><th>Nombre</th><th>Évol. sem.</th><th>Analyse</th><th>Responsable</th><th>Stockage</th><th>Blocage SAP</th><th>Ancienneté</th></tr></thead><tbody>';
+  lots.forEach(function(l){
+    var n = prisonLotTotal(l);
+    var d = prev && prev.lots && prev.lots[l.id]!==undefined ? n-prev.lots[l.id] : null;
+    var age = l.dateEntree ? daysBetween(l.dateEntree, todayStr())+' j' : '-';
+    h += '<tr><td class="pp-strong">'+esc(l.defaut)+'</td><td>'+esc(l.type||'-')+'</td><td class="pp-num pp-strong">'+n+'</td>'+
+      '<td class="pp-num">'+(d===null?'-':(d>0?'+':'')+d)+'</td><td>'+esc(l.analyse||'-')+'</td><td>'+esc(l.responsable||'-')+'</td>'+
+      '<td>'+esc(l.stockage||'-')+'</td><td>'+esc(l.blocageSap||'-')+'</td><td class="pp-num">'+age+'</td></tr>';
+  });
+  h += '</tbody><tfoot><tr><td colspan="2">TOTAL</td><td class="pp-num">'+total+'</td><td class="pp-num">'+(prev?((total-prev.total>0?'+':'')+(total-prev.total)):'-')+'</td><td colspan="5"></td></tr></tfoot></table>'+
+    '<div class="pp-details">'+lots.map(prisonPrintDetail).join('')+'</div></div>';
+  return h;
+}
 RENDERERS.prison = function(){
   var lots = DATA.prisonLots.slice();
   var shown = prisonZoneFilter ? lots.filter(function(l){ return l.stockage===prisonZoneFilter; }) : lots;
@@ -3687,7 +3743,7 @@ RENDERERS.prison = function(){
   var shownTotal = shown.reduce(function(s,l){ return s+prisonLotTotal(l); },0);
   var prev = prisonPreviousSnapshot();
   var lastUpd = prisonLastUpdate();
-  var html = '<div class="section">';
+  var html = '<div class="section">'+(lots.length? prisonPrintView(shown) : '')+'<div class="screen-only">';
 
   // ---- En-tête : total, évolution hebdo, répartition par zone ----
   html += '<div class="card" style="margin-bottom:16px; display:flex; align-items:center; gap:28px; flex-wrap:wrap;">'+
@@ -3713,7 +3769,7 @@ RENDERERS.prison = function(){
 
   if(!lots.length){
     html += emptyState('Aucune pièce en prison qualité enregistrée.');
-    html += '</div>';
+    html += '</div></div>';
     return html;
   }
 
@@ -3741,7 +3797,7 @@ RENDERERS.prison = function(){
 
   // ---- Détail par défaut (comme les tableaux de la feuille papier) ----
   html += '<div class="prison-masonry">'+shown.map(prisonDetailCard).join('')+'</div>';
-  html += '</div>';
+  html += '</div></div>';
   return html;
 };
 async function handleSavePrisonLot(){
@@ -8093,7 +8149,14 @@ app.addEventListener('click', async function(e){
   var prisonGotoBtn = e.target.closest('[data-action="prison-goto-detail"]');
   if(prisonGotoBtn){ e.preventDefault(); var tgt = document.getElementById('prison-detail-'+prisonGotoBtn.dataset.id); if(tgt && tgt.scrollIntoView) tgt.scrollIntoView({behavior:'smooth', block:'start'}); return; }
   if(e.target.closest('[data-action="prison-import-sheet"]')){ await handleImportPrisonSheet(); return; }
-  if(e.target.closest('[data-action="prison-print"]')){ printWithPageSize('A4 landscape'); return; }
+  if(e.target.closest('[data-action="prison-print"]')){
+    document.body.classList.add('print-prison');
+    var rmPrisonPrint = function(){ document.body.classList.remove('print-prison'); window.removeEventListener('afterprint', rmPrisonPrint); };
+    window.addEventListener('afterprint', rmPrisonPrint);
+    setTimeout(rmPrisonPrint, 4000);
+    printWithPageSize('A3 landscape');
+    return;
+  }
   if(e.target.closest('[data-action="toggle-biblio-form"]')){ biblioFormOpen = !biblioFormOpen; render(); return; }
   if(e.target.closest('[data-action="save-biblio"]')){ await handleSaveBiblio(); return; }
   var deleteBiblioBtn = e.target.closest('[data-action="delete-biblio"]');
