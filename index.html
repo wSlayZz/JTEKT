@@ -481,6 +481,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -512,11 +513,11 @@ var KEYS = {
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
   esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1',
-  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', chokkoPosteConfig:'mcu_chokko_poste_config_v1', bibliotheque:'app_bibliotheque_v1', uiSettings:'app_ui_settings_v1'
+  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', chokkoPosteConfig:'mcu_chokko_poste_config_v1', bibliotheque:'app_bibliotheque_v1', prisonLots:'mcu_prison_lots_v1', prisonSnapshots:'mcu_prison_snapshots_v1', uiSettings:'app_ui_settings_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, bibliotheque:[], uiSettings:{sidebarColor:null, iconStyle:'svg'}};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, bibliotheque:[], prisonLots:[], prisonSnapshots:[], uiSettings:{sidebarColor:null, iconStyle:'svg'}};
 var RENDERERS = {};
-var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['bibliotheque','Bibliothèque'],['archives','Archives']];
+var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['prison','Prison qualité'],['bibliotheque','Bibliothèque'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
 
 // ============ LABELS PERSONNALISABLES ============
@@ -642,7 +643,7 @@ var currentUser = null;
 
 // ============ SECTEURS ============
 var SECTEURS_DEFAULT = [
-  {id:'MCU', nom:'MCU', lignes:['MCU1','MCU2','MCU3'], tabs:['dashboard','proprete','perf','metro','ateq','chokko','actions','planning','esd','cicl','formations','archives']},
+  {id:'MCU', nom:'MCU', lignes:['MCU1','MCU2','MCU3'], tabs:['dashboard','proprete','perf','metro','ateq','chokko','actions','planning','prison','esd','cicl','formations','archives']},
   {id:'PV',  nom:'PV',  lignes:['PV01','PV02','PV03','PV04'], tabs:['dashboard','perf','metro','actions','planning','archives']},
   {id:'CR',  nom:'CR',  lignes:['CR03','CR05','CR06','CR08','CR09','CR10'], tabs:['dashboard','perf','metro','actions','planning','archives']},
   {id:'KA',  nom:'KA',  lignes:['KA03','KA04/05','KA06/07/09','KA14/15/16'], tabs:['dashboard','perf','metro','actions','planning','archives']},
@@ -664,6 +665,7 @@ function secteurTabs(){
   // migration de données côté Supabase.
   if(currentSecteur==='MCU' && tabs.indexOf('formations')<0) tabs.push('formations');
   if(currentSecteur==='MCU' && tabs.indexOf('perf')<0) tabs.push('perf');
+  if(currentSecteur==='MCU' && tabs.indexOf('prison')<0) tabs.push('prison');
   if(tabs.indexOf('bibliotheque')<0) tabs.push('bibliotheque');
   return tabs;
 }
@@ -3553,6 +3555,283 @@ function formationEcheance(p){
   d.setFullYear(d.getFullYear()+1);
   return d.toISOString().slice(0,10);
 }
+// ---------- PRISON QUALITE (stock de pièces bloquées) ----------
+var PRISON_QTY_COLS = [['complet','Complet'],['sansCapot','Sans capot'],['sansPcb','Sans PCB']];
+var prisonLotFormOpen = false; // false | 'new' | id du lot en modification
+var prisonZoneFilter = '';
+function prisonLineTotal(l){ return (Number(l.complet)||0)+(Number(l.sansCapot)||0)+(Number(l.sansPcb)||0); }
+function prisonLotTotal(lot){ return (lot.lignes||[]).reduce(function(s,l){ return s+prisonLineTotal(l); },0); }
+function prisonWeekKey(dateStr){ var w = isoWeekInfo(dateStr); return w.year+'-S'+String(w.week).padStart(2,'0'); }
+function prisonCurrentSnapshotData(){
+  var lots = {};
+  DATA.prisonLots.forEach(function(l){ lots[l.id] = prisonLotTotal(l); });
+  var total = Object.keys(lots).reduce(function(s,k){ return s+lots[k]; },0);
+  return {total:total, lots:lots};
+}
+// Une photo du stock par semaine ISO : sert de référence pour le point hebdomadaire
+function prisonUpsertSnapshot(dateStr){
+  dateStr = dateStr || todayStr();
+  var key = prisonWeekKey(dateStr);
+  var snap = prisonCurrentSnapshotData();
+  var existing = DATA.prisonSnapshots.find(function(s){ return s.week===key; });
+  if(existing){ existing.date = dateStr; existing.total = snap.total; existing.lots = snap.lots; }
+  else DATA.prisonSnapshots.push({week:key, date:dateStr, total:snap.total, lots:snap.lots});
+  DATA.prisonSnapshots.sort(function(a,b){ return a.week.localeCompare(b.week); });
+}
+function prisonPreviousSnapshot(){
+  var cur = prisonWeekKey(todayStr());
+  var prev = DATA.prisonSnapshots.filter(function(s){ return s.week<cur; });
+  return prev.length? prev[prev.length-1] : null;
+}
+function prisonLastUpdate(){
+  var s = DATA.prisonSnapshots;
+  return s.length? s[s.length-1].date : null;
+}
+async function prisonCommit(action, summary){
+  prisonUpsertSnapshot();
+  await save('prisonLots');
+  await save('prisonSnapshots');
+  logChange('Prison qualité', action, summary||'');
+}
+function prisonZones(){
+  var z = [];
+  DATA.prisonLots.forEach(function(l){ if(l.stockage && z.indexOf(l.stockage)<0) z.push(l.stockage); });
+  return z.sort();
+}
+function prisonDeltaHtml(delta){
+  if(delta===null || delta===undefined) return '<span class="tiny" style="color:var(--text-faint);">-</span>';
+  if(delta===0) return '<span class="tiny" style="color:var(--text-faint);">=</span>';
+  // Une baisse du stock bloqué est une bonne nouvelle : vert ; une hausse : rouge
+  return '<span style="font-family:var(--mono); font-weight:700; color:var(--'+(delta<0?'ok':'danger')+');">'+(delta>0?'+':'')+delta+'</span>';
+}
+function prisonAgeHtml(lot){
+  if(!lot.dateEntree) return '<span class="tiny" style="color:var(--text-faint);">-</span>';
+  var d = daysBetween(lot.dateEntree, todayStr());
+  var lvl = d>90? 'danger' : d>30? 'warn' : 'ok';
+  return badge(lvl, d+' j');
+}
+function prisonLotForm(){
+  var lot = prisonLotFormOpen==='new' ? {} : (DATA.prisonLots.find(function(l){ return l.id===prisonLotFormOpen; })||{});
+  var analyses = [], responsables = [];
+  DATA.prisonLots.forEach(function(l){
+    if(l.analyse && analyses.indexOf(l.analyse)<0) analyses.push(l.analyse);
+    if(l.responsable && responsables.indexOf(l.responsable)<0) responsables.push(l.responsable);
+  });
+  DATA.accounts.forEach(function(a){ if(a.displayName!=='Administrateur' && responsables.indexOf(a.displayName)<0) responsables.push(a.displayName); });
+  return '<div class="card" style="margin-bottom:16px;">'+
+    '<div class="eyebrow" style="margin-bottom:10px;">'+(prisonLotFormOpen==='new'?'Nouveau défaut en prison':'Modifier le défaut')+'</div>'+
+    '<div class="entryform cols2">'+
+      '<label class="field">Défaut<input type="text" id="pl-defaut" value="'+esc(lot.defaut||'')+'" placeholder="Ex. Défaut GDU"></label>'+
+      '<label class="field">Type (référence produit)<input type="text" id="pl-type" value="'+esc(lot.type||'')+'" placeholder="Ex. 149X"></label>'+
+      '<label class="field">Analyse / statut<input type="text" id="pl-analyse" list="pl-analyse-list" value="'+esc(lot.analyse||'')+'" placeholder="Ex. Attente analyse avec CONTI"></label>'+
+      '<label class="field">Responsable<input type="text" id="pl-responsable" list="pl-resp-list" value="'+esc(lot.responsable||'')+'"></label>'+
+      '<label class="field">Zone de stockage<input type="text" id="pl-stockage" list="pl-zone-list" value="'+esc(lot.stockage||'')+'" placeholder="Ex. Prison MCU"></label>'+
+      '<label class="field">Date d\'entrée en prison<input type="date" id="pl-date" value="'+esc(lot.dateEntree||'')+'"></label>'+
+      '<label class="field full">Blocage SAP <span class="tiny">(optionnel)</span><input type="text" id="pl-sap" value="'+esc(lot.blocageSap||'')+'" placeholder="Ex. Moteur : 12 · PCB : 3"></label>'+
+    '</div>'+
+    '<datalist id="pl-analyse-list">'+analyses.map(function(a){return '<option value="'+esc(a)+'">';}).join('')+'</datalist>'+
+    '<datalist id="pl-resp-list">'+responsables.map(function(a){return '<option value="'+esc(a)+'">';}).join('')+'</datalist>'+
+    '<datalist id="pl-zone-list">'+prisonZones().map(function(a){return '<option value="'+esc(a)+'">';}).join('')+'</datalist>'+
+    '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="prison-cancel-lot">Annuler</button><button class="btn primary" data-action="prison-save-lot">Enregistrer</button></div>'+
+  '</div>';
+}
+function prisonDetailCard(lot){
+  var lignes = lot.lignes||[];
+  var colTotals = PRISON_QTY_COLS.map(function(c){ return lignes.reduce(function(s,l){ return s+(Number(l[c[0]])||0); },0); });
+  var html = '<div class="card prison-detail" id="prison-detail-'+lot.id+'" style="break-inside:avoid;">'+
+    '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; gap:8px;">'+
+      '<div style="font-weight:700; text-transform:uppercase; font-size:13px;">'+esc(lot.defaut)+(lot.type?' <span class="tiny" style="text-transform:none;">· '+esc(lot.type)+'</span>':'')+'</div>'+
+      '<div style="font-family:var(--mono); font-weight:700;">'+prisonLotTotal(lot)+' pcs</div>'+
+    '</div>'+
+    '<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Réf.</th>'+
+      PRISON_QTY_COLS.map(function(c){ return '<th style="text-align:center;">'+c[1]+'</th>'; }).join('')+
+      '<th style="text-align:center;">Total</th><th class="row-actions-noprint"></th></tr></thead><tbody>';
+  lignes.forEach(function(l){
+    html += '<tr>'+
+      '<td><select class="prison-cell" data-lot="'+lot.id+'" data-line="'+l.id+'" data-field="ligne" style="font-size:12px; padding:2px 4px;">'+
+        ['','MCU1','MCU2','MCU3'].map(function(x){ return '<option value="'+x+'"'+((l.ligne||'')===x?' selected':'')+'>'+(x||'-')+'</option>'; }).join('')+
+      '</select></td>'+
+      '<td><input type="text" class="prison-cell" data-lot="'+lot.id+'" data-line="'+l.id+'" data-field="ref" value="'+esc(l.ref||'')+'" style="width:110px; font-size:12.5px;"></td>'+
+      PRISON_QTY_COLS.map(function(c){
+        var v = Number(l[c[0]])||0;
+        return '<td style="text-align:center;"><input type="number" min="0" class="prison-cell chk-cell" data-lot="'+lot.id+'" data-line="'+l.id+'" data-field="'+c[0]+'" value="'+(v||'')+'" style="width:64px; text-align:center;"></td>';
+      }).join('')+
+      '<td style="text-align:center; font-family:var(--mono); font-weight:700;">'+prisonLineTotal(l)+'</td>'+
+      '<td class="row-actions-noprint"><button class="postit-del" data-action="prison-delete-line" data-lot="'+lot.id+'" data-line="'+l.id+'" title="Supprimer cette ligne" style="color:var(--danger);">✕</button></td>'+
+    '</tr>';
+  });
+  if(!lignes.length) html += '<tr><td colspan="7" class="tiny" style="color:var(--text-faint);">Aucune pièce détaillée pour ce défaut.</td></tr>';
+  html += '</tbody><tfoot><tr style="font-weight:700;"><td colspan="2">Total</td>'+
+    colTotals.map(function(t){ return '<td style="text-align:center; font-family:var(--mono);">'+(t||'-')+'</td>'; }).join('')+
+    '<td style="text-align:center; font-family:var(--mono);">'+prisonLotTotal(lot)+'</td><td class="row-actions-noprint"></td></tr></tfoot></table></div>'+
+    '<div class="row-actions-noprint" style="display:flex; gap:6px; align-items:center; margin-top:8px; flex-wrap:wrap;">'+
+      '<select id="prison-new-ligne-'+lot.id+'" style="font-size:12px; padding:3px 5px;"><option value="">Ligne -</option><option>MCU1</option><option>MCU2</option><option>MCU3</option></select>'+
+      '<input type="text" id="prison-new-ref-'+lot.id+'" placeholder="Réf. (ex. 18889)" style="width:130px; font-size:12.5px;">'+
+      '<button class="btn small" data-action="prison-add-line" data-lot="'+lot.id+'">+ Ajouter une réf.</button>'+
+    '</div>'+
+  '</div>';
+  return html;
+}
+RENDERERS.prison = function(){
+  var lots = DATA.prisonLots.slice();
+  var shown = prisonZoneFilter ? lots.filter(function(l){ return l.stockage===prisonZoneFilter; }) : lots;
+  var total = lots.reduce(function(s,l){ return s+prisonLotTotal(l); },0);
+  var shownTotal = shown.reduce(function(s,l){ return s+prisonLotTotal(l); },0);
+  var prev = prisonPreviousSnapshot();
+  var lastUpd = prisonLastUpdate();
+  var html = '<div class="section">';
+
+  // ---- En-tête : total, évolution hebdo, répartition par zone ----
+  html += '<div class="card" style="margin-bottom:16px; display:flex; align-items:center; gap:28px; flex-wrap:wrap;">'+
+    '<div><div class="eyebrow">Synthèse du stock en prison qualité</div>'+
+      '<div class="tiny" style="margin-top:4px;">'+(lastUpd?'Mis à jour le '+fmtDate(lastUpd):'Aucune mise à jour enregistrée')+'</div></div>'+
+    '<div style="text-align:center;"><div class="tiny">Total pièces</div><div style="font-family:var(--mono); font-size:30px; font-weight:700;">'+total+'</div></div>'+
+    '<div style="text-align:center;"><div class="tiny">vs semaine précédente'+(prev?' ('+fmtDate(prev.date)+')':'')+'</div><div style="font-size:20px;">'+prisonDeltaHtml(prev? total-prev.total : null)+'</div></div>'+
+    '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-left:auto;">'+
+      '<button class="btn small'+(!prisonZoneFilter?' primary':'')+'" data-action="prison-zone-filter" data-zone="">Toutes zones</button>'+
+      prisonZones().map(function(z){
+        var n = lots.filter(function(l){ return l.stockage===z; }).reduce(function(s,l){ return s+prisonLotTotal(l); },0);
+        return '<button class="btn small'+(prisonZoneFilter===z?' primary':'')+'" data-action="prison-zone-filter" data-zone="'+esc(z)+'">'+esc(z)+' · '+n+'</button>';
+      }).join('')+
+    '</div>'+
+  '</div>';
+
+  html += '<div class="toolbar row-actions-noprint"><div class="left"></div><div style="display:flex; gap:8px;">'+
+    (!lots.length? '<button class="btn" data-action="prison-import-sheet" title="Reprendre les données de la feuille papier du 23/03/2026">📥 Reprendre la synthèse du 23/03/2026</button>' : '')+
+    '<button class="btn" data-action="prison-print" title="Exporter en PDF">🖨️ Exporter en PDF</button>'+
+    '<button class="btn primary" data-action="prison-new-lot">+ Nouveau défaut</button>'+
+  '</div></div>';
+  if(prisonLotFormOpen) html += prisonLotForm();
+
+  if(!lots.length){
+    html += emptyState('Aucune pièce en prison qualité enregistrée.');
+    html += '</div>';
+    return html;
+  }
+
+  // ---- Tableau de synthèse ----
+  html += '<div class="table-wrap" style="margin-bottom:20px;"><table><thead><tr>'+
+    '<th>Défaut</th><th>Type</th><th style="text-align:center;">Nombre</th><th style="text-align:center;">Évol. semaine</th><th>Analyse</th><th>Responsable</th><th>Stockage</th><th>Blocage SAP</th><th style="text-align:center;">Ancienneté</th><th class="row-actions-noprint"></th>'+
+  '</tr></thead><tbody>';
+  shown.forEach(function(l){
+    var n = prisonLotTotal(l);
+    var d = prev ? (prev.lots && prev.lots[l.id]!==undefined ? n-prev.lots[l.id] : null) : null;
+    html += '<tr>'+
+      '<td style="font-weight:600;"><a href="#" data-action="prison-goto-detail" data-id="'+l.id+'" style="color:inherit;">'+esc(l.defaut)+'</a></td>'+
+      '<td>'+esc(l.type||'-')+'</td>'+
+      '<td style="text-align:center; font-family:var(--mono); font-weight:700;">'+n+'</td>'+
+      '<td style="text-align:center;">'+(prev && d===null ? '<span class="tiny">nouveau</span>' : prisonDeltaHtml(d))+'</td>'+
+      '<td>'+esc(l.analyse||'-')+'</td>'+
+      '<td>'+esc(l.responsable||'-')+'</td>'+
+      '<td>'+esc(l.stockage||'-')+'</td>'+
+      '<td class="tiny">'+esc(l.blocageSap||'-')+'</td>'+
+      '<td style="text-align:center;">'+prisonAgeHtml(l)+'</td>'+
+      '<td class="row-actions-noprint" style="white-space:nowrap;"><button class="btn small" data-action="prison-edit-lot" data-id="'+l.id+'">Modifier</button> <button class="btn small danger-outline" data-action="prison-delete-lot" data-id="'+l.id+'">Suppr.</button></td>'+
+    '</tr>';
+  });
+  html += '</tbody><tfoot><tr style="font-weight:700;"><td colspan="2">TOTAL'+(prisonZoneFilter?' ('+esc(prisonZoneFilter)+')':'')+'</td><td style="text-align:center; font-family:var(--mono); font-size:15px;">'+shownTotal+'</td><td colspan="7"></td></tr></tfoot></table></div>';
+
+  // ---- Détail par défaut (comme les tableaux de la feuille papier) ----
+  html += '<div class="grid grid-2" style="align-items:start;">'+shown.map(prisonDetailCard).join('')+'</div>';
+  html += '</div>';
+  return html;
+};
+async function handleSavePrisonLot(){
+  var defaut = document.getElementById('pl-defaut').value.trim();
+  if(!defaut){ toast('Merci de renseigner le défaut.', 'error'); return; }
+  var fields = {
+    defaut: defaut,
+    type: document.getElementById('pl-type').value.trim(),
+    analyse: document.getElementById('pl-analyse').value.trim(),
+    responsable: document.getElementById('pl-responsable').value.trim(),
+    stockage: document.getElementById('pl-stockage').value.trim(),
+    dateEntree: document.getElementById('pl-date').value || null,
+    blocageSap: document.getElementById('pl-sap').value.trim()
+  };
+  var isNew = prisonLotFormOpen==='new';
+  if(isNew){
+    DATA.prisonLots.push(Object.assign({id:uid('prison'), lignes:[]}, fields));
+  } else {
+    var lot = DATA.prisonLots.find(function(l){ return l.id===prisonLotFormOpen; });
+    if(lot) Object.assign(lot, fields);
+  }
+  await prisonCommit(isNew?'Nouveau défaut':'Modification', defaut);
+  toast(isNew? 'Défaut ajouté, vous pouvez détailler les références ci-dessous.' : 'Défaut mis à jour.');
+  prisonLotFormOpen = false;
+  render();
+}
+async function handleDeletePrisonLot(id){
+  var lot = DATA.prisonLots.find(function(l){ return l.id===id; });
+  if(!lot) return;
+  if(!confirm('Supprimer le défaut "'+lot.defaut+'" et ses '+prisonLotTotal(lot)+' pièce(s) de la prison qualité ?\n\nÀ faire uniquement quand le stock est réellement sorti (rebut, recyclage, réintroduction...).')) return;
+  DATA.prisonLots = DATA.prisonLots.filter(function(l){ return l.id!==id; });
+  await prisonCommit('Sortie du défaut', lot.defaut+' ('+prisonLotTotal(lot)+' pcs)');
+  toast('Défaut retiré de la prison qualité.');
+  render();
+}
+async function handleAddPrisonLine(lotId){
+  var lot = DATA.prisonLots.find(function(l){ return l.id===lotId; });
+  if(!lot) return;
+  var ref = document.getElementById('prison-new-ref-'+lotId).value.trim();
+  if(!ref){ toast('Merci de renseigner la référence.', 'error'); return; }
+  lot.lignes = lot.lignes||[];
+  lot.lignes.push({id:uid('pline'), ligne:document.getElementById('prison-new-ligne-'+lotId).value, ref:ref, complet:0, sansCapot:0, sansPcb:0});
+  await prisonCommit('Ajout référence', lot.defaut+' · '+ref);
+  render();
+  var firstQty = document.querySelector('#prison-detail-'+lotId+' tbody tr:last-child input[data-field="complet"]');
+  if(firstQty) firstQty.focus();
+}
+async function handleDeletePrisonLine(lotId, lineId){
+  var lot = DATA.prisonLots.find(function(l){ return l.id===lotId; });
+  if(!lot) return;
+  var line = (lot.lignes||[]).find(function(x){ return x.id===lineId; });
+  if(!line) return;
+  if(prisonLineTotal(line)>0 && !confirm('Supprimer la référence '+line.ref+' ('+prisonLineTotal(line)+' pièce(s)) de ce défaut ?')) return;
+  lot.lignes = lot.lignes.filter(function(x){ return x.id!==lineId; });
+  await prisonCommit('Suppression référence', lot.defaut+' · '+line.ref);
+  render();
+}
+async function handlePrisonCellChange(el){
+  var lot = DATA.prisonLots.find(function(l){ return l.id===el.dataset.lot; });
+  if(!lot) return;
+  var line = (lot.lignes||[]).find(function(x){ return x.id===el.dataset.line; });
+  if(!line) return;
+  var f = el.dataset.field;
+  if(f==='ref' || f==='ligne'){ line[f] = el.value.trim(); }
+  else { line[f] = Math.max(0, parseInt(el.value,10)||0); }
+  await prisonCommit('Mise à jour quantité', lot.defaut+' · '+line.ref);
+  render();
+}
+// Reprise de la feuille papier "Synthèse du stock de MCU en prison qualité" mise à jour le 23/03/2026
+function prisonSheetSeed(){
+  function L(ligne, ref, complet, sansCapot, sansPcb){ return {id:uid('pline'), ligne:ligne, ref:String(ref), complet:complet||0, sansCapot:sansCapot||0, sansPcb:sansPcb||0}; }
+  function lot(defaut, type, analyse, resp, stockage, sap, lignes){ return {id:uid('prison'), defaut:defaut, type:type, analyse:analyse, responsable:resp, stockage:stockage, dateEntree:null, blocageSap:sap, lignes:lignes}; }
+  return [
+    lot('Défaut Torque Ripple 4th/12th','TT','Attente analyse avec CONTI','Emmanuel','Palettier N2','',[
+      L('',17060,8),L('',18344,8),L('',17580,4),L('',18831,16),L('',18891,61),L('',19083,2),L('',18890,7),L('',18889,5),L('',19174,12),L('',19172,4)]),
+    lot('Ancienne référence MCU','143X','Attente décision LOG','Sébastien','Prison MCU','',[
+      L('MCU1',18342,1,1),L('MCU1',17578,2),L('MCU1',18331,3,1),L('MCU1',18334,1,1),L('MCU1',18338,2,22),L('MCU1',18344,6,1),L('MCU1',18889,9,4,1),L('MCU1',18890,5,11),L('MCU1',19085,5),L('MCU1',19891,3,1),
+      L('MCU2',17578,1),L('MCU2',17580,3),L('MCU2',18334,1,3),L('MCU2',18338,0,0,1),L('MCU2',18342,3),L('MCU2',18343,1),L('MCU2',17579,1,1),L('MCU2',18889,8,3),L('MCU2',18890,11,15),L('MCU2',18891,5,9),L('MCU2',19085,2,1,1),L('MCU2',19087,4)]),
+    lot('Défaut GDU','149X','Attente analyse avec CONTI','Morin','Palettier N2','',[L('',17060,87),L('',18199,148)]),
+    lot('Recyclage OK','141P','Attente réintro sur MCU1','Sébastien','Prison MCU','',[
+      L('',4164,1,0,1),L('',4779,0,1,1),L('',4161,1,1),L('',4810,7,8,10),L('',4163,4,16,9),L('',4165,5,2,5),L('',4811,1,6,33),L('',4162,3,3)]),
+    lot('Ancienne traça IGEAR','162R','Attente recyclage sur MCU3','Morin','Palettier N2','Moteur spec A : 419 · Moteur spec B : 185 · ECU : 604',[L('','SPEC A',419),L('','SPEC B',185)]),
+    lot('Défaut MAS','144P','Attente analyse avec CONTI','Emmanuel','Palettier N2','',[
+      L('',19406,148),L('',18889,5),L('',18331,2),L('',19835,12),L('',18891,86),L('',19833,7),L('',19172,1),L('',19834,1),L('',19174,2),L('',19934,1)]),
+    lot('Défaut HW - PN','162R','Attente recyclage sur MCU3','Morin','Prison MCU','Moteur spec A : 65 · Moteur spec B : 53 · ECU : 118',[L('','19722 (SPEC B)',68)]),
+    lot('Défaut brasage boule','162R','Attente recyclage sur MCU3','Sébastien','Prison MCU','Moteur spec A : 0 · Moteur spec B : 68 · ECU : 68',[L('','SPEC A',0,65),L('','SPEC B',0,53)])
+  ];
+}
+async function handleImportPrisonSheet(){
+  if(DATA.prisonLots.length){ toast('Des données existent déjà, reprise annulée.', 'error'); return; }
+  if(!confirm('Reprendre les 8 défauts de la synthèse papier du 23/03/2026 (1689 pièces) ?\n\nPensez à vérifier les quantités par rapport à la feuille, puis à les mettre à jour.')) return;
+  DATA.prisonLots = prisonSheetSeed();
+  prisonUpsertSnapshot('2026-03-23'); // point de référence daté de la feuille papier
+  await prisonCommit('Reprise de la feuille du 23/03/2026', DATA.prisonLots.length+' défauts');
+  toast('Synthèse reprise : '+prisonCurrentSnapshotData().total+' pièces.');
+  render();
+}
+
 var biblioFormOpen = false;
 RENDERERS.bibliotheque = function(){
   var links = DATA.bibliotheque.slice().sort(function(a,b){ return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'}); });
@@ -6575,6 +6854,8 @@ function canSub(key){
 }
 // ===== Navigation en sidebar avec groupes rétractables =====
 var SVG_ICONS = {
+  prison: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+  bibliotheque: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
   dashboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>',
   proprete: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M9 6l3-4 3 4"/><path d="M5 10h14l-1.5 10a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2z"/></svg>',
   metro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l5 5-12 12H4v-5z"/><path d="M13 6l5 5"/></svg>',
@@ -6594,14 +6875,14 @@ var SVG_ICONS = {
 };
 var EMOJI_ICONS = {
   dashboard:'📊', proprete:'🧼', metro:'📏', ateq:'⚠️', chokko:'🏭', perf:'📈',
-  actions:'✅', planning:'🗓️', bibliotheque:'📚', archives:'🗄️',
+  actions:'✅', planning:'🗓️', prison:'🔒', bibliotheque:'📚', archives:'🗄️',
   esd:'🎓', cicl:'🔧', formations:'🎓', comptes:'⚙️',
   production:'📦', qualite:'📋', admin:'⚙️'
 };
 function currentIconSet(){ return (DATA.uiSettings && DATA.uiSettings.iconStyle==='emoji') ? EMOJI_ICONS : SVG_ICONS; }
 var TAB_GROUPS_DEF = [
   {id:'production', label:'Production', tabs:['proprete','metro','ateq','chokko','perf']},
-  {id:'qualite',    label:'Qualite',    tabs:['actions','planning','bibliotheque','archives']},
+  {id:'qualite',    label:'Qualite',    tabs:['actions','planning','prison','bibliotheque','archives']},
   {id:'formations', label:'Formations', tabs:['esd','cicl','formations']},
   {id:'admin',      label:'Admin',      tabs:['comptes']}
 ];
@@ -7788,6 +8069,23 @@ app.addEventListener('click', async function(e){
   if(perfDelBtn){ await handleDeletePerfCell(perfDelBtn.dataset.id); return; }
   // FORMATIONS SREM
   if(e.target.closest('[data-action="new-formation"]')){ formationFormOpen = true; render(); return; }
+  if(e.target.closest('[data-action="prison-new-lot"]')){ prisonLotFormOpen = 'new'; render(); return; }
+  var prisonEditBtn = e.target.closest('[data-action="prison-edit-lot"]');
+  if(prisonEditBtn){ prisonLotFormOpen = prisonEditBtn.dataset.id; render(); window.scrollTo(0,0); return; }
+  if(e.target.closest('[data-action="prison-cancel-lot"]')){ prisonLotFormOpen = false; render(); return; }
+  if(e.target.closest('[data-action="prison-save-lot"]')){ await handleSavePrisonLot(); return; }
+  var prisonDelLotBtn = e.target.closest('[data-action="prison-delete-lot"]');
+  if(prisonDelLotBtn){ await handleDeletePrisonLot(prisonDelLotBtn.dataset.id); return; }
+  var prisonAddLineBtn = e.target.closest('[data-action="prison-add-line"]');
+  if(prisonAddLineBtn){ await handleAddPrisonLine(prisonAddLineBtn.dataset.lot); return; }
+  var prisonDelLineBtn = e.target.closest('[data-action="prison-delete-line"]');
+  if(prisonDelLineBtn){ await handleDeletePrisonLine(prisonDelLineBtn.dataset.lot, prisonDelLineBtn.dataset.line); return; }
+  var prisonZoneBtn = e.target.closest('[data-action="prison-zone-filter"]');
+  if(prisonZoneBtn){ prisonZoneFilter = prisonZoneBtn.dataset.zone; render(); return; }
+  var prisonGotoBtn = e.target.closest('[data-action="prison-goto-detail"]');
+  if(prisonGotoBtn){ e.preventDefault(); var tgt = document.getElementById('prison-detail-'+prisonGotoBtn.dataset.id); if(tgt && tgt.scrollIntoView) tgt.scrollIntoView({behavior:'smooth', block:'start'}); return; }
+  if(e.target.closest('[data-action="prison-import-sheet"]')){ await handleImportPrisonSheet(); return; }
+  if(e.target.closest('[data-action="prison-print"]')){ printWithPageSize('A4 landscape'); return; }
   if(e.target.closest('[data-action="toggle-biblio-form"]')){ biblioFormOpen = !biblioFormOpen; render(); return; }
   if(e.target.closest('[data-action="save-biblio"]')){ await handleSaveBiblio(); return; }
   var deleteBiblioBtn = e.target.closest('[data-action="delete-biblio"]');
@@ -8310,6 +8608,7 @@ app.addEventListener('change', async function(e){
   }
   if(e.target.id==='chokko-mois'){ chokkoMonth = Number(e.target.value); render(); return; }
   if(e.target.id==='chokko-annee'){ chokkoYear = Number(e.target.value)||chokkoYear; render(); return; }
+  if(e.target.classList && e.target.classList.contains('prison-cell')){ await handlePrisonCellChange(e.target); return; }
   if(e.target.id==='releve-annee'){ releveYear = Number(e.target.value)||releveYear; render(); return; }
   if(e.target.classList && e.target.classList.contains('chokko-poste-label-input')){
     var lblLigne = e.target.dataset.ligne, lblIdx = Number(e.target.dataset.index);
@@ -8615,6 +8914,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
