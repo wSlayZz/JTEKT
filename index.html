@@ -178,6 +178,7 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .annual-table td.score-cell{text-align:center; font-family:var(--mono); font-weight:600; cursor:pointer;}
 .annual-table td.score-cell:hover{outline:2px solid var(--accent); outline-offset:-2px;}
 .annual-table td.c-empty{text-align:center; color:var(--text-faint);}
+.annual-table th:not(:first-child){text-align:center;}
 .sc-ok{background:#2E9E5B; color:#fff;}
 .sc-warn{background:#E0922A; color:#fff;}
 .sc-danger{background:#D6483A; color:#fff;}
@@ -515,6 +516,7 @@ window.SEED = {"metro": [{"ligne": "MCU1", "numMoyen": "D586092700", "type": "14
 
 
 
+
 (function(){
 "use strict";
 
@@ -706,7 +708,7 @@ function secteurTabs(){
 function bySecteur(arr){ return (arr||[]).filter(function(x){ return (x.secteur||'MCU')===currentSecteur; }); }
 function userSecteurs(){
   if(!currentUser) return [];
-  if(currentUser.roleId===ADMIN_ROLE_ID || currentUser.allSecteurs) return (DATA.secteurs||SECTEURS_DEFAULT).map(function(s){return s.id;});
+  if(currentUser.roleId===ADMIN_ROLE_ID || currentUser.allSecteurs) return ((DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT).map(function(s){return s.id;});
   return currentUser.secteurs || ['MCU'];
 }
 var CONTAM_LINES = ['MCU0','MCU1','MCU2','MCU3'];
@@ -849,8 +851,13 @@ function hideSyncIndicatorSoon(){
     if(el) el.classList.remove('active');
   }, 350);
 }
+var savesInFlight = {};   // nombre d'envois en cours par donnée
+var lastSaveStart = {};   // horodatage du dernier envoi lancé
+var lastSaveEnd = {};     // horodatage du dernier envoi terminé
 async function save(k){
   showSyncIndicator();
+  savesInFlight[k] = (savesInFlight[k]||0) + 1;
+  lastSaveStart[k] = Date.now();
   try{ await backendSet(KEYS[k], JSON.stringify(DATA[k])); }
   catch(e){
     console.error('storage error', k, e);
@@ -859,6 +866,10 @@ async function save(k){
       alert('⚠ ERREUR D\'ENREGISTREMENT\n\nVotre dernière modification n\'a PAS été sauvegardée sur le serveur ('+k+').\nVérifiez votre connexion puis réessayez.');
       setTimeout(function(){ saveErrorShown = false; }, 10000);
     }
+  }
+  finally{
+    savesInFlight[k] = Math.max(0, (savesInFlight[k]||1) - 1);
+    lastSaveEnd[k] = Date.now();
   }
   hideSyncIndicatorSoon();
 }
@@ -942,7 +953,7 @@ function globalConformityScore(){
     }
   }
   if(on('actions')){
-    var relevantActions = DATA.actions.filter(function(a){ return a.statut!=='abandonnee'; });
+    var relevantActions = bySecteur(DATA.actions).filter(function(a){ return a.statut!=='abandonnee'; });
     if(relevantActions.length){
       var lateA = relevantActions.filter(isActionLate).length;
       var ac = (1-lateA/relevantActions.length)*100;
@@ -1789,14 +1800,6 @@ var contamDirectFormOpen = false;
 var contamCollecteFormOpen = false;
 var contamCollecteState = {ligne:'MCU1', ref:'141P', originalNcId:null, originalMois:null, originalAnnee:null};
 
-function retestDeadline(c){
-  // Deadline = 15 du mois suivant le NC
-  var d = new Date(c.annee, c.mois+1, 15);
-  return fmtISOLocal(d);
-}
-function retestExpired(c){
-  return todayStr() > retestDeadline(c);
-}
 var contamAnalyseEditId = null;
 var contamDirectState = {ligne:'MCU0', ref:'Bague'};
 var CONTAM_COMBOS = (function(){
@@ -2662,18 +2665,30 @@ function masseStatus(r){
   if(r.masseMg===null || r.masseMg===undefined) return {level:'neutral', label:'-'};
   return r.masseMg<7.5 ? {level:'ok', label:'Conforme'} : {level:'danger', label:'Non conforme'};
 }
+function releveMondayOf(dateStr){
+  var d = new Date(dateStr+'T00:00:00Z');
+  var day = d.getUTCDay() || 7;            // lundi = 1 ... dimanche = 7
+  d.setUTCDate(d.getUTCDate() - day + 1);
+  return d.toISOString().slice(0,10);
+}
+// Lundis des semaines ISO de l'année : la semaine 1 peut commencer fin décembre de l'année précédente
+// (ex. 2026 : S1 commence le lundi 29/12/2025), et l'année peut compter 53 semaines.
 function mondaysOfYear(year){
   var out = [];
-  var d = new Date(Date.UTC(year,0,1));
-  while(d.getUTCDay()!==1) d.setUTCDate(d.getUTCDate()+1);
-  while(d.getUTCFullYear()===year){
+  var d = new Date(releveMondayOf(year+'-01-04')+'T00:00:00Z'); // le 4 janvier est toujours en semaine 1
+  while(isoWeekInfo(d.toISOString().slice(0,10)).year===year){
     out.push(d.toISOString().slice(0,10));
     d.setUTCDate(d.getUTCDate()+7);
   }
   return out;
 }
+// Date "de rangement" d'un relevé dans le tableau : lundi de la semaine (chlorure) ou 1er du mois (masses)
+function releveCanonicalDate(type, dateStr){
+  if(!dateStr) return dateStr;
+  return type==='chlorure' ? releveMondayOf(dateStr) : dateStr.slice(0,7)+'-01';
+}
 function releveFind(type, bain, date){
-  return DATA.releves.find(function(x){ return x.type===type && x.bain===bain && x.date===date && (x.secteur||'MCU')===currentSecteur; });
+  return DATA.releves.find(function(x){ return x.type===type && x.bain===bain && releveCanonicalDate(type, x.date)===date && (x.secteur||'MCU')===currentSecteur; });
 }
 var releveYear = null;
 var releveDirectFormOpen = false; // false | 'chlorure' | 'masse'
@@ -2689,7 +2704,7 @@ function proprReleves(){
   // ── MASSES POLLUANTES : tableau de suivi annuel (mensuel) ──
   html += '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;"><div class="eyebrow">Masses polluantes - Tableau de suivi '+year+' (seuil &lt; 7,5mg)</div><button class="btn small" data-action="add-releve-direct" data-type="masse">+ Saisie directe</button></div>';
   if(releveDirectFormOpen==='masse') html += releveDirectForm('masse');
-  html += '<div class="table-wrap" style="margin-bottom:24px;"><table class="annual-table"><thead><tr><th>Mois</th>'+RELEVES_BAINS.map(function(b){return '<th>'+esc(b)+'</th>';}).join('')+'</tr></thead><tbody>';
+  html += '<div class="table-wrap" style="margin-bottom:24px;"><table class="annual-table"><thead><tr><th>Mois</th>'+RELEVES_BAINS.map(function(b){return '<th style="text-align:center;">'+esc(b)+'</th>';}).join('')+'</tr></thead><tbody>';
   for(var m=0; m<12; m++){
     var monthDate = year+'-'+String(m+1).padStart(2,'0')+'-01';
     var monthKey = year+'-'+String(m+1).padStart(2,'0');
@@ -2713,7 +2728,7 @@ function proprReleves(){
   // ── CONCENTRATION CHLORURE : tableau de suivi annuel (hebdomadaire) ──
   html += '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;"><div class="eyebrow">Concentration chlorure - Tableau de suivi '+year+' (Bain 1 : 1,5-3,5% · Bain 2 : 1-3% · chlorure ≤200mg)</div><button class="btn small" data-action="add-releve-direct" data-type="chlorure">+ Saisie directe</button></div>';
   if(releveDirectFormOpen==='chlorure') html += releveDirectForm('chlorure');
-  html += '<div class="table-wrap"><table class="annual-table"><thead><tr><th>Semaine</th>'+RELEVES_BAINS.map(function(b){return '<th>'+esc(b)+'</th>';}).join('')+'</tr></thead><tbody>';
+  html += '<div class="table-wrap"><table class="annual-table"><thead><tr><th>Semaine</th>'+RELEVES_BAINS.map(function(b){return '<th style="text-align:center;">'+esc(b)+'</th>';}).join('')+'</tr></thead><tbody>';
   mondaysOfYear(year).forEach(function(dateStr){
     var wk = isoWeekInfo(dateStr).week;
     var isFuture = dateStr>todayStr();
@@ -2742,7 +2757,7 @@ function releveDirectForm(type){
     '<div class="eyebrow" style="margin-bottom:10px;">'+(pf.editId?'Modifier le relevé':'Saisie directe')+' - '+(isChlorure?'concentration chlorure':'masse polluante')+'</div>'+
     '<div class="entryform cols2">'+
     '<label class="field">Bain<select id="rd-bain">'+RELEVES_BAINS.map(function(b){return '<option value="'+b+'"'+(b===pf.bain?' selected':'')+'>'+b+'</option>';}).join('')+'</select></label>'+
-    '<label class="field">Date<input type="date" id="rd-date" value="'+(pf.date||todayStr())+'"></label>'+
+    '<label class="field">Date<input type="date" id="rd-date" value="'+(pf.dateReleve||pf.date||todayStr())+'"></label>'+
     (isChlorure?
       '<label class="field">Concentration (%)<input type="number" step="0.1" min="0" id="rd-concentration" value="'+(pf.concentration!==undefined&&pf.concentration!==null?pf.concentration:'')+'"></label>'+
       '<label class="field">Chlorure (mg)<input type="number" step="1" min="0" id="rd-chlorure" value="'+(pf.chlorureMg!==undefined&&pf.chlorureMg!==null?pf.chlorureMg:'')+'"></label>'
@@ -2758,20 +2773,27 @@ function releveDirectForm(type){
 }
 async function handleSaveReleveDirect(type){
   var bain = document.getElementById('rd-bain').value;
-  var date = document.getElementById('rd-date').value || todayStr();
+  var dateSaisie = document.getElementById('rd-date').value || todayStr();
+  var date = releveCanonicalDate(type, dateSaisie);
   var editId = releveDirectPrefill && releveDirectPrefill.editId;
   var r = editId ? DATA.releves.find(function(x){return x.id===editId;}) : null;
+  // Un seul relevé par bain et par période : on met à jour l'existant au lieu de créer un doublon invisible
+  var existing = releveFind(type, bain, date);
+  if(existing && existing!==r){
+    if(r){ DATA.releves = DATA.releves.filter(function(x){ return x.id!==r.id; }); }
+    r = existing;
+  }
   if(type==='chlorure'){
     var concStr = document.getElementById('rd-concentration').value;
     var clStr = document.getElementById('rd-chlorure').value;
     if(concStr===''||clStr===''){ toast('Merci de renseigner la concentration et le chlorure.','error'); return; }
     if(!r){ r = {id:uid('releve'), type:'chlorure', secteur:currentSecteur}; DATA.releves.push(r); }
-    r.bain = bain; r.date = date; r.concentration = parseFloat(concStr); r.chlorureMg = parseFloat(clStr);
+    r.bain = bain; r.date = date; r.dateReleve = dateSaisie; r.concentration = parseFloat(concStr); r.chlorureMg = parseFloat(clStr);
   } else {
     var masseStr = document.getElementById('rd-masse').value;
     if(masseStr===''){ toast('Merci de renseigner la masse polluante.','error'); return; }
     if(!r){ r = {id:uid('releve'), type:'masse', secteur:currentSecteur}; DATA.releves.push(r); }
-    r.bain = bain; r.date = date; r.masseMg = parseFloat(masseStr);
+    r.bain = bain; r.date = date; r.dateReleve = dateSaisie; r.masseMg = parseFloat(masseStr);
   }
   await save('releves');
   logChange('Propreté', 'Relevé MCU0', bain+' - '+fmtDate(date));
@@ -3085,10 +3107,10 @@ function ciclStatus(p){
   var ech = ciclEcheance(p);
   if(!ech) return {level:'neutral', label:'Sans date'};
   var today = todayStr();
-  if(ech < today) return {level:'danger', label:'Expiree'};
+  if(ech < today) return {level:'danger', label:'Expirée'};
   if(ech.slice(0,7) === today.slice(0,7)) return {level:'urgent', label:'Expire ce mois'};
-  if(daysBetween(today, ech) <= 60) return {level:'warn', label:'A renouveler'};
-  return {level:'ok', label:'A jour'};
+  if(daysBetween(today, ech) <= 60) return {level:'warn', label:'À renouveler'};
+  return {level:'ok', label:'À jour'};
 }
 function ciclRecordsForRef(ref){
   return DATA.cicl.filter(function(r){ return r.ref===ref; });
@@ -3122,19 +3144,19 @@ function ciclPrintSummary(){
     html += '<div'+(idx>0?' class="print-page-break"':'')+' style="padding:10px 0;">';
     html += '<h2 style="margin:0 0 10px;">Formations CI/CL - '+ligne+'</h2>';
     if(!names.length){
-      html += '<p class="tiny">Aucun regleur forme sur cette ligne.</p>';
+      html += '<p class="tiny">Aucun régleur formé sur cette ligne.</p>';
     } else {
       html += '<table style="width:100%; border-collapse:collapse;"><thead><tr>'+
         '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Nom</th>'+
-        '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Role</th>'+
-        '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Derniere formation</th>'+
-        '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Echeance</th>'+
+        '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Rôle</th>'+
+        '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Dernière formation</th>'+
+        '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Échéance</th>'+
         '<th style="text-align:left; border-bottom:2px solid #333; padding:5px 8px;">Statut</th>'+
       '</tr></thead><tbody>';
       names.forEach(function(nom){
         var recs = byName[nom];
         var personRecord = DATA.ciclPersons.find(function(p){ return p.nom===nom; });
-        var roleText = personRecord? (personRecord.role==='pilote'?'Pilote':'Regleur') : '-';
+        var roleText = personRecord? (personRecord.role==='pilote'?'Pilote':'Régleur') : '-';
         // Derniere formation : la plus recente parmi ses postes sur cette ligne
         var lastDate = recs.reduce(function(acc,r){ return (r.dateFormation && (!acc || r.dateFormation>acc)) ? r.dateFormation : acc; }, null);
         // Echeance : la plus proche/urgente parmi ses postes sur cette ligne
@@ -3265,12 +3287,12 @@ function ciclRecapView(){
     html += '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px; margin-bottom:10px;">';
     html += '<div class="eyebrow">'+ligne+' <span class="tiny" style="text-transform:none; font-weight:400;">('+refs.join(', ')+')</span></div>';
     html += '<div style="display:flex; gap:16px;">'+
-      '<span class="tiny">'+allRecords.length+' formation(s) enregistree(s)</span>'+
+      '<span class="tiny">'+allRecords.length+' formation(s) enregistrée(s)</span>'+
     '</div></div>';
     html += '<div class="grid grid-4">'+
-      '<div class="statcard s-danger"><div class="eyebrow">Expirees</div><div class="val">'+expired+'</div></div>'+
+      '<div class="statcard s-danger"><div class="eyebrow">Expirées</div><div class="val">'+expired+'</div></div>'+
       '<div class="statcard s-urgent"><div class="eyebrow">Expire ce mois</div><div class="val">'+urgent+'</div></div>'+
-      '<div class="statcard s-warn"><div class="eyebrow">A renouveler</div><div class="val">'+warn+'</div></div>'+
+      '<div class="statcard s-warn"><div class="eyebrow">À renouveler</div><div class="val">'+warn+'</div></div>'+
       '<div class="statcard'+(uncovered.length?' s-danger':'')+'"><div class="eyebrow">Postes non couverts</div><div class="val">'+uncovered.length+'</div></div>'+
     '</div>';
     var nextExp = allRecords.filter(function(p){ return ciclEcheance(p) && ciclStatus(p).level!=='danger'; })
@@ -3279,7 +3301,7 @@ function ciclRecapView(){
       html += '<p class="tiny" style="margin-top:8px;">Prochaine expiration : <b>'+esc(nextExp.nom)+'</b> ('+esc(nextExp.poste)+') le '+fmtDate(ciclEcheance(nextExp))+'</p>';
     }
     if(uncovered.length){
-      html += '<p class="tiny" style="margin-top:8px; color:var(--danger);">Aucun regleur a jour sur : '+uncovered.map(esc).join(', ')+'</p>';
+      html += '<p class="tiny" style="margin-top:8px; color:var(--danger);">Aucun régleur à jour sur : '+uncovered.map(esc).join(', ')+'</p>';
     }
 
     // Personnes concernees par au moins une formation expiree : nom + nombre de postes, pas le detail poste par poste
@@ -3292,7 +3314,7 @@ function ciclRecapView(){
     var expiredNames = Object.keys(expiredByPerson).sort(function(a,b){ return expiredByPerson[b]-expiredByPerson[a]; });
     if(expiredNames.length){
       html += '<div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--danger-border);">'+
-        '<div class="tiny" style="font-weight:700; color:var(--danger); margin-bottom:6px;">Formations expirees a renouveler :</div>'+
+        '<div class="tiny" style="font-weight:700; color:var(--danger); margin-bottom:6px;">Formations expirées à renouveler :</div>'+
         '<div style="display:flex; flex-wrap:wrap; gap:6px;">'+
         expiredNames.map(function(nom){
           var n = expiredByPerson[nom];
@@ -3302,7 +3324,7 @@ function ciclRecapView(){
     }
     html += '</div>';
   });
-  html += '<p class="tiny">Cliquez sur une ligne pour voir le detail par reference et poste.</p>';
+  html += '<p class="tiny">Cliquez sur une ligne pour voir le détail par référence et poste.</p>';
   return html;
 }
 
@@ -3321,10 +3343,10 @@ function ciclLigneView(ligne){
     });
     html += '<div class="section card" style="margin-bottom:18px;">';
     html += '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:10px;">';
-    html += '<div class="eyebrow">Reference '+esc(ciclRefLabel(ref))+
+    html += '<div class="eyebrow">Référence '+esc(ciclRefLabel(ref))+
       (partage? ' <span class="tiny" style="text-transform:none; font-weight:400; color:var(--accent);">(commune '+REF_CICL_LIGNES[ref].join(' + ')+')</span>' : '')+
       '</div>';
-    html += '<button class="btn small primary" data-action="cicl-new" data-ref="'+ref+'">+ Ajouter un regleur</button>';
+    html += '<button class="btn small primary" data-action="cicl-new" data-ref="'+ref+'">+ Ajouter un régleur</button>';
     html += '</div>';
 
     if(ciclFormOpenFor===ref) html += ciclForm(ref);
@@ -3332,7 +3354,7 @@ function ciclLigneView(ligne){
     if(!records.length){
       html += emptyState('Aucun régleur formé sur cette référence.');
     } else {
-      html += '<div class="table-wrap"><table><thead><tr><th>Poste</th><th>Nom</th><th>Derniere formation</th><th>Echeance (1 an)</th><th>Statut</th><th class="row-actions-noprint"></th></tr></thead><tbody>';
+      html += '<div class="table-wrap"><table><thead><tr><th>Poste</th><th>Nom</th><th>Dernière formation</th><th>Échéance (1 an)</th><th>Statut</th><th class="row-actions-noprint"></th></tr></thead><tbody>';
       var prevPoste = null;
       html += records.map(function(p){
         if(ciclEditId===p.id){ prevPoste = p.poste; return ciclEditRow(p, ref); }
@@ -3365,11 +3387,11 @@ function ciclLigneView(ligne){
 function ciclForm(ref){
   var postes = REF_CICL_POSTES[ref]||[];
   return '<div class="card" style="max-width:480px; margin-bottom:16px;">'+
-    '<div class="eyebrow" style="margin-bottom:10px;">Ajouter un regleur - '+esc(ciclRefLabel(ref))+'</div>'+
+    '<div class="eyebrow" style="margin-bottom:10px;">Ajouter un régleur - '+esc(ciclRefLabel(ref))+'</div>'+
     '<div class="entryform cols2">'+
     '<label class="field" style="grid-column:1/-1;">Nom complet<input type="text" id="cf-nom" placeholder="EX. : DUPONT Jean"></label>'+
     '<label class="field">Poste<select id="cf-poste">'+postes.map(function(p){return '<option value="'+p+'">'+p+'</option>';}).join('')+'</select></label>'+
-    '<label class="field">Date de la derniere formation<input type="date" id="cf-date" value="'+todayStr()+'"></label>'+
+    '<label class="field">Date de la dernière formation<input type="date" id="cf-date" value="'+todayStr()+'"></label>'+
     '</div>'+
     '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="cancel-cicl">Annuler</button><button class="btn primary" data-action="save-cicl" data-ref="'+ref+'">Enregistrer</button></div></div>';
 }
@@ -3408,7 +3430,7 @@ async function handleSaveCiclEdit(id){
   if(!nom){ alert('Merci de saisir un nom.'); return; }
   p.nom = nom; p.poste = poste; p.dateFormation = date||null;
   await save('cicl');
-  logChange('CI/CL', 'Mise a jour', nom+' - '+p.ref+' / '+poste);
+  logChange('CI/CL', 'Mise à jour', nom+' - '+p.ref+' / '+poste);
   ciclEditId = null;
   render();
 }
@@ -4552,7 +4574,7 @@ function chokkoWizardStepModal(){
       '</div>'+
     '</div>'+
     '<div class="tiny" style="margin-top:14px; padding-top:10px; border-top:1px solid var(--border); color:var(--text-faint);">'+
-      'Chokko du jour actuel : <b style="color:var(--'+chokkoLevel(totals.pct)+');">'+(totals.pct!==null?totals.pct.toFixed(1)+'%':'-')+'</b>'+
+      'Chokko du jour actuel : <b style="color:var(--'+chokkoLevelVsObjectif(totals.pct, ligne)+');">'+(totals.pct!==null?totals.pct.toFixed(1)+'%':'-')+'</b>'+
     '</div>'+
     '</div></div>';
 }
@@ -4686,7 +4708,7 @@ function chokkoSaisieView(){
     '<td></td><td></td></tr>';
 
   html += '</tbody></table></div>';
-  html += '<p class="tiny" style="margin-top:8px;">Seuils Chokko : ≥'+CHOKKO_ATTENTION+'% conforme, '+CHOKKO_DANGER+'-'+CHOKKO_ATTENTION+'% attention, &lt;'+CHOKKO_DANGER+'% en danger.</p>';
+  html += '<p class="tiny" style="margin-top:8px;">Objectif '+esc(ligne)+' : ≥ '+chokkoObjectif(ligne)+'% (vert) · entre '+(chokkoObjectif(ligne)-2)+' et '+chokkoObjectif(ligne)+'% : attention (orange) · &lt; '+(chokkoObjectif(ligne)-2)+'% : alerte (rouge).</p>';
 
   // Graphique "SUIVI DES CAUSES DE NON CHOKKO" - defauts par poste sur le mois
   html += '<div class="card" style="margin-top:18px;">'+
@@ -4711,7 +4733,7 @@ function chokkoRecapView(){
     var prodTotal = days.reduce(function(s,d){return s+d.totals.totalProd;},0);
     var ncTotal = days.reduce(function(s,d){return s+d.totals.totalNC;},0);
     html += '<tr><td>'+MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1)+'</td>'+
-      '<td>'+(avg!==null?badge(chokkoLevel(avg), avg.toFixed(1)+'%'):'<span class="tiny">-</span>')+'</td>'+
+      '<td>'+(avg!==null?badge(chokkoLevelVsObjectif(avg, ligne), avg.toFixed(1)+'%'):'<span class="tiny">-</span>')+'</td>'+
       '<td class="num">'+(prodTotal||'-')+'</td><td class="num">'+(ncTotal||'-')+'</td></tr>';
   }
   html += '</tbody></table></div>';
@@ -4731,8 +4753,8 @@ function renderChokkoChart(){
       type:'bar',
       data:{labels:MONTHS_FR.map(function(m){return m.slice(0,3);}), datasets:[
         {label:'% Chokko', data:data, backgroundColor:'#1F5C5C99', borderColor:'#1F5C5C', borderWidth:1.5, borderRadius:3},
-        {label:'Seuil attention', type:'line', data:Array(12).fill(CHOKKO_ATTENTION), borderColor:'#B8730A88', borderWidth:1.5, borderDash:[5,4], pointRadius:0},
-        {label:'Seuil danger', type:'line', data:Array(12).fill(CHOKKO_DANGER), borderColor:'#B23B2E88', borderWidth:1.5, borderDash:[5,4], pointRadius:0}
+        {label:'Objectif '+chokkoLigne, type:'line', data:Array(12).fill(chokkoObjectif(chokkoLigne)), borderColor:'#B8730A88', borderWidth:1.5, borderDash:[5,4], pointRadius:0},
+        {label:'Seuil d\'alerte', type:'line', data:Array(12).fill(chokkoObjectif(chokkoLigne)-2), borderColor:'#B23B2E88', borderWidth:1.5, borderDash:[5,4], pointRadius:0}
       ]},
       options:{responsive:true, maintainAspectRatio:false, scales:{y:{min:80, max:100, ticks:{callback:function(v){return v+'%';}}}}}
     });
@@ -5310,7 +5332,7 @@ function renderTodayBanner(){
 
   var pctsToday = lignes.map(function(l){ return chokkoDayTotals(l, todayStr()).pct; }).filter(function(v){return v!==null;});
   var chokkoToday = pctsToday.length? pctsToday.reduce(function(a,b){return a+b;},0)/pctsToday.length : null;
-  var chokkoLvl = chokkoToday!==null ? chokkoLevel(chokkoToday) : 'neutral';
+  var chokkoLvl = chokkoToday!==null ? chokkoLevelVsObjectif(chokkoToday, 'MCU3') : 'neutral';
 
   // Compteur d'alertes actives, tous domaines confondus
   var nbAlerts = 0;
@@ -5329,6 +5351,30 @@ function renderTodayBanner(){
     '<div><span class="tiny">Alertes actives</span> <b style="font-family:var(--mono); font-size:16px; color:'+(nbAlerts?'var(--danger)':'var(--ok)')+';">'+nbAlerts+'</b></div>'+
   '</div>';
 }
+// Score de conformité d'un secteur hors MCU (audits perf du mois, métrologie, actions) - source unique
+function secteurGaugeScoreFor(sid){
+  var curM = Number(todayStr().split('-')[1])-1;
+  var curY = Number(todayStr().split('-')[0]);
+  var inSect = function(x){ return (x.secteur||'MCU')===sid; };
+  var perfMonth = DATA.perf.filter(function(r){ return (r.secteur||'')===sid && r.annee===curY && r.mois===curM && r.resultatPct!==null && r.resultatPct!==undefined; });
+  var perfMoy = perfMonth.length ? Math.round(perfMonth.reduce(function(s,r){return s+r.resultatPct;},0)/perfMonth.length) : null;
+  var parts = [], detail = [];
+  if(perfMoy!==null){ parts.push(perfMoy); detail.push({label:'Audits perf', val:perfMoy}); }
+  var metroSect2 = DATA.metro.filter(inSect);
+  if(metroSect2.length){
+    var mLate = metroSect2.filter(function(e){ return metroStatus(e).level==='danger'; }).length;
+    var mScore = Math.round((1 - mLate/metroSect2.length)*100);
+    parts.push(mScore); detail.push({label:'Métrologie à jour', val:mScore});
+  }
+  var actionsSect = DATA.actions.filter(inSect);
+  var lateA = actionsSect.filter(isActionLate).length;
+  var openOrDone = actionsSect.filter(function(a){ return isActionOpen(a); });
+  if(openOrDone.length){
+    var aScore = Math.round((1 - lateA/Math.max(openOrDone.length,1))*100);
+    parts.push(aScore); detail.push({label:'Actions dans les temps', val:aScore});
+  }
+  return {score: parts.length ? Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length) : null, detail:detail};
+}
 function renderSecteurDashboard(){
   var sec = getSecteur(currentSecteur);
   var lines = secteurLines();
@@ -5346,20 +5392,9 @@ function renderSecteurDashboard(){
   var openA = actionsSect.filter(function(a){ return isActionOpen(a) && !isActionDone(a); }).length;
 
   // ===== SCORE GLOBAL DU SECTEUR (jauge) =====
-  var parts = [], detail = [];
-  if(perfMoy!==null){ parts.push(perfMoy); detail.push({label:'Audits perf', val:perfMoy}); }
-  var metroSect2 = bySecteur(DATA.metro);
-  if(metroSect2.length){
-    var mLate = metroSect2.filter(function(e){ return metroStatus(e).level==='danger'; }).length;
-    var mScore = Math.round((1 - mLate/metroSect2.length)*100);
-    parts.push(mScore); detail.push({label:'Métrologie à jour', val:mScore});
-  }
-  var openOrDone = actionsSect.filter(function(a){ return isActionOpen(a); });
-  if(openOrDone.length){
-    var aScore = Math.round((1 - late/Math.max(openOrDone.length,1))*100);
-    parts.push(aScore); detail.push({label:'Actions dans les temps', val:aScore});
-  }
-  secteurGaugeScore = parts.length ? Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length) : null;
+  var gsS = secteurGaugeScoreFor(currentSecteur);
+  var detail = gsS.detail;
+  secteurGaugeScore = gsS.score;
 
   var glvl = secteurGaugeScore!==null ? scoreLevel(secteurGaugeScore) : 'neutral';
   html += '<div class="section card" style="margin-bottom:18px;">'+
@@ -5447,12 +5482,14 @@ function secteurMetroScore(sid){
   return {score:Math.round((1-late/metroSect.length)*100), label:'métro. à jour'};
 }
 function secteurAllScore(sid, curY, curM){
-  var parts = [];
-  [secteurPropreteScore(sid,curY,curM), secteurPerfScore(sid,curY,curM), secteurMetroScore(sid)].forEach(function(r){
-    if(r.score!==null) parts.push(r.score);
-  });
-  if(!parts.length) return {score:null, label:'aucune donnée'};
-  return {score:Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length), label:'score global'};
+  // Même calcul que le tableau de bord du secteur, pour qu'il n'existe qu'un seul "score de conformité"
+  if(sid==='MCU'){
+    var saved = currentSecteur;
+    try{ currentSecteur = 'MCU'; var g = globalConformityScore(); }
+    finally{ currentSecteur = saved; }
+    return {score: (g && g.score!==null && g.score!==undefined) ? g.score : null, label:'score de conformité'};
+  }
+  return {score: secteurGaugeScoreFor(sid).score, label:'score de conformité'};
 }
 var MULTISECTEUR_METRIC_OPTIONS = [['all','Score de conformité'],['propr','Propreté'],['perf','Perf'],['metro','Métrologie'],['auto','Automatique (propreté MCU, perf ailleurs)']];
 var perfProgressYear = null, perfProgressMonth = null;
@@ -5490,7 +5527,7 @@ function renderPerfAuditProgress(){
     '</div>';
   });
   html += '</div>';
-  html += '<p class="tiny" style="margin-top:10px; color:var(--text-faint);">'+doneLignes+' / '+totalLignes+' ligne(s) auditee(s) ce mois, tous secteurs confondus.</p>';
+  html += '<p class="tiny" style="margin-top:10px; color:var(--text-faint);">'+doneLignes+' / '+totalLignes+' ligne(s) auditée(s) ce mois, tous secteurs confondus.</p>';
   html += '</div>';
   return html;
 }
@@ -5557,7 +5594,7 @@ RENDERERS.dashboard = function(){
     var cs = currentSecteur==='MCU' ? secteurConformiteStats() : null;
     var pieHtml = '';
     if(cs && cs.totalProd>0){
-      var pieLvl = chokkoLevel(cs.pct);
+      var pieLvl = chokkoLevelVsObjectif(cs.pct, 'MCU3');
       pieHtml = '<div style="display:flex; align-items:center; gap:18px; padding-left:28px; margin-left:28px; border-left:1px solid var(--border);">'+
         '<div style="position:relative; width:130px; height:130px; flex-shrink:0;"><canvas id="chart-conformite-pie-mini"></canvas>'+
           '<div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:700; font-size:24px; color:var(--'+pieLvl+');">'+cs.pct.toFixed(1)+'%</div>'+
@@ -5680,7 +5717,7 @@ RENDERERS.dashboard = function(){
     var lignes = ['MCU1','MCU2','MCU3'];
     var cards = lignes.map(function(l){
       var avg = chokkoMonthAverage(l, y, m);
-      var lvl = chokkoLevel(avg);
+      var lvl = chokkoLevelVsObjectif(avg, l);
       return '<div class="statcard s-'+lvl+'"><div class="eyebrow">'+l+'</div><div class="val">'+(avg!==null?avg.toFixed(0)+'%':'-')+'</div><div class="lbl">ce mois</div></div>';
     }).join('');
     var stale = lignes.map(function(l){ return {ligne:l, delay:chokkoSaisieDelay(l)}; }).filter(function(s){ return s.delay===null || s.delay>=2; });
@@ -5766,7 +5803,7 @@ RENDERERS.dashboard = function(){
     });
     var bon = Math.max(0, totalProd-totalNC);
     var pct = totalProd>0 ? (bon/totalProd*100) : null;
-    var lvl = pct!==null ? chokkoLevel(pct) : 'neutral';
+    var lvl = pct!==null ? chokkoLevelVsObjectif(pct, 'MCU3') : 'neutral';
     if(!totalProd){
       return '<div class="eyebrow" style="margin-bottom:6px;">Conformité des pièces (mois en cours)</div>'+
         '<div class="tiny" style="color:var(--text-faint);">Aucune donnée ce mois-ci</div>';
@@ -6399,7 +6436,6 @@ function renderAteqMonthlyTable(){
 
 var ateqChartOffset = 0; // 0 = J-30→aujourd'hui, -1 = J-60→J-30, etc.
 var chartAteqCompare=null, chartAteq2nd=null;
-var ateqDetailActionId = null !== undefined ? ateqDetailActionId : null;
 
 function ateqPeriodDates(){
   var today = new Date(todayStr()+'T00:00:00');
@@ -6739,7 +6775,9 @@ async function handleSavePostitModal(existingId){
   } else {
     DATA.postits.push({
       id: uid('postit'), text: text.slice(0,300), color: color,
-      x: 20+Math.floor(Math.random()*120), y: 8+Math.floor(Math.random()*40),
+      // Sur CHOKKO, on place le post-it dans la zone libre entre le sélecteur de mois et les cartes de résultat
+      x: postitModalPage==='chokko' ? 300+Math.floor(Math.random()*110) : 20+Math.floor(Math.random()*120),
+      y: postitModalPage==='chokko' ? 60+Math.floor(Math.random()*10) : 8+Math.floor(Math.random()*40),
       secteur: currentSecteur, author: currentUser.displayName, createdAt: todayStr(),
       assignedTo: assignedTo? assignedTo.slice(0,60) : null,
       dueDate: dueDate || null,
@@ -6956,7 +6994,7 @@ var EMOJI_ICONS = {
 function currentIconSet(){ return (DATA.uiSettings && DATA.uiSettings.iconStyle==='emoji') ? EMOJI_ICONS : SVG_ICONS; }
 var TAB_GROUPS_DEF = [
   {id:'production', label:'Production', tabs:['proprete','metro','ateq','chokko','perf']},
-  {id:'qualite',    label:'Qualite',    tabs:['actions','planning','prison','bibliotheque','archives']},
+  {id:'qualite',    label:'Qualité',    tabs:['actions','planning','prison','bibliotheque','archives']},
   {id:'formations', label:'Formations', tabs:['esd','cicl','formations']},
   {id:'admin',      label:'Admin',      tabs:['comptes']}
 ];
@@ -7187,33 +7225,62 @@ function handleLogout(){
 // ---------- SYNCHRONISATION PÉRIODIQUE (Supabase) ----------
 var POLL_INTERVAL_MS = 10000;
 var pollTimer = null;
+function isFieldDirty(el){
+  if(el.disabled || el.readOnly) return false;
+  if(el.tagName==='SELECT'){
+    for(var i=0;i<el.options.length;i++){ if(el.options[i].selected !== el.options[i].defaultSelected) return true; }
+    return false;
+  }
+  if(el.type==='checkbox' || el.type==='radio') return el.checked !== el.defaultChecked;
+  if(el.type==='button' || el.type==='submit' || el.type==='file') return false;
+  return el.value !== el.defaultValue;
+}
 function isUserMidEdit(){
   if(auditWizard || metroEditingId || planningEditingId || contamDirectFormOpen || contamCollecteFormOpen || contamAnalyseEditId || accountFormState || roleFormState || ateqActionFormOpen || particuleCampagneFormOpen || particuleDTEditId || particuleResultatEditId) return true;
   var openForms = document.querySelectorAll('form[id^="form-"]');
   for(var i=0;i<openForms.length;i++){ if(openForms[i].style.display!=='none') return true; }
+  // Une fenêtre de saisie est ouverte (gestion des postes, post-it, assistant, récurrence...)
+  if(document.querySelector('.modal-overlay')) return true;
+  // Le curseur est dans un champ de saisie
+  var a = document.activeElement;
+  if(a && a!==document.body && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) && a.closest('#app, .modal-overlay')) return true;
+  // Du texte a été tapé dans un formulaire mais pas encore enregistré
+  var fields = document.querySelectorAll('#view input[id], #view textarea[id], #view select[id]');
+  for(var j=0;j<fields.length;j++){ if(isFieldDirty(fields[j])) return true; }
   return false;
 }
+var pendingRemoteRender = false; // des mises à jour distantes attendent la fin de la saisie pour s'afficher
 var lastChartRefresh = 0;
 var CHART_REFRESH_MS = 60000;
+var pollRunning = false;
 async function pollForUpdates(){
-  if(STORAGE_MODE!=='supabase' || !currentUser || isUserMidEdit()) return;
+  if(STORAGE_MODE!=='supabase' || !currentUser || pollRunning) return;
+  pollRunning = true;
   try{
     var changed = false;
     for(var k in KEYS){
+      var t0 = Date.now();
       var res = await backendGet(KEYS[k]);
+      // Ne jamais écraser une donnée que l'utilisateur est en train d'envoyer ou vient d'envoyer :
+      // la version lue sur le serveur pourrait être antérieure à sa saisie.
+      if(savesInFlight[k] || (lastSaveStart[k]||0) >= t0 - 1500 || (lastSaveEnd[k]||0) >= t0) continue;
       var newVal = res ? JSON.parse(res.value) : (Array.isArray(DATA[k]) ? [] : DATA[k]);
       if(res && JSON.stringify(newVal) !== JSON.stringify(DATA[k])){
         DATA[k] = newVal;
         changed = true;
       }
     }
-    if(changed && !isUserMidEdit()){
+    if(changed) pendingRemoteRender = true;
+    // L'écran n'est redessiné qu'une fois la saisie terminée : rien de ce qui est en cours de frappe n'est perdu
+    if(pendingRemoteRender && !isUserMidEdit()){
       if(currentTab==='dashboard' && (Date.now()-lastChartRefresh) < CHART_REFRESH_MS) return;
+      pendingRemoteRender = false;
       renderNav();
       renderUserbox();
       render();
     }
   }catch(e){ console.error('poll error', e); }
+  finally{ pollRunning = false; }
 }
 function startPolling(){
   stopPolling();
@@ -8995,6 +9062,7 @@ async function init(){
 init();
 
 })();
+
 
 
 
