@@ -351,6 +351,14 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .chokko-grid td.chk-note-cell:hover{background:var(--accent-bg, #E6EFEE); outline:1px solid var(--accent); outline-offset:-1px;}
 .chk-note-preview{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:pre-line; font-size:10.5px; line-height:1.3; word-break:break-word;}
 .chk-note-empty{color:var(--text-faint); font-style:italic;}
+.ui-tooltip{position:absolute; z-index:9999; max-width:380px; min-width:180px; background:var(--card, #fff); color:var(--text, #1C1B18); border:1px solid var(--border, #E2DED4); border-radius:10px; box-shadow:0 10px 30px rgba(20,30,30,.18), 0 2px 6px rgba(20,30,30,.08); padding:0; overflow:hidden; pointer-events:none; opacity:0; transform:translateY(4px); transition:opacity .15s ease, transform .15s ease; font-size:12.5px; line-height:1.5;}
+.ui-tooltip.visible{opacity:1; transform:translateY(0);}
+.ui-tooltip-title{background:var(--sb-bg, #143E3E); color:var(--sb-fg, #fff); font-weight:700; font-size:11.5px; letter-spacing:.02em; padding:7px 12px;}
+.ui-tooltip-body{padding:10px 12px; white-space:pre-line; word-break:break-word; max-height:320px; overflow:hidden;}
+.ui-tooltip-hint{padding:6px 12px 8px; font-size:11px; color:var(--text-faint, #8A8577); border-top:1px solid var(--border, #E2DED4); background:var(--neutral-bg, #F6F4EF);}
+.ui-tooltip-hint-only{border-top:none;}
+.ui-tooltip-compact{min-width:0;}
+@media print{ .ui-tooltip{display:none !important;} }
 .chokko-grid .chk-sticky{position:sticky; left:0; z-index:2; border-right:2px solid #999;}
 </style>
 </head>
@@ -4687,7 +4695,7 @@ function chokkoSaisieView(){
     var rowTotalClass = chokkoPaintMode? ' chokko-paintable' : '';
     html += '<td id="chokko-poste-total-'+posteId+'" class="'+rowTotalClass.trim()+'" style="'+rowTotalStyle+'" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-rowtotal="1">'+totalPoste+'</td>';
     var noteTxt = note ? (note.texte||'') : '';
-    html += '<td class="chk-note-cell" data-action="chokko-note-open" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-annee="'+chokkoYear+'" data-mois="'+chokkoMonth+'" title="'+(noteTxt? esc(noteTxt)+'\n\n(Cliquer pour lire ou modifier)' : 'Cliquer pour saisir les actions menées')+'">'+
+    html += '<td class="chk-note-cell" data-action="chokko-note-open" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-annee="'+chokkoYear+'" data-mois="'+chokkoMonth+'" data-tip="'+esc(noteTxt)+'" data-tip-title="'+esc(posteId+' · '+ligne+' · '+MONTHS_FR[chokkoMonth].charAt(0).toUpperCase()+MONTHS_FR[chokkoMonth].slice(1))+'" data-tip-hint="'+(noteTxt?'Cliquer pour lire ou modifier':'Cliquer pour saisir les actions menées')+'">'+
       '<div class="chk-note-preview">'+(noteTxt? esc(noteTxt) : '<span class="chk-note-empty">+ Actions menées…</span>')+'</div></td>';
     html += '</tr>';
   });
@@ -9111,6 +9119,48 @@ async function init(){
     showFatalError('init', err);
   }
 }
+
+// ---------- Info-bulle personnalisée (remplace l'info-bulle native, non stylable) ----------
+var uiTip = null, uiTipTarget = null, uiTipTimer = null;
+function uiTipEl(){
+  if(!uiTip){ uiTip = document.createElement('div'); uiTip.id = 'ui-tooltip'; uiTip.className = 'ui-tooltip'; document.body.appendChild(uiTip); }
+  return uiTip;
+}
+function uiTipShow(target){
+  var tip = uiTipEl();
+  var title = target.getAttribute('data-tip-title') || '';
+  var body = target.getAttribute('data-tip') || '';
+  var hint = target.getAttribute('data-tip-hint') || '';
+  tip.innerHTML = '';
+  if(title){ var t = document.createElement('div'); t.className = 'ui-tooltip-title'; t.textContent = title; tip.appendChild(t); }
+  if(body){ var b = document.createElement('div'); b.className = 'ui-tooltip-body'; b.textContent = body; tip.appendChild(b); }
+  if(hint){ var h = document.createElement('div'); h.className = 'ui-tooltip-hint'+(body?'':' ui-tooltip-hint-only'); h.textContent = hint; tip.appendChild(h); }
+  tip.classList.toggle('ui-tooltip-compact', !body);
+  tip.style.left = '0px'; tip.style.top = '0px';
+  tip.classList.add('visible');
+  // Placement : à gauche de la case si elle est près du bord droit, sinon à droite ; jamais hors de l'écran
+  var r = target.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight, m = 10;
+  var vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
+  var left = (r.right + m + tw <= vw) ? r.right + m : r.left - m - tw;
+  if(left < m) left = Math.max(m, Math.min(vw - tw - m, r.left + r.width/2 - tw/2));
+  var top = r.top + r.height/2 - th/2;
+  top = Math.max(m, Math.min(vh - th - m, top));
+  tip.style.left = Math.round(left + window.scrollX) + 'px';
+  tip.style.top = Math.round(top + window.scrollY) + 'px';
+}
+function uiTipHide(){ clearTimeout(uiTipTimer); uiTipTarget = null; if(uiTip) uiTip.classList.remove('visible'); }
+document.addEventListener('mouseover', function(e){
+  var t = e.target.closest ? e.target.closest('[data-tip], [data-tip-hint]') : null;
+  if(t === uiTipTarget) return;
+  uiTipHide();
+  if(!t || chokkoPaintMode) return;
+  uiTipTarget = t;
+  uiTipTimer = setTimeout(function(){ if(uiTipTarget===t && document.body.contains(t)) uiTipShow(t); }, 220);
+});
+document.addEventListener('mousedown', uiTipHide, true);
+window.addEventListener('scroll', function(){ if(uiTip && uiTip.classList.contains('visible')) uiTipHide(); }, true);
+window.addEventListener('blur', uiTipHide);
+
 init();
 
 })();
