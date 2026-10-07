@@ -243,6 +243,9 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
   .chokko-grid .chk-sticky{position:static !important;}
   .chokko-grid input.chk-cell{min-width:0 !important; width:100% !important; font-size:10px !important; padding:0 !important; background:transparent !important;}
   .chokko-grid textarea.chk-note{min-width:0 !important; font-size:7.5px !important; height:auto !important;}
+  .chokko-grid td.chk-note-cell{min-width:0 !important; max-width:none !important;}
+  .chk-note-preview{display:block !important; -webkit-line-clamp:unset !important; overflow:visible !important; font-size:7.5px !important;}
+  .chk-note-empty{display:none;}
   .chokko-grid .chk-label{min-width:0 !important;}
   .subtabs{display:none !important;}
 }
@@ -344,6 +347,10 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .chokko-grid input.chk-cell:focus{outline:2px solid var(--accent); outline-offset:-2px; background:#fff;}
 .chokko-grid textarea.chk-note{width:100%; min-width:180px; border:none; background:transparent; font-family:inherit; font-size:10.5px; resize:vertical; padding:2px;}
 .chokko-grid textarea.chk-note:focus{outline:2px solid var(--accent); outline-offset:-2px; background:#fff;}
+.chokko-grid td.chk-note-cell{cursor:pointer; text-align:left; min-width:180px; max-width:280px; padding:3px 6px; vertical-align:middle;}
+.chokko-grid td.chk-note-cell:hover{background:var(--accent-bg, #E6EFEE); outline:1px solid var(--accent); outline-offset:-1px;}
+.chk-note-preview{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:pre-line; font-size:10.5px; line-height:1.3; word-break:break-word;}
+.chk-note-empty{color:var(--text-faint); font-style:italic;}
 .chokko-grid .chk-sticky{position:sticky; left:0; z-index:2; border-right:2px solid #999;}
 </style>
 </head>
@@ -4097,6 +4104,21 @@ var chokkoColorsPanelOpen = false;
 var chokkoPaintMode = false; // false | couleur hex active du pinceau
 var chokkoTotalsLocked = true; // verrouille les cellules TOTAL PROD par défaut (évite une modification accidentelle)
 var chokkoManagePostesOpen = false;
+var chokkoNoteModal = null; // {ligne, poste, annee, mois} de la case "Actions" ouverte
+function chokkoNoteModalHtml(){
+  var m = chokkoNoteModal;
+  var note = chokkoNote(m.ligne, m.poste, m.annee, m.mois);
+  var posteDef = chokkoPostes(m.ligne).find(function(p){ return p[0]===m.poste; });
+  var moisNom = MONTHS_FR[m.mois].charAt(0).toUpperCase()+MONTHS_FR[m.mois].slice(1);
+  return '<div class="modal-overlay chokko-note-backdrop">'+
+    '<div class="modal-box" style="max-width:640px; width:100%;">'+
+    '<h3 style="margin-bottom:4px;">Actions menées</h3>'+
+    '<p class="tiny" style="margin-bottom:12px;">'+esc(m.poste)+(posteDef&&posteDef[1]?' - '+esc(posteDef[1]):'')+' · '+esc(m.ligne)+' · '+moisNom+' '+m.annee+'</p>'+
+    '<textarea id="chokko-note-text" rows="10" style="width:100%; font-family:inherit; font-size:13.5px; line-height:1.45; padding:10px; resize:vertical;" placeholder="Décrivez les actions menées ce mois sur ce poste...">'+esc(note?note.texte||'':'')+'</textarea>'+
+    '<p class="tiny" style="margin-top:6px; color:var(--text-faint);">Astuce : Ctrl + Entrée pour enregistrer.</p>'+
+    '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="chokko-note-cancel">Annuler</button><button class="btn primary" data-action="chokko-note-save">Enregistrer</button></div>'+
+    '</div></div>';
+}
 var chokkoPaintPickerOpen = false;
 var chokkoImportOpen = false;
 var chokkoImportSummary = null; // resultat du dernier import (pour affichage)
@@ -4253,6 +4275,7 @@ RENDERERS.chokko = function(){
   if(chokkoWizardOpen) html += chokkoWizardPickerModal();
   if(chokkoImportOpen) html += chokkoImportModal();
   if(chokkoManagePostesOpen) html += chokkoManagePostesModal(chokkoLigne);
+  if(chokkoNoteModal) html += chokkoNoteModalHtml();
   if(chokkoWizardActive) html += chokkoWizardStepModal();
   return html;
 };
@@ -4663,7 +4686,9 @@ function chokkoSaisieView(){
     var rowTotalStyle = rowTotalHl? 'background:'+rowTotalHl+'; color:'+contrastTextColor(rowTotalHl)+'; font-weight:700;' : 'font-weight:700;';
     var rowTotalClass = chokkoPaintMode? ' chokko-paintable' : '';
     html += '<td id="chokko-poste-total-'+posteId+'" class="'+rowTotalClass.trim()+'" style="'+rowTotalStyle+'" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-rowtotal="1">'+totalPoste+'</td>';
-    html += '<td style="text-align:left;"><textarea class="chk-note chokko-note" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-annee="'+chokkoYear+'" data-mois="'+chokkoMonth+'" rows="1" placeholder="Actions menées ce mois...">'+esc(note?note.texte:'')+'</textarea></td>';
+    var noteTxt = note ? (note.texte||'') : '';
+    html += '<td class="chk-note-cell" data-action="chokko-note-open" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-annee="'+chokkoYear+'" data-mois="'+chokkoMonth+'" title="'+(noteTxt? esc(noteTxt)+'\n\n(Cliquer pour lire ou modifier)' : 'Cliquer pour saisir les actions menées')+'">'+
+      '<div class="chk-note-preview">'+(noteTxt? esc(noteTxt) : '<span class="chk-note-empty">+ Actions menées…</span>')+'</div></td>';
     html += '</tr>';
   });
 
@@ -8432,6 +8457,27 @@ app.addEventListener('click', async function(e){
   }
   if(e.target.closest('[data-action="chokko-import-open"]')){ chokkoImportOpen = true; chokkoImportSummary = null; render(); return; }
   if(e.target.closest('[data-action="chokko-manage-postes-open"]')){ chokkoManagePostesOpen = true; render(); return; }
+  var noteOpen = e.target.closest('[data-action="chokko-note-open"]');
+  if(noteOpen && !chokkoPaintMode){
+    chokkoNoteModal = {ligne:noteOpen.dataset.ligne, poste:noteOpen.dataset.poste, annee:Number(noteOpen.dataset.annee), mois:Number(noteOpen.dataset.mois)};
+    render();
+    var ta = document.getElementById('chokko-note-text');
+    if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+    return;
+  }
+  if(e.target.closest('[data-action="chokko-note-cancel"]') || (e.target.classList && e.target.classList.contains('chokko-note-backdrop'))){
+    chokkoNoteModal = null; render(); return;
+  }
+  if(e.target.closest('[data-action="chokko-note-save"]')){
+    var nm = chokkoNoteModal;
+    var txt = document.getElementById('chokko-note-text').value.replace(/\s+$/,'');
+    chokkoNoteModal = null;
+    await handleChokkoNoteChange(nm.ligne, nm.poste, nm.annee, nm.mois, txt);
+    logChange('CHOKKO', 'Actions menées', nm.ligne+' · '+nm.poste+' - '+MONTHS_FR[nm.mois]+' '+nm.annee);
+    toast('Actions enregistrées.');
+    render();
+    return;
+  }
   if(e.target.closest('[data-action="chokko-manage-postes-close"]')){ chokkoManagePostesOpen = false; render(); return; }
   if(e.target.classList && e.target.classList.contains('chokko-manage-postes-backdrop')){ chokkoManagePostesOpen = false; render(); return; }
   var posteMoveBtn = e.target.closest('[data-action="chokko-poste-move"]');
@@ -8936,6 +8982,12 @@ loginOverlayEl.addEventListener('keydown', async function(e){
   if(e.key==='Enter' && (e.target.id==='login-password' || e.target.id==='login-username')){ await handleLogin(); }
 });
 app.addEventListener('keydown', function(e){
+  if(e.key==='Enter' && (e.ctrlKey||e.metaKey) && e.target.id==='chokko-note-text'){
+    e.preventDefault();
+    var saveNoteBtn = document.querySelector('[data-action="chokko-note-save"]');
+    if(saveNoteBtn) saveNoteBtn.click();
+    return;
+  }
   if(e.key==='Enter' && e.target.id==='wiz-step-input'){
     e.preventDefault();
     var nextBtn = document.querySelector('[data-action="chokko-wizard-next"]');
