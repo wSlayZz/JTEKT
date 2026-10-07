@@ -244,7 +244,7 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
   .chokko-grid input.chk-cell{min-width:0 !important; width:100% !important; font-size:10px !important; padding:0 !important; background:transparent !important;}
   .chokko-grid textarea.chk-note{min-width:0 !important; font-size:7.5px !important; height:auto !important;}
   .chokko-grid td.chk-note-cell{min-width:0 !important; max-width:none !important;}
-  .chk-note-preview{display:block !important; -webkit-line-clamp:unset !important; overflow:visible !important; font-size:7.5px !important;}
+  .chk-note-preview{display:block !important; max-width:none !important; white-space:pre-line !important; overflow:visible !important; text-overflow:clip !important; font-size:7.5px !important;}
   .chk-note-empty{display:none;}
   .chokko-grid .chk-label{min-width:0 !important;}
   .subtabs{display:none !important;}
@@ -349,7 +349,7 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .chokko-grid textarea.chk-note:focus{outline:2px solid var(--accent); outline-offset:-2px; background:#fff;}
 .chokko-grid td.chk-note-cell{cursor:pointer; text-align:left; min-width:180px; max-width:280px; padding:3px 6px; vertical-align:middle;}
 .chokko-grid td.chk-note-cell:hover{background:var(--accent-bg, #E6EFEE); outline:1px solid var(--accent); outline-offset:-1px;}
-.chk-note-preview{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:pre-line; font-size:10.5px; line-height:1.3; word-break:break-word;}
+.chk-note-preview{display:block; max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:10.5px; line-height:1.3;}
 .chk-note-empty{color:var(--text-faint); font-style:italic;}
 .ui-tooltip{position:absolute; z-index:9999; max-width:380px; min-width:180px; background:var(--card, #fff); color:var(--text, #1C1B18); border:1px solid var(--border, #E2DED4); border-radius:10px; box-shadow:0 10px 30px rgba(20,30,30,.18), 0 2px 6px rgba(20,30,30,.08); padding:0; overflow:hidden; pointer-events:none; opacity:0; transform:translateY(4px); transition:opacity .15s ease, transform .15s ease; font-size:12.5px; line-height:1.5;}
 .ui-tooltip.visible{opacity:1; transform:translateY(0);}
@@ -5311,6 +5311,36 @@ var LINES = ['MCU1','MCU2','MCU3'];
 var PLAN_TYPES = [['perf','Audits de perf'],['metro','Suivi métrologie'],['proprete','Audit propreté'],['labo','Relevés laboratoire']];
 
 var lastGlobalScore = null;
+// Clé stable d'une zone défilante : son id, sinon sa classe + celle de son tableau + son rang parmi les zones identiques
+function scrollZoneKeys(){
+  var zones = view.querySelectorAll('.table-wrap, .modal-box');
+  var seen = {}, out = [];
+  Array.prototype.forEach.call(zones, function(z){
+    var inner = z.querySelector('table');
+    var sig = z.id ? '#'+z.id : (z.className+'|'+(inner? inner.className : ''));
+    seen[sig] = (seen[sig]||0) + 1;
+    out.push({el:z, key: sig+'|'+seen[sig]});
+  });
+  return out;
+}
+var lastRenderedTab = null;
+function captureScrollPositions(){
+  var snap = {tab:lastRenderedTab, zones:{}, winX:window.scrollX, winY:window.scrollY};
+  scrollZoneKeys().forEach(function(z){
+    if(z.el.scrollLeft || z.el.scrollTop) snap.zones[z.key] = {left:z.el.scrollLeft, top:z.el.scrollTop};
+  });
+  return snap;
+}
+function restoreScrollPositions(snap){
+  var sameTab = snap.tab===currentTab;
+  lastRenderedTab = currentTab;
+  if(!sameTab) return;   // changement d'onglet : affichage normal, en haut à gauche
+  scrollZoneKeys().forEach(function(z){
+    var s = snap.zones[z.key];
+    if(s){ z.el.scrollLeft = s.left; z.el.scrollTop = s.top; }
+  });
+  if(window.scrollY!==snap.winY || window.scrollX!==snap.winX) window.scrollTo(snap.winX, snap.winY);
+}
 function render(){
   Array.prototype.forEach.call(document.querySelectorAll('#sidebar-nav button[data-tab]'), function(b){
     b.classList.toggle('active', b.dataset.tab===currentTab);
@@ -5321,8 +5351,11 @@ function render(){
   if(activeEl && activeEl.id && view.contains(activeEl) && (activeEl.tagName==='INPUT'||activeEl.tagName==='TEXTAREA')){
     focusInfo = {id:activeEl.id, start:activeEl.selectionStart, end:activeEl.selectionEnd};
   }
+  // Préserver la position de défilement des tableaux larges et des fenêtres (sinon retour à gauche à chaque mise à jour)
+  var scrollSnap = captureScrollPositions();
   var fn = RENDERERS[currentTab] || RENDERERS.dashboard;
   view.innerHTML = fn();
+  restoreScrollPositions(scrollSnap);
   if(focusInfo){
     var el = document.getElementById(focusInfo.id);
     if(el && (el.tagName==='INPUT'||el.tagName==='TEXTAREA')){
@@ -8470,7 +8503,7 @@ app.addEventListener('click', async function(e){
     chokkoNoteModal = {ligne:noteOpen.dataset.ligne, poste:noteOpen.dataset.poste, annee:Number(noteOpen.dataset.annee), mois:Number(noteOpen.dataset.mois)};
     render();
     var ta = document.getElementById('chokko-note-text');
-    if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+    if(ta){ ta.focus({preventScroll:true}); ta.setSelectionRange(ta.value.length, ta.value.length); }
     return;
   }
   if(e.target.closest('[data-action="chokko-note-cancel"]') || (e.target.classList && e.target.classList.contains('chokko-note-backdrop'))){
