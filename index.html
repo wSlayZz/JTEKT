@@ -358,6 +358,8 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .ui-tooltip-hint{padding:6px 12px 8px; font-size:11px; color:var(--text-faint, #8A8577); border-top:1px solid var(--border, #E2DED4); background:var(--neutral-bg, #F6F4EF);}
 .ui-tooltip-hint-only{border-top:none;}
 .ui-tooltip-compact{min-width:0;}
+.sector-detail-heading{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:28px 0 12px; padding:0 2px 8px; border-bottom:2px solid var(--sb-bg, #143E3E);}
+.sector-detail-heading > span:first-child{font-size:17px; font-weight:700; color:var(--sb-bg, #143E3E);}
 @media print{ .ui-tooltip{display:none !important;} }
 .chokko-grid .chk-sticky{position:sticky; left:0; z-index:2; border-right:2px solid #999;}
 </style>
@@ -980,7 +982,7 @@ function globalConformityScore(){
     var chokkoVals = ['MCU1','MCU2','MCU3'].map(function(l){ return chokkoMonthAverage(l, today0.getFullYear(), today0.getMonth()); }).filter(function(v){ return v!==null; });
     if(chokkoVals.length){
       var ck = chokkoVals.reduce(function(a,b){return a+b;},0)/chokkoVals.length;
-      parts.push(ck); detail.push({label:'CHOKKO', val:Math.round(ck)});
+      parts.push(ck); detail.push({label:'CHOKKO', val:Math.round(ck*10)/10});
     }
   }
   if(!parts.length) return {score:null, detail:[]};
@@ -1083,9 +1085,18 @@ function latestResultByLine(ligne){
   return items.slice().sort(function(a,b){ return monthIndex(b.mois)-monthIndex(a.mois); })[0];
 }
 function latestPerfResultByLine(ligne){
-  var items = DATA.planning.filter(function(p){ return p.ligne===ligne && p.type==='perf' && p.resultatPct!==undefined && p.resultatPct!==null && p.resultatPct!==''; });
-  if(!items.length) return null;
-  return items.slice().sort(function(a,b){ return (b.echeance||'').localeCompare(a.echeance||''); })[0];
+  // Source principale : l'onglet "Audits de perf". Les anciens résultats saisis dans le planning restent pris en compte.
+  var cands = [];
+  DATA.perf.forEach(function(r){
+    if((r.secteur||'MCU')!==currentSecteur || r.ligne!==ligne || r.resultatPct===null || r.resultatPct===undefined) return;
+    cands.push({resultatPct:r.resultatPct, sortKey:r.annee+'-'+String(r.mois+1).padStart(2,'0')+'-31', when:MONTHS_FR[r.mois].charAt(0).toUpperCase()+MONTHS_FR[r.mois].slice(1)+' '+r.annee});
+  });
+  DATA.planning.forEach(function(p){
+    if(p.ligne!==ligne || p.type!=='perf' || p.resultatPct===undefined || p.resultatPct===null || p.resultatPct==='') return;
+    cands.push({resultatPct:p.resultatPct, sortKey:p.echeance||'', when:fmtDate(p.echeance)});
+  });
+  if(!cands.length) return null;
+  return cands.sort(function(a,b){ return b.sortKey.localeCompare(a.sortKey); })[0];
 }
 // ---------- scoring audits propreté (seuils IATF : 85% attention, 50% danger) ----------
 var SCORE_ATTENTION = 85, SCORE_DANGER = 50;
@@ -5341,7 +5352,14 @@ function restoreScrollPositions(snap){
   });
   if(window.scrollY!==snap.winY || window.scrollX!==snap.winX) window.scrollTo(snap.winX, snap.winY);
 }
+function updateHeaderSubtitle(){
+  var el = document.getElementById('todaylabel');
+  if(!el) return;
+  var sec = currentSecteur ? getSecteur(currentSecteur) : null;
+  el.textContent = (sec && sec.nom ? 'Secteur '+sec.nom+' · ' : '') + 'Aujourd\'hui : ' + fmtDate(todayStr());
+}
 function render(){
+  updateHeaderSubtitle();
   Array.prototype.forEach.call(document.querySelectorAll('#sidebar-nav button[data-tab]'), function(b){
     b.classList.toggle('active', b.dataset.tab===currentTab);
   });
@@ -5441,11 +5459,17 @@ function secteurGaugeScoreFor(sid){
   }
   return {score: parts.length ? Math.round(parts.reduce(function(a,b){return a+b;},0)/parts.length) : null, detail:detail};
 }
+// Séparation visuelle entre la vue site (tous secteurs) et le détail du secteur sélectionné
+function sectorDetailHeading(){
+  var sec = getSecteur(currentSecteur);
+  return '<div class="sector-detail-heading"><span>Détail du secteur '+esc(sec? sec.nom : currentSecteur)+'</span>'+
+    '<span class="tiny">Cliquez sur une carte ci-dessus pour changer de secteur</span></div>';
+}
 function renderSecteurDashboard(){
   var sec = getSecteur(currentSecteur);
   var lines = secteurLines();
   var html = '';
-  if(userSecteurs().length>1) html += renderMultiSecteurBanner()+renderPerfAuditProgress();
+  if(userSecteurs().length>1) html += renderMultiSecteurBanner()+renderPerfAuditProgress()+sectorDetailHeading();
 
   var curM = Number(todayStr().split('-')[1])-1;
   var curY = Number(todayStr().split('-')[0]);
@@ -5627,7 +5651,8 @@ function renderMultiSecteurBanner(){
     var isCur = sid===currentSecteur;
     html += '<div style="padding:16px 10px; border-radius:var(--radius-sm); border:1.5px solid '+(isCur?'var(--ok)':'var(--border)')+'; background:'+(isCur?'var(--ok-bg)':'var(--card)')+'; cursor:pointer; text-align:center;" data-action="switch-secteur" data-id="'+sid+'">'+
       '<div style="font-weight:700; font-size:14px; margin-bottom:8px;">'+esc(sec.nom)+'</div>'+
-      '<div style="font-family:var(--mono); font-size:32px; font-weight:700; color:var(--'+lvl+');">'+(score!==null?score+'%':'-')+'</div>'+
+      (score!==null ? '<div style="font-family:var(--mono); font-size:32px; font-weight:700; color:var(--'+lvl+');">'+score+'%</div>'
+                     : '<div style="font-size:12.5px; color:var(--text-faint); padding:11px 0 10px;">Pas de données</div>')+
     '</div>';
   });
   html += '</div></div>';
@@ -5764,7 +5789,7 @@ RENDERERS.dashboard = function(){
         '<div style="display:flex; width:100%; justify-content:space-between;"><b>'+l+'</b><span class="tiny">Aucune donnée</span></div>'+
         (nextTxt? '<span class="tiny">'+nextTxt+'</span>' : '')+'</div>';
       return '<div class="linebadge" style="flex-direction:column; align-items:flex-start; gap:2px;">'+
-        '<div style="display:flex; align-items:center; gap:6px; width:100%; justify-content:space-between;"><b>'+l+'</b>'+badge(scoreLevel(p.resultatPct), p.resultatPct+'% ('+fmtDate(p.echeance)+')')+'</div>'+
+        '<div style="display:flex; align-items:center; gap:6px; width:100%; justify-content:space-between;"><b>'+l+'</b>'+badge(scoreLevel(p.resultatPct), p.resultatPct+'% ('+p.when+')')+'</div>'+
         (nextTxt? '<span class="tiny">'+nextTxt+'</span>' : '')+'</div>';
     }).join('');
     var perfHtml = '<div class="eyebrow">'+esc(t('title_perf','Audits de perf - résultats et prochain audit'))+'</div><div class="linebadges" style="gap:8px;">'+perfLines+'</div>';
@@ -5784,7 +5809,7 @@ RENDERERS.dashboard = function(){
     var cards = lignes.map(function(l){
       var avg = chokkoMonthAverage(l, y, m);
       var lvl = chokkoLevelVsObjectif(avg, l);
-      return '<div class="statcard s-'+lvl+'"><div class="eyebrow">'+l+'</div><div class="val">'+(avg!==null?avg.toFixed(0)+'%':'-')+'</div><div class="lbl">ce mois</div></div>';
+      return '<div class="statcard s-'+lvl+'"><div class="eyebrow">'+l+'</div><div class="val">'+(avg!==null?avg.toFixed(1)+'%':'-')+'</div><div class="lbl">ce mois · objectif ≥ '+chokkoObjectif(l)+'%</div></div>';
     }).join('');
     var stale = lignes.map(function(l){ return {ligne:l, delay:chokkoSaisieDelay(l)}; }).filter(function(s){ return s.delay===null || s.delay>=2; });
     var staleHtml = stale.length? '<div class="tiny" style="margin-top:8px; color:var(--warn); font-weight:600;">⚠ '+stale.map(function(s){ return s.ligne+' : '+(s.delay===null?'aucune saisie':'retard '+s.delay+'j'); }).join(' · ')+'</div>' : '';
@@ -6008,8 +6033,8 @@ RENDERERS.dashboard = function(){
   // ===== Assemblage avec disposition personnalisable =====
   var layout = getDashboardLayout().filter(function(w){ return !w.hidden; }); // "hidden" = supprimé du modèle
   var html = '';
+  if(userSecteurs().length>1) html += renderMultiSecteurBanner()+renderPerfAuditProgress()+sectorDetailHeading();
   html += renderTodayBanner();
-  if(userSecteurs().length>1) html += renderMultiSecteurBanner()+renderPerfAuditProgress();
 
   html += '<div id="dashboard-canvas">';
   html += renderPostits();
