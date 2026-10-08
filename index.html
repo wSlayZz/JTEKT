@@ -360,6 +360,40 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .ui-tooltip-compact{min-width:0;}
 .sector-detail-heading{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:28px 0 12px; padding:0 2px 8px; border-bottom:2px solid var(--sb-bg, #143E3E);}
 .sector-detail-heading > span:first-child{font-size:17px; font-weight:700; color:var(--sb-bg, #143E3E);}
+.ap-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:12px;}
+.ap-tools{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+.ap-scope{display:flex; gap:4px;}
+.ap-resp{font-size:12.5px; padding:4px 8px; max-width:220px;}
+.ap-kpis{display:grid; grid-template-columns:repeat(6, minmax(0,1fr)) 1.3fr; gap:8px; margin-bottom:12px;}
+@media (max-width:1100px){ .ap-kpis{grid-template-columns:repeat(3, minmax(0,1fr));} }
+.ap-kpi{display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:9px 11px; border:1px solid var(--border); border-left:4px solid var(--neutral); border-radius:var(--radius-sm, 8px); background:var(--card, #fff); cursor:pointer; text-align:left; font:inherit; color:inherit; transition:box-shadow .15s, transform .15s;}
+.ap-kpi:hover{box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.ap-kpi.active{box-shadow:0 0 0 2px var(--sb-bg, #143E3E) inset; background:var(--neutral-bg);}
+.ap-kpi.ap-danger{border-left-color:var(--danger);} .ap-kpi.ap-warn{border-left-color:var(--warn);} .ap-kpi.ap-ok{border-left-color:var(--ok);}
+.ap-kpi-val{font-family:var(--mono); font-size:22px; font-weight:700; line-height:1.1;}
+.ap-kpi.ap-danger .ap-kpi-val{color:var(--danger);}
+.ap-kpi-lbl{font-size:11.5px; color:var(--text-faint);}
+.ap-progress{padding:8px 11px; border:1px solid var(--border); border-radius:var(--radius-sm, 8px); display:flex; flex-direction:column; gap:3px;}
+.ap-progress-val{font-family:var(--mono); font-size:20px; font-weight:700; color:var(--ok);}
+.ap-bar{height:7px; border-radius:4px; background:var(--neutral-bg); overflow:hidden;}
+.ap-bar > div{height:100%; background:var(--ok); border-radius:4px;}
+.ap-list{max-height:430px; overflow:auto; border:1px solid var(--border); border-radius:var(--radius-sm, 8px);}
+.ap-list table{width:100%; border-collapse:collapse;}
+.ap-list thead th{position:sticky; top:0; z-index:1; background:var(--card, #fff); box-shadow:0 1px 0 var(--border);}
+.ap-row{cursor:pointer;}
+.ap-row:hover td{background:var(--neutral-bg);}
+.ap-row-late td:first-child{box-shadow:inset 3px 0 0 var(--danger);}
+.ap-desc{max-width:520px;}
+.ap-last{font-size:11px; color:var(--text-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:520px;}
+.ap-row-abandon td{color:var(--text-faint);}
+.ad-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px 16px; margin-top:4px;}
+.ad-grid .field{margin:0;}
+@media (max-width:600px){ .ad-grid{grid-template-columns:1fr;} }
+.ad-history{margin-top:10px; display:flex; flex-direction:column; gap:8px; max-height:220px; overflow:auto;}
+.ad-note{border-left:3px solid var(--sb-bg, #143E3E); padding:4px 10px; background:var(--neutral-bg); border-radius:0 6px 6px 0;}
+.ad-note-meta{font-size:11px; color:var(--text-faint); font-weight:600;}
+.ad-note-text{font-size:13px; white-space:pre-line;}
+@media print{ .ap-list{max-height:none !important; overflow:visible !important;} .ap-tools{display:none !important;} }
 @media print{ .ui-tooltip{display:none !important;} }
 .chokko-grid .chk-sticky{position:sticky; left:0; z-index:2; border-right:2px solid #999;}
 </style>
@@ -582,6 +616,7 @@ function t(key, fallback){
 // ============ DASHBOARD PERSONNALISABLE (widgets) ============
 var DASHBOARD_WIDGETS_DEFAULT = [
   {id:'w_score'},
+  {id:'w_actions'},
   {id:'w_chokko_trend'},
   {id:'w_causes_bar'},
   {id:'w_planning'},
@@ -596,7 +631,6 @@ var DASHBOARD_WIDGETS_DEFAULT = [
   {id:'w_ciclcoverage'},
   {id:'w_vidange'},
   {id:'w_my_actions'},
-  {id:'w_actions'},
   {id:'w_trend'},
   {id:'w_scorehist'},
   {id:'w_alerts'}
@@ -611,7 +645,7 @@ var WIDGET_TITLES = {
   w_particules:'Relevés particules', w_contamination:'Contamination',
   w_ciclcoverage:'Couverture CI/CL', w_vidange:'Vidanges',
   w_my_actions:'Mes actions',
-  w_actions:"Plan d'actions - échéances", w_trend:'Tendance globale', w_scorehist:'Évolution du score', w_alerts:'Alertes'
+  w_actions:'Suivi des actions', w_trend:'Tendance globale', w_scorehist:'Évolution du score', w_alerts:'Alertes'
 };
 var dashboardCustomizing = false;
 var widgetPickerOpen = false;
@@ -2860,6 +2894,162 @@ function proprVidange(){
 
 var ACTION_STATUSES = [['planifiee','Planifiée'],['realisee','Réalisée'],['verifiee','Vérifiée'],['perennisee','Pérennisée'],['non_prise_en_compte','Non prise en compte'],['abandonnee','Abandonnée']];
 var actionsViewAll = false; // toggle vue globale multi-secteurs
+// ---------- SUIVI DES ACTIONS (fenêtre tableau de bord + fiche action) ----------
+var actionsPanelFilter = 'all';   // all | late | encours | realisee | cloturee | abandon
+var actionsPanelScope = 'secteur'; // secteur | all (comptes multi-secteurs)
+var actionsPanelResp = '';
+var actionDetailId = null;
+function actionPanelCategory(a){
+  if(isActionLate(a)) return 'late';
+  if(a.statut==='realisee') return 'realisee';
+  if(a.statut==='verifiee' || a.statut==='perennisee') return 'cloturee';
+  if(a.statut==='abandonnee' || a.statut==='non_prise_en_compte') return 'abandon';
+  return 'encours';
+}
+var ACTION_PANEL_FILTERS = [
+  ['all','Toutes','neutral'], ['late','En retard','danger'], ['encours','En cours','warn'],
+  ['realisee','Réalisées · à vérifier','ok'], ['cloturee','Vérifiées / pérennisées','ok'], ['abandon','Abandonnées','neutral']
+];
+function actionsPanelSource(){
+  var multi = userSecteurs().length>1;
+  if(multi && actionsPanelScope==='all'){
+    var us = userSecteurs();
+    return DATA.actions.filter(function(a){ return us.indexOf(a.secteur||'MCU')>=0; });
+  }
+  return bySecteur(DATA.actions);
+}
+function actionsPanelSort(a,b){
+  var order = {late:0, encours:1, realisee:2, cloturee:3, abandon:4};
+  var ca = order[actionPanelCategory(a)], cb = order[actionPanelCategory(b)];
+  if(ca!==cb) return ca-cb;
+  var ea = a.echeance||'9999', eb = b.echeance||'9999';
+  return ca>=2 ? eb.localeCompare(ea) : ea.localeCompare(eb);
+}
+function renderActionsPanel(){
+  var multi = userSecteurs().length>1;
+  var all = actionsPanelSource();
+  var resps = [];
+  all.forEach(function(a){ var r = (a.responsable||'').trim(); if(r && resps.indexOf(r)<0) resps.push(r); });
+  resps.sort(function(x,y){ return x.localeCompare(y,'fr',{sensitivity:'base'}); });
+  if(actionsPanelResp && resps.indexOf(actionsPanelResp)<0) actionsPanelResp = '';
+  var base = actionsPanelResp ? all.filter(function(a){ return (a.responsable||'').trim()===actionsPanelResp; }) : all;
+  var counts = {all:base.length, late:0, encours:0, realisee:0, cloturee:0, abandon:0};
+  base.forEach(function(a){ counts[actionPanelCategory(a)]++; });
+  var actives = base.length - counts.abandon;
+  var avancement = actives ? Math.round((counts.realisee+counts.cloturee)/actives*100) : null;
+  var rows = (actionsPanelFilter==='all' ? base : base.filter(function(a){ return actionPanelCategory(a)===actionsPanelFilter; })).slice().sort(actionsPanelSort);
+  var showSect = multi && actionsPanelScope==='all';
+
+  var h = '<div class="ap-head">'+
+    '<div><div class="eyebrow">Suivi des actions'+(showSect?' · tous mes secteurs':' · secteur '+esc(currentSecteur))+'</div>'+
+      '<div class="tiny" style="margin-top:3px;">'+counts.all+' action(s)'+(actionsPanelResp?' pour '+esc(actionsPanelResp):'')+' · cliquer sur une action pour l\'ouvrir</div></div>'+
+    '<div class="ap-tools">'+
+      (multi? '<div class="ap-scope"><button class="btn small'+(actionsPanelScope==='secteur'?' primary':'')+'" data-action="actions-panel-scope" data-s="secteur">Ce secteur</button>'+
+        '<button class="btn small'+(actionsPanelScope==='all'?' primary':'')+'" data-action="actions-panel-scope" data-s="all">Tous mes secteurs</button></div>' : '')+
+      '<select id="actions-panel-resp" class="ap-resp"><option value="">Tous les responsables</option>'+
+        resps.map(function(r){ return '<option value="'+esc(r)+'"'+(r===actionsPanelResp?' selected':'')+'>'+esc(r)+'</option>'; }).join('')+'</select>'+
+      '<button class="btn small primary" data-action="action-new-from-panel">+ Nouvelle action</button>'+
+    '</div></div>';
+
+  h += '<div class="ap-kpis">'+ACTION_PANEL_FILTERS.map(function(f){
+    return '<button class="ap-kpi ap-'+f[2]+(actionsPanelFilter===f[0]?' active':'')+'" data-action="actions-panel-filter" data-f="'+f[0]+'">'+
+      '<span class="ap-kpi-val">'+counts[f[0]]+'</span><span class="ap-kpi-lbl">'+f[1]+'</span></button>';
+  }).join('')+
+    '<div class="ap-progress"><div class="tiny">Avancement</div><div class="ap-progress-val">'+(avancement===null?'-':avancement+' %')+'</div>'+
+    '<div class="ap-bar"><div style="width:'+(avancement||0)+'%;"></div></div><div class="tiny" style="color:var(--text-faint);">réalisées ou clôturées</div></div>'+
+  '</div>';
+
+  if(!rows.length){
+    h += emptyState(base.length? 'Aucune action dans ce filtre.' : 'Aucune action enregistrée pour le moment.');
+    return h;
+  }
+  h += '<div class="ap-list"><table><thead><tr><th>Statut</th>'+(showSect?'<th>Secteur</th>':'')+'<th>Ligne</th><th>Action</th><th>Responsable</th><th>Échéance</th><th>Délai</th></tr></thead><tbody>';
+  h += rows.map(function(a){
+    var cat = actionPanelCategory(a);
+    var meta = actionStatusMeta(a.statut);
+    var st = cat==='late' ? badge('danger','En retard') : badge(meta.level==='neutral' && cat==='encours' ? 'warn' : meta.level, meta.label);
+    var dl = (cat==='late' || cat==='encours') ? daysLabel(a.echeance) : null;
+    var lastNote = (a.suivi && a.suivi.length) ? a.suivi[a.suivi.length-1] : null;
+    return '<tr class="ap-row ap-row-'+cat+'" data-action="action-open" data-id="'+a.id+'">'+
+      '<td>'+st+'</td>'+(showSect?'<td><b>'+esc(a.secteur||'MCU')+'</b></td>':'')+
+      '<td>'+esc(a.ligne||'-')+'</td>'+
+      '<td class="ap-desc"><div>'+esc(a.description||'')+'</div>'+(lastNote?'<div class="ap-last">Dernier suivi ('+fmtDate(lastNote.date)+') : '+esc(lastNote.texte)+'</div>':'')+'</td>'+
+      '<td>'+esc(a.responsable||'-')+'</td>'+
+      '<td class="num">'+(a.echeance?fmtDate(a.echeance):'-')+'</td>'+
+      '<td>'+(dl? '<span class="delay-pill delay-'+(cat==='late'?'late':'soon')+'">'+dl.text+'</span>' : '')+'</td></tr>';
+  }).join('');
+  h += '</tbody></table></div>';
+  return h;
+}
+// Fiche action : tous les champs modifiables + notes de suivi datées
+function actionResponsableSelect(current){
+  var accs = DATA.accounts.filter(function(a){ return a.displayName!=='Administrateur'; }).map(function(a){ return a.displayName; })
+    .sort(function(x,y){ return x.localeCompare(y,'fr',{sensitivity:'base'}); });
+  var isOther = current && accs.indexOf(current)<0;
+  return '<label class="field">Responsable<select id="ad-resp" class="responsable-select-autre" data-wrap="ad-resp-autre-wrap">'+
+      '<option value="">- Non assigné -</option>'+
+      accs.map(function(n){ return '<option value="'+esc(n)+'"'+(n===current?' selected':'')+'>'+esc(n)+'</option>'; }).join('')+
+      '<option value="__autre__"'+(isOther?' selected':'')+'>Autre (personne hors application)…</option>'+
+    '</select></label>'+
+    '<label class="field" id="ad-resp-autre-wrap" style="'+(isOther?'':'display:none;')+'">Nom du responsable<input type="text" id="ad-resp-autre" value="'+esc(isOther?current:'')+'"></label>';
+}
+function actionDetailModalHtml(){
+  var isNew = actionDetailId==='new';
+  var a = isNew ? {secteur:currentSecteur, statut:'planifiee', suivi:[]} : DATA.actions.find(function(x){ return x.id===actionDetailId; });
+  if(!a) return '';
+  var lignes = (getSecteur(a.secteur||'MCU')||{}).lignes || secteurLines();
+  var cat = isNew ? 'encours' : actionPanelCategory(a);
+  var suivi = (a.suivi||[]).slice().reverse();
+  return '<div class="modal-overlay action-detail-backdrop"><div class="modal-box" style="max-width:720px; width:100%; max-height:90vh; overflow-y:auto;">'+
+    '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">'+
+      '<h3 style="margin:0;">'+(isNew?'Nouvelle action':'Fiche action')+'</h3>'+
+      (isNew? '' : (cat==='late'? badge('danger','En retard') : badge(actionStatusMeta(a.statut).level, actionStatusMeta(a.statut).label)))+
+    '</div>'+
+    '<label class="field" style="margin-bottom:10px;">Description<textarea id="ad-desc" rows="3" style="width:100%; font-family:inherit; font-size:13.5px;">'+esc(a.description||'')+'</textarea></label>'+
+    '<div class="ad-grid">'+
+      '<label class="field">Ligne<select id="ad-ligne"><option value="">-</option>'+lignes.map(function(l){ return '<option'+(l===a.ligne?' selected':'')+'>'+esc(l)+'</option>'; }).join('')+'</select></label>'+
+      actionResponsableSelect(a.responsable||'')+
+      '<label class="field">Échéance<input type="date" id="ad-echeance" value="'+esc(a.echeance||'')+'"></label>'+
+      '<label class="field">Statut<select id="ad-statut">'+ACTION_STATUSES.map(function(s){ return '<option value="'+s[0]+'"'+(s[0]===a.statut?' selected':'')+'>'+s[1]+'</option>'; }).join('')+'</select></label>'+
+    '</div>'+
+    (isNew? '' : '<p class="tiny" style="margin:8px 0 0; color:var(--text-faint);">Secteur '+esc(a.secteur||'MCU')+(a.origine?' · origine : '+esc(a.origine):'')+(a.dateCreation?' · créée le '+fmtDate(a.dateCreation):'')+'</p>')+
+    '<div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">'+
+      '<div class="eyebrow" style="margin-bottom:8px;">Suivi de l\'avancement</div>'+
+      '<textarea id="ad-note" rows="2" style="width:100%; font-family:inherit; font-size:13px;" placeholder="Ajouter un point d\'avancement (sera daté et signé)..."></textarea>'+
+      (suivi.length? '<div class="ad-history">'+suivi.map(function(n){
+        return '<div class="ad-note"><div class="ad-note-meta">'+fmtDate(n.date)+' · '+esc(n.auteur||'')+'</div><div class="ad-note-text">'+esc(n.texte)+'</div></div>';
+      }).join('')+'</div>' : '<p class="tiny" style="color:var(--text-faint); margin-top:6px;">Aucun point de suivi pour le moment.</p>')+
+    '</div>'+
+    '<div class="actions-row" style="margin-top:16px;"><button class="btn" data-action="action-detail-cancel">Annuler</button><button class="btn primary" data-action="action-detail-save">Enregistrer</button></div>'+
+  '</div></div>';
+}
+async function handleSaveActionDetail(){
+  var isNew = actionDetailId==='new';
+  var desc = document.getElementById('ad-desc').value.trim();
+  if(!desc){ toast('Merci de décrire l\'action.', 'error'); return; }
+  var resp = resolveResponsableFromInputs('ad-resp','ad-resp-autre');
+  var a = isNew ? {id:uid('act'), secteur:currentSecteur, dateCreation:todayStr(), origine:'Suivi des actions', suivi:[]} : DATA.actions.find(function(x){ return x.id===actionDetailId; });
+  if(!a){ actionDetailId = null; render(); return; }
+  var oldStatut = a.statut;
+  a.description = desc;
+  a.ligne = document.getElementById('ad-ligne').value || null;
+  a.responsable = resp || '';
+  a.echeance = document.getElementById('ad-echeance').value || null;
+  a.statut = document.getElementById('ad-statut').value;
+  var note = document.getElementById('ad-note').value.trim();
+  a.suivi = a.suivi || [];
+  if(!isNew && oldStatut && oldStatut!==a.statut){
+    a.suivi.push({date:todayStr(), auteur:currentUser?currentUser.displayName:'', texte:'Statut : '+actionStatusMeta(oldStatut).label+' → '+actionStatusMeta(a.statut).label});
+  }
+  if(note) a.suivi.push({date:todayStr(), auteur:currentUser?currentUser.displayName:'', texte:note});
+  if(isNew) DATA.actions.push(a);
+  await save('actions');
+  logChange("Plan d'actions", isNew?'Ajout':'Mise à jour', (a.secteur||'')+' · '+desc.slice(0,60));
+  toast(isNew? 'Action créée.' : 'Action mise à jour.');
+  actionDetailId = null;
+  render();
+}
+
 RENDERERS.actions = function(){
   var multiSect = userSecteurs().length>1;
   var ACTIONS_SECT;
@@ -2907,7 +3097,7 @@ function actionRow(a){
   }
   return '<tr><td>'+badge(level, label)+'</td><td>'+esc(a.description)+'</td><td>'+ligneCell+'</td><td>'+esc(val(a.responsable,''))+'</td>'+
     '<td class="num">'+fmtDate(a.echeance)+'</td>'+
-    '<td><select data-action="change-status" data-id="'+a.id+'">'+ACTION_STATUSES.map(function(s){return '<option value="'+s[0]+'"'+(s[0]===a.statut?' selected':'')+'>'+s[1]+'</option>';}).join('')+'</select> '+
+    '<td style="white-space:nowrap;"><button class="btn small" data-action="action-open" data-id="'+a.id+'">Ouvrir</button> <select data-action="change-status" data-id="'+a.id+'">'+ACTION_STATUSES.map(function(s){return '<option value="'+s[0]+'"'+(s[0]===a.statut?' selected':'')+'>'+s[1]+'</option>';}).join('')+'</select> '+
     '<button class="btn small danger-outline" data-action="delete" data-module="actions" data-id="'+a.id+'">Suppr.</button></td></tr>';
 }
 
@@ -5324,7 +5514,7 @@ var PLAN_TYPES = [['perf','Audits de perf'],['metro','Suivi métrologie'],['prop
 var lastGlobalScore = null;
 // Clé stable d'une zone défilante : son id, sinon sa classe + celle de son tableau + son rang parmi les zones identiques
 function scrollZoneKeys(){
-  var zones = view.querySelectorAll('.table-wrap, .modal-box');
+  var zones = view.querySelectorAll('.table-wrap, .modal-box, .ap-list');
   var seen = {}, out = [];
   Array.prototype.forEach.call(zones, function(z){
     var inner = z.querySelector('table');
@@ -5372,7 +5562,7 @@ function render(){
   // Préserver la position de défilement des tableaux larges et des fenêtres (sinon retour à gauche à chaque mise à jour)
   var scrollSnap = captureScrollPositions();
   var fn = RENDERERS[currentTab] || RENDERERS.dashboard;
-  view.innerHTML = fn();
+  view.innerHTML = fn() + (actionDetailId ? actionDetailModalHtml() : '');
   restoreScrollPositions(scrollSnap);
   if(focusInfo){
     var el = document.getElementById(focusInfo.id);
@@ -5510,6 +5700,9 @@ function renderSecteurDashboard(){
   html += '<div class="statcard"><div class="eyebrow">Actions ouvertes</div><div class="val">'+openA+'</div></div>';
   html += '</div></div>';
 
+  // Suivi de toutes les actions du secteur
+  html += '<div class="section card" style="margin-bottom:18px;">'+renderActionsPanel()+'</div>';
+
   // Perf par ligne du mois en cours
   html += '<div class="section card" style="margin-bottom:18px;"><div class="eyebrow" style="margin-bottom:10px;">Audits de perf - '+MONTHS_FR[curM].charAt(0).toUpperCase()+MONTHS_FR[curM].slice(1)+' '+curY+'</div>';
   html += '<div class="linebadges">'+lines.map(function(l){
@@ -5518,16 +5711,6 @@ function renderSecteurDashboard(){
     return '<div class="linebadge"><b>'+esc(l)+'</b> '+b+'</div>';
   }).join('')+'</div></div>';
 
-  // Actions en retard
-  var lateActions = actionsSect.filter(isActionLate).sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
-  if(lateActions.length){
-    html += '<div class="section card" style="margin-bottom:18px;"><div class="eyebrow" style="color:var(--danger); margin-bottom:10px;">Actions en retard ('+lateActions.length+')</div>';
-    html += '<div class="table-wrap"><table><thead><tr><th>Description</th><th>Ligne</th><th>Échéance</th><th>Responsable</th></tr></thead><tbody>';
-    html += lateActions.slice(0,8).map(function(a){
-      return '<tr><td>'+esc(a.description)+'</td><td>'+esc(val(a.ligne,'-'))+'</td><td class="num" style="color:var(--danger);">'+fmtDate(a.echeance)+'</td><td>'+esc(val(a.responsable,'-'))+'</td></tr>';
-    }).join('');
-    html += '</tbody></table></div></div>';
-  }
   return html;
 }
 
@@ -6000,31 +6183,7 @@ RENDERERS.dashboard = function(){
     '</div>';
   })();
 
-  W.w_actions = (function(){
-    var openActions = DATA.actions.filter(isActionOpen);
-    var lateActions = DATA.actions.filter(isActionLate).sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
-    var upcomingActions = DATA.actions.filter(function(a){
-      return isActionOpen(a) && !isActionDone(a) && !isActionLate(a) && a.echeance && daysBetween(todayStr(), a.echeance)<=alertHorizon;
-    }).sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
-    function actionsTable(items, lvl){
-      var html2 = '<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Description</th><th>Origine</th><th>Échéance</th><th>Délai</th><th>Responsable</th></tr></thead><tbody>';
-      html2 += items.map(function(a){
-        var dl = daysLabel(a.echeance);
-        return '<tr><td>'+esc(val(a.ligne,'-'))+'</td><td>'+esc(a.description)+'</td><td class="tiny">'+esc(val(a.origine,'-'))+'</td>'+
-          '<td class="num">'+(a.echeance?fmtDate(a.echeance):'-')+'</td>'+
-          '<td>'+(dl? '<span class="delay-pill delay-'+lvl+'">'+dl.text+'</span>' : '-')+'</td>'+
-          '<td>'+esc(val(a.responsable,'-'))+'</td></tr>';
-      }).join('');
-      return html2+'</tbody></table></div>';
-    }
-    var h = '<div style="display:flex; align-items:baseline; gap:14px; margin-bottom:10px; flex-wrap:wrap;"><div class="eyebrow">'+esc(t('title_actions',"Plan d'actions - échéances"))+'</div>'+
-      '<span class="tiny">'+openActions.length+' ouvertes au total · '+lateActions.length+' en retard · '+upcomingActions.length+' à venir sous '+alertHorizon+'j</span></div>';
-    h += '<div class="alert-group-title alert-group-danger">En retard ('+lateActions.length+')</div>';
-    h += lateActions.length? actionsTable(lateActions,'late') : emptyState('Aucune action en retard.');
-    h += '<div class="alert-group-title alert-group-warn" style="margin-top:14px;">À venir ('+upcomingActions.length+')</div>';
-    h += upcomingActions.length? actionsTable(upcomingActions,'soon') : emptyState('Aucune action à venir sous '+alertHorizon+' jours.');
-    return h;
-  })();
+  W.w_actions = renderActionsPanel();
 
   W.w_trend = '<div class="eyebrow" style="margin-bottom:8px;">'+esc(t('title_trend','Tendance globale - 12 derniers mois'))+'</div><div class="chart-box"><canvas id="chart-trend"></canvas></div>';
   W.w_scorehist = '<div class="eyebrow" style="margin-bottom:8px;">'+esc(t('title_scorehist','Évolution du score de conformité global'))+'</div><div class="chart-box"><canvas id="chart-score-history"></canvas></div>';
@@ -8523,6 +8682,15 @@ app.addEventListener('click', async function(e){
   }
   if(e.target.closest('[data-action="chokko-import-open"]')){ chokkoImportOpen = true; chokkoImportSummary = null; render(); return; }
   if(e.target.closest('[data-action="chokko-manage-postes-open"]')){ chokkoManagePostesOpen = true; render(); return; }
+  var apFilter = e.target.closest('[data-action="actions-panel-filter"]');
+  if(apFilter){ actionsPanelFilter = apFilter.dataset.f; render(); return; }
+  var apScope = e.target.closest('[data-action="actions-panel-scope"]');
+  if(apScope){ actionsPanelScope = apScope.dataset.s; render(); return; }
+  if(e.target.closest('[data-action="action-new-from-panel"]')){ actionDetailId = 'new'; render(); var nd = document.getElementById('ad-desc'); if(nd) nd.focus({preventScroll:true}); return; }
+  var actionOpen = e.target.closest('[data-action="action-open"]');
+  if(actionOpen && !e.target.closest('select, input, textarea')){ actionDetailId = actionOpen.dataset.id; render(); return; }
+  if(e.target.closest('[data-action="action-detail-cancel"]') || (e.target.classList && e.target.classList.contains('action-detail-backdrop'))){ actionDetailId = null; render(); return; }
+  if(e.target.closest('[data-action="action-detail-save"]')){ await handleSaveActionDetail(); return; }
   var noteOpen = e.target.closest('[data-action="chokko-note-open"]');
   if(noteOpen && !chokkoPaintMode){
     chokkoNoteModal = {ligne:noteOpen.dataset.ligne, poste:noteOpen.dataset.poste, annee:Number(noteOpen.dataset.annee), mois:Number(noteOpen.dataset.mois)};
@@ -8785,6 +8953,7 @@ app.addEventListener('change', async function(e){
     if(autreWrap) autreWrap.style.display = (e.target.value==='__autre__') ? '' : 'none';
     return;
   }
+  if(e.target.id==='actions-panel-resp'){ actionsPanelResp = e.target.value; render(); return; }
   if(e.target.id==='perf-progress-mois'){ perfProgressMonth = Number(e.target.value); render(); return; }
   if(e.target.id==='perf-progress-annee'){ perfProgressYear = Number(e.target.value)||perfProgressYear; render(); return; }
   if(e.target.id==='multisecteur-metric-select'){
