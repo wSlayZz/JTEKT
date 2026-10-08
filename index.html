@@ -386,6 +386,49 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .ap-desc{max-width:520px;}
 .ap-last{font-size:11px; color:var(--text-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:520px;}
 .ap-row-abandon td{color:var(--text-faint);}
+.ap-kpi-alert{font-size:10.5px; font-weight:700; color:var(--danger); margin-top:1px;}
+.ap-incomplete{display:block; width:100%; text-align:left; font:inherit; font-size:12.5px; color:var(--warn); background:var(--warn-bg); border:1px solid var(--warn-border); border-radius:var(--radius-sm, 8px); padding:8px 12px; margin-bottom:12px; cursor:pointer;}
+.ap-incomplete.active{box-shadow:0 0 0 2px var(--warn) inset;}
+.ap-missing{display:inline-block; font-size:11px; font-weight:600; color:var(--warn); background:var(--warn-bg); border-radius:4px; padding:1px 6px;}
+.ap-src{font-size:11px; color:var(--sb-bg, #143E3E); margin-top:2px; font-weight:600;}
+.ap-verif-pill{background:var(--neutral-bg); color:var(--text-faint); border:1px solid var(--border);}
+.ap-row-veriflate td:first-child{box-shadow:inset 3px 0 0 var(--danger);}
+.ap-trend{border:1px solid var(--border); border-radius:var(--radius-sm, 8px); padding:8px 12px 4px; margin-bottom:12px;}
+.ap-trend-empty{padding:8px 12px;}
+.ap-trend-head{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+.ap-trend-svg{width:100%; height:110px; display:block;}
+.ap-trend-svg text{font-size:10px; fill:var(--text-faint);}
+.ap-axis{stroke:var(--border); stroke-width:1;}
+.ap-line-open{fill:none; stroke:var(--sb-bg, #143E3E); stroke-width:2.2; vector-effect:non-scaling-stroke;}
+.ap-line-late{fill:none; stroke:var(--danger); stroke-width:2.2; vector-effect:non-scaling-stroke;}
+.ap-dot-open{fill:var(--sb-bg, #143E3E);} .ap-dot-late{fill:var(--danger);}
+.ap-lg{display:inline-block; width:14px; height:3px; border-radius:2px; vertical-align:middle; margin:0 4px 0 10px;}
+.ap-lg-open{background:var(--sb-bg, #143E3E);} .ap-lg-late{background:var(--danger);}
+.ap-link-count{display:inline-block; font-size:10.5px; font-weight:600; color:var(--sb-bg, #143E3E); background:var(--neutral-bg); border:1px solid var(--border); border-radius:10px; padding:0 7px; margin-left:4px; vertical-align:middle;}
+.ap-link-count.late{color:var(--danger); border-color:var(--danger-border);}
+.ad-source{display:flex; justify-content:space-between; align-items:center; gap:10px; background:var(--neutral-bg); border-radius:6px; padding:7px 10px; margin-bottom:12px; font-size:12.5px;}
+.ad-verif{margin-top:16px; padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm, 8px); background:var(--card, #fff);}
+.ad-linked{margin-top:14px; padding-top:12px; border-top:1px solid var(--border);}
+.ad-linked-head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px;}
+.ad-linked-row{display:flex; align-items:center; gap:10px; padding:6px 8px; border-radius:6px; cursor:pointer; font-size:13px;}
+.ad-linked-row:hover{background:var(--neutral-bg);}
+.ad-linked-row > span:nth-child(2){flex:1;}
+#actions-print-sheet{display:none;}
+@media print{
+  body.print-actions-sheet > *:not(#actions-print-sheet){display:none !important;}
+  body.print-actions-sheet #actions-print-sheet{display:block !important; font-family:Arial, Helvetica, sans-serif; color:#000;}
+  .aps-head{display:flex; justify-content:space-between; align-items:center; background:#1F3864; color:#fff; padding:6px 10px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .aps-title{font-size:15px; font-weight:700;} .aps-date{font-size:11px; font-weight:700;}
+  .aps-meta{font-size:11px; margin:6px 0 4px;}
+  .aps-kpis{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:11px; margin-bottom:8px; padding:5px 8px; background:#F2F2F2; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .aps-red{color:#B23B2E;}
+  .aps-table{width:100%; border-collapse:collapse; font-size:10.5px;}
+  .aps-table th, .aps-table td{border:1px solid #9aa3b2; padding:3px 5px; vertical-align:top; text-align:left;}
+  .aps-table th{background:#D9E1F2; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .aps-table tr{break-inside:avoid;}
+  .aps-late td:first-child{color:#B23B2E; font-weight:700;}
+  .aps-sub{font-size:9.5px; color:#444; margin-top:1px;}
+}
 .ad-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px 16px; margin-top:4px;}
 .ad-grid .field{margin:0;}
 @media (max-width:600px){ .ad-grid{grid-template-columns:1fr;} }
@@ -599,9 +642,9 @@ var KEYS = {
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
   esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1',
-  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', chokkoPosteConfig:'mcu_chokko_poste_config_v1', bibliotheque:'app_bibliotheque_v1', prisonLots:'mcu_prison_lots_v1', prisonSnapshots:'mcu_prison_snapshots_v1', uiSettings:'app_ui_settings_v1'
+  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', chokkoPosteConfig:'mcu_chokko_poste_config_v1', bibliotheque:'app_bibliotheque_v1', prisonLots:'mcu_prison_lots_v1', prisonSnapshots:'mcu_prison_snapshots_v1', actionsSnapshots:'mcu_actions_snapshots_v1', uiSettings:'app_ui_settings_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, bibliotheque:[], prisonLots:[], prisonSnapshots:[], uiSettings:{sidebarColor:null, iconStyle:'svg'}};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, bibliotheque:[], prisonLots:[], prisonSnapshots:[], actionsSnapshots:[], uiSettings:{sidebarColor:null, iconStyle:'svg'}};
 var RENDERERS = {};
 var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['prison','Prison qualité'],['bibliotheque','Bibliothèque'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
@@ -922,6 +965,7 @@ async function save(k){
     savesInFlight[k] = Math.max(0, (savesInFlight[k]||1) - 1);
     lastSaveEnd[k] = Date.now();
   }
+  if(k==='actions'){ try{ actionsSnapshotTick(); }catch(e){ console.error('snapshot actions', e); } }
   hideSyncIndicatorSoon();
 }
 // ---------- toasts (notifications discrètes, remplacent les alert() de confirmation) ----------
@@ -2895,16 +2939,38 @@ function proprVidange(){
 var ACTION_STATUSES = [['planifiee','Planifiée'],['realisee','Réalisée'],['verifiee','Vérifiée'],['perennisee','Pérennisée'],['non_prise_en_compte','Non prise en compte'],['abandonnee','Abandonnée']];
 var actionsViewAll = false; // toggle vue globale multi-secteurs
 // ---------- SUIVI DES ACTIONS (fenêtre tableau de bord + fiche action) ----------
-var actionsPanelFilter = 'all';   // all | late | encours | realisee | cloturee | abandon
+var actionsPanelFilter = 'all';   // all | late | encours | realisee | cloturee | abandon | incomplete
 var actionsPanelScope = 'secteur'; // secteur | all (comptes multi-secteurs)
 var actionsPanelResp = '';
-var actionDetailId = null;
+var actionDetailId = null;        // id | 'new'
+var actionDraft = null;           // pré-remplissage d'une nouvelle action (ex. créée depuis la prison qualité)
+var VERIF_DELAI_JOURS = 30;
+function addDays(dateStr, n){ var d = new Date(dateStr+'T00:00:00'); d.setDate(d.getDate()+n); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function actionPanelCategory(a){
   if(isActionLate(a)) return 'late';
   if(a.statut==='realisee') return 'realisee';
   if(a.statut==='verifiee' || a.statut==='perennisee') return 'cloturee';
   if(a.statut==='abandonnee' || a.statut==='non_prise_en_compte') return 'abandon';
   return 'encours';
+}
+// n°1 : action en cours sans échéance ou sans responsable (elle ne pourrait jamais apparaître "en retard")
+function isActionIncomplete(a){
+  var c = actionPanelCategory(a);
+  return (c==='encours' || c==='late') && (!a.echeance || !(a.responsable||'').trim());
+}
+// n°2 : vérification d'efficacité dépassée
+function isVerifLate(a){ return a.statut==='realisee' && a.verifPrevue && a.verifPrevue < todayStr(); }
+// Règles appliquées à chaque changement de statut (fiche, onglet, partout)
+function applyActionStatusTransition(a, oldStatut, newStatut){
+  if(newStatut==='realisee' && oldStatut!=='realisee'){
+    a.dateRealisation = todayStr();
+    if(!a.verifPrevue) a.verifPrevue = addDays(todayStr(), VERIF_DELAI_JOURS);
+  }
+  if((newStatut==='verifiee' || newStatut==='perennisee') && !a.dateVerification) a.dateVerification = todayStr();
+  if(oldStatut && oldStatut!==newStatut){
+    a.suivi = a.suivi || [];
+    a.suivi.push({date:todayStr(), auteur:currentUser?currentUser.displayName:'', texte:'Statut : '+actionStatusMeta(oldStatut).label+' → '+actionStatusMeta(newStatut).label});
+  }
 }
 var ACTION_PANEL_FILTERS = [
   ['all','Toutes','neutral'], ['late','En retard','danger'], ['encours','En cours','warn'],
@@ -2922,23 +2988,48 @@ function actionsPanelSort(a,b){
   var order = {late:0, encours:1, realisee:2, cloturee:3, abandon:4};
   var ca = order[actionPanelCategory(a)], cb = order[actionPanelCategory(b)];
   if(ca!==cb) return ca-cb;
+  if(ca===2){ return (a.verifPrevue||'9999').localeCompare(b.verifPrevue||'9999'); }  // vérifications les plus urgentes d'abord
   var ea = a.echeance||'9999', eb = b.echeance||'9999';
-  return ca>=2 ? eb.localeCompare(ea) : ea.localeCompare(eb);
+  return ca>=3 ? eb.localeCompare(ea) : ea.localeCompare(eb);
+}
+// Sélection affichée (périmètre + responsable + filtre) : partagée par l'écran et l'export PDF
+function actionsPanelSelection(){
+  var all = actionsPanelSource();
+  var base = actionsPanelResp ? all.filter(function(a){ return (a.responsable||'').trim()===actionsPanelResp; }) : all;
+  var rows;
+  if(actionsPanelFilter==='all') rows = base;
+  else if(actionsPanelFilter==='incomplete') rows = base.filter(isActionIncomplete);
+  else rows = base.filter(function(a){ return actionPanelCategory(a)===actionsPanelFilter; });
+  var counts = {all:base.length, late:0, encours:0, realisee:0, cloturee:0, abandon:0, incomplete:0, verifLate:0};
+  base.forEach(function(a){ counts[actionPanelCategory(a)]++; if(isActionIncomplete(a)) counts.incomplete++; if(isVerifLate(a)) counts.verifLate++; });
+  var actives = base.length - counts.abandon;
+  return {all:all, base:base, rows:rows.slice().sort(actionsPanelSort), counts:counts, avancement: actives ? Math.round((counts.realisee+counts.cloturee)/actives*100) : null};
+}
+function actionSourceLabel(a){
+  if(a.source && a.source.label) return a.source.label;
+  return a.origine && a.origine!=='Suivi des actions' ? a.origine : '';
+}
+function actionDelayHtml(a){
+  var cat = actionPanelCategory(a);
+  if(cat==='late' || cat==='encours'){
+    var dl = daysLabel(a.echeance);
+    return dl ? '<span class="delay-pill delay-'+(cat==='late'?'late':'soon')+'">'+dl.text+'</span>' : '';
+  }
+  if(cat==='realisee' && a.verifPrevue){
+    var d = daysBetween(todayStr(), a.verifPrevue);
+    if(d<0) return '<span class="delay-pill delay-late">Vérif. en retard de '+(-d)+' j</span>';
+    return '<span class="delay-pill ap-verif-pill">Vérif. '+(d===0?'aujourd\'hui':'dans '+d+' j')+'</span>';
+  }
+  return '';
 }
 function renderActionsPanel(){
   var multi = userSecteurs().length>1;
-  var all = actionsPanelSource();
+  var sel = actionsPanelSelection();
   var resps = [];
-  all.forEach(function(a){ var r = (a.responsable||'').trim(); if(r && resps.indexOf(r)<0) resps.push(r); });
+  sel.all.forEach(function(a){ var r = (a.responsable||'').trim(); if(r && resps.indexOf(r)<0) resps.push(r); });
   resps.sort(function(x,y){ return x.localeCompare(y,'fr',{sensitivity:'base'}); });
-  if(actionsPanelResp && resps.indexOf(actionsPanelResp)<0) actionsPanelResp = '';
-  var base = actionsPanelResp ? all.filter(function(a){ return (a.responsable||'').trim()===actionsPanelResp; }) : all;
-  var counts = {all:base.length, late:0, encours:0, realisee:0, cloturee:0, abandon:0};
-  base.forEach(function(a){ counts[actionPanelCategory(a)]++; });
-  var actives = base.length - counts.abandon;
-  var avancement = actives ? Math.round((counts.realisee+counts.cloturee)/actives*100) : null;
-  var rows = (actionsPanelFilter==='all' ? base : base.filter(function(a){ return actionPanelCategory(a)===actionsPanelFilter; })).slice().sort(actionsPanelSort);
-  var showSect = multi && actionsPanelScope==='all';
+  if(actionsPanelResp && resps.indexOf(actionsPanelResp)<0){ actionsPanelResp = ''; sel = actionsPanelSelection(); }
+  var counts = sel.counts, rows = sel.rows, showSect = multi && actionsPanelScope==='all';
 
   var h = '<div class="ap-head">'+
     '<div><div class="eyebrow">Suivi des actions'+(showSect?' · tous mes secteurs':' · secteur '+esc(currentSecteur))+'</div>'+
@@ -2948,40 +3039,122 @@ function renderActionsPanel(){
         '<button class="btn small'+(actionsPanelScope==='all'?' primary':'')+'" data-action="actions-panel-scope" data-s="all">Tous mes secteurs</button></div>' : '')+
       '<select id="actions-panel-resp" class="ap-resp"><option value="">Tous les responsables</option>'+
         resps.map(function(r){ return '<option value="'+esc(r)+'"'+(r===actionsPanelResp?' selected':'')+'>'+esc(r)+'</option>'; }).join('')+'</select>'+
+      '<button class="btn small" data-action="actions-panel-print" title="Exporter la sélection affichée en PDF">🖨️ PDF</button>'+
       '<button class="btn small primary" data-action="action-new-from-panel">+ Nouvelle action</button>'+
     '</div></div>';
 
   h += '<div class="ap-kpis">'+ACTION_PANEL_FILTERS.map(function(f){
+    var extra = (f[0]==='realisee' && counts.verifLate) ? '<span class="ap-kpi-alert">'+counts.verifLate+' vérif. en retard</span>' : '';
     return '<button class="ap-kpi ap-'+f[2]+(actionsPanelFilter===f[0]?' active':'')+'" data-action="actions-panel-filter" data-f="'+f[0]+'">'+
-      '<span class="ap-kpi-val">'+counts[f[0]]+'</span><span class="ap-kpi-lbl">'+f[1]+'</span></button>';
+      '<span class="ap-kpi-val">'+counts[f[0]]+'</span><span class="ap-kpi-lbl">'+f[1]+'</span>'+extra+'</button>';
   }).join('')+
-    '<div class="ap-progress"><div class="tiny">Avancement</div><div class="ap-progress-val">'+(avancement===null?'-':avancement+' %')+'</div>'+
-    '<div class="ap-bar"><div style="width:'+(avancement||0)+'%;"></div></div><div class="tiny" style="color:var(--text-faint);">réalisées ou clôturées</div></div>'+
+    '<div class="ap-progress"><div class="tiny">Avancement</div><div class="ap-progress-val">'+(sel.avancement===null?'-':sel.avancement+' %')+'</div>'+
+    '<div class="ap-bar"><div style="width:'+(sel.avancement||0)+'%;"></div></div><div class="tiny" style="color:var(--text-faint);">réalisées ou clôturées</div></div>'+
   '</div>';
 
+  if(counts.incomplete){
+    h += '<button class="ap-incomplete'+(actionsPanelFilter==='incomplete'?' active':'')+'" data-action="actions-panel-filter" data-f="'+(actionsPanelFilter==='incomplete'?'all':'incomplete')+'">'+
+      '⚠ <b>'+counts.incomplete+' action(s) à compléter</b> : sans échéance ou sans responsable, elles ne peuvent pas être suivies correctement. '+
+      '<u>'+(actionsPanelFilter==='incomplete'?'Afficher toutes les actions':'Les afficher')+'</u></button>';
+  }
+  h += renderActionsTrend(showSect);
+
   if(!rows.length){
-    h += emptyState(base.length? 'Aucune action dans ce filtre.' : 'Aucune action enregistrée pour le moment.');
+    h += emptyState(sel.base.length? 'Aucune action dans ce filtre.' : 'Aucune action enregistrée pour le moment.');
     return h;
   }
-  h += '<div class="ap-list"><table><thead><tr><th>Statut</th>'+(showSect?'<th>Secteur</th>':'')+'<th>Ligne</th><th>Action</th><th>Responsable</th><th>Échéance</th><th>Délai</th></tr></thead><tbody>';
+  var miss = '<span class="ap-missing">à définir</span>';
+  h += '<div class="ap-list"><table><thead><tr><th>Statut</th>'+(showSect?'<th>Secteur</th>':'')+'<th>Ligne</th><th>Action</th><th>Responsable</th><th>Échéance</th><th>Délai / vérification</th></tr></thead><tbody>';
   h += rows.map(function(a){
     var cat = actionPanelCategory(a);
     var meta = actionStatusMeta(a.statut);
     var st = cat==='late' ? badge('danger','En retard') : badge(meta.level==='neutral' && cat==='encours' ? 'warn' : meta.level, meta.label);
-    var dl = (cat==='late' || cat==='encours') ? daysLabel(a.echeance) : null;
     var lastNote = (a.suivi && a.suivi.length) ? a.suivi[a.suivi.length-1] : null;
-    return '<tr class="ap-row ap-row-'+cat+'" data-action="action-open" data-id="'+a.id+'">'+
+    var src = actionSourceLabel(a);
+    var openish = (cat==='encours' || cat==='late');
+    return '<tr class="ap-row ap-row-'+cat+(isVerifLate(a)?' ap-row-veriflate':'')+'" data-action="action-open" data-id="'+a.id+'">'+
       '<td>'+st+'</td>'+(showSect?'<td><b>'+esc(a.secteur||'MCU')+'</b></td>':'')+
       '<td>'+esc(a.ligne||'-')+'</td>'+
-      '<td class="ap-desc"><div>'+esc(a.description||'')+'</div>'+(lastNote?'<div class="ap-last">Dernier suivi ('+fmtDate(lastNote.date)+') : '+esc(lastNote.texte)+'</div>':'')+'</td>'+
-      '<td>'+esc(a.responsable||'-')+'</td>'+
-      '<td class="num">'+(a.echeance?fmtDate(a.echeance):'-')+'</td>'+
-      '<td>'+(dl? '<span class="delay-pill delay-'+(cat==='late'?'late':'soon')+'">'+dl.text+'</span>' : '')+'</td></tr>';
+      '<td class="ap-desc"><div>'+esc(a.description||'')+'</div>'+
+        (src?'<div class="ap-src">↳ '+esc(src)+'</div>':'')+
+        (lastNote?'<div class="ap-last">Dernier suivi ('+fmtDate(lastNote.date)+') : '+esc(lastNote.texte)+'</div>':'')+'</td>'+
+      '<td>'+((a.responsable||'').trim() ? esc(a.responsable) : (openish? miss : '-'))+'</td>'+
+      '<td class="num">'+(a.echeance? fmtDate(a.echeance) : (openish? miss : '-'))+'</td>'+
+      '<td>'+actionDelayHtml(a)+'</td></tr>';
   }).join('');
   h += '</tbody></table></div>';
   return h;
 }
-// Fiche action : tous les champs modifiables + notes de suivi datées
+// ---------- n°5 : photo hebdomadaire et courbe d'évolution ----------
+function actionsStatsFor(list){
+  var s = {total:list.length, open:0, late:0, realisee:0, verifLate:0, cloturee:0, abandon:0};
+  list.forEach(function(a){
+    var c = actionPanelCategory(a);
+    if(c==='late'){ s.late++; s.open++; } else if(c==='encours') s.open++;
+    else if(c==='realisee') s.realisee++; else if(c==='cloturee') s.cloturee++; else s.abandon++;
+    if(isVerifLate(a)) s.verifLate++;
+  });
+  return s;
+}
+function actionsSnapshotTick(){
+  if(!currentUser || !DATA.actionsSnapshots) return;
+  var week = prisonWeekKey(todayStr()), changed = false;
+  var sects = {};
+  DATA.actions.forEach(function(a){ sects[a.secteur||'MCU'] = true; });
+  Object.keys(sects).forEach(function(sid){
+    var st = actionsStatsFor(DATA.actions.filter(function(a){ return (a.secteur||'MCU')===sid; }));
+    var snap = DATA.actionsSnapshots.find(function(x){ return x.week===week && x.secteur===sid; });
+    if(!snap){ snap = {week:week, secteur:sid}; DATA.actionsSnapshots.push(snap); changed = true; }
+    ['total','open','late','realisee','verifLate','cloturee','abandon'].forEach(function(k){ if(snap[k]!==st[k]){ snap[k] = st[k]; changed = true; } });
+    if(changed) snap.date = todayStr();
+  });
+  if(changed) save('actionsSnapshots');
+}
+function renderActionsTrend(allScope){
+  var sects = allScope ? userSecteurs() : [currentSecteur];
+  var byWeek = {};
+  (DATA.actionsSnapshots||[]).forEach(function(s){
+    if(sects.indexOf(s.secteur)<0) return;
+    var w = byWeek[s.week] || (byWeek[s.week] = {week:s.week, open:0, late:0});
+    w.open += s.open||0; w.late += s.late||0;
+  });
+  var weeks = Object.keys(byWeek).sort().slice(-12).map(function(k){ return byWeek[k]; });
+  if(!weeks.length) return '';
+  if(weeks.length<2){
+    return '<div class="ap-trend ap-trend-empty"><span class="tiny"><b>Évolution :</b> l\'historique démarre cette semaine ('+weeks[0].open+' ouvertes, '+weeks[0].late+' en retard). La courbe apparaîtra dès la semaine prochaine.</span></div>';
+  }
+  var W = 640, H = 110, pl = 28, pr = 10, pt = 10, pb = 20;
+  var max = Math.max(1, Math.max.apply(null, weeks.map(function(w){ return Math.max(w.open, w.late); })));
+  var x = function(i){ return pl + (W-pl-pr) * (weeks.length===1?0.5:i/(weeks.length-1)); };
+  var y = function(v){ return pt + (H-pt-pb) * (1 - v/max); };
+  var line = function(k){ return weeks.map(function(w,i){ return (i?'L':'M')+x(i).toFixed(1)+' '+y(w[k]).toFixed(1); }).join(' '); };
+  var dots = function(k, cls){ return weeks.map(function(w,i){ return '<circle class="'+cls+'" cx="'+x(i).toFixed(1)+'" cy="'+y(w[k]).toFixed(1)+'" r="3"><title>'+w.week+' : '+w[k]+'</title></circle>'; }).join(''); };
+  var labels = weeks.map(function(w,i){ return '<text x="'+x(i).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle">'+w.week.split('-')[1]+'</text>'; }).join('');
+  return '<div class="ap-trend"><div class="ap-trend-head"><span class="tiny"><b>Évolution sur '+weeks.length+' semaines</b></span>'+
+    '<span class="tiny"><i class="ap-lg ap-lg-open"></i>ouvertes <i class="ap-lg ap-lg-late"></i>en retard</span></div>'+
+    '<svg viewBox="0 0 '+W+' '+H+'" class="ap-trend-svg" preserveAspectRatio="none">'+
+      '<line x1="'+pl+'" y1="'+y(0)+'" x2="'+(W-pr)+'" y2="'+y(0)+'" class="ap-axis"/>'+
+      '<text x="'+(pl-4)+'" y="'+(y(max)+4)+'" text-anchor="end">'+max+'</text><text x="'+(pl-4)+'" y="'+(y(0)+4)+'" text-anchor="end">0</text>'+
+      '<path d="'+line('open')+'" class="ap-line-open"/><path d="'+line('late')+'" class="ap-line-late"/>'+dots('open','ap-dot-open')+dots('late','ap-dot-late')+labels+
+    '</svg></div>';
+}
+// ---------- n°3 : origine de l'action ----------
+function actionsLinkedTo(type, ref){ return DATA.actions.filter(function(a){ return a.source && a.source.type===type && a.source.ref===ref; }); }
+function openActionFromSource(source, ligne, description){
+  actionDraft = {secteur:currentSecteur, statut:'planifiee', ligne:ligne||'', description:description||'', source:source, suivi:[]};
+  actionDetailId = 'new';
+  render();
+  var nd = document.getElementById('ad-desc'); if(nd){ nd.focus({preventScroll:true}); nd.setSelectionRange(nd.value.length, nd.value.length); }
+}
+function gotoActionSource(a){
+  var s = a.source; if(!s) return;
+  actionDetailId = null;
+  if(s.secteur && userSecteurs().indexOf(s.secteur)>=0) currentSecteur = s.secteur;
+  if(s.type==='prison'){ currentTab = 'prison'; prisonZoneFilter = ''; renderNav(); render(); var el = document.getElementById('prison-detail-'+s.ref); if(el && el.scrollIntoView) el.scrollIntoView({behavior:'smooth', block:'start'}); return; }
+  if(s.type==='chokko'){ currentTab = 'chokko'; chokkoView = 'saisie'; chokkoLigne = s.ligne; chokkoYear = s.annee; chokkoMonth = s.mois; renderNav(); render(); return; }
+  if(s.type==='ateq'){ currentTab = 'ateq'; renderNav(); render(); return; }
+}
+// ---------- Fiche action ----------
 function actionResponsableSelect(current){
   var accs = DATA.accounts.filter(function(a){ return a.displayName!=='Administrateur'; }).map(function(a){ return a.displayName; })
     .sort(function(x,y){ return x.localeCompare(y,'fr',{sensitivity:'base'}); });
@@ -2995,16 +3168,18 @@ function actionResponsableSelect(current){
 }
 function actionDetailModalHtml(){
   var isNew = actionDetailId==='new';
-  var a = isNew ? {secteur:currentSecteur, statut:'planifiee', suivi:[]} : DATA.actions.find(function(x){ return x.id===actionDetailId; });
+  var a = isNew ? (actionDraft || {secteur:currentSecteur, statut:'planifiee', suivi:[]}) : DATA.actions.find(function(x){ return x.id===actionDetailId; });
   if(!a) return '';
   var lignes = (getSecteur(a.secteur||'MCU')||{}).lignes || secteurLines();
   var cat = isNew ? 'encours' : actionPanelCategory(a);
   var suivi = (a.suivi||[]).slice().reverse();
-  return '<div class="modal-overlay action-detail-backdrop"><div class="modal-box" style="max-width:720px; width:100%; max-height:90vh; overflow-y:auto;">'+
+  var src = actionSourceLabel(a);
+  return '<div class="modal-overlay action-detail-backdrop"><div class="modal-box" style="max-width:740px; width:100%; max-height:90vh; overflow-y:auto;">'+
     '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">'+
       '<h3 style="margin:0;">'+(isNew?'Nouvelle action':'Fiche action')+'</h3>'+
       (isNew? '' : (cat==='late'? badge('danger','En retard') : badge(actionStatusMeta(a.statut).level, actionStatusMeta(a.statut).label)))+
     '</div>'+
+    (src? '<div class="ad-source"><span>Origine : <b>'+esc(src)+'</b></span>'+(a.source? '<button class="btn small" data-action="action-goto-source"'+(isNew?' disabled title="Disponible une fois l\'action enregistrée"':'')+'>Voir la source →</button>' : '')+'</div>' : '')+
     '<label class="field" style="margin-bottom:10px;">Description<textarea id="ad-desc" rows="3" style="width:100%; font-family:inherit; font-size:13.5px;">'+esc(a.description||'')+'</textarea></label>'+
     '<div class="ad-grid">'+
       '<label class="field">Ligne<select id="ad-ligne"><option value="">-</option>'+lignes.map(function(l){ return '<option'+(l===a.ligne?' selected':'')+'>'+esc(l)+'</option>'; }).join('')+'</select></label>'+
@@ -3012,7 +3187,17 @@ function actionDetailModalHtml(){
       '<label class="field">Échéance<input type="date" id="ad-echeance" value="'+esc(a.echeance||'')+'"></label>'+
       '<label class="field">Statut<select id="ad-statut">'+ACTION_STATUSES.map(function(s){ return '<option value="'+s[0]+'"'+(s[0]===a.statut?' selected':'')+'>'+s[1]+'</option>'; }).join('')+'</select></label>'+
     '</div>'+
-    (isNew? '' : '<p class="tiny" style="margin:8px 0 0; color:var(--text-faint);">Secteur '+esc(a.secteur||'MCU')+(a.origine?' · origine : '+esc(a.origine):'')+(a.dateCreation?' · créée le '+fmtDate(a.dateCreation):'')+'</p>')+
+    (isNew? '' : '<p class="tiny" style="margin:8px 0 0; color:var(--text-faint);">Secteur '+esc(a.secteur||'MCU')+(a.dateCreation?' · créée le '+fmtDate(a.dateCreation):'')+(a.dateRealisation?' · réalisée le '+fmtDate(a.dateRealisation):'')+(a.dateVerification?' · vérifiée le '+fmtDate(a.dateVerification):'')+'</p>')+
+    '<div class="ad-verif">'+
+      '<div class="eyebrow" style="margin-bottom:4px;">Vérification d\'efficacité</div>'+
+      '<p class="tiny" style="margin:0 0 8px; color:var(--text-faint);">Comment saura-t-on que l\'action a fonctionné ? Une date de vérification est proposée automatiquement à J+'+VERIF_DELAI_JOURS+' quand l\'action passe en « Réalisée ».</p>'+
+      '<div class="ad-grid">'+
+        '<label class="field">Critère d\'efficacité<input type="text" id="ad-critere" value="'+esc(a.critereEfficacite||'')+'" placeholder="Ex. 0 défaut OP1010 sur 4 semaines"></label>'+
+        '<label class="field">Vérification prévue le<input type="date" id="ad-verif" value="'+esc(a.verifPrevue||'')+'"></label>'+
+      '</div>'+
+      '<label class="field" style="margin-top:10px;">Résultat de la vérification<textarea id="ad-resultat" rows="2" style="width:100%; font-family:inherit; font-size:13px;" placeholder="Constat lors de la vérification (efficace / non efficace et pourquoi)">'+esc(a.resultatVerif||'')+'</textarea></label>'+
+      (isVerifLate(a)? '<p class="tiny" style="color:var(--danger); margin:6px 0 0; font-weight:600;">Vérification en retard de '+(-daysBetween(todayStr(), a.verifPrevue))+' jour(s).</p>' : '')+
+    '</div>'+
     '<div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">'+
       '<div class="eyebrow" style="margin-bottom:8px;">Suivi de l\'avancement</div>'+
       '<textarea id="ad-note" rows="2" style="width:100%; font-family:inherit; font-size:13px;" placeholder="Ajouter un point d\'avancement (sera daté et signé)..."></textarea>'+
@@ -3028,26 +3213,64 @@ async function handleSaveActionDetail(){
   var desc = document.getElementById('ad-desc').value.trim();
   if(!desc){ toast('Merci de décrire l\'action.', 'error'); return; }
   var resp = resolveResponsableFromInputs('ad-resp','ad-resp-autre');
-  var a = isNew ? {id:uid('act'), secteur:currentSecteur, dateCreation:todayStr(), origine:'Suivi des actions', suivi:[]} : DATA.actions.find(function(x){ return x.id===actionDetailId; });
-  if(!a){ actionDetailId = null; render(); return; }
-  var oldStatut = a.statut;
+  var a;
+  if(isNew){
+    var dr = actionDraft || {};
+    a = {id:uid('act'), secteur:dr.secteur||currentSecteur, dateCreation:todayStr(), origine: dr.source ? dr.source.typeLabel : 'Suivi des actions', suivi:[]};
+    if(dr.source) a.source = dr.source;
+  } else {
+    a = DATA.actions.find(function(x){ return x.id===actionDetailId; });
+  }
+  if(!a){ actionDetailId = null; actionDraft = null; render(); return; }
+  var oldStatut = isNew ? null : a.statut;
   a.description = desc;
   a.ligne = document.getElementById('ad-ligne').value || null;
   a.responsable = resp || '';
   a.echeance = document.getElementById('ad-echeance').value || null;
-  a.statut = document.getElementById('ad-statut').value;
+  a.critereEfficacite = document.getElementById('ad-critere').value.trim();
+  a.verifPrevue = document.getElementById('ad-verif').value || null;
+  a.resultatVerif = document.getElementById('ad-resultat').value.trim();
+  var newStatut = document.getElementById('ad-statut').value;
+  a.statut = newStatut;
+  applyActionStatusTransition(a, oldStatut, newStatut);
   var note = document.getElementById('ad-note').value.trim();
   a.suivi = a.suivi || [];
-  if(!isNew && oldStatut && oldStatut!==a.statut){
-    a.suivi.push({date:todayStr(), auteur:currentUser?currentUser.displayName:'', texte:'Statut : '+actionStatusMeta(oldStatut).label+' → '+actionStatusMeta(a.statut).label});
-  }
   if(note) a.suivi.push({date:todayStr(), auteur:currentUser?currentUser.displayName:'', texte:note});
   if(isNew) DATA.actions.push(a);
   await save('actions');
   logChange("Plan d'actions", isNew?'Ajout':'Mise à jour', (a.secteur||'')+' · '+desc.slice(0,60));
   toast(isNew? 'Action créée.' : 'Action mise à jour.');
-  actionDetailId = null;
+  actionDetailId = null; actionDraft = null;
   render();
+}
+// ---------- n°4 : export PDF de la sélection affichée ----------
+function printActionsPanel(){
+  var multi = userSecteurs().length>1, showSect = multi && actionsPanelScope==='all';
+  var sel = actionsPanelSelection(), c = sel.counts;
+  var filtreLbl = actionsPanelFilter==='incomplete' ? 'À compléter' : (ACTION_PANEL_FILTERS.find(function(f){ return f[0]===actionsPanelFilter; })||['','Toutes'])[1];
+  var old = document.getElementById('actions-print-sheet'); if(old) old.remove();
+  var sheet = document.createElement('div'); sheet.id = 'actions-print-sheet';
+  var rowsHtml = sel.rows.map(function(a){
+    var cat = actionPanelCategory(a), meta = actionStatusMeta(a.statut);
+    var lastNote = (a.suivi && a.suivi.length) ? a.suivi[a.suivi.length-1] : null;
+    var src = actionSourceLabel(a);
+    var delay = actionDelayHtml(a).replace(/<[^>]+>/g,'');
+    return '<tr class="'+(cat==='late'?'aps-late':'')+'"><td>'+(cat==='late'?'En retard':esc(meta.label))+'</td>'+(showSect?'<td>'+esc(a.secteur||'MCU')+'</td>':'')+
+      '<td>'+esc(a.ligne||'-')+'</td><td><b>'+esc(a.description||'')+'</b>'+(src?'<div class="aps-sub">Origine : '+esc(src)+'</div>':'')+
+      (a.critereEfficacite?'<div class="aps-sub">Critère : '+esc(a.critereEfficacite)+'</div>':'')+
+      (lastNote?'<div class="aps-sub">Dernier suivi ('+fmtDate(lastNote.date)+') : '+esc(lastNote.texte)+'</div>':'')+'</td>'+
+      '<td>'+esc(a.responsable||'à définir')+'</td><td>'+(a.echeance?fmtDate(a.echeance):'à définir')+'</td><td>'+esc(delay)+'</td></tr>';
+  }).join('');
+  sheet.innerHTML = '<div class="aps-head"><div class="aps-title">SUIVI DES ACTIONS - '+(showSect?'TOUS SECTEURS':'SECTEUR '+esc(currentSecteur))+'</div><div class="aps-date">Édité le '+fmtDate(todayStr())+'</div></div>'+
+    '<div class="aps-meta">Filtre : <b>'+esc(filtreLbl)+'</b>'+(actionsPanelResp?' · Responsable : <b>'+esc(actionsPanelResp)+'</b>':'')+' · '+sel.rows.length+' action(s) listée(s)</div>'+
+    '<div class="aps-kpis"><span>Total <b>'+c.all+'</b></span><span class="aps-red">En retard <b>'+c.late+'</b></span><span>En cours <b>'+c.encours+'</b></span><span>Réalisées à vérifier <b>'+c.realisee+'</b>'+(c.verifLate?' (dont '+c.verifLate+' vérif. en retard)':'')+'</span><span>Vérifiées / pérennisées <b>'+c.cloturee+'</b></span><span>Abandonnées <b>'+c.abandon+'</b></span><span>À compléter <b>'+c.incomplete+'</b></span><span>Avancement <b>'+(sel.avancement===null?'-':sel.avancement+' %')+'</b></span></div>'+
+    '<table class="aps-table"><thead><tr><th>Statut</th>'+(showSect?'<th>Secteur</th>':'')+'<th>Ligne</th><th>Action</th><th>Responsable</th><th>Échéance</th><th>Délai / vérification</th></tr></thead><tbody>'+
+    (rowsHtml || '<tr><td colspan="7">Aucune action dans cette sélection.</td></tr>')+'</tbody></table>';
+  document.body.appendChild(sheet);
+  document.body.classList.add('print-actions-sheet');
+  var cleanup = function(){ document.body.classList.remove('print-actions-sheet'); var s = document.getElementById('actions-print-sheet'); if(s) s.remove(); window.removeEventListener('afterprint', cleanup); };
+  window.addEventListener('afterprint', cleanup);
+  printWithPageSize('A4 landscape');
 }
 
 RENDERERS.actions = function(){
@@ -4027,7 +4250,9 @@ RENDERERS.prison = function(){
     var n = prisonLotTotal(l);
     var d = prev ? (prev.lots && prev.lots[l.id]!==undefined ? n-prev.lots[l.id] : null) : null;
     html += '<tr>'+
-      '<td style="font-weight:600;"><a href="#" data-action="prison-goto-detail" data-id="'+l.id+'" style="color:inherit;">'+esc(l.defaut)+'</a></td>'+
+      '<td style="font-weight:600;"><a href="#" data-action="prison-goto-detail" data-id="'+l.id+'" style="color:inherit;">'+esc(l.defaut)+'</a>'+
+        (function(){ var n = actionsLinkedTo('prison', l.id); var open = n.filter(function(a){ var c = actionPanelCategory(a); return c==='late'||c==='encours'; }).length;
+          return n.length ? ' <span class="ap-link-count'+(n.some(isActionLate)?' late':'')+'" title="Actions liées à ce défaut">'+n.length+' action'+(n.length>1?'s':'')+(open?' · '+open+' ouverte'+(open>1?'s':''):'')+'</span>' : ''; })()+'</td>'+
       '<td>'+esc(l.type||'-')+'</td>'+
       '<td style="text-align:center; font-family:var(--mono); font-weight:700;">'+n+'</td>'+
       '<td style="text-align:center;">'+(prev && d===null ? '<span class="tiny">nouveau</span>' : prisonDeltaHtml(d))+'</td>'+
@@ -4036,7 +4261,7 @@ RENDERERS.prison = function(){
       '<td>'+esc(l.stockage||'-')+'</td>'+
       '<td class="tiny">'+esc(l.blocageSap||'-')+'</td>'+
       '<td style="text-align:center;">'+prisonAgeHtml(l)+'</td>'+
-      '<td class="row-actions-noprint" style="white-space:nowrap;"><button class="btn small" data-action="prison-edit-lot" data-id="'+l.id+'">Modifier</button> <button class="btn small danger-outline" data-action="prison-delete-lot" data-id="'+l.id+'">Suppr.</button></td>'+
+      '<td class="row-actions-noprint" style="white-space:nowrap;"><button class="btn small" data-action="action-from-prison" data-id="'+l.id+'" title="Créer une action liée à ce défaut">+ Action</button> <button class="btn small" data-action="prison-edit-lot" data-id="'+l.id+'">Modifier</button> <button class="btn small danger-outline" data-action="prison-delete-lot" data-id="'+l.id+'">Suppr.</button></td>'+
     '</tr>';
   });
   html += '</tbody><tfoot><tr style="font-weight:700;"><td colspan="2">TOTAL'+(prisonZoneFilter?' ('+esc(prisonZoneFilter)+')':'')+'</td><td style="text-align:center; font-family:var(--mono); font-size:15px;">'+shownTotal+'</td><td colspan="7"></td></tr></tfoot></table></div>';
@@ -4314,6 +4539,17 @@ var chokkoPaintMode = false; // false | couleur hex active du pinceau
 var chokkoTotalsLocked = true; // verrouille les cellules TOTAL PROD par défaut (évite une modification accidentelle)
 var chokkoManagePostesOpen = false;
 var chokkoNoteModal = null; // {ligne, poste, annee, mois} de la case "Actions" ouverte
+// Ferme la fenêtre "Actions menées" en enregistrant d'abord le texte tapé (rien ne se perd en passant à une action)
+async function closeChokkoNoteKeepingText(){
+  if(!chokkoNoteModal) return;
+  var m = chokkoNoteModal, ta = document.getElementById('chokko-note-text');
+  chokkoNoteModal = null;
+  if(ta){
+    var cur = chokkoNote(m.ligne, m.poste, m.annee, m.mois);
+    var txt = ta.value.replace(/\s+$/,'');
+    if(txt !== ((cur && cur.texte)||'')) await handleChokkoNoteChange(m.ligne, m.poste, m.annee, m.mois, txt);
+  }
+}
 function chokkoNoteModalHtml(){
   var m = chokkoNoteModal;
   var note = chokkoNote(m.ligne, m.poste, m.annee, m.mois);
@@ -4325,6 +4561,14 @@ function chokkoNoteModalHtml(){
     '<p class="tiny" style="margin-bottom:12px;">'+esc(m.poste)+(posteDef&&posteDef[1]?' - '+esc(posteDef[1]):'')+' · '+esc(m.ligne)+' · '+moisNom+' '+m.annee+'</p>'+
     '<textarea id="chokko-note-text" rows="10" style="width:100%; font-family:inherit; font-size:13.5px; line-height:1.45; padding:10px; resize:vertical;" placeholder="Décrivez les actions menées ce mois sur ce poste...">'+esc(note?note.texte||'':'')+'</textarea>'+
     '<p class="tiny" style="margin-top:6px; color:var(--text-faint);">Astuce : Ctrl + Entrée pour enregistrer.</p>'+
+    '<div class="ad-linked"><div class="ad-linked-head"><span class="eyebrow">Actions liées à ce poste</span>'+
+      '<button class="btn small" data-action="action-from-chokko">+ Créer une action pour ce poste</button></div>'+
+      (function(){ var ls = actionsLinkedTo('chokko', m.ligne+'|'+m.poste).slice().sort(actionsPanelSort);
+        if(!ls.length) return '<p class="tiny" style="color:var(--text-faint); margin:6px 0 0;">Aucune action liée pour l\'instant. Les actions créées ici apparaîtront aussi dans le suivi des actions du tableau de bord.</p>';
+        return ls.map(function(a){ var cat = actionPanelCategory(a), meta = actionStatusMeta(a.statut);
+          return '<div class="ad-linked-row" data-action="action-open" data-id="'+a.id+'">'+(cat==='late'?badge('danger','En retard'):badge(meta.level, meta.label))+
+            '<span>'+esc(a.description||'')+'</span><span class="tiny">'+(a.echeance?fmtDate(a.echeance):'')+'</span></div>'; }).join(''); })()+
+    '</div>'+
     '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="chokko-note-cancel">Annuler</button><button class="btn primary" data-action="chokko-note-save">Enregistrer</button></div>'+
     '</div></div>';
 }
@@ -5610,7 +5854,7 @@ function renderTodayBanner(){
 
   // Compteur d'alertes actives, tous domaines confondus
   var nbAlerts = 0;
-  nbAlerts += DATA.actions.filter(isActionLate).length;
+  nbAlerts += bySecteur(DATA.actions).filter(function(a){ return isActionLate(a) || isVerifLate(a); }).length;
   nbAlerts += DATA.esd.filter(function(p){ return esdStatus(p).level==='danger'; }).length;
   nbAlerts += bySecteur(DATA.formations).filter(function(p){ return formationEcheance(p) && formationEcheance(p)<todayStr(); }).length;
   DATA.cicl.forEach(function(rec){ if(ciclStatus(rec).level==='danger') nbAlerts++; });
@@ -6665,6 +6909,7 @@ async function handleSaveAteqAction(){
     dateCrise: document.getElementById('aa-dateCrise').value || todayStr(),
     statut:'planifiee', dateCreation: todayStr()
   };
+  entry.source = {type:'ateq', ref:'ateq-'+entry.ligne, secteur:currentSecteur, label:'Défauts ATEQ · '+entry.ligne, typeLabel:'ATEQ'};
   DATA.actions.push(entry);
   await save('actions');
   logChange('ATEQ', 'Action corrective déclenchée', entry.description, entry.ligne);
@@ -7148,6 +7393,63 @@ var PROPRETE_SUBS = [
   ['canVidange',       'MCU0 Vidange'],
   ['canReleves',       'MCU0 Relevés bains']
 ];
+// ---------- MOTS DE PASSE : hachage à sens unique (jamais stockés en clair) ----------
+// SHA-256 en JavaScript pur : résultat identique sur tous les navigateurs et tous les postes.
+function sha256Hex(msg){
+  function rotr(n,x){ return (x>>>n)|(x<<(32-n)); }
+  var K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  var bytes = unescape(encodeURIComponent(msg)), l = bytes.length, words = [], i;
+  for(i=0;i<l;i++) words[i>>2] |= (bytes.charCodeAt(i)&0xff) << (24-(i%4)*8);
+  words[l>>2] |= 0x80 << (24-(l%4)*8);
+  words[(((l+8)>>6)+1)*16-1] = l*8;
+  var H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19], W = new Array(64);
+  for(var j=0;j<words.length;j+=16){
+    var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+    for(i=0;i<64;i++){
+      if(i<16) W[i] = words[j+i]|0;
+      else { var s0=rotr(7,W[i-15])^rotr(18,W[i-15])^(W[i-15]>>>3), s1=rotr(17,W[i-2])^rotr(19,W[i-2])^(W[i-2]>>>10); W[i]=(W[i-16]+s0+W[i-7]+s1)|0; }
+      var t1 = (h + (rotr(6,e)^rotr(11,e)^rotr(25,e)) + ((e&f)^(~e&g)) + K[i] + W[i])|0;
+      var t2 = ((rotr(2,a)^rotr(13,a)^rotr(22,a)) + ((a&b)^(a&c)^(b&c)))|0;
+      h=g; g=f; f=e; e=(d+t1)|0; d=c; c=b; b=a; a=(t1+t2)|0;
+    }
+    H[0]=(H[0]+a)|0; H[1]=(H[1]+b)|0; H[2]=(H[2]+c)|0; H[3]=(H[3]+d)|0; H[4]=(H[4]+e)|0; H[5]=(H[5]+f)|0; H[6]=(H[6]+g)|0; H[7]=(H[7]+h)|0;
+  }
+  return H.map(function(x){ return ('00000000'+(x>>>0).toString(16)).slice(-8); }).join('');
+}
+var PWD_ITER = 5000;
+function pwdDerive(pwd, salt, iter){
+  var h = sha256Hex(salt+':'+pwd);
+  for(var i=1;i<iter;i++) h = sha256Hex(h+salt);
+  return h;
+}
+function makePasswordHash(pwd){
+  var arr = new Uint8Array(16);
+  (window.crypto||window.msCrypto).getRandomValues(arr);
+  var salt = Array.prototype.map.call(arr, function(b){ return ('0'+b.toString(16)).slice(-2); }).join('');
+  return 'h1$'+PWD_ITER+'$'+salt+'$'+pwdDerive(pwd, salt, PWD_ITER);
+}
+function verifyPassword(acc, pwd){
+  if(!acc) return false;
+  if(acc.passwordHash){
+    var p = acc.passwordHash.split('$');
+    if(p.length!==4 || p[0]!=='h1') return false;
+    return pwdDerive(pwd, p[2], Number(p[1])) === p[3];
+  }
+  return typeof acc.password==='string' && acc.password===pwd;   // ancien compte non encore converti
+}
+// Convertit les anciens mots de passe en clair ; renvoie true si au moins un compte a changé
+function migrateAccountPasswords(){
+  var changed = false;
+  DATA.accounts.forEach(function(a){
+    if(typeof a.password==='string'){
+      if(!a.passwordHash) a.passwordHash = makePasswordHash(a.password);
+      delete a.password;
+      changed = true;
+    }
+  });
+  return changed;
+}
+
 function bootstrapAdmin(){
   var changed = false;
   if(!DATA.roles.length){
@@ -7155,9 +7457,11 @@ function bootstrapAdmin(){
     changed = true;
   }
   if(!DATA.accounts.length){
-    DATA.accounts.push({id:uid('acc'), username:'admin', password:'admin1234', displayName:'Administrateur', roleId:ADMIN_ROLE_ID, allSecteurs:true, secteurs:[]});
+    DATA.accounts.push({id:uid('acc'), username:'admin', passwordHash:makePasswordHash('admin1234'), displayName:'Administrateur', roleId:ADMIN_ROLE_ID, allSecteurs:true, secteurs:[]});
     changed = true;
   }
+  // Sécurité : plus aucun mot de passe en clair dans la base
+  if(migrateAccountPasswords()) changed = true;
   // Migration multi-secteurs : comptes existants sans champ secteurs
   DATA.accounts.forEach(function(a){
     if(a.secteurs===undefined){
@@ -7448,7 +7752,9 @@ async function handleLogin(){
   var btn = document.getElementById('login-submit');
   await withBtnLoading(btn, async function(){
     var acc = DATA.accounts.find(function(a){ return a.username.toLowerCase()===username.toLowerCase(); });
-    if(!acc || acc.password!==pwd){ renderLoginOverlay('Identifiant ou mot de passe incorrect.'); return; }
+    if(!acc || !verifyPassword(acc, pwd)){ renderLoginOverlay('Identifiant ou mot de passe incorrect.'); return; }
+    if(migrateAccountPasswords()) await save('accounts');
+    setTimeout(function(){ try{ actionsSnapshotTick(); }catch(e){} }, 0);
     try{ localStorage.setItem('mcu_last_username_v1', acc.username); }catch(e){}
     currentUser = acc;
     setSession(acc.id);
@@ -7689,13 +7995,13 @@ async function handleSaveAccount(){
     var a = DATA.accounts.find(function(x){ return x.id===accountFormState.id; });
     a.displayName = displayName; a.username = username; a.roleId = roleId;
     a.allSecteurs = allSecteurs; a.secteurs = secteurs;
-    if(password) a.password = password;
+    if(password){ a.passwordHash = makePasswordHash(password); delete a.password; }
     if(currentUser && currentUser.id===a.id) currentUser = a;
     await save('accounts');
     logChange('Comptes', 'Modification', displayName+' ('+username+')');
   } else {
     if(!password){ alert('Mot de passe requis.'); return; }
-    DATA.accounts.push({id:uid('acc'), displayName:displayName, username:username, password:password, roleId:roleId, allSecteurs:allSecteurs, secteurs:secteurs});
+    DATA.accounts.push({id:uid('acc'), displayName:displayName, username:username, passwordHash:makePasswordHash(password), roleId:roleId, allSecteurs:allSecteurs, secteurs:secteurs});
     await save('accounts');
     logChange('Comptes', 'Création', displayName+' ('+username+')');
   }
@@ -8077,6 +8383,7 @@ async function handleChangeStatus(id, newVal){
   if(item){
     var before = item.statut;
     item.statut = newVal;
+    applyActionStatusTransition(item, before, newVal);
     await save('actions');
     logChange("Plan d'actions", 'Changement de statut', item.description, before+' → '+newVal);
     render();
@@ -8686,10 +8993,33 @@ app.addEventListener('click', async function(e){
   if(apFilter){ actionsPanelFilter = apFilter.dataset.f; render(); return; }
   var apScope = e.target.closest('[data-action="actions-panel-scope"]');
   if(apScope){ actionsPanelScope = apScope.dataset.s; render(); return; }
-  if(e.target.closest('[data-action="action-new-from-panel"]')){ actionDetailId = 'new'; render(); var nd = document.getElementById('ad-desc'); if(nd) nd.focus({preventScroll:true}); return; }
+  if(e.target.closest('[data-action="action-new-from-panel"]')){ actionDraft = null; actionDetailId = 'new'; render(); var nd = document.getElementById('ad-desc'); if(nd) nd.focus({preventScroll:true}); return; }
   var actionOpen = e.target.closest('[data-action="action-open"]');
-  if(actionOpen && !e.target.closest('select, input, textarea')){ actionDetailId = actionOpen.dataset.id; render(); return; }
-  if(e.target.closest('[data-action="action-detail-cancel"]') || (e.target.classList && e.target.classList.contains('action-detail-backdrop'))){ actionDetailId = null; render(); return; }
+  if(actionOpen && !e.target.closest('select, input, textarea')){ await closeChokkoNoteKeepingText(); actionDraft = null; actionDetailId = actionOpen.dataset.id; render(); return; }
+  if(e.target.closest('[data-action="action-detail-cancel"]') || (e.target.classList && e.target.classList.contains('action-detail-backdrop'))){ actionDetailId = null; actionDraft = null; render(); return; }
+  if(e.target.closest('[data-action="actions-panel-print"]')){ printActionsPanel(); return; }
+  if(e.target.closest('[data-action="action-goto-source"]')){
+    var srcA = DATA.actions.find(function(x){ return x.id===actionDetailId; });
+    if(srcA) gotoActionSource(srcA);
+    return;
+  }
+  var fromPrison = e.target.closest('[data-action="action-from-prison"]');
+  if(fromPrison){
+    var lotP = DATA.prisonLots.find(function(l){ return l.id===fromPrison.dataset.id; });
+    if(lotP) openActionFromSource({type:'prison', ref:lotP.id, secteur:currentSecteur, label:'Prison qualité · '+lotP.defaut+(lotP.type?' ('+lotP.type+')':''), typeLabel:'Prison qualité'}, '', '');
+    return;
+  }
+  if(e.target.closest('[data-action="action-from-chokko"]')){
+    var nm2 = chokkoNoteModal;
+    if(nm2){
+      await closeChokkoNoteKeepingText();
+      var pdef = chokkoPostes(nm2.ligne).find(function(p){ return p[0]===nm2.poste; });
+      var mn = MONTHS_FR[nm2.mois].charAt(0).toUpperCase()+MONTHS_FR[nm2.mois].slice(1);
+      openActionFromSource({type:'chokko', ref:nm2.ligne+'|'+nm2.poste, secteur:currentSecteur, ligne:nm2.ligne, annee:nm2.annee, mois:nm2.mois,
+        label:'CHOKKO · '+nm2.ligne+' · '+nm2.poste+(pdef&&pdef[1]?' - '+pdef[1]:'')+' ('+mn+' '+nm2.annee+')', typeLabel:'CHOKKO'}, nm2.ligne, '');
+    }
+    return;
+  }
   if(e.target.closest('[data-action="action-detail-save"]')){ await handleSaveActionDetail(); return; }
   var noteOpen = e.target.closest('[data-action="chokko-note-open"]');
   if(noteOpen && !chokkoPaintMode){
@@ -9333,6 +9663,7 @@ async function init(){
     if(bootstrapped){ await save('roles'); await save('accounts'); await save('secteurs'); await save('labelOverrides'); await save('cicl'); }
     var sess = getSession();
     if(sess){ currentUser = DATA.accounts.find(function(a){ return a.id===sess.accountId; }) || null; }
+    if(currentUser) setTimeout(function(){ try{ actionsSnapshotTick(); }catch(e){} }, 0);
     if(currentUser){
       loginOverlayEl.classList.add('hidden');
       renderNav();
