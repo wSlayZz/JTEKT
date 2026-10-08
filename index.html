@@ -1119,8 +1119,78 @@ function metroOverall(lines){
   var lbl = worst==='danger'?'Échéance dépassée':worst==='urgent'?'Expire ce mois':worst==='warn'?'À prévoir':'À jour';
   return {level:worst, label:lbl, late:late, urgent:urgent, warn:warn, worstItem: (worst!=='ok'? worstItem : null), worstLabel: (worst!=='ok' && worstItem? daysLabel(worstItem.echeance) : null)};
 }
+// ---------- Réalisation déduite des données réellement saisies ----------
+// Une échéance du planning est considérée comme réalisée dès qu'un relevé / audit / résultat existe
+// pour le même mois dans le module concerné, même si personne n'a cliqué sur "Marquer réalisé".
+function monthKeyOf(y, m){ return y+'-'+String(m+1).padStart(2,'0'); }
+function contamMonthsFor(ligne, ref){
+  var set = {};
+  DATA.contamination.forEach(function(c){
+    if(c.ligne!==ligne || (ref && c.ref!==ref) || c.mois===undefined || c.mois===null || !c.annee) return;
+    var k = monthKeyOf(c.annee, c.mois);
+    // Date exacte de collecte si elle tombe dans le mois du relevé, sinon simple repère "mi-mois"
+    var exact = c.collecteDate && c.collecteDate.slice(0,7)===k ? c.collecteDate : null;
+    var cur = set[k], curExact = cur && cur.slice(8)!=='15';
+    if(exact){ if(!curExact || exact>cur) set[k] = exact; }
+    else if(!cur) set[k] = k+'-15';
+  });
+  return set;
+}
+function planningRecordMonths(type, ligne, ref, secteur){
+  // Renvoie {'AAAA-MM': date la plus récente} des données réelles pour ce type/ligne(/réf.)
+  var set = {};
+  function add(k, d){ if(!set[k] || d>set[k]) set[k] = d; }
+  secteur = secteur || 'MCU';
+  if(type==='labo'){
+    if(secteur!=='MCU') return set;
+    if(ref) return contamMonthsFor(ligne, ref);
+    // Échéance sans référence = toute la ligne : chaque référence doit avoir son relevé du mois
+    var refs = refsForLigne(ligne);
+    if(!refs.length) return contamMonthsFor(ligne, null);
+    var per = refs.map(function(r){ return contamMonthsFor(ligne, r); });
+    Object.keys(per[0]).forEach(function(k){
+      if(per.every(function(m){ return m[k]; })){
+        add(k, per.map(function(m){ return m[k]; }).sort().pop());
+      }
+    });
+  } else if(type==='perf'){
+    DATA.perf.forEach(function(r){
+      if((r.secteur||'MCU')!==secteur || r.ligne!==ligne || r.resultatPct===null || r.resultatPct===undefined || r.mois===undefined) return;
+      var k = monthKeyOf(r.annee, r.mois); add(k, k+'-15');
+    });
+  } else if(type==='proprete'){
+    DATA.propAudits.forEach(function(a){
+      if(a.ligne!==ligne || !a.date || (a.secteur && a.secteur!==secteur)) return;
+      add(a.date.slice(0,7), a.date);
+    });
+    DATA.resultats.forEach(function(r){
+      if(r.ligne!==ligne || r.resultatPct===null || r.resultatPct===undefined) return;
+      var mi = monthIndex(r.mois); if(mi<0) return;
+      var y = r.annee || Number(todayStr().slice(0,4));
+      var k = monthKeyOf(y, mi); add(k, k+'-15');
+    });
+  }
+  return set;
+}
+function planningAutoDone(p, refOverride){
+  if(!p || !p.echeance) return null;
+  var sec = p.secteur||'MCU';
+  if(p.type==='perf' && p.resultatPct!==undefined && p.resultatPct!==null && p.resultatPct!=='') return p.echeance;
+  if(p.type==='metro'){
+    // Pas de "relevé" métrologie mensuel : la tournée est considérée faite si, une fois son échéance passée,
+    // aucun instrument de la ligne n'est hors validité.
+    if(p.echeance>todayStr()) return null;
+    var inst = DATA.metro.filter(function(e){ return (e.secteur||'MCU')===sec && e.ligne===p.ligne && e.echeance; });
+    if(!inst.length) return null;
+    return inst.some(function(e){ return metroStatus(e).level==='danger'; }) ? null : p.echeance;
+  }
+  var months = planningRecordMonths(p.type, p.ligne, refOverride || p.ref || null, sec);
+  return months[p.echeance.slice(0,7)] || null;
+}
+function planningIsDone(p, refOverride){ return !!(p.realisation || planningAutoDone(p, refOverride)); }
 function planningStatus(p){
   if(p.realisation) return {level:'ok', label:'Réalisé'};
+  if(planningAutoDone(p)) return {level:'ok', label:'Réalisé', auto:true};
   if(!p.echeance) return {level:'neutral', label:'Planifié'};
   var d = daysBetween(todayStr(), p.echeance);
   if(d<0) return {level:'danger', label:'En retard'};
@@ -1146,16 +1216,96 @@ function planningCurrentEntry(type, ligne, ref){
   });
   if(!items.length) return null;
   var today = todayStr();
-  var overdue = items.filter(function(p){ return !p.realisation && p.echeance && p.echeance<=today; })
+  var overdue = items.filter(function(p){ return !planningIsDone(p, ref) && p.echeance && p.echeance<=today; })
     .sort(function(a,b){ return a.echeance.localeCompare(b.echeance); });
   if(overdue.length) return overdue[0];
-  var upcoming = items.filter(function(p){ return !p.realisation && p.echeance && p.echeance>today; })
+  var upcoming = items.filter(function(p){ return !planningIsDone(p, ref) && p.echeance && p.echeance>today; })
     .sort(function(a,b){ return a.echeance.localeCompare(b.echeance); });
   if(upcoming.length) return upcoming[0];
-  var done = items.filter(function(p){ return p.realisation; })
-    .sort(function(a,b){ return b.realisation.localeCompare(a.realisation); });
+  var done = items.filter(function(p){ return planningIsDone(p, ref); })
+    .sort(function(a,b){ return String(b.realisation||b.echeance).localeCompare(String(a.realisation||a.echeance)); });
   if(done.length) return done[0];
   return items[0];
+}
+// Statut affiché sur les cartes du tableau de bord : on regarde la DERNIÈRE échéance passée
+// (et non la plus ancienne), en tenant compte des relevés réellement saisis.
+function lastRecordLabel(type, ligne, ref){
+  var months = planningRecordMonths(type, ligne, ref||null, currentSecteur);
+  var keys = Object.keys(months).sort();
+  if(!keys.length) return null;
+  var k = keys[keys.length-1], d = months[k];
+  var mi = Number(k.slice(5,7))-1;
+  var monthTxt = MONTHS_FR[mi].charAt(0).toUpperCase()+MONTHS_FR[mi].slice(1)+' '+k.slice(0,4);
+  var exact = d && d.slice(0,7)===k && d.slice(8)!=='15';
+  return {key:k, date:d, text: exact ? fmtDate(d) : monthTxt};
+}
+function planningCardInfo(type, ligne, ref){
+  var today = todayStr();
+  if(type==='metro'){
+    var ms = metroOverall([ligne]);
+    var nextM = bySecteur(DATA.planning).filter(function(p){ return p.type==='metro' && p.ligne===ligne && p.echeance && p.echeance>today; })
+      .sort(function(a,b){ return a.echeance.localeCompare(b.echeance); })[0];
+    var linesM = [];
+    if(ms.level==='neutral') return {level:'neutral', label:'Aucune donnée', lines: nextM? ['Prochaine vérif. : '+fmtDate(nextM.echeance)] : []};
+    if(ms.late) linesM.push(ms.late+' instrument'+(ms.late>1?'s':'')+' hors validité');
+    else if(ms.urgent) linesM.push(ms.urgent+' expire'+(ms.urgent>1?'nt':'')+' ce mois');
+    else if(ms.warn) linesM.push(ms.warn+' à prévoir le mois prochain');
+    if(nextM) linesM.push('Prochaine vérif. : '+fmtDate(nextM.echeance));
+    var lbl = ms.level==='danger'?'En retard':ms.level==='urgent'?'Expire ce mois':ms.level==='warn'?'À prévoir':'À jour';
+    return {level: ms.level==='urgent'?'warn':ms.level, label:lbl, lines:linesM};
+  }
+  var items = bySecteur(DATA.planning).filter(function(p){
+    if(p.type!==type || p.ligne!==ligne || !p.echeance) return false;
+    if(ref) return !p.ref || p.ref===ref;
+    return true;
+  }).sort(function(a,b){ return a.echeance.localeCompare(b.echeance); });
+  var due = items.filter(function(p){ return p.echeance<today; });   // le jour J n'est pas encore un retard
+  var next = items.filter(function(p){ return p.echeance>=today && !planningIsDone(p, ref); })[0] || null;
+  var last = lastRecordLabel(type, ligne, ref);
+  var lines = [];
+  var lastWord = type==='labo' ? 'Dernier relevé' : 'Dernier audit';
+  if(due.length){
+    var latest = due[due.length-1];
+    var missed = due.slice(0,-1).filter(function(p){ return !planningIsDone(p, ref); }).length;
+    if(planningIsDone(latest, ref)){
+      if(last) lines.push(lastWord+' : '+last.text);
+      if(next){ var dn = daysLabel(next.echeance); lines.push('Prochaine : '+fmtDate(next.echeance)+(dn?' · '+dn.text:'')); }
+      return {level:'ok', label:'À jour', lines:lines, missed:missed};
+    }
+    var dl = daysLabel(latest.echeance);
+    lines.push('Échéance '+fmtDate(latest.echeance)+(dl?' · '+dl.text:''));
+    lines.push(last ? lastWord+' : '+last.text : (type==='labo'?'Aucun relevé saisi':'Aucun audit saisi'));
+    return {level:'danger', label:'En retard', lines:lines, missed:missed, echeance:latest.echeance, entry:latest};
+  }
+  if(next){
+    var dn2 = daysLabel(next.echeance);
+    if(last) lines.push(lastWord+' : '+last.text);
+    lines.push('Prochaine : '+fmtDate(next.echeance)+(dn2?' · '+dn2.text:''));
+    return {level: dn2 && dn2.d<=14 ? 'warn' : 'neutral', label: dn2 && dn2.d<=14 ? 'À venir' : 'Planifié', lines:lines, missed:0};
+  }
+  if(last){
+    // Aucune échéance planifiée : on se base sur le rythme mensuel des relevés
+    var prev = new Date(); prev.setDate(1); prev.setMonth(prev.getMonth()-1);
+    var prevKey = monthKeyOf(prev.getFullYear(), prev.getMonth());
+    var fresh = last.key>=prevKey;
+    lines.push(lastWord+' : '+last.text);
+    if(!fresh) lines.push('Rien de saisi depuis');
+    return {level: fresh?'ok':'danger', label: fresh?'À jour':'En retard', lines:lines, missed:0};
+  }
+  return {level:'neutral', label:'Aucune donnée', lines:[], missed:0};
+}
+function planningCardBadge(head, info){
+  return '<div class="linebadge" style="flex-direction:column; align-items:flex-start; gap:2px;">'+
+    '<div style="display:flex; align-items:center; gap:6px; width:100%; justify-content:space-between;">'+head+badge(info.level, info.label)+'</div>'+
+    info.lines.map(function(t){ return '<span class="tiny">'+esc(t)+'</span>'; }).join('')+
+    (info.missed? '<span class="tiny" style="color:var(--warn);">+ '+info.missed+' échéance'+(info.missed>1?'s':'')+' antérieure'+(info.missed>1?'s':'')+' non réalisée'+(info.missed>1?'s':'')+'</span>' : '')+
+    '</div>';
+}
+function planningNextDate(type, ligne){
+  var today = todayStr();
+  var n = bySecteur(DATA.planning).filter(function(p){ return p.type===type && p.ligne===ligne && p.echeance && p.echeance>=today && !planningIsDone(p); })
+    .sort(function(a,b){ return a.echeance.localeCompare(b.echeance); })[0];
+  return n ? n.echeance : null;
 }
 function latestResultByLine(ligne){
   var items = DATA.resultats.filter(function(r){ return r.ligne===ligne; });
@@ -2148,27 +2298,8 @@ async function handleSaveCollecteContam(){
   });
   await save('contamination');
 
-  // Marquer automatiquement l'échéance planning "labo" correspondante comme réalisée
-  // Si aucune échéance n'existe, en créer une marquée directement réalisée
-  if(!isRetest){
-    var echeance = planningCurrentEntry('labo', ligne, ref);
-    if(echeance && !echeance.realisation){
-      echeance.realisation = todayStr();
-      echeance.collecteId = uid('tmp'); // sera remplacé par l'id de la collecte après push
-      await save('planning');
-      logChange('Planning', 'Réalisation auto (collecte)', ligne+' · '+ref);
-    } else if(!echeance){
-      var today2 = todayStr();
-      var moisLabel = MONTHS_FR[mois].charAt(0).toUpperCase()+MONTHS_FR[mois].slice(1);
-      DATA.planning.push({
-        id:uid('plan'), ligne:ligne, ref:ref, type:'labo',
-        mois:moisLabel, echeance:today2, realisation:today2,
-        responsable:'', resultatPct:null, autoCreated:true
-      });
-      await save('planning');
-      logChange('Planning', 'Échéance créée automatiquement (collecte)', ligne+' · '+ref+' - '+moisLabel);
-    }
-  }
+  // Le planning n'est plus coché ici : l'échéance du mois est reconnue automatiquement comme réalisée
+  // dès qu'un relevé existe pour ce mois (voir planningAutoDone).
 
   // Réinitialiser l'état
   contamCollecteState.originalNcId = null;
@@ -2204,7 +2335,8 @@ async function handleDeleteCollecte(id){
   if(!confirm('Supprimer cette collecte ('+c.ligne+' · '+c.ref+') ?\nL\'échéance planning associée sera remise en statut Planifié ou En retard.')) return;
 
   // Retrouver l'échéance planning associée et annuler sa réalisation
-  var echeance = planningCurrentEntry('labo', c.ligne, c.ref);
+  // Seules les échéances cochées automatiquement par une ancienne version (collecte) sont annulées
+  var echeance = bySecteur(DATA.planning).filter(function(p){ return p.type==='labo' && p.ligne===c.ligne && (p.ref||null)===(c.ref||null) && (p.autoCreated || p.collecteId) && p.realisation && c.collecteDate && p.realisation===c.collecteDate; })[0] || null;
   if(echeance && echeance.realisation){
     if(echeance.autoCreated){
       // L'échéance avait été créée par la collecte → on la supprime entièrement
@@ -6147,28 +6279,11 @@ RENDERERS.dashboard = function(){
       var lineBadges;
       if(pt[0]==='labo'){
         lineBadges = CONTAM_COMBOS.map(function(c){
-          var cur = planningCurrentEntry('labo', c.ligne, c.ref);
-          var s = cur ? planningStatus(cur) : {level:'neutral', label:'Aucune donnée'};
-          var dl = cur && cur.echeance ? daysLabel(cur.echeance) : null;
-          var dateInfo = cur && cur.echeance ? fmtDate(cur.echeance)+(dl?' · '+dl.text:'') : '';
-          return '<div class="linebadge" style="flex-direction:column; align-items:flex-start; gap:2px;">'+
-            '<div style="display:flex; align-items:center; gap:6px; width:100%; justify-content:space-between;">'+
-              '<b>'+c.ligne+' <span style="color:var(--text-faint); font-weight:400;">'+c.ref+'</span></b>'+
-              badge(s.level, s.label)+
-            '</div>'+
-            (dateInfo? '<span class="tiny">'+esc(dateInfo)+'</span>' : '')+
-            '</div>';
+          return planningCardBadge('<b>'+c.ligne+' <span style="color:var(--text-faint); font-weight:400;">'+c.ref+'</span></b>', planningCardInfo('labo', c.ligne, c.ref));
         }).join('');
       } else {
         lineBadges = LINES.map(function(l){
-          var cur = planningCurrentEntry(pt[0], l);
-          var s = cur ? planningStatus(cur) : {level:'neutral', label:'Aucune donnée'};
-          var dl = cur && cur.echeance ? daysLabel(cur.echeance) : null;
-          var dateInfo = cur && cur.echeance ? fmtDate(cur.echeance)+(dl?' · '+dl.text:'') : '';
-          return '<div class="linebadge" style="flex-direction:column; align-items:flex-start; gap:2px;">'+
-            '<div style="display:flex; align-items:center; gap:6px; width:100%; justify-content:space-between;"><b>'+l+'</b>'+badge(s.level, s.label)+'</div>'+
-            (dateInfo? '<span class="tiny">'+esc(dateInfo)+'</span>' : '')+
-            '</div>';
+          return planningCardBadge('<b>'+l+'</b>', planningCardInfo(pt[0], l));
         }).join('');
       }
       h += '<div class="statcard"><div class="eyebrow">'+esc(pt[1])+'</div><div class="linebadges">'+lineBadges+'</div></div>';
@@ -6196,8 +6311,8 @@ RENDERERS.dashboard = function(){
 
     var proprLines = LINES.map(function(l){
       var r = latestResultByLine(l);
-      var nextAudit = planningCurrentEntry('proprete', l);
-      var nextTxt = nextAudit && nextAudit.echeance ? 'Prochain : '+fmtDate(nextAudit.echeance) : null;
+      var nextDate = planningNextDate('proprete', l);
+      var nextTxt = nextDate ? 'Prochain : '+fmtDate(nextDate) : null;
       if(!r) return '<div class="linebadge" style="flex-direction:column; align-items:flex-start; gap:2px;">'+
         '<div style="display:flex; width:100%; justify-content:space-between;"><b>'+l+'</b><span class="tiny">Aucune donnée</span></div>'+
         (nextTxt? '<span class="tiny">'+nextTxt+'</span>' : '')+'</div>';
@@ -6210,8 +6325,8 @@ RENDERERS.dashboard = function(){
 
     var perfLines = LINES.map(function(l){
       var p = latestPerfResultByLine(l);
-      var nextAudit = planningCurrentEntry('perf', l);
-      var nextTxt = nextAudit && nextAudit.echeance ? 'Prochain : '+fmtDate(nextAudit.echeance) : null;
+      var nextDate = planningNextDate('perf', l);
+      var nextTxt = nextDate ? 'Prochain : '+fmtDate(nextDate) : null;
       if(!p) return '<div class="linebadge" style="flex-direction:column; align-items:flex-start; gap:2px;">'+
         '<div style="display:flex; width:100%; justify-content:space-between;"><b>'+l+'</b><span class="tiny">Aucune donnée</span></div>'+
         (nextTxt? '<span class="tiny">'+nextTxt+'</span>' : '')+'</div>';
@@ -6636,10 +6751,11 @@ function planningRow(p){
       '<button class="btn small" data-action="cancel-planning-edit">Annuler</button></td></tr>';
   }
   var resultCell = (p.resultatPct!==undefined && p.resultatPct!==null && p.resultatPct!=='') ? badge(scoreLevel(p.resultatPct), p.resultatPct+'%') : '-';
-  return '<tr data-row-ligne="'+p.ligne+'" data-row-type="'+p.type+'" data-row-mois="'+(p.echeance?p.echeance.slice(0,7):'')+'" data-row-echeance="'+(p.echeance||'')+'" data-row-done="'+(p.realisation?'1':'0')+'">'+
+  var realCell = p.realisation ? fmtDate(p.realisation) : (s.auto ? '<span class="tiny" title="Déduit des données saisies dans le module">auto · données saisies</span>' : fmtDate(null));
+  return '<tr data-row-ligne="'+p.ligne+'" data-row-type="'+p.type+'" data-row-mois="'+(p.echeance?p.echeance.slice(0,7):'')+'" data-row-echeance="'+(p.echeance||'')+'" data-row-done="'+((p.realisation||s.auto)?'1':'0')+'">'+
     '<td>'+badge(s.level,s.label)+'</td><td>'+ligneLabel+'</td><td>'+esc(typeLabel)+'</td><td>'+esc(val(p.mois))+'</td>'+
-    '<td class="num">'+fmtDate(p.echeance)+'</td><td class="num">'+fmtDate(p.realisation)+'</td><td>'+resultCell+'</td><td>'+esc(val(p.responsable))+'</td>'+
-    '<td>'+(p.realisation? '' : '<button class="btn small" data-action="mark-done" data-module="planning" data-id="'+p.id+'">Marquer réalisé</button>')+
+    '<td class="num">'+fmtDate(p.echeance)+'</td><td class="num">'+realCell+'</td><td>'+resultCell+'</td><td>'+esc(val(p.responsable))+'</td>'+
+    '<td>'+((p.realisation||s.auto)? '' : '<button class="btn small" data-action="mark-done" data-module="planning" data-id="'+p.id+'">Marquer réalisé</button>')+
     ' <button class="btn small" data-action="edit-planning" data-id="'+p.id+'">Modifier</button>'+
     ' <button class="btn small danger-outline" data-action="delete" data-module="planning" data-id="'+p.id+'">Suppr.</button></td></tr>';
 }
@@ -7128,11 +7244,12 @@ function computeAlerts(){
       detail: 'N° du moyen : '+esc(e.numMoyen)+' · Lieu : '+esc(val(e.lieu,'non précisé'))});
   });
   PLAN_TYPES.forEach(function(t){
+    if(t[0]==='metro') return; // déjà couvert instrument par instrument ci-dessus
     LINES.forEach(function(l){
-      var cur = planningCurrentEntry(t[0], l);
-      if(!cur) return;
-      var s = planningStatus(cur);
-      if(s.level==='danger'||s.level==='warn'){
+      var info = planningCardInfo(t[0], l);
+      if(info.level!=='danger' || !info.entry) return;
+      var cur = info.entry, s = {level:'danger', label:'En retard'};
+      {
         alerts.push({id:'al-'+(n++), level:s.level, module:'Planning', ligne:l, echeance:cur.echeance,
           title: t[1], meta: s.label,
           detail: 'Responsable : '+esc(val(cur.responsable,'non précisé'))+(cur.email? ' ('+esc(cur.email)+')':'')+' · Mois : '+esc(val(cur.mois,''))});
