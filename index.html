@@ -182,6 +182,20 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .sc-ok{background:#2E9E5B; color:#fff;}
 .sc-warn{background:#E0922A; color:#fff;}
 .sc-danger{background:#D6483A; color:#fff;}
+.sc-nc-med{background:#EC8A3C; color:#fff;}
+.sc-nc-low{background:#F3D27A; color:#5A4300;}
+.sc-pending{background:#ECE8E1; color:#6B655C;}
+.nc-cause{font-size:9.5px; font-weight:600; line-height:1.1; opacity:.95; font-family:var(--sans, inherit);}
+.nc-legend{display:flex; flex-wrap:wrap; gap:6px 16px; margin:8px 2px 0;}
+.nc-legend span{display:inline-flex; align-items:center; gap:5px;}
+.nc-legend i{display:inline-block; width:12px; height:12px; border-radius:3px;}
+.nc-grav-note{margin:0 0 12px; padding:8px 10px; border-radius:8px; font-size:12.5px; background:var(--danger-bg); color:var(--danger);}
+.nc-grav-note.nc-grav-low{background:#FBF1D3; color:#6E5300;}
+.nc-grav-note.nc-grav-med{background:var(--urgent-bg); color:var(--urgent);}
+.grav-pill{display:inline-block; margin-left:4px; padding:0 6px; border-radius:9px; font-size:10px; font-weight:600; vertical-align:1px;}
+.grav-pill.grav-high{background:var(--danger-bg); color:var(--danger);}
+.grav-pill.grav-medium{background:var(--urgent-bg); color:var(--urgent);}
+.grav-pill.grav-low{background:#FBF1D3; color:#6E5300;}
 .chart-box{position:relative; height:260px;}
 .modal-overlay{position:fixed; inset:0; background:rgba(28,27,24,0.5); display:flex; align-items:center; justify-content:center; z-index:50; padding:20px;}
 .modal-box{background:#fff; border-radius:var(--radius); padding:22px; max-width:560px; width:100%; max-height:80vh; overflow-y:auto;}
@@ -407,6 +421,38 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .ap-link-count{display:inline-block; font-size:10.5px; font-weight:600; color:var(--sb-bg, #143E3E); background:var(--neutral-bg); border:1px solid var(--border); border-radius:10px; padding:0 7px; margin-left:4px; vertical-align:middle;}
 .ap-link-count.late{color:var(--danger); border-color:var(--danger-border);}
 .ad-source{display:flex; justify-content:space-between; align-items:center; gap:10px; background:var(--neutral-bg); border-radius:6px; padding:7px 10px; margin-bottom:12px; font-size:12.5px;}
+.ad-noverif{display:flex; gap:10px; align-items:flex-start; cursor:pointer; font-size:13px; line-height:1.35;}
+.ad-noverif input{width:16px; height:16px; margin-top:2px; flex:none; cursor:pointer;}
+/* ----- Analyses Pareto ----- */
+.pareto-head{display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap;}
+.pareto-total{font-size:13px; color:var(--text-faint);}
+.pareto-total span{font-family:var(--mono); font-weight:700; font-size:28px; color:var(--text);}
+.pareto-reading{margin:10px 0 14px; padding:10px 12px; background:var(--neutral-bg, #F4F2EE); border-radius:8px; font-size:13.5px; line-height:1.5;}
+.pareto-layout{display:grid; grid-template-columns:minmax(0,3fr) minmax(0,2fr); gap:18px; align-items:start;}
+.pareto-chart{height:440px !important;}
+.pareto-table-wrap{max-height:440px; overflow:auto;}
+.pareto-table{width:100%; border-collapse:collapse; font-size:13px;}
+.pareto-table th{position:sticky; top:0; background:var(--card, #fff); text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-faint); padding:6px 6px; border-bottom:1px solid var(--border);}
+.pareto-table td{padding:6px 6px; border-bottom:1px solid var(--border);}
+.pareto-table .num{text-align:right; font-family:var(--mono); white-space:nowrap;}
+.pareto-row-A td{background:rgba(178,118,74,.08);}
+.pareto-a{display:inline-block; min-width:16px; padding:0 4px; border-radius:4px; background:#B2764A; color:#fff; font-size:10.5px; font-weight:700; text-align:center;}
+@media (max-width:1100px){ .pareto-layout{grid-template-columns:1fr;} .pareto-table-wrap{max-height:none;} }
+#pareto-card:fullscreen{background:#fff; padding:28px 36px; overflow:auto;}
+#pareto-card:fullscreen .pareto-chart{height:62vh !important;}
+#pareto-card:fullscreen .pareto-table-wrap{max-height:62vh;}
+#pareto-card:fullscreen h2{font-size:24px !important;}
+#pareto-card:fullscreen .pareto-reading{font-size:16px;}
+#pareto-card:fullscreen .pareto-table{font-size:15px;}
+#pareto-print-sheet{display:none;}
+@media print{
+  body.print-pareto-sheet > *:not(#pareto-print-sheet){display:none !important;}
+  body.print-pareto-sheet #pareto-print-sheet{display:block !important; font-family:Arial, Helvetica, sans-serif; color:#000;}
+  .pps-body{display:grid; grid-template-columns:62% 1fr; gap:10px; align-items:start;}
+  .pps-img{width:100%; height:auto; border:1px solid #ccc;}
+  .pps-table td, .pps-table th{font-size:9.5px; padding:2px 4px;}
+  .pps-a td{background:#F3E7DC; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+}
 .ad-verif{margin-top:16px; padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm, 8px); background:var(--card, #fff);}
 .ad-linked{margin-top:14px; padding-top:12px; border-top:1px solid var(--border);}
 .ad-linked-head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px;}
@@ -646,7 +692,7 @@ var KEYS = {
 };
 var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, bibliotheque:[], prisonLots:[], prisonSnapshots:[], actionsSnapshots:[], uiSettings:{sidebarColor:null, iconStyle:'svg'}};
 var RENDERERS = {};
-var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['prison','Prison qualité'],['bibliotheque','Bibliothèque'],['archives','Archives']];
+var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['ateq','Défauts ATEQ'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['pareto','Analyses Pareto'],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['prison','Prison qualité'],['bibliotheque','Bibliothèque'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
 
 // ============ LABELS PERSONNALISABLES ============
@@ -680,7 +726,7 @@ var DASHBOARD_WIDGETS_DEFAULT = [
 ];
 var WIDGET_TITLES = {
   w_score:'Score de conformité', w_conformite_pie:'Conformité des pièces (camembert)',
-  w_chokko_trend:'Tendance CHOKKO (courbe)', w_causes_bar:'Causes de non-conformité (barres)',
+  w_chokko_trend:'Tendance CHOKKO (courbe)', w_causes_bar:'Pareto des causes',
   w_planning:"Planning échéances",
   w_indicateurs:'Indicateurs (métrologie, ATEQ, propreté, perf)',
   w_chokko:'Suivi CHOKKO', w_production:'Production du secteur', w_cicl:'Formations CI/CL',
@@ -796,6 +842,7 @@ function secteurTabs(){
   if(currentSecteur==='MCU' && tabs.indexOf('perf')<0) tabs.push('perf');
   if(currentSecteur==='MCU' && tabs.indexOf('prison')<0) tabs.push('prison');
   if(tabs.indexOf('bibliotheque')<0) tabs.push('bibliotheque');
+  if(tabs.indexOf('pareto')<0) tabs.push('pareto');
   return tabs;
 }
 // Filtre par secteur : les enregistrements sans champ secteur appartiennent à MCU (données historiques)
@@ -819,6 +866,44 @@ var REF_CRITERIA = {
 };
 function refsForLigne(ligne){ return LINE_REFS[ligne]||[]; }
 function ligneForRef(ref){ for(var l in LINE_REFS){ if(LINE_REFS[l].indexOf(ref)>=0) return l; } return ''; }
+// ---------- Gravité des dépassements (relevés pièces) ----------
+// Masse polluante = critère principal → gravité élevée.
+// Particules à seuil 0 (> 750 µm, conductrices > 400 µm) : une seule suffit → gravité élevée.
+// Petites particules à seuil large (250–500 µm ≤ 205) : gravité faible. Entre les deux (500–750 µm, conductrices 200–400 µm) : modérée.
+var CONTAM_GRAVITES = {
+  high:  {rank:3, label:'Élevée',  level:'danger', cell:'sc-danger'},
+  medium:{rank:2, label:'Modérée', level:'urgent', cell:'sc-nc-med'},
+  low:   {rank:1, label:'Faible',  level:'warn',   cell:'sc-nc-low'}
+};
+function contamCritGravite(cr){
+  if(cr.grav) return cr.grav;
+  if(/^masse/.test(cr.id)) return 'high';
+  if(Number(cr.seuil)===0) return 'high';
+  if(Number(cr.seuil)>=100) return 'low';
+  return 'medium';
+}
+// Analyse d'un relevé : critères dépassés + gravité la plus forte
+function contamNcAnalysis(c){
+  var crit = REF_CRITERIA[c.ref]||[], vals = c.values||{};
+  var over = [];
+  crit.forEach(function(cr){
+    var v = vals[cr.id];
+    if(v!==undefined && v!==null && v!=='' && Number(v)>cr.seuil) over.push({crit:cr, value:Number(v), grav:contamCritGravite(cr)});
+  });
+  over.sort(function(a,b){ return CONTAM_GRAVITES[b.grav].rank-CONTAM_GRAVITES[a.grav].rank; });
+  var grav = over.length ? over[0].grav : (c.statut==='nc' ? 'high' : null);  // NC sans détail des valeurs : on reste prudent
+  return {over:over, grav:grav, unknown: c.statut==='nc' && !over.length};
+}
+function contamOverShort(o){
+  var l = o.crit.label.replace('Particules ','').replace('Masse polluante','Masse').replace('conductrices','cond.');
+  return l+' : '+o.value+(o.crit.unit?' '+o.crit.unit:'')+' (seuil '+o.crit.seuil+')';
+}
+function contamGravBadge(c){
+  var a = contamNcAnalysis(c);
+  if(c.statut!=='nc' || !a.grav) return badge(contamLevelForStatut(c.statut), contamStatutLabel(c.statut));
+  var g = CONTAM_GRAVITES[a.grav];
+  return '<span title="'+esc(a.over.map(contamOverShort).join(' · ') || 'Détail des valeurs non saisi')+'">'+badge(g.level, 'NC · gravité '+g.label.toLowerCase())+'</span>';
+}
 function contamConformite(ref, values){
   var crit = REF_CRITERIA[ref]||[];
   var nc = false;
@@ -1369,6 +1454,11 @@ function actionStatusMeta(s){
     abandonnee:{label:'Abandonnée', level:'neutral'}
   };
   return map[s] || {label:s, level:'neutral'};
+}
+// Statut affiché d'une action (tient compte des actions ponctuelles sans vérification d'efficacité)
+function actionMeta(a){
+  if(a && a.statut==='realisee' && a.sansVerif) return {label:'Réalisée · sans vérif.', level:'ok'};
+  return actionStatusMeta(a ? a.statut : '');
 }
 var ACTION_DONE_STATUTS = ['realisee','verifiee','perennisee','non_prise_en_compte','abandonnee'];
 function isActionOpen(a){ return a.statut!=='perennisee' && a.statut!=='abandonnee' && a.statut!=='non_prise_en_compte'; }
@@ -2095,7 +2185,12 @@ function proprContamination(){
 
   // KPI
   html += '<div class="grid grid-4" style="margin-bottom:18px;">'+
-    '<div class="statcard s-danger"><div class="eyebrow">Non conformes</div><div class="val">'+nc+'</div></div>'+
+    '<div class="statcard s-danger"><div class="eyebrow">Non conformes</div><div class="val">'+nc+'</div>'+(function(){
+      if(!nc) return '';
+      var g = {high:0, medium:0, low:0};
+      rs.forEach(function(c){ if(c.statut==='nc') g[contamNcAnalysis(c).grav]++; });
+      return '<div class="lbl">'+[['high','élevée'],['medium','modérée'],['low','faible']].filter(function(x){ return g[x[0]]; }).map(function(x){ return g[x[0]]+' gravité '+x[1]; }).join(' · ')+'</div>';
+    })()+'</div>'+
     '<div class="statcard s-warn"><div class="eyebrow">En attente d\'analyse</div><div class="val">'+pending+'</div></div>'+
     '<div class="statcard"><div class="eyebrow">Pas de prod</div><div class="val">'+noprod+'</div></div>'+
     '<div class="statcard"><div class="eyebrow">Relevés '+resultsYear+'</div><div class="val">'+rs.length+'</div></div>'+
@@ -2104,7 +2199,7 @@ function proprContamination(){
   // ── SECTION 1 : CONTRE-ANALYSES REQUISES (prioritaire si existantes) ──
   var pendingRetests = DATA.contamination.filter(function(c){
     return c.statut==='nc' && !c.retested;
-  });
+  }).sort(function(a,b){ return CONTAM_GRAVITES[contamNcAnalysis(b).grav].rank - CONTAM_GRAVITES[contamNcAnalysis(a).grav].rank; });
   if(pendingRetests.length){
     html += '<div class="card" style="margin-bottom:18px; border:2px solid var(--danger);">'+
       '<div class="eyebrow" style="color:var(--danger); margin-bottom:8px;">⚠ Contre-analyses requises ('+pendingRetests.length+')</div>'+
@@ -2113,6 +2208,7 @@ function proprContamination(){
         '<th style="text-align:left; padding:4px 8px;">Ligne</th>'+
         '<th style="text-align:left; padding:4px 8px;">Référence</th>'+
         '<th style="text-align:left; padding:4px 8px;">Mois du NC</th>'+
+        '<th style="text-align:left; padding:4px 8px;">Gravité</th>'+
         '<th style="text-align:left; padding:4px 8px;">Deadline</th>'+
         '<th style="text-align:left; padding:4px 8px;"></th>'+
       '</tr></thead><tbody>';
@@ -2124,6 +2220,7 @@ function proprContamination(){
         '<td style="padding:6px 8px;">'+esc(c.ligne)+'</td>'+
         '<td style="padding:6px 8px; font-weight:700;">'+esc(c.ref)+'</td>'+
         '<td style="padding:6px 8px; font-size:12px;">'+moisLabel+'</td>'+
+        '<td style="padding:6px 8px;">'+contamGravBadge(c)+'</td>'+
         '<td style="padding:6px 8px; font-size:12px; color:'+(expired?'var(--text-faint)':'var(--danger)')+';">'+
           fmtDate(deadline)+(expired?' <span class="tiny">(expiré)</span>':' <span class="tiny">('+daysBetween(todayStr(),deadline)+' j)</span>')+
         '</td>'+
@@ -2200,13 +2297,25 @@ function proprContamination(){
         return;
       }
       var lvl = contamLevelForStatut(rec.statut);
-      var cls = lvl==='danger'?'sc-danger':lvl==='warn'?'sc-warn':lvl==='ok'?'sc-ok':'';
-      var display = rec.statut==='noprod'? 'NP' : rec.statut==='collected'? '…' : (rec.values && (rec.values.masse!==undefined? rec.values.masse : rec.values.masse_a))+'mg';
-      html += '<td class="score-cell '+cls+'" data-action="view-contam" data-id="'+rec.id+'">'+display+'</td>';
+      var cls = lvl==='warn'?'sc-pending':lvl==='ok'?'sc-ok':'';
+      var masseV = rec.values && (rec.values.masse!==undefined? rec.values.masse : rec.values.masse_a);
+      var display = rec.statut==='noprod'? 'NP' : rec.statut==='collected'? '…' : (masseV!==undefined && masseV!==null ? masseV+'mg' : '-');
+      var tip = '';
+      if(rec.statut==='nc'){
+        var an = contamNcAnalysis(rec);
+        cls = CONTAM_GRAVITES[an.grav].cell;
+        // Si la masse est conforme, on indique la cause du NC sous la valeur
+        var causes = an.over.filter(function(o){ return !/^masse/.test(o.crit.id); });
+        var masseOver = an.over.some(function(o){ return /^masse/.test(o.crit.id); });
+        if(causes.length && !masseOver) display += '<div class="nc-cause">'+esc(causes[0].crit.label.replace('Particules ','').replace(' Zone ',' ').replace('conductrices','cond.'))+(causes.length>1?' +'+(causes.length-1):'')+'</div>';
+        tip = 'Non conforme · gravité '+CONTAM_GRAVITES[an.grav].label.toLowerCase()+(an.over.length? ' - '+an.over.map(contamOverShort).join(' · ') : ' (détail non saisi)');
+      }
+      html += '<td class="score-cell '+cls+'" data-action="view-contam" data-id="'+rec.id+'"'+(tip?' title="'+esc(tip)+'"':'')+'>'+display+'</td>';
     });
     html += '</tr>';
   });
   html += '</tbody></table></div>';
+  html += '<div class="nc-legend tiny"><span><i class="sc-ok"></i>Conforme</span><span><i class="sc-danger"></i>NC gravité élevée (masse, particules à seuil 0)</span><span><i class="sc-nc-med"></i>NC gravité modérée (500–750 µm, cond. 200–400 µm)</span><span><i class="sc-nc-low"></i>NC gravité faible (petites particules 250–500 µm)</span><span><i class="sc-pending"></i>En attente d\'analyse</span></div>';
 
 
   // ── TABLEAU PAGINÉ DES RÉSULTATS ───────────────────────────────────
@@ -2221,10 +2330,10 @@ function proprContamination(){
 
   html += '<div class="eyebrow" style="margin-top:24px; margin-bottom:8px;">Historique des résultats</div>';
   html += '<div class="table-wrap"><table><thead><tr>'+
-    '<th>Ligne</th><th>Référence</th><th>Mois</th><th>Type</th><th>Masse principale</th><th>Statut</th><th>Collecté le</th><th></th>'+
+    '<th>Ligne</th><th>Référence</th><th>Mois</th><th>Type</th><th>Masse principale</th><th>Statut</th><th>Dépassement(s)</th><th>Collecté le</th><th></th>'+
     '</tr></thead><tbody>';
   if(!pageItems.length){
-    html += '<tr><td colspan="8">'+emptyState('Aucun résultat enregistré.')+'</td></tr>';
+    html += '<tr><td colspan="9">'+emptyState('Aucun résultat enregistré.')+'</td></tr>';
   } else {
     pageItems.forEach(function(c){
       var moisLabel = MONTHS_FR[c.mois].charAt(0).toUpperCase()+MONTHS_FR[c.mois].slice(1)+' '+c.annee;
@@ -2234,8 +2343,9 @@ function proprContamination(){
       var over = masse!==null && masse!==undefined && masse>seuil;
       html += '<tr><td>'+esc(c.ligne)+'</td><td>'+esc(c.ref)+'</td><td>'+moisLabel+'</td>'+
         '<td>'+(c.isRetest? badge('danger','Contre-analyse') : badge('neutral','1er relevé'))+'</td>'+
-        '<td style="font-family:var(--mono); color:'+(over?'var(--danger)':'inherit')+'; font-weight:700;">'+(masse!==null&&masse!==undefined? masse+'<span class="tiny"> mg</span>':'-')+'</td>'+
-        '<td>'+badge(contamLevelForStatut(c.statut), contamStatutLabel(c.statut))+'</td>'+
+        '<td style="font-family:var(--mono); color:'+(over?'var(--danger)':'inherit')+'; font-weight:'+(over?'700':'400')+';">'+(masse!==null&&masse!==undefined? masse+'<span class="tiny"> mg</span>':'-')+'</td>'+
+        '<td>'+contamGravBadge(c)+'</td>'+
+        '<td class="tiny">'+(c.statut==='nc'? esc(contamNcAnalysis(c).over.map(contamOverShort).join(' · ') || 'Détail non saisi') : '')+'</td>'+
         '<td class="num tiny">'+fmtDate(c.collecteDate)+'</td>'+
         '<td><button class="btn small" data-action="view-contam" data-id="'+c.id+'">Détail</button></td></tr>';
     });
@@ -2538,13 +2648,15 @@ async function handleSaveAnalyseContam(id){
   await save('contamination');
   if(rec.statut==='nc'){
     var msg, description;
+    var anS = contamNcAnalysis(rec), gS = CONTAM_GRAVITES[anS.grav];
+    var gravTxt = ' [gravité '+gS.label.toLowerCase()+' : '+anS.over.map(contamOverShort).join(' · ')+']';
     if(rec.isRetest){
       // 2ème NC consécutif → escalade
-      description = '🚨 ESCALADE - Contre-analyse également NC : '+rec.ligne+' · '+rec.ref+'. Blocage production recommandé.';
+      description = '🚨 ESCALADE - Contre-analyse également NC : '+rec.ligne+' · '+rec.ref+gravTxt+'. Blocage production recommandé.';
       msg = '⚠️ CONTRE-ANALYSE NON CONFORME - résultat NC deux fois consécutives ('+rec.ligne+' · '+rec.ref+').\n\nAction d\'escalade créée dans le plan d\'actions.';
     } else {
-      description = 'Contre-analyse à réaliser - '+rec.ligne+' · '+rec.ref+' (résultat NC)';
-      msg = 'Résultat NON CONFORME. Une contre-analyse est requise.\nUne action corrective a été créée dans le plan d\'actions.';
+      description = 'Contre-analyse à réaliser - '+rec.ligne+' · '+rec.ref+' (résultat NC'+gravTxt+')';
+      msg = 'Résultat NON CONFORME - gravité '+gS.label.toUpperCase()+'.\n'+anS.over.map(contamOverShort).join('\n')+'\n\nUne contre-analyse est requise.\nUne action corrective a été créée dans le plan d\'actions.';
     }
     DATA.actions.push({id:uid('act'), origine:'Propreté', secteur:currentSecteur, description:description, ligne:rec.ligne, responsable:'', echeance:null, statut:'planifiee', dateCreation:todayStr()});
     await save('actions');
@@ -2595,12 +2707,19 @@ function renderContamDetailModal(){
   var crit = REF_CRITERIA[c.ref]||[];
   var html = '<div class="modal-overlay"><div class="modal-box">';
   html += '<h3>'+esc(c.ligne)+' · '+esc(c.ref)+' - '+MONTHS_FR[c.mois].charAt(0).toUpperCase()+MONTHS_FR[c.mois].slice(1)+' '+c.annee+'</h3>';
-  html += '<div style="margin-bottom:12px;">'+badge(contamLevelForStatut(c.statut), contamStatutLabel(c.statut))+(c.isRetest?' <span class="tiny">(contre-analyse)</span>':'')+'</div>';
+  html += '<div style="margin-bottom:12px;">'+contamGravBadge(c)+(c.isRetest?' <span class="tiny">(contre-analyse)</span>':'')+'</div>';
+  if(c.statut==='nc'){
+    var anD = contamNcAnalysis(c);
+    if(anD.grav==='low') html += '<div class="nc-grav-note nc-grav-low">Dépassement uniquement sur les <b>petites particules</b> : gravité faible. La masse polluante (critère principal) et les grosses particules sont conformes.</div>';
+    else if(anD.grav==='medium') html += '<div class="nc-grav-note nc-grav-med">Dépassement sur des particules de taille intermédiaire : gravité modérée. La masse polluante et les plus grosses particules sont conformes.</div>';
+    else if(anD.unknown) html += '<div class="nc-grav-note">Résultat NC sans détail des valeurs : gravité considérée comme élevée par prudence.</div>';
+  }
   if(c.statut==='ok'||c.statut==='nc'){
     crit.forEach(function(cr){
-      var v = c.values[cr.id];
+      var v = (c.values||{})[cr.id];
       var over = v!==undefined && v!==null && v!=='' && Number(v)>cr.seuil;
-      html += '<div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border); font-size:12.5px;"><span>'+esc(cr.label)+'</span><span style="font-family:var(--mono); color:'+(over?'var(--danger)':'var(--text)')+'; font-weight:600;">'+(v!==undefined&&v!==null&&v!==''?v:'-')+(cr.unit?' '+cr.unit:'')+' <span class="tiny">(seuil '+cr.seuil+(cr.unit?' '+cr.unit:'')+')</span></span></div>';
+      var gk = contamCritGravite(cr), gv = CONTAM_GRAVITES[gk];
+      html += '<div style="display:flex; justify-content:space-between; gap:8px; padding:5px 0; border-bottom:1px solid var(--border); font-size:12.5px;"><span>'+esc(cr.label)+' <span class="grav-pill grav-'+gk+'" title="Gravité si dépassé">'+gv.label+'</span></span><span style="font-family:var(--mono); color:'+(over?'var(--'+gv.level+')':'var(--text)')+'; font-weight:'+(over?'700':'500')+'; white-space:nowrap;">'+(v!==undefined&&v!==null&&v!==''?v:'-')+(cr.unit?' '+cr.unit:'')+' <span class="tiny">(seuil '+cr.seuil+(cr.unit?' '+cr.unit:'')+')</span></span></div>';
     });
   }
   html += '<div class="tiny" style="margin-top:10px;">'+(c.serie?'N° série : '+esc(c.serie)+' · ':'')+(c.collecteDate?'Collecté le '+fmtDate(c.collecteDate):'')+'</div>';
@@ -3080,7 +3199,7 @@ var VERIF_DELAI_JOURS = 30;
 function addDays(dateStr, n){ var d = new Date(dateStr+'T00:00:00'); d.setDate(d.getDate()+n); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function actionPanelCategory(a){
   if(isActionLate(a)) return 'late';
-  if(a.statut==='realisee') return 'realisee';
+  if(a.statut==='realisee') return a.sansVerif ? 'cloturee' : 'realisee';  // action ponctuelle : close dès sa réalisation
   if(a.statut==='verifiee' || a.statut==='perennisee') return 'cloturee';
   if(a.statut==='abandonnee' || a.statut==='non_prise_en_compte') return 'abandon';
   return 'encours';
@@ -3091,12 +3210,13 @@ function isActionIncomplete(a){
   return (c==='encours' || c==='late') && (!a.echeance || !(a.responsable||'').trim());
 }
 // n°2 : vérification d'efficacité dépassée
-function isVerifLate(a){ return a.statut==='realisee' && a.verifPrevue && a.verifPrevue < todayStr(); }
+function isVerifLate(a){ return a.statut==='realisee' && !a.sansVerif && a.verifPrevue && a.verifPrevue < todayStr(); }
 // Règles appliquées à chaque changement de statut (fiche, onglet, partout)
 function applyActionStatusTransition(a, oldStatut, newStatut){
   if(newStatut==='realisee' && oldStatut!=='realisee'){
     a.dateRealisation = todayStr();
-    if(!a.verifPrevue) a.verifPrevue = addDays(todayStr(), VERIF_DELAI_JOURS);
+    if(a.sansVerif) a.verifPrevue = null;
+    else if(!a.verifPrevue) a.verifPrevue = addDays(todayStr(), VERIF_DELAI_JOURS);
   }
   if((newStatut==='verifiee' || newStatut==='perennisee') && !a.dateVerification) a.dateVerification = todayStr();
   if(oldStatut && oldStatut!==newStatut){
@@ -3199,7 +3319,7 @@ function renderActionsPanel(){
   h += '<div class="ap-list"><table><thead><tr><th>Statut</th>'+(showSect?'<th>Secteur</th>':'')+'<th>Ligne</th><th>Action</th><th>Responsable</th><th>Échéance</th><th>Délai / vérification</th></tr></thead><tbody>';
   h += rows.map(function(a){
     var cat = actionPanelCategory(a);
-    var meta = actionStatusMeta(a.statut);
+    var meta = actionMeta(a);
     var st = cat==='late' ? badge('danger','En retard') : badge(meta.level==='neutral' && cat==='encours' ? 'warn' : meta.level, meta.label);
     var lastNote = (a.suivi && a.suivi.length) ? a.suivi[a.suivi.length-1] : null;
     var src = actionSourceLabel(a);
@@ -3285,6 +3405,7 @@ function gotoActionSource(a){
   if(s.type==='prison'){ currentTab = 'prison'; prisonZoneFilter = ''; renderNav(); render(); var el = document.getElementById('prison-detail-'+s.ref); if(el && el.scrollIntoView) el.scrollIntoView({behavior:'smooth', block:'start'}); return; }
   if(s.type==='chokko'){ currentTab = 'chokko'; chokkoView = 'saisie'; chokkoLigne = s.ligne; chokkoYear = s.annee; chokkoMonth = s.mois; renderNav(); render(); return; }
   if(s.type==='ateq'){ currentTab = 'ateq'; renderNav(); render(); return; }
+  if(s.type==='pareto'){ paretoState = {src:s.src, ligne:s.ligne||'', period:s.period||'mois', month:s.month||null}; currentTab = 'pareto'; renderNav(); render(); return; }
 }
 // ---------- Fiche action ----------
 function actionResponsableSelect(current){
@@ -3309,7 +3430,7 @@ function actionDetailModalHtml(){
   return '<div class="modal-overlay action-detail-backdrop"><div class="modal-box" style="max-width:740px; width:100%; max-height:90vh; overflow-y:auto;">'+
     '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">'+
       '<h3 style="margin:0;">'+(isNew?'Nouvelle action':'Fiche action')+'</h3>'+
-      (isNew? '' : (cat==='late'? badge('danger','En retard') : badge(actionStatusMeta(a.statut).level, actionStatusMeta(a.statut).label)))+
+      (isNew? '' : (cat==='late'? badge('danger','En retard') : badge(actionMeta(a).level, actionMeta(a).label)))+
     '</div>'+
     (src? '<div class="ad-source"><span>Origine : <b>'+esc(src)+'</b></span>'+(a.source? '<button class="btn small" data-action="action-goto-source"'+(isNew?' disabled title="Disponible une fois l\'action enregistrée"':'')+'>Voir la source →</button>' : '')+'</div>' : '')+
     '<label class="field" style="margin-bottom:10px;">Description<textarea id="ad-desc" rows="3" style="width:100%; font-family:inherit; font-size:13.5px;">'+esc(a.description||'')+'</textarea></label>'+
@@ -3322,13 +3443,17 @@ function actionDetailModalHtml(){
     (isNew? '' : '<p class="tiny" style="margin:8px 0 0; color:var(--text-faint);">Secteur '+esc(a.secteur||'MCU')+(a.dateCreation?' · créée le '+fmtDate(a.dateCreation):'')+(a.dateRealisation?' · réalisée le '+fmtDate(a.dateRealisation):'')+(a.dateVerification?' · vérifiée le '+fmtDate(a.dateVerification):'')+'</p>')+
     '<div class="ad-verif">'+
       '<div class="eyebrow" style="margin-bottom:4px;">Vérification d\'efficacité</div>'+
-      '<p class="tiny" style="margin:0 0 8px; color:var(--text-faint);">Comment saura-t-on que l\'action a fonctionné ? Une date de vérification est proposée automatiquement à J+'+VERIF_DELAI_JOURS+' quand l\'action passe en « Réalisée ».</p>'+
+      '<label class="ad-noverif"><input type="checkbox" id="ad-sansverif"'+(a.sansVerif?' checked':'')+'> <span><b>Pas de vérification d\'efficacité nécessaire</b><br><span class="tiny">Action ponctuelle (essai, test, demande unique…) qui ne corrige pas un défaut : elle sera close dès qu\'elle est réalisée.</span></span></label>'+
+      '<div id="ad-sansverif-motif-wrap" style="'+(a.sansVerif?'':'display:none;')+' margin-top:8px;"><label class="field">Pourquoi (facultatif)<input type="text" id="ad-sansverif-motif" value="'+esc(a.sansVerifMotif||'')+'" placeholder="Ex. essai unique d\'emmanchement de bagues, pas lié à un défaut"></label></div>'+
+      '<div id="ad-verif-fields" style="'+(a.sansVerif?'display:none;':'')+'">'+
+      '<p class="tiny" style="margin:8px 0 8px; color:var(--text-faint);">Comment saura-t-on que l\'action a fonctionné ? Une date de vérification est proposée automatiquement à J+'+VERIF_DELAI_JOURS+' quand l\'action passe en « Réalisée ».</p>'+
       '<div class="ad-grid">'+
         '<label class="field">Critère d\'efficacité<input type="text" id="ad-critere" value="'+esc(a.critereEfficacite||'')+'" placeholder="Ex. 0 défaut OP1010 sur 4 semaines"></label>'+
         '<label class="field">Vérification prévue le<input type="date" id="ad-verif" value="'+esc(a.verifPrevue||'')+'"></label>'+
       '</div>'+
       '<label class="field" style="margin-top:10px;">Résultat de la vérification<textarea id="ad-resultat" rows="2" style="width:100%; font-family:inherit; font-size:13px;" placeholder="Constat lors de la vérification (efficace / non efficace et pourquoi)">'+esc(a.resultatVerif||'')+'</textarea></label>'+
       (isVerifLate(a)? '<p class="tiny" style="color:var(--danger); margin:6px 0 0; font-weight:600;">Vérification en retard de '+(-daysBetween(todayStr(), a.verifPrevue))+' jour(s).</p>' : '')+
+      '</div>'+
     '</div>'+
     '<div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">'+
       '<div class="eyebrow" style="margin-bottom:8px;">Suivi de l\'avancement</div>'+
@@ -3362,6 +3487,15 @@ async function handleSaveActionDetail(){
   a.critereEfficacite = document.getElementById('ad-critere').value.trim();
   a.verifPrevue = document.getElementById('ad-verif').value || null;
   a.resultatVerif = document.getElementById('ad-resultat').value.trim();
+  var sv = !!document.getElementById('ad-sansverif').checked;
+  if(!isNew && !!a.sansVerif!==sv){
+    a.suivi = a.suivi || [];
+    a.suivi.push({date:todayStr(), auteur:currentUser?currentUser.displayName:'', texte: sv ? 'Marquée « sans vérification d\'efficacité » (action ponctuelle)' : 'Vérification d\'efficacité réactivée'});
+  }
+  a.sansVerif = sv;
+  a.sansVerifMotif = sv ? document.getElementById('ad-sansverif-motif').value.trim() : '';
+  if(sv) a.verifPrevue = null;
+  else if(a.statut==='realisee' && !a.verifPrevue) a.verifPrevue = addDays(a.dateRealisation||todayStr(), VERIF_DELAI_JOURS);
   var newStatut = document.getElementById('ad-statut').value;
   a.statut = newStatut;
   applyActionStatusTransition(a, oldStatut, newStatut);
@@ -3383,7 +3517,7 @@ function printActionsPanel(){
   var old = document.getElementById('actions-print-sheet'); if(old) old.remove();
   var sheet = document.createElement('div'); sheet.id = 'actions-print-sheet';
   var rowsHtml = sel.rows.map(function(a){
-    var cat = actionPanelCategory(a), meta = actionStatusMeta(a.statut);
+    var cat = actionPanelCategory(a), meta = actionMeta(a);
     var lastNote = (a.suivi && a.suivi.length) ? a.suivi[a.suivi.length-1] : null;
     var src = actionSourceLabel(a);
     var delay = actionDelayHtml(a).replace(/<[^>]+>/g,'');
@@ -3443,7 +3577,7 @@ RENDERERS.actions = function(){
 };
 function actionRow(a){
   var late = isActionLate(a);
-  var meta = actionStatusMeta(a.statut);
+  var meta = actionMeta(a);
   var level = late ? 'danger' : meta.level;
   var label = late ? 'En retard' : meta.label;
   var ligneCell = esc(val(a.ligne,''));
@@ -4500,6 +4634,383 @@ async function handleImportPrisonSheet(){
 }
 
 var biblioFormOpen = false;
+// ============ ANALYSES PARETO (pilotage en réunion) ============
+var PARETO_SOURCES = [
+  {id:'chokko',          group:'Production', label:'CHOKKO · défauts par poste',                 unit:'défauts', tab:'chokko',   mcu:true, period:true,  lines:['MCU1','MCU2','MCU3']},
+  {id:'propre_critere',  group:'Production', label:'Propreté · écarts (NG) par critère',          unit:'écarts',  tab:'proprete', mcu:true, period:true,  lines:['MCU1','MCU2','MCU3']},
+  {id:'propre_poste',    group:'Production', label:'Propreté · écarts (NG) par poste',            unit:'écarts',  tab:'proprete', mcu:true, period:true,  lines:['MCU1','MCU2','MCU3']},
+  {id:'contam',          group:'Production', label:'Contamination · résultats non conformes',     unit:'NC',      tab:'proprete', mcu:true, period:true,  lines:['MCU0','MCU1','MCU2','MCU3']},
+  {id:'prison_defaut',   group:'Qualité',    label:'Prison qualité · pièces bloquées par défaut', unit:'pièces',  tab:'prison',   mcu:true, period:false, lines:['MCU1','MCU2','MCU3']},
+  {id:'prison_ref',      group:'Qualité',    label:'Prison qualité · pièces bloquées par réf.',   unit:'pièces',  tab:'prison',   mcu:true, period:false, lines:['MCU1','MCU2','MCU3']},
+  {id:'actions_origine', group:'Qualité',    label:"Plan d'actions · actions ouvertes par origine",     unit:'actions', tab:'actions', period:false, lines:'secteur'},
+  {id:'actions_resp',    group:'Qualité',    label:"Plan d'actions · actions ouvertes par responsable", unit:'actions', tab:'actions', period:false, lines:'secteur'},
+  {id:'actions_late',    group:'Qualité',    label:"Plan d'actions · actions en retard par responsable", unit:'actions', tab:'actions', period:false, lines:'secteur'}
+];
+var PARETO_PERIODS = [['mois','Mois'],['3m','3 mois glissants'],['annee','Année']];
+var PARETO_COLOR_A = '#B2764A', PARETO_COLOR_B = '#E6D5C6', PARETO_COLOR_OTHER = '#CFCAC2', PARETO_COLOR_CUM = '#1F3864';
+var paretoState = {src:null, ligne:'', period:'mois', month:null};
+var paretoWidgetSrc = null;
+var chartPareto = null, chartParetoWidget = null;
+
+function paretoSourceById(id){ return PARETO_SOURCES.filter(function(s){ return s.id===id; })[0] || null; }
+function paretoAvailableSources(){
+  return PARETO_SOURCES.filter(function(s){
+    if(s.mcu && currentSecteur!=='MCU') return false;
+    return tabAllowed(s.tab);
+  });
+}
+function paretoLinesFor(src){ return src.lines==='secteur' ? secteurLines() : (src.lines||[]); }
+function paretoMonthLabel(key){ var mi = Number(key.slice(5,7))-1; return MONTHS_FR[mi].charAt(0).toUpperCase()+MONTHS_FR[mi].slice(1)+' '+key.slice(0,4); }
+function paretoShiftMonth(key, n){ var y = Number(key.slice(0,4)), m = Number(key.slice(5,7))-1+n; var d = new Date(y, m, 1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function paretoMonthEnd(key){ return key+'-'+String(daysInMonth(Number(key.slice(0,4)), Number(key.slice(5,7))-1)).padStart(2,'0'); }
+// Période analysée + période précédente équivalente (pour la colonne "évolution")
+function paretoRange(period, month){
+  var r = paretoRangeFull(period, month);
+  // Période en cours : on compare à durée égale (ex. 1er-7 octobre contre 1er-7 septembre), sinon l'évolution est trompeuse
+  var today = todayStr();
+  if(r.from<=today && r.to>today){
+    var elapsed = daysBetween(r.from, today);
+    r.to = today;
+    r.label += ' (au '+fmtDate(today).slice(0,5)+')';
+    var pto = addDays(r.prev.from, elapsed);
+    r.prev = {from:r.prev.from, to:pto, label:'la même durée '+(period==='annee'?'en '+r.prev.from.slice(0,4):'du '+fmtDate(r.prev.from).slice(0,5)+' au '+fmtDate(pto).slice(0,5))};
+    r.partial = true;
+  }
+  return r;
+}
+function paretoRangeFull(period, month){
+  month = month || todayStr().slice(0,7);
+  if(period==='3m'){
+    var f = paretoShiftMonth(month,-2), pf = paretoShiftMonth(month,-5), pt = paretoShiftMonth(month,-3);
+    return {from:f+'-01', to:paretoMonthEnd(month), label:paretoMonthLabel(f)+' → '+paretoMonthLabel(month), endMonth:month,
+      prev:{from:pf+'-01', to:paretoMonthEnd(pt), label:'les 3 mois précédents'}};
+  }
+  if(period==='annee'){
+    var y = month.slice(0,4), py = String(Number(y)-1);
+    return {from:y+'-01-01', to:y+'-12-31', label:'Année '+y, endMonth:month, prev:{from:py+'-01-01', to:py+'-12-31', label:'l\'année '+py}};
+  }
+  var pm = paretoShiftMonth(month,-1);
+  return {from:month+'-01', to:paretoMonthEnd(month), label:paretoMonthLabel(month), endMonth:month, prev:{from:pm+'-01', to:paretoMonthEnd(pm), label:paretoMonthLabel(pm).toLowerCase()}};
+}
+function paretoInRange(dateStr, range){ return !!dateStr && (!range || (dateStr>=range.from && dateStr<=range.to)); }
+function paretoActionOpen(a){ var c = actionPanelCategory(a); return c==='late' || c==='encours' || c==='realisee'; }
+
+// Collecte des données brutes : {key: {key,label,value,ligne,meta}}
+function paretoRaw(src, range, ligne){
+  var acc = {};
+  function add(key, label, v, extra){
+    if(!v) return;
+    if(!acc[key]){ acc[key] = {key:key, label:label, value:0}; if(extra) Object.keys(extra).forEach(function(k){ acc[key][k] = extra[k]; }); }
+    acc[key].value += v;
+  }
+  var lines = ligne ? [ligne] : paretoLinesFor(src);
+  if(src.id==='chokko'){
+    lines.forEach(function(l){
+      var names = {}; chokkoPostes(l).forEach(function(p){ names[p[0]] = p[1]; });
+      DATA.chokko.forEach(function(e){
+        if(e.ligne!==l || !paretoInRange(e.date, range)) return;
+        Object.keys(e.defects||{}).forEach(function(pid){
+          var n = Number(e.defects[pid])||0;
+          add(l+'|'+pid, (ligne?'':l+' · ')+pid+(names[pid]?' - '+names[pid]:''), n, {ligne:l, poste:pid, posteNom:names[pid]||''});
+        });
+      });
+    });
+  } else if(src.id==='propre_critere' || src.id==='propre_poste'){
+    DATA.propAudits.forEach(function(a){
+      if(lines.indexOf(a.ligne)<0 || !paretoInRange(a.date, range)) return;
+      (a.items||[]).forEach(function(it){
+        if(it.result!=='NG') return;
+        if(src.id==='propre_poste'){ var po = it.poste||'Général'; add(po, po, 1); }
+        else { var cr = (it.critere||'Critère').trim(); add(cr, cr+(it.poste && it.poste!=='Général'?' ('+it.poste+')':''), 1); }
+      });
+    });
+  } else if(src.id==='contam'){
+    DATA.contamination.forEach(function(c){
+      if(c.statut!=='nc' || lines.indexOf(c.ligne)<0 || c.mois===undefined || c.mois===null) return;
+      var d = c.annee+'-'+String(c.mois+1).padStart(2,'0')+'-15';
+      if(!paretoInRange(d, range)) return;
+      add(c.ligne+'|'+c.ref, c.ligne+' · '+c.ref, 1, {ligne:c.ligne});
+    });
+  } else if(src.id==='prison_defaut' || src.id==='prison_ref'){
+    DATA.prisonLots.forEach(function(lot){
+      (lot.lignes||[]).forEach(function(pl){
+        if(ligne && pl.ligne!==ligne) return;
+        var n = prisonLineTotal(pl);
+        if(src.id==='prison_defaut') add(lot.id, lot.defaut+(lot.type?' ('+lot.type+')':''), n, {lotId:lot.id});
+        else add(String(pl.ref||'?'), 'Réf. '+(pl.ref||'?'), n);
+      });
+    });
+  } else {
+    bySecteur(DATA.actions).forEach(function(a){
+      if(ligne && a.ligne!==ligne) return;
+      if(src.id==='actions_late'){ if(!isActionLate(a)) return; }
+      else if(!paretoActionOpen(a)) return;
+      if(src.id==='actions_origine'){
+        var o = (a.source && a.source.typeLabel) || a.origine || 'Non précisée';
+        if(o==='Suivi des actions') o = 'Saisie directe';
+        add(o, o, 1);
+      } else {
+        var r = (a.responsable||'').trim() || 'Non assigné';
+        add(r, r, 1);
+      }
+    });
+  }
+  return acc;
+}
+// Tri décroissant, pourcentages, cumul et classe A (jusqu'à 80 % du cumul) / B
+function paretoCompute(src, range, ligne){
+  var raw = paretoRaw(src, range, ligne);
+  var rows = Object.keys(raw).map(function(k){ return raw[k]; }).filter(function(r){ return r.value>0; })
+    .sort(function(a,b){ return b.value-a.value || a.label.localeCompare(b.label,'fr'); });
+  var total = rows.reduce(function(s,r){ return s+r.value; },0);
+  var cum = 0;
+  rows.forEach(function(r){
+    var before = total ? cum/total*100 : 0;
+    cum += r.value;
+    r.pct = total ? r.value/total*100 : 0;
+    r.cum = total ? cum/total*100 : 0;
+    r.cls = before < 80 ? 'A' : 'B';   // A = causes qui, cumulées, atteignent les 80 % (la barre qui franchit le seuil incluse)
+  });
+  var prev = null;
+  if(src.period && range && range.prev){
+    var praw = paretoRaw(src, range.prev, ligne);
+    prev = {total:0, byKey:{}};
+    Object.keys(praw).forEach(function(k){ prev.byKey[k] = praw[k].value; prev.total += praw[k].value; });
+  }
+  return {rows:rows, total:total, prev:prev, nA:rows.filter(function(r){ return r.cls==='A'; }).length};
+}
+function paretoFmtPct(v){ return (Math.round(v*10)/10).toLocaleString('fr-FR')+' %'; }
+function paretoShort(s, n){ s = String(s); return s.length>n ? s.slice(0,n-1)+'…' : s; }
+function paretoChartRows(res, maxBars){
+  var rows = res.rows;
+  if(rows.length<=maxBars) return rows;
+  var top = rows.slice(0, maxBars-1), rest = rows.slice(maxBars-1);
+  var v = rest.reduce(function(s,r){ return s+r.value; },0);
+  return top.concat([{key:'__autres__', label:'Autres ('+rest.length+')', value:v, pct:res.total? v/res.total*100:0, cum:100, cls:'C'}]);
+}
+function paretoChartConfig(res, src, compact){
+  var rows = paretoChartRows(res, compact? 8 : 14);
+  var valueLabels = {
+    id:'paretoValueLabels',
+    afterDatasetsDraw:function(chart){
+      var meta = chart.getDatasetMeta(0); if(!meta || !meta.data) return;
+      var c = chart.ctx; c.save();
+      c.font = (compact?'600 10px ':'600 11px ')+'system-ui, sans-serif'; c.fillStyle = '#3b3b3b'; c.textAlign = 'center'; c.textBaseline = 'bottom';
+      meta.data.forEach(function(bar, i){ c.fillText(String(rows[i].value), bar.x, bar.y-3); });
+      c.restore();
+    }
+  };
+  return {
+    type:'bar',
+    data:{
+      labels: rows.map(function(r){ return paretoShort(r.label, compact? 16 : 26); }),
+      datasets:[
+        {type:'bar', label:src.unit.charAt(0).toUpperCase()+src.unit.slice(1), yAxisID:'y', order:2, borderWidth:0, borderRadius:3,
+          backgroundColor: rows.map(function(r){ return r.cls==='A'?PARETO_COLOR_A:r.cls==='C'?PARETO_COLOR_OTHER:PARETO_COLOR_B; }),
+          data: rows.map(function(r){ return r.value; })},
+        {type:'line', label:'% cumulé', yAxisID:'y1', order:1, data: rows.map(function(r){ return Math.round(r.cum*10)/10; }),
+          borderColor:PARETO_COLOR_CUM, backgroundColor:PARETO_COLOR_CUM, borderWidth:2, pointRadius: compact?2:3, tension:0},
+        {type:'line', label:'Seuil 80 %', yAxisID:'y1', order:0, data: rows.map(function(){ return 80; }),
+          borderColor:'#9A948A', borderDash:[6,4], borderWidth:1, pointRadius:0, pointHitRadius:0}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false,
+      layout:{padding:{top:16}},
+      plugins:{
+        legend:{display:!compact, position:'bottom', labels:{boxWidth:12, font:{size:11}}},
+        tooltip:{callbacks:{
+          title:function(items){ return items.length ? rows[items[0].dataIndex].label : ''; },
+          label:function(ctx){
+            var r = rows[ctx.dataIndex];
+            if(ctx.datasetIndex===0) return ' '+r.value+' '+src.unit+' ('+paretoFmtPct(r.pct)+')';
+            if(ctx.datasetIndex===1) return ' Cumul : '+paretoFmtPct(r.cum);
+            return null;
+          }
+        }}
+      },
+      scales:{
+        x:{ticks:{autoSkip:false, maxRotation:compact?50:40, minRotation:0, font:{size:compact?9.5:11}}, grid:{display:false}},
+        y:{beginAtZero:true, grace:'8%', title:{display:!compact, text:'Nombre de '+src.unit}, ticks:{precision:0}},
+        y1:{min:0, max:100, position:'right', grid:{drawOnChartArea:false}, ticks:{callback:function(v){ return v+' %'; }, stepSize:20}}
+      }
+    },
+    plugins:[valueLabels]
+  };
+}
+function paretoReading(res, src, range){
+  if(!res.total) return 'Aucune donnée sur la période.';
+  var top = res.rows[0];
+  var aRows = res.rows.filter(function(r){ return r.cls==='A'; });
+  var aSum = aRows.reduce(function(s,r){ return s+r.value; },0);
+  var txt = '<b>'+aRows.length+' cause'+(aRows.length>1?'s':'')+' sur '+res.rows.length+'</b> concentre'+(aRows.length>1?'nt':'')+' <b>'+paretoFmtPct(aSum/res.total*100)+'</b> des '+src.unit+' ('+aSum+' / '+res.total+'). '+
+    'Priorité n°1 : <b>'+esc(top.label)+'</b> ('+top.value+', '+paretoFmtPct(top.pct)+').';
+  if(res.prev){
+    if(res.prev.total){
+      var d = res.total-res.prev.total, pc = Math.round(d/res.prev.total*100);
+      txt += ' Total '+res.total+' contre '+res.prev.total+' sur '+esc(range.prev.label)+' (<b style="color:var(--'+(d>0?'danger':d<0?'ok':'text-faint')+');">'+(d>0?'+':'')+pc+' %</b>).';
+    } else txt += ' Aucune donnée sur '+esc(range.prev.label)+' pour comparer.';
+  }
+  return txt;
+}
+function paretoActionSource(src, row, range){
+  var per = range ? range.label : 'stock actuel';
+  if(src.id==='chokko' && row.ligne){
+    return {type:'chokko', ref:row.ligne+'|'+row.poste, secteur:currentSecteur, ligne:row.ligne,
+      annee:Number(range.endMonth.slice(0,4)), mois:Number(range.endMonth.slice(5,7))-1,
+      label:'CHOKKO · '+row.ligne+' · '+row.poste+(row.posteNom?' - '+row.posteNom:'')+' (Pareto '+per+')', typeLabel:'CHOKKO'};
+  }
+  if(src.id==='prison_defaut' && row.lotId){
+    return {type:'prison', ref:row.lotId, secteur:currentSecteur, label:'Prison qualité · '+row.label, typeLabel:'Prison qualité'};
+  }
+  return {type:'pareto', ref:src.id+'|'+row.key, secteur:currentSecteur, src:src.id, ligne:paretoState.ligne||'', period:paretoState.period, month:paretoState.month,
+    label:'Pareto · '+src.label+' · '+row.label+' ('+per+')', typeLabel:'Pareto'};
+}
+function paretoLinkedCount(src, row){
+  if(src.id==='chokko' && row.ligne) return actionsLinkedTo('chokko', row.ligne+'|'+row.poste).filter(paretoActionOpen).length;
+  if(src.id==='prison_defaut' && row.lotId) return actionsLinkedTo('prison', row.lotId).filter(paretoActionOpen).length;
+  return actionsLinkedTo('pareto', src.id+'|'+row.key).filter(paretoActionOpen).length;
+}
+function paretoEnsureState(){
+  var srcs = paretoAvailableSources();
+  if(!srcs.length) return null;
+  if(!paretoState.src || !srcs.some(function(s){ return s.id===paretoState.src; })) paretoState.src = srcs[0].id;
+  if(!paretoState.month) paretoState.month = todayStr().slice(0,7);
+  var src = paretoSourceById(paretoState.src);
+  if(paretoState.ligne && paretoLinesFor(src).indexOf(paretoState.ligne)<0) paretoState.ligne = '';
+  return src;
+}
+function paretoCurrent(){
+  var src = paretoEnsureState(); if(!src) return null;
+  var range = src.period ? paretoRange(paretoState.period, paretoState.month) : null;
+  return {src:src, range:range, res:paretoCompute(src, range, paretoState.ligne)};
+}
+function paretoTitle(cur){
+  return cur.src.label+(paretoState.ligne?' · '+paretoState.ligne:' · toutes lignes')+' · '+(cur.range? cur.range.label : 'stock / état actuel');
+}
+
+RENDERERS.pareto = function(){
+  var cur = paretoCurrent();
+  if(!cur) return '<div class="section"><div class="empty">Aucune donnée analysable pour ce secteur avec vos droits.</div></div>';
+  var src = cur.src, range = cur.range, res = cur.res;
+  var srcs = paretoAvailableSources(), groups = [];
+  srcs.forEach(function(s){ if(groups.indexOf(s.group)<0) groups.push(s.group); });
+  var lines = paretoLinesFor(src);
+
+  var h = '<div class="section"><div class="toolbar"><div class="left" style="flex-wrap:wrap; gap:8px;">';
+  h += '<select id="pareto-src" title="Ce qu\'on analyse">'+groups.map(function(g){
+    return '<optgroup label="'+esc(g)+'">'+srcs.filter(function(s){ return s.group===g; }).map(function(s){ return '<option value="'+s.id+'"'+(s.id===src.id?' selected':'')+'>'+esc(s.label)+'</option>'; }).join('')+'</optgroup>';
+  }).join('')+'</select>';
+  h += '<select id="pareto-ligne"><option value="">Toutes les lignes</option>'+lines.map(function(l){ return '<option'+(l===paretoState.ligne?' selected':'')+'>'+esc(l)+'</option>'; }).join('')+'</select>';
+  if(src.period){
+    h += '<select id="pareto-period">'+PARETO_PERIODS.map(function(p){ return '<option value="'+p[0]+'"'+(p[0]===paretoState.period?' selected':'')+'>'+p[1]+'</option>'; }).join('')+'</select>';
+    h += '<button class="btn small" data-action="pareto-month" data-d="-1" title="Période précédente">◀</button>'+
+      '<input type="month" id="pareto-month" value="'+esc(paretoState.month)+'" style="width:150px;">'+
+      '<button class="btn small" data-action="pareto-month" data-d="1" title="Période suivante">▶</button>';
+  } else {
+    h += '<span class="tiny" style="align-self:center;">État actuel (pas de période)</span>';
+  }
+  h += '</div><div style="display:flex; gap:8px;">'+
+    '<button class="btn" data-action="pareto-fullscreen" title="Afficher en plein écran pour la réunion">⛶ Plein écran</button>'+
+    '<button class="btn" data-action="pareto-print" title="Exporter en PDF (A4 paysage)">🖨 Export PDF</button></div></div>';
+
+  h += '<div class="card" id="pareto-card">';
+  h += '<div class="pareto-head"><div><div class="eyebrow">Pareto</div><h2 style="margin:2px 0 0; font-size:18px;">'+esc(paretoTitle(cur))+'</h2></div>'+
+    '<div class="pareto-total"><span>'+res.total+'</span> '+esc(src.unit)+'</div></div>';
+  h += '<p class="pareto-reading">'+paretoReading(res, src, range)+'</p>';
+  if(!res.total){
+    h += '<div class="empty" style="padding:40px 0;">Rien à afficher pour cette sélection. Essayez une autre ligne ou une période plus large.</div></div></div>';
+    return h;
+  }
+  h += '<div class="pareto-layout"><div class="chart-box pareto-chart"><canvas id="chart-pareto"></canvas></div>';
+  h += '<div class="pareto-table-wrap"><table class="pareto-table"><thead><tr><th>#</th><th>Cause</th><th class="num">Nb</th><th class="num">%</th><th class="num">Cumul</th>'+
+    (res.prev? '<th class="num" title="Comparaison avec '+esc(range.prev.label)+'">Évol.</th>' : '')+'<th class="row-actions-noprint"></th></tr></thead><tbody>'+
+    res.rows.map(function(r, i){
+      var evo = '';
+      if(res.prev){
+        var p = res.prev.byKey[r.key]||0, d = r.value-p;
+        evo = '<td class="num" title="'+p+' sur '+esc(range.prev.label)+'">'+(d>0?'<span style="color:var(--danger);">▲ +'+d+'</span>':d<0?'<span style="color:var(--ok);">▼ '+d+'</span>':'<span style="color:var(--text-faint);">=</span>')+'</td>';
+      }
+      var linked = paretoLinkedCount(src, r);
+      return '<tr class="pareto-row-'+r.cls+'"><td class="num">'+(i+1)+'</td><td>'+(r.cls==='A'?'<span class="pareto-a" title="Fait partie des causes qui pèsent 80 %">A</span> ':'')+esc(r.label)+'</td>'+
+        '<td class="num"><b>'+r.value+'</b></td><td class="num">'+paretoFmtPct(r.pct)+'</td><td class="num">'+paretoFmtPct(r.cum)+'</td>'+evo+
+        '<td class="row-actions-noprint" style="white-space:nowrap;">'+(linked? '<span class="tiny" title="Actions ouvertes liées à cette cause">'+linked+' action'+(linked>1?'s':'')+'</span> ' : '')+
+          '<button class="btn small" data-action="pareto-new-action" data-key="'+esc(r.key)+'" title="Créer une action sur cette cause">+ Action</button></td></tr>';
+    }).join('')+
+    '</tbody></table></div></div>';
+  h += '<p class="tiny" style="margin-top:10px; color:var(--text-faint);">Barres foncées (A) : les causes qui, cumulées, font 80 % du total, à traiter en priorité. Survolez une barre pour le libellé complet.</p>';
+  h += '</div></div>';
+  return h;
+};
+function renderParetoChart(){
+  if(typeof Chart==='undefined') return;
+  var ctx = document.getElementById('chart-pareto'); if(!ctx) return;
+  if(chartPareto){ chartPareto.destroy(); chartPareto = null; }
+  var cur = paretoCurrent(); if(!cur || !cur.res.total) return;
+  try{ chartPareto = new Chart(ctx, paretoChartConfig(cur.res, cur.src, false)); }catch(err){ console.error('pareto chart error', err); }
+}
+// ----- Widget du tableau de bord : Pareto du mois en cours, source au choix -----
+function paretoWidgetCurrent(){
+  var srcs = paretoAvailableSources(); if(!srcs.length) return null;
+  if(!paretoWidgetSrc || !srcs.some(function(s){ return s.id===paretoWidgetSrc; })) paretoWidgetSrc = srcs[0].id;
+  var src = paretoSourceById(paretoWidgetSrc);
+  var range = src.period ? paretoRange('mois', todayStr().slice(0,7)) : null;
+  return {src:src, range:range, res:paretoCompute(src, range, ''), srcs:srcs};
+}
+function paretoWidgetHtml(){
+  var cur = paretoWidgetCurrent();
+  if(!cur) return '<div class="eyebrow">Pareto des causes</div><div class="tiny" style="margin-top:6px; color:var(--text-faint);">Aucune source disponible.</div>';
+  var h = '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px; flex-wrap:wrap;">'+
+    '<div class="eyebrow">Pareto · '+(cur.range? esc(cur.range.label.toLowerCase()) : 'état actuel')+'</div>'+
+    '<div style="display:flex; gap:6px; align-items:center;"><select id="pareto-w-src" class="dash-actions-noprint" style="font-size:12px; max-width:280px;">'+
+      cur.srcs.map(function(s){ return '<option value="'+s.id+'"'+(s.id===cur.src.id?' selected':'')+'>'+esc(s.label)+'</option>'; }).join('')+'</select>'+
+    '<button class="btn small dash-actions-noprint" data-action="pareto-open-full">Analyser →</button></div></div>';
+  if(!cur.res.total) return h+'<div class="empty" style="height:200px; display:flex; align-items:center; justify-content:center;">Aucune donnée '+(cur.range?'ce mois-ci':'')+'</div>';
+  return h+'<div class="chart-box" style="height:250px;"><canvas id="chart-pareto-widget"></canvas></div>'+
+    '<p class="tiny" style="margin-top:6px;">'+paretoReading(cur.res, cur.src, cur.range)+'</p>';
+}
+function renderParetoWidgetChart(){
+  if(typeof Chart==='undefined') return;
+  var ctx = document.getElementById('chart-pareto-widget'); if(!ctx) return;
+  if(chartParetoWidget){ chartParetoWidget.destroy(); chartParetoWidget = null; }
+  var cur = paretoWidgetCurrent(); if(!cur || !cur.res.total) return;
+  try{ chartParetoWidget = new Chart(ctx, paretoChartConfig(cur.res, cur.src, true)); }catch(err){ console.error('pareto widget error', err); }
+}
+// ----- Export PDF (A4 paysage, une page) -----
+function printPareto(){
+  var cur = paretoCurrent(); if(!cur) return;
+  var canvas = document.getElementById('chart-pareto');
+  var img = '';
+  if(canvas && chartPareto){ try{ img = canvas.toDataURL('image/png'); }catch(e){ img = ''; } }
+  var res = cur.res, src = cur.src, range = cur.range;
+  var old = document.getElementById('pareto-print-sheet'); if(old) old.remove();
+  var sheet = document.createElement('div'); sheet.id = 'pareto-print-sheet';
+  var rows = res.rows.slice(0, 18);
+  sheet.innerHTML = '<div class="aps-head"><div class="aps-title">PARETO · '+esc(src.label.toUpperCase())+'</div><div class="aps-date">Édité le '+fmtDate(todayStr())+'</div></div>'+
+    '<div class="aps-meta">Secteur '+esc(currentSecteur)+' · '+(paretoState.ligne? 'Ligne '+esc(paretoState.ligne) : 'Toutes les lignes')+' · '+(range? esc(range.label) : 'État actuel')+' · Total : <b>'+res.total+' '+esc(src.unit)+'</b></div>'+
+    '<div class="aps-kpis" style="display:block;">'+paretoReading(res, src, range)+'</div>'+
+    '<div class="pps-body">'+(img? '<img src="'+img+'" class="pps-img">' : '')+
+    '<table class="aps-table pps-table"><thead><tr><th>#</th><th>Cause</th><th>Nb</th><th>%</th><th>Cumul</th>'+(res.prev?'<th>Évol.</th>':'')+'</tr></thead><tbody>'+
+    rows.map(function(r,i){
+      var evo = '';
+      if(res.prev){ var d = r.value-(res.prev.byKey[r.key]||0); evo = '<td>'+(d>0?'+'+d:d<0?String(d):'=')+'</td>'; }
+      return '<tr'+(r.cls==='A'?' class="pps-a"':'')+'><td>'+(i+1)+'</td><td>'+esc(r.label)+'</td><td><b>'+r.value+'</b></td><td>'+paretoFmtPct(r.pct)+'</td><td>'+paretoFmtPct(r.cum)+'</td>'+evo+'</tr>';
+    }).join('')+
+    (res.rows.length>rows.length? '<tr><td></td><td colspan="'+(res.prev?5:4)+'"><i>+ '+(res.rows.length-rows.length)+' autre(s) cause(s)</i></td></tr>' : '')+
+    '</tbody></table></div>';
+  document.body.appendChild(sheet);
+  document.body.classList.add('print-pareto-sheet');
+  var cleanup = function(){ document.body.classList.remove('print-pareto-sheet'); var s = document.getElementById('pareto-print-sheet'); if(s) s.remove(); window.removeEventListener('afterprint', cleanup); };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(cleanup, 4000);
+  printWithPageSize('A4 landscape');
+}
+function paretoRowByKey(key){
+  var cur = paretoCurrent(); if(!cur) return null;
+  var r = cur.res.rows.filter(function(x){ return x.key===key; })[0];
+  return r ? {cur:cur, row:r} : null;
+}
+
 RENDERERS.bibliotheque = function(){
   var links = DATA.bibliotheque.slice().sort(function(a,b){ return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'}); });
   var html = '<div class="section">';
@@ -4697,7 +5208,7 @@ function chokkoNoteModalHtml(){
       '<button class="btn small" data-action="action-from-chokko">+ Créer une action pour ce poste</button></div>'+
       (function(){ var ls = actionsLinkedTo('chokko', m.ligne+'|'+m.poste).slice().sort(actionsPanelSort);
         if(!ls.length) return '<p class="tiny" style="color:var(--text-faint); margin:6px 0 0;">Aucune action liée pour l\'instant. Les actions créées ici apparaîtront aussi dans le suivi des actions du tableau de bord.</p>';
-        return ls.map(function(a){ var cat = actionPanelCategory(a), meta = actionStatusMeta(a.statut);
+        return ls.map(function(a){ var cat = actionPanelCategory(a), meta = actionMeta(a);
           return '<div class="ad-linked-row" data-action="action-open" data-id="'+a.id+'">'+(cat==='late'?badge('danger','En retard'):badge(meta.level, meta.label))+
             '<span>'+esc(a.description||'')+'</span><span class="tiny">'+(a.echeance?fmtDate(a.echeance):'')+'</span></div>'; }).join(''); })()+
     '</div>'+
@@ -5363,8 +5874,7 @@ function renderChokkoChart(){
       type:'bar',
       data:{labels:MONTHS_FR.map(function(m){return m.slice(0,3);}), datasets:[
         {label:'% Chokko', data:data, backgroundColor:'#1F5C5C99', borderColor:'#1F5C5C', borderWidth:1.5, borderRadius:3},
-        {label:'Objectif '+chokkoLigne, type:'line', data:Array(12).fill(chokkoObjectif(chokkoLigne)), borderColor:'#B8730A88', borderWidth:1.5, borderDash:[5,4], pointRadius:0},
-        {label:'Seuil d\'alerte', type:'line', data:Array(12).fill(chokkoObjectif(chokkoLigne)-2), borderColor:'#B23B2E88', borderWidth:1.5, borderDash:[5,4], pointRadius:0}
+        {label:'Objectif '+chokkoLigne, type:'line', data:Array(12).fill(chokkoObjectif(chokkoLigne)), borderColor:'#B8730A88', borderWidth:1.5, borderDash:[5,4], pointRadius:0}
       ]},
       options:{responsive:true, maintainAspectRatio:false, scales:{y:{min:80, max:100, ticks:{callback:function(v){return v+'%';}}}}}
     });
@@ -5954,11 +6464,13 @@ function render(){
     renderGlobalGauge(lastGlobalScore);
     renderConformitePieChart();
     renderChokkoTrendChart();
-    renderCausesBarChart();
+    renderParetoWidgetChart();
   }
   if(currentTab==='dashboard' && currentSecteur!=='MCU'){
     renderGlobalGauge(secteurGaugeScore);
+    renderParetoWidgetChart();
   }
+  if(currentTab==='pareto'){ renderParetoChart(); }
   if(currentTab==='planning'){ applyPlanningFilter(); }
   if(currentTab==='ateq'){ renderAteqCharts(); }
   if(currentTab==='perf'){ renderPerfChart(); }
@@ -6460,11 +6972,7 @@ RENDERERS.dashboard = function(){
       '<div class="chart-box" style="height:200px;"><canvas id="chart-chokko-trend"></canvas></div>';
   })();
 
-  W.w_causes_bar = (function(){
-    if(currentSecteur!=='MCU') return '<div class="eyebrow">Causes de non-conformité</div><div class="tiny" style="margin-top:6px; color:var(--text-faint);">Disponible pour le secteur MCU.</div>';
-    return '<div class="eyebrow" style="margin-bottom:8px;">Principales causes de non-conformité (mois en cours)</div>'+
-      '<div class="chart-box" style="height:220px;"><canvas id="chart-causes-bar"></canvas></div>';
-  })();
+  W.w_causes_bar = paretoWidgetHtml();
 
   W.w_production = (function(){
     if(currentSecteur!=='MCU') return '<div class="eyebrow">Production du secteur</div><div class="tiny" style="margin-top:6px; color:var(--text-faint);">Disponible uniquement pour le secteur MCU (données CHOKKO).</div>';
@@ -7621,7 +8129,10 @@ function tabAllowed(tabKey){
   if(!currentUser) return false;
   if(currentUser.roleId===ADMIN_ROLE_ID) return true;
   var role = DATA.roles.find(function(r){ return r.id===currentUser.roleId; });
-  return !!(role && role.tabs.indexOf(tabKey)>=0);
+  if(!role) return false;
+  // Analyses Pareto : accessibles dès que le rôle voit au moins un module qui les alimente
+  if(tabKey==='pareto' && ['chokko','proprete','prison','actions'].some(function(k){ return role.tabs.indexOf(k)>=0; })) return true;
+  return role.tabs.indexOf(tabKey)>=0;
 }
 function canAudit(){
   if(!currentUser) return false;
@@ -7637,6 +8148,7 @@ function canSub(key){
 }
 // ===== Navigation en sidebar avec groupes rétractables =====
 var SVG_ICONS = {
+  pareto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><rect x="4" y="8" width="3.5" height="13"/><rect x="10" y="13" width="3.5" height="8"/><rect x="16" y="17" width="3.5" height="4"/><path d="M5.7 6 12 4.5 18 3.5"/></svg>',
   prison: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
   bibliotheque: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
   dashboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>',
@@ -7658,14 +8170,14 @@ var SVG_ICONS = {
 };
 var EMOJI_ICONS = {
   dashboard:'📊', proprete:'🧼', metro:'📏', ateq:'⚠️', chokko:'🏭', perf:'📈',
-  actions:'✅', planning:'🗓️', prison:'🔒', bibliotheque:'📚', archives:'🗄️',
+  actions:'✅', pareto:'📶', planning:'🗓️', prison:'🔒', bibliotheque:'📚', archives:'🗄️',
   esd:'🎓', cicl:'🔧', formations:'🎓', comptes:'⚙️',
   production:'📦', qualite:'📋', admin:'⚙️'
 };
 function currentIconSet(){ return (DATA.uiSettings && DATA.uiSettings.iconStyle==='emoji') ? EMOJI_ICONS : SVG_ICONS; }
 var TAB_GROUPS_DEF = [
   {id:'production', label:'Production', tabs:['proprete','metro','ateq','chokko','perf']},
-  {id:'qualite',    label:'Qualité',    tabs:['actions','planning','prison','bibliotheque','archives']},
+  {id:'qualite',    label:'Qualité',    tabs:['actions','pareto','planning','prison','bibliotheque','archives']},
   {id:'formations', label:'Formations', tabs:['esd','cicl','formations']},
   {id:'admin',      label:'Admin',      tabs:['comptes']}
 ];
@@ -7909,6 +8421,7 @@ function isFieldDirty(el){
   return el.value !== el.defaultValue;
 }
 function isUserMidEdit(){
+  if(document.fullscreenElement) return true;   // présentation plein écran en cours (réunion) : ne pas reconstruire la page
   if(auditWizard || metroEditingId || planningEditingId || contamDirectFormOpen || contamCollecteFormOpen || contamAnalyseEditId || accountFormState || roleFormState || ateqActionFormOpen || particuleCampagneFormOpen || particuleDTEditId || particuleResultatEditId) return true;
   var openForms = document.querySelectorAll('form[id^="form-"]');
   for(var i=0;i<openForms.length;i++){ if(openForms[i].style.display!=='none') return true; }
@@ -8591,6 +9104,34 @@ async function handleSaveAteqWeek(){
 
 // ---------- event delegation ----------
 app.addEventListener('click', async function(e){
+  var parMonthBtn = e.target.closest('[data-action="pareto-month"]');
+  if(parMonthBtn){
+    var step = paretoState.period==='3m' ? 3 : paretoState.period==='annee' ? 12 : 1;
+    paretoState.month = paretoShiftMonth(paretoState.month || todayStr().slice(0,7), Number(parMonthBtn.dataset.d)*step);
+    render(); return;
+  }
+  if(e.target.closest('[data-action="pareto-fullscreen"]')){
+    var pc = document.getElementById('pareto-card');
+    if(pc && pc.requestFullscreen){ pc.requestFullscreen().catch(function(){ toast('Plein écran refusé par le navigateur.', 'error'); }); }
+    return;
+  }
+  if(e.target.closest('[data-action="pareto-print"]')){ printPareto(); return; }
+  if(e.target.closest('[data-action="pareto-open-full"]')){
+    var wc = paretoWidgetCurrent();
+    if(wc){ paretoState = {src:wc.src.id, ligne:'', period:'mois', month:todayStr().slice(0,7)}; }
+    currentTab = 'pareto'; renderNav(); render(); window.scrollTo(0,0); return;
+  }
+  var parActBtn = e.target.closest('[data-action="pareto-new-action"]');
+  if(parActBtn){
+    if(document.fullscreenElement){ try{ await document.exitFullscreen(); }catch(err){} }
+    var pr = paretoRowByKey(parActBtn.dataset.key);
+    if(pr){
+      var r = pr.row, src = pr.cur.src;
+      var desc = 'Pareto '+src.label.split(' · ')[0]+' ('+(pr.cur.range? pr.cur.range.label : 'état actuel')+') : '+r.label+' = '+r.value+' '+src.unit+' ('+paretoFmtPct(r.pct)+'). Action : ';
+      openActionFromSource(paretoActionSource(src, r, pr.cur.range), r.ligne || paretoState.ligne || '', desc);
+    }
+    return;
+  }
   var tabBtn = e.target.closest('#sidebar-nav button[data-tab]');
   if(tabBtn){ currentTab = tabBtn.dataset.tab; sidebarMobileOpen = false; render(); renderNav(); return; }
 
@@ -9391,6 +9932,20 @@ app.addEventListener('click', async function(e){
 });
 
 app.addEventListener('change', async function(e){
+  if(e.target && /^pareto-(src|ligne|period|month)$/.test(e.target.id)){
+    var pk = e.target.id.slice(7);
+    if(pk==='month' && !e.target.value) return;
+    paretoState[pk] = e.target.value;
+    render(); return;
+  }
+  if(e.target && e.target.id==='pareto-w-src'){ paretoWidgetSrc = e.target.value; render(); return; }
+  if(e.target && e.target.id==='ad-sansverif'){
+    var on = e.target.checked;
+    var f = document.getElementById('ad-verif-fields'), m = document.getElementById('ad-sansverif-motif-wrap');
+    if(f) f.style.display = on ? 'none' : '';
+    if(m) m.style.display = on ? '' : 'none';
+    return;
+  }
   if(e.target.classList && e.target.classList.contains('cicl-person-apply-date')){
     ciclApplyDates[e.target.dataset.id] = e.target.value;
     return;
