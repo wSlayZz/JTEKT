@@ -421,6 +421,23 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .ap-link-count{display:inline-block; font-size:10.5px; font-weight:600; color:var(--sb-bg, #143E3E); background:var(--neutral-bg); border:1px solid var(--border); border-radius:10px; padding:0 7px; margin-left:4px; vertical-align:middle;}
 .ap-link-count.late{color:var(--danger); border-color:var(--danger-border);}
 .ad-source{display:flex; justify-content:space-between; align-items:center; gap:10px; background:var(--neutral-bg); border-radius:6px; padding:7px 10px; margin-bottom:12px; font-size:12.5px;}
+.releve-chl-layout{display:grid; grid-template-columns:minmax(260px,1fr) minmax(0,2fr); gap:18px; align-items:start;}
+@media (max-width:1000px){ .releve-chl-layout{grid-template-columns:1fr;} }
+.releve-recap td{padding-top:5px !important; padding-bottom:5px !important;}
+.releve-recap tr:hover td:first-child{text-decoration:underline;}
+tr.releve-recap-sel td:first-child{font-weight:700; box-shadow:inset 4px 0 0 #1F3864;}
+.sc-partial{background:#F6E7C8; color:#6E5300;}
+.bain-chip{display:inline-block; padding:2px 10px; border-radius:10px; background:var(--bain); color:#fff; font-weight:700; letter-spacing:.02em; text-transform:none;}
+.releve-modal{max-width:500px; border-top:5px solid var(--bain);}
+.bain-tabs{display:grid; grid-template-columns:repeat(2,1fr); gap:8px;}
+.bain-tab{padding:10px 12px; border-radius:8px; border:2px solid var(--bain); background:#fff; color:var(--bain); font-weight:700; font-size:14px; cursor:pointer; font-family:inherit;}
+.bain-tab.active{background:var(--bain); color:#fff;}
+.bain-tab:not(.active):hover{background:color-mix(in srgb, var(--bain) 10%, #fff);}
+.bain-tab-done{font-size:12px; opacity:.9;}
+.btn.bain-next{border-color:var(--bain); color:var(--bain); font-weight:600;}
+.btn.bain-next:hover{background:var(--bain); color:#fff;}
+tr.releve-cur-week td{box-shadow:inset 0 2px 0 #1F3864, inset 0 -2px 0 #1F3864;}
+tr.releve-cur-week td:first-child{font-weight:700;}
 .ad-noverif{display:flex; gap:10px; align-items:flex-start; cursor:pointer; font-size:13px; line-height:1.35;}
 .ad-noverif input{width:16px; height:16px; margin-top:2px; flex:none; cursor:pointer;}
 /* ----- Analyses Pareto ----- */
@@ -3005,6 +3022,10 @@ function renderParticulesCharts(){
 }
 
 var RELEVES_BAINS = ['Bain 1','Bain 2'];
+// Couleur propre à chaque bain (onglets de saisie, en-têtes de colonnes) : on voit tout de suite sur quel bain on travaille
+var BAIN_COLORS = {'Bain 1':'#2F6FB0', 'Bain 2':'#8A4FB5'};
+function bainColor(b){ return BAIN_COLORS[b] || '#5A6B7B'; }
+function bainHeader(b){ return '<th style="text-align:center;"><span class="bain-chip" style="--bain:'+bainColor(b)+';">'+esc(b)+'</span></th>'; }
 function chlorureConcentrationRange(bain){
   return bain==='Bain 2' ? {min:1, max:3} : {min:1.5, max:3.5};
 }
@@ -3046,6 +3067,15 @@ function releveFind(type, bain, date){
   return DATA.releves.find(function(x){ return x.type===type && x.bain===bain && releveCanonicalDate(type, x.date)===date && (x.secteur||'MCU')===currentSecteur; });
 }
 var releveYear = null;
+var releveMonthView = null;      // mois affiché dans le détail chlorure (0-11)
+// Lundis des semaines qui touchent le mois (comme le détail des audits : une semaine à cheval apparaît dans les deux mois)
+function releveWeeksOfMonth(year, monthIdx){
+  var first = year+'-'+String(monthIdx+1).padStart(2,'0')+'-01';
+  var last = year+'-'+String(monthIdx+1).padStart(2,'0')+'-'+String(daysInMonth(year, monthIdx)).padStart(2,'0');
+  var out = [], d = releveMondayOf(first);
+  while(d<=last){ out.push(d); d = addDays(d, 7); }
+  return out;
+}
 var releveDirectFormOpen = false; // false | 'chlorure' | 'masse'
 var releveDirectPrefill = null;   // {bain, date, ...valeurs existantes} pour pre-remplir le formulaire
 
@@ -3058,8 +3088,7 @@ function proprReleves(){
 
   // ── MASSES POLLUANTES : tableau de suivi annuel (mensuel) ──
   html += '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;"><div class="eyebrow">Masses polluantes - Tableau de suivi '+year+' (seuil &lt; 7,5mg)</div><button class="btn small" data-action="add-releve-direct" data-type="masse">+ Saisie directe</button></div>';
-  if(releveDirectFormOpen==='masse') html += releveDirectForm('masse');
-  html += '<div class="table-wrap" style="margin-bottom:24px;"><table class="annual-table"><thead><tr><th>Mois</th>'+RELEVES_BAINS.map(function(b){return '<th style="text-align:center;">'+esc(b)+'</th>';}).join('')+'</tr></thead><tbody>';
+  html += '<div class="table-wrap" style="margin-bottom:24px;"><table class="annual-table"><thead><tr><th>Mois</th>'+RELEVES_BAINS.map(bainHeader).join('')+'</tr></thead><tbody>';
   for(var m=0; m<12; m++){
     var monthDate = year+'-'+String(m+1).padStart(2,'0')+'-01';
     var monthKey = year+'-'+String(m+1).padStart(2,'0');
@@ -3080,14 +3109,40 @@ function proprReleves(){
   }
   html += '</tbody></table></div>';
 
-  // ── CONCENTRATION CHLORURE : tableau de suivi annuel (hebdomadaire) ──
-  html += '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;"><div class="eyebrow">Concentration chlorure - Tableau de suivi '+year+' (Bain 1 : 1,5-3,5% · Bain 2 : 1-3% · chlorure ≤200mg)</div><button class="btn small" data-action="add-releve-direct" data-type="chlorure">+ Saisie directe</button></div>';
-  if(releveDirectFormOpen==='chlorure') html += releveDirectForm('chlorure');
-  html += '<div class="table-wrap"><table class="annual-table"><thead><tr><th>Semaine</th>'+RELEVES_BAINS.map(function(b){return '<th style="text-align:center;">'+esc(b)+'</th>';}).join('')+'</tr></thead><tbody>';
-  mondaysOfYear(year).forEach(function(dateStr){
+  // ── CONCENTRATION CHLORURE : récapitulatif par mois + détail des semaines du mois choisi (comme les audits) ──
+  if(releveMonthView===null) releveMonthView = year===Number(todayStr().slice(0,4)) ? Number(todayStr().slice(5,7))-1 : 0;
+  html += '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; flex-wrap:wrap; gap:8px;"><div class="eyebrow">Concentration chlorure - '+year+' (Bain 1 : 1,5-3,5% · Bain 2 : 1-3% · chlorure ≤200mg)</div>'+
+    '<div style="display:flex; gap:6px;"><button class="btn small" data-action="releve-goto-week" title="Afficher le mois en cours et la semaine en cours">Semaine en cours</button><button class="btn small" data-action="add-releve-direct" data-type="chlorure">+ Saisie directe</button></div></div>';
+  html += '<div class="releve-chl-layout">';
+  // Récapitulatif annuel : une ligne par mois, nombre de semaines saisies par bain
+  html += '<div class="table-wrap"><table class="annual-table releve-recap"><thead><tr><th>Mois</th>'+RELEVES_BAINS.map(bainHeader).join('')+'</tr></thead><tbody>';
+  for(var rm=0; rm<12; rm++){
+    var mKey = year+'-'+String(rm+1).padStart(2,'0');
+    var isSel = rm===releveMonthView;
+    html += '<tr class="'+(isSel?'releve-recap-sel':'')+'" data-action="releve-month" data-month="'+rm+'" style="cursor:pointer;"><td>'+MONTHS_FR[rm].charAt(0).toUpperCase()+MONTHS_FR[rm].slice(1)+'</td>';
+    var mWeeks = releveWeeksOfMonth(year, rm).filter(function(d){ return d<=todayStr(); });
+    RELEVES_BAINS.forEach(function(bain){
+      if(mKey>todayMonthKey || !mWeeks.length){ html += '<td class="c-empty">-</td>'; return; }
+      var done = 0, nc = 0;
+      mWeeks.forEach(function(d){ var r = releveFind('chlorure', bain, d); if(r){ done++; if(chlorureStatus(r).level==='danger') nc++; } });
+      var cls = nc ? 'sc-danger' : done===mWeeks.length ? 'sc-ok' : done ? 'sc-partial' : 'c-empty';
+      var tip = done+' semaine(s) saisie(s) sur '+mWeeks.length+(nc? ' · '+nc+' hors tolérance' : '');
+      html += '<td class="score-cell '+cls+'" title="'+tip+'">'+done+'/'+mWeeks.length+(nc?' · '+nc+' NC':'')+'</td>';
+    });
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  // Détail du mois choisi, semaine par semaine
+  var selLabel = MONTHS_FR[releveMonthView].charAt(0).toUpperCase()+MONTHS_FR[releveMonthView].slice(1);
+  html += '<div><div class="toolbar" style="margin-bottom:8px;"><div class="left"><button class="btn small" data-action="releve-month-step" data-d="-1">← Mois préc.</button>'+
+    '<b style="font-size:14px; min-width:120px; text-align:center;">'+selLabel+' '+year+'</b>'+
+    '<button class="btn small" data-action="releve-month-step" data-d="1">Mois suiv. →</button></div></div>';
+  html += '<div class="table-wrap"><table class="annual-table"><thead><tr><th>Semaine</th>'+RELEVES_BAINS.map(bainHeader).join('')+'</tr></thead><tbody>';
+  releveWeeksOfMonth(year, releveMonthView).forEach(function(dateStr){
     var wk = isoWeekInfo(dateStr).week;
     var isFuture = dateStr>todayStr();
-    html += '<tr><td>S'+wk+' <span class="tiny" style="color:var(--text-faint);">('+fmtDate(dateStr)+')</span></td>';
+    var isCurWeek = releveMondayOf(todayStr())===dateStr;
+    html += '<tr'+(isCurWeek?' id="releve-cur-week" class="releve-cur-week"':'')+'><td>S'+wk+' <span class="tiny" style="color:var(--text-faint);">(du '+fmtDate(dateStr).slice(0,5)+' au '+fmtDate(addDays(dateStr,6)).slice(0,5)+')</span></td>';
     RELEVES_BAINS.forEach(function(bain){
       if(isFuture){ html += '<td class="c-empty">-</td>'; return; }
       var r = releveFind('chlorure', bain, dateStr);
@@ -3102,31 +3157,69 @@ function proprReleves(){
     html += '</tr>';
   });
   html += '</tbody></table></div>';
+  html += '<p class="tiny" style="margin-top:6px; color:var(--text-faint);">Une semaine à cheval sur deux mois apparaît dans les deux (même relevé). Cliquez sur un mois du récapitulatif pour l\'afficher.</p></div>';
+  html += '</div>';
+  if(releveDirectFormOpen) html += releveDirectForm(releveDirectFormOpen);
   return html;
 }
 
 function releveDirectForm(type){
   var pf = releveDirectPrefill || {};
   var isChlorure = type==='chlorure';
-  return '<div class="card" style="max-width:480px; margin-bottom:16px;">'+
-    '<div class="eyebrow" style="margin-bottom:10px;">'+(pf.editId?'Modifier le relevé':'Saisie directe')+' - '+(isChlorure?'concentration chlorure':'masse polluante')+'</div>'+
-    '<div class="entryform cols2">'+
-    '<label class="field">Bain<select id="rd-bain">'+RELEVES_BAINS.map(function(b){return '<option value="'+b+'"'+(b===pf.bain?' selected':'')+'>'+b+'</option>';}).join('')+'</select></label>'+
-    '<label class="field">Date<input type="date" id="rd-date" value="'+(pf.dateReleve||pf.date||todayStr())+'"></label>'+
+  var bain = pf.bain || RELEVES_BAINS[0];
+  var col = bainColor(bain);
+  var dateVal = pf.dateReleve||pf.date||todayStr();
+  var period = isChlorure ? 'S'+isoWeekInfo(releveCanonicalDate('chlorure', dateVal)).week+' '+dateVal.slice(0,4) : MONTHS_FR[Number(dateVal.slice(5,7))-1]+' '+dateVal.slice(0,4);
+  var others = RELEVES_BAINS.filter(function(b){ return b!==bain; });
+  function num(v){ return v!==undefined && v!==null ? v : ''; }
+  return '<div class="modal-overlay releve-modal-backdrop"><div class="modal-box releve-modal" style="--bain:'+col+';">'+
+    '<div class="eyebrow">'+(isChlorure?'Concentration chlorure':'Masse polluante')+' · '+esc(period)+'</div>'+
+    '<h3 style="margin:2px 0 12px;">'+(pf.editId?'Modifier le relevé':'Nouveau relevé')+'</h3>'+
+    '<div class="bain-tabs">'+RELEVES_BAINS.map(function(b){
+      var has = releveFind(type, b, releveCanonicalDate(type, dateVal));
+      return '<button type="button" class="bain-tab'+(b===bain?' active':'')+'" style="--bain:'+bainColor(b)+';" data-action="releve-pick-bain" data-bain="'+esc(b)+'">'+esc(b)+(has?' <span class="bain-tab-done" title="Déjà saisi pour cette période">✓</span>':'')+'</button>';
+    }).join('')+'</div>'+
+    '<input type="hidden" id="rd-bain" value="'+esc(bain)+'">'+
+    '<div class="entryform cols2" style="margin-top:12px;">'+
+    '<label class="field">Date<input type="date" id="rd-date" value="'+esc(dateVal)+'"></label>'+
     (isChlorure?
-      '<label class="field">Concentration (%)<input type="number" step="0.1" min="0" id="rd-concentration" value="'+(pf.concentration!==undefined&&pf.concentration!==null?pf.concentration:'')+'"></label>'+
-      '<label class="field">Chlorure (mg)<input type="number" step="1" min="0" id="rd-chlorure" value="'+(pf.chlorureMg!==undefined&&pf.chlorureMg!==null?pf.chlorureMg:'')+'"></label>'
+      '<label class="field">Concentration (%)<input type="number" step="0.1" min="0" id="rd-concentration" class="rd-val" value="'+num(pf.concentration)+'"></label>'+
+      '<label class="field">Chlorure (mg)<input type="number" step="1" min="0" id="rd-chlorure" class="rd-val" value="'+num(pf.chlorureMg)+'"></label>'
       :
-      '<label class="field">Masse polluante (mg)<input type="number" step="0.1" min="0" id="rd-masse" value="'+(pf.masseMg!==undefined&&pf.masseMg!==null?pf.masseMg:'')+'"></label>'
+      '<label class="field">Masse polluante (mg)<input type="number" step="0.1" min="0" id="rd-masse" class="rd-val" value="'+num(pf.masseMg)+'"></label>'
     )+
     '</div>'+
-    '<div class="actions-row" style="margin-top:12px;">'+
+    '<p class="tiny" style="margin:8px 0 0; color:var(--text-faint);">'+(isChlorure? (bain==='Bain 1'?'Bain 1 : concentration 1,5–3,5 %':'Bain 2 : concentration 1–3 %')+' · chlorure ≤ 200 mg' : 'Masse polluante < 7,5 mg')+' · Entrée = enregistrer (puis passe à l\'autre bain s\'il reste à saisir) · Échap = fermer</p>'+
+    '<div class="actions-row" style="margin-top:14px; flex-wrap:wrap;">'+
     (pf.editId? '<button class="btn danger-outline" data-action="delete-releve-direct" data-id="'+pf.editId+'">Supprimer</button>' : '')+
     '<button class="btn" data-action="cancel-releve-direct">Annuler</button>'+
     '<button class="btn primary" data-action="save-releve-direct" data-type="'+type+'">Enregistrer</button>'+
-    '</div></div>';
+    others.map(function(o){ return '<button class="btn bain-next" style="--bain:'+bainColor(o)+';" data-action="save-releve-direct" data-type="'+type+'" data-next="'+esc(o)+'" title="Enregistrer puis saisir '+esc(o)+' pour la même période">Enregistrer → '+esc(o)+'</button>'; }).join('')+
+    '</div></div></div>';
 }
-async function handleSaveReleveDirect(type){
+// Changement de bain dans la fenêtre : on charge le relevé existant de ce bain pour la même période, sinon on garde ce qui a été tapé
+function releveSwitchBain(type, bain, keepTyped){
+  var dEl = document.getElementById('rd-date');
+  var dateVal = (dEl && dEl.value) || (releveDirectPrefill && (releveDirectPrefill.dateReleve||releveDirectPrefill.date)) || todayStr();
+  var ex = releveFind(type, bain, releveCanonicalDate(type, dateVal));
+  if(ex){ releveDirectPrefill = Object.assign({editId:ex.id}, ex); }
+  else {
+    var pf = {bain:bain, date:dateVal};
+    if(keepTyped){
+      var g = function(id){ var el = document.getElementById(id); return el && el.value!=='' ? parseFloat(el.value) : undefined; };
+      pf.concentration = g('rd-concentration'); pf.chlorureMg = g('rd-chlorure'); pf.masseMg = g('rd-masse');
+    }
+    releveDirectPrefill = pf;
+  }
+  releveDirectFormOpen = type;
+}
+function focusReleveModal(){
+  setTimeout(function(){
+    var first = document.querySelector('.releve-modal .rd-val');
+    if(first){ first.focus(); if(first.select) first.select(); }
+  }, 30);
+}
+async function handleSaveReleveDirect(type, nextBain){
   var bain = document.getElementById('rd-bain').value;
   var dateSaisie = document.getElementById('rd-date').value || todayStr();
   var date = releveCanonicalDate(type, dateSaisie);
@@ -3152,7 +3245,14 @@ async function handleSaveReleveDirect(type){
   }
   await save('releves');
   logChange('Propreté', 'Relevé MCU0', bain+' - '+fmtDate(date));
-  toast('Relevé enregistré.');
+  toast(bain+' enregistré.');
+  if(nextBain){
+    var ex2 = releveFind(type, nextBain, date);
+    releveDirectPrefill = ex2 ? Object.assign({editId:ex2.id}, ex2) : {bain:nextBain, date:dateSaisie};
+    releveDirectFormOpen = type;
+    render(); focusReleveModal();
+    return;
+  }
   releveDirectFormOpen = false;
   releveDirectPrefill = null;
   render();
@@ -9280,15 +9380,18 @@ app.addEventListener('click', async function(e){
   if(addReleveBtn){
     var arType = addReleveBtn.dataset.type;
     releveDirectPrefill = null;
-    releveDirectFormOpen = releveDirectFormOpen===arType ? false : arType;
-    render();
+    releveDirectFormOpen = arType;
+    render(); focusReleveModal();
     return;
   }
   var cellAddBtn = e.target.closest('[data-action="releve-cell-add"]');
   if(cellAddBtn){
-    releveDirectPrefill = {bain:cellAddBtn.dataset.bain, date:cellAddBtn.dataset.date};
+    var cDate = cellAddBtn.dataset.date;
+    // Semaine en cours : on propose la date du jour plutôt que le lundi
+    if(cellAddBtn.dataset.type==='chlorure' && releveMondayOf(todayStr())===cDate) cDate = todayStr();
+    releveDirectPrefill = {bain:cellAddBtn.dataset.bain, date:cDate};
     releveDirectFormOpen = cellAddBtn.dataset.type;
-    render();
+    render(); focusReleveModal();
     return;
   }
   var cellEditBtn = e.target.closest('[data-action="releve-cell-edit"]');
@@ -9297,13 +9400,29 @@ app.addEventListener('click', async function(e){
     if(editR){
       releveDirectPrefill = Object.assign({editId:editR.id}, editR);
       releveDirectFormOpen = cellEditBtn.dataset.type;
-      render();
+      render(); focusReleveModal();
     }
     return;
   }
-  if(e.target.closest('[data-action="cancel-releve-direct"]')){ releveDirectFormOpen = false; releveDirectPrefill = null; render(); return; }
+  if(e.target.closest('[data-action="cancel-releve-direct"]') || (e.target.classList && e.target.classList.contains('releve-modal-backdrop'))){ releveDirectFormOpen = false; releveDirectPrefill = null; render(); return; }
+  var pickBainBtn = e.target.closest('[data-action="releve-pick-bain"]');
+  if(pickBainBtn){ releveSwitchBain(releveDirectFormOpen, pickBainBtn.dataset.bain, true); render(); focusReleveModal(); return; }
+  if(e.target.closest('[data-action="releve-goto-week"]')){
+    releveYear = Number(todayStr().slice(0,4)); releveMonthView = Number(todayStr().slice(5,7))-1; render();
+    var cw = document.getElementById('releve-cur-week');
+    if(cw && cw.scrollIntoView) cw.scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+  var relMonthRow = e.target.closest('[data-action="releve-month"]');
+  if(relMonthRow){ releveMonthView = Number(relMonthRow.dataset.month); render(); return; }
+  var relStep = e.target.closest('[data-action="releve-month-step"]');
+  if(relStep){
+    var nm = releveMonthView + Number(relStep.dataset.d);
+    if(nm<0){ nm = 11; releveYear--; } else if(nm>11){ nm = 0; releveYear++; }
+    releveMonthView = nm; render(); return;
+  }
   var saveReleveBtn = e.target.closest('[data-action="save-releve-direct"]');
-  if(saveReleveBtn){ await handleSaveReleveDirect(saveReleveBtn.dataset.type); return; }
+  if(saveReleveBtn){ await handleSaveReleveDirect(saveReleveBtn.dataset.type, saveReleveBtn.dataset.next||null); return; }
   var deleteReleveBtn = e.target.closest('[data-action="delete-releve-direct"]');
   if(deleteReleveBtn){ await handleDeleteReleveDirect(deleteReleveBtn.dataset.id); return; }
   var cellAddBtn = e.target.closest('[data-action="contam-cell-add"]');
@@ -10040,7 +10159,7 @@ app.addEventListener('change', async function(e){
   if(e.target.id==='chokko-mois'){ chokkoMonth = Number(e.target.value); render(); return; }
   if(e.target.id==='chokko-annee'){ chokkoYear = Number(e.target.value)||chokkoYear; render(); return; }
   if(e.target.classList && e.target.classList.contains('prison-cell')){ await handlePrisonCellChange(e.target); return; }
-  if(e.target.id==='releve-annee'){ releveYear = Number(e.target.value)||releveYear; render(); return; }
+  if(e.target.id==='releve-annee'){ releveYear = Number(e.target.value)||releveYear; releveMonthView = null; render(); return; }
   if(e.target.classList && e.target.classList.contains('chokko-poste-label-input')){
     var lblLigne = e.target.dataset.ligne, lblIdx = Number(e.target.dataset.index);
     var lblConfig = chokkoPosteConfigFor(lblLigne);
@@ -10219,6 +10338,14 @@ loginOverlayEl.addEventListener('keydown', async function(e){
   if(e.key==='Enter' && (e.target.id==='login-password' || e.target.id==='login-username')){ await handleLogin(); }
 });
 app.addEventListener('keydown', function(e){
+  if(e.key==='Enter' && releveDirectFormOpen && e.target.closest && e.target.closest('.releve-modal')){
+    e.preventDefault();
+    // Entrée enchaîne sur l'autre bain tant qu'il n'est pas saisi pour la même période
+    var curB = (document.getElementById('rd-bain')||{}).value, dV = (document.getElementById('rd-date')||{}).value || todayStr();
+    var nextB = RELEVES_BAINS.filter(function(b){ return b!==curB && !releveFind(releveDirectFormOpen, b, releveCanonicalDate(releveDirectFormOpen, dV)); })[0] || null;
+    handleSaveReleveDirect(releveDirectFormOpen, nextB); return;
+  }
+  if(e.key==='Escape' && releveDirectFormOpen){ releveDirectFormOpen = false; releveDirectPrefill = null; render(); return; }
   if(e.key==='Enter' && (e.ctrlKey||e.metaKey) && e.target.id==='chokko-note-text'){
     e.preventDefault();
     var saveNoteBtn = document.querySelector('[data-action="chokko-note-save"]');
