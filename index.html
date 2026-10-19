@@ -6754,7 +6754,7 @@ function renderChokkoChart(){
         {label:'% Chokko', data:data, backgroundColor:'#1F5C5C99', borderColor:'#1F5C5C', borderWidth:1.5, borderRadius:3},
         {label:'Objectif '+chokkoLigne, type:'line', data:Array(12).fill(chokkoObjectif(chokkoLigne)), borderColor:'#B8730A88', borderWidth:1.5, borderDash:[5,4], pointRadius:0}
       ]},
-      options:{responsive:true, maintainAspectRatio:false, scales:{y:{min:(function(){ var v = data.filter(function(x){ return x!==null; }); var lo = v.length? Math.min.apply(null, v) : 100; return lo<90 ? Math.floor(lo) : 90; })(), max:100, ticks:{callback:function(v){return v+'%';}}}}}
+      options:{responsive:true, maintainAspectRatio:false, scales:{y:{min:(function(){ var v = data.filter(function(x){ return x!==null; }); var lo = v.length? Math.min.apply(null, v) : 100; return lo<95 ? Math.floor(lo*2)/2 : 95; })(), max:100, ticks:{stepSize:0.5, callback:function(v){ return v.toLocaleString('fr-FR',{minimumFractionDigits:1, maximumFractionDigits:1})+' %'; }}}}}
     });
   }catch(err){ console.error('chokko year chart error', err); }
 }
