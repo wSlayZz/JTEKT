@@ -140,6 +140,16 @@ button.btn.btn-loading::after{content:''; position:absolute; width:14px; height:
 button.btn.primary.btn-loading::after{border-color:rgba(255,255,255,0.35); border-top-color:#fff;}
 @keyframes btn-spin{to{transform:rotate(360deg);}}
 .subtabs{display:flex; gap:6px; margin-bottom:14px;}
+/* Téléphone / tablette : rien ne doit dépasser de l'écran ; les tableaux larges défilent dans leur cadre */
+@media (max-width:820px){
+  .subtabs{flex-wrap:wrap;}
+  .alert-group{overflow-x:auto; max-width:100%;}
+  #view .card{max-width:100%;}
+  #view .card > table, #view .section > table, #view .card > div > table{display:block; overflow-x:auto; max-width:100%;}
+  #view .toolbar{flex-wrap:wrap; gap:8px;}
+  #view .toolbar .left{flex-wrap:wrap;}
+  .modal-box{max-width:calc(100vw - 24px) !important;}
+}
 .subtabs button{font-family:var(--sans); border:1px solid var(--border-strong); background:var(--surface); padding:6px 12px; border-radius:999px; font-size:12.5px; font-weight:500; cursor:pointer; color:var(--text-muted);}
 .subtabs button.active{background:var(--accent); border-color:var(--accent); color:#fff;}
 .thumb{width:34px; height:34px; border-radius:5px; object-fit:cover; border:1px solid var(--border); cursor:pointer;}
@@ -427,6 +437,56 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .releve-recap tr:hover td:first-child{text-decoration:underline;}
 tr.releve-recap-sel td:first-child{font-weight:700; box-shadow:inset 4px 0 0 #1F3864;}
 .sc-partial{background:#F6E7C8; color:#6E5300;}
+#monthly-report{display:none;}
+@media print{
+  body.print-monthly-report > *:not(#monthly-report){display:none !important;}
+  body.print-monthly-report #monthly-report{display:block !important; font-family:Arial, Helvetica, sans-serif; color:#111; font-size:11px;}
+  .mr-page{page-break-after:always; break-after:page; position:relative; min-height:270mm;}
+  .mr-page:last-child{page-break-after:auto; break-after:auto;}
+  .mr-head{display:flex; justify-content:space-between; align-items:flex-end; background:#1F3864; color:#fff; padding:8px 12px; margin-bottom:10px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .mr-sup{font-size:9px; letter-spacing:.06em; text-transform:uppercase; opacity:.85;}
+  .mr-title{font-size:17px; font-weight:700;}
+  .mr-month{font-size:14px; font-weight:700;}
+  .mr-h3{font-size:12.5px; margin:14px 0 6px; padding-bottom:3px; border-bottom:2px solid #1F3864; color:#1F3864;}
+  .mr-kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:8px 0;}
+  .mr-kpi{border:1px solid #c9ced8; border-radius:6px; padding:7px 9px;}
+  .mr-kpi-l{font-size:9px; text-transform:uppercase; letter-spacing:.04em; color:#555;}
+  .mr-kpi-v{font-size:20px; font-weight:700; margin:2px 0;}
+  .mr-kpi-s{font-size:9px; color:#555;}
+  .mr-table{width:100%; border-collapse:collapse; font-size:10.5px; margin:4px 0;}
+  .mr-table th, .mr-table td{border:1px solid #b8bfcc; padding:3px 6px; text-align:left; vertical-align:top;}
+  .mr-table th{background:#D9E1F2; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .mr-table .n{text-align:right; white-space:nowrap;}
+  .mr-table tr{break-inside:avoid;}
+  .mr-a td{background:#F3E7DC; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .mr-chart{width:100%; height:auto; border:1px solid #ddd; margin:4px 0;}
+  .mr-reading{background:#F2F2F2; padding:6px 9px; border-radius:4px; margin:6px 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .mr-dim{color:#666;} .mr-small{font-size:9.5px;}
+  .mr-list{margin:4px 0 0 16px; padding:0;} .mr-list li{margin:3px 0;}
+  .mr-notes{border:1px solid #b8bfcc; padding:4px 10px 10px;}
+  .mr-note-line{border-bottom:1px dotted #999; height:24px;}
+  .mr-sign{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px; font-weight:700;}
+  .mr-sign div{border:1px solid #b8bfcc; height:44px; padding:4px 6px;}
+  .mr-foot{position:absolute; bottom:0; left:0; right:0; font-size:8.5px; color:#777; text-align:right; border-top:1px solid #ddd; padding-top:3px;}
+}
+.ui-dialog-overlay{position:fixed; inset:0; z-index:100001; background:rgba(25,30,35,.45); display:flex; align-items:center; justify-content:center; padding:16px;}
+.ui-dialog{background:var(--card, #fff); border-radius:12px; box-shadow:0 18px 50px rgba(0,0,0,.28); width:100%; max-width:460px; padding:18px 20px 16px; border-top:4px solid #5A6B7B;}
+.ui-dialog-danger{border-top-color:var(--danger);} .ui-dialog-warn{border-top-color:var(--urgent, #C25A00);} .ui-dialog-info{border-top-color:#2F6FB0;}
+.ui-dialog-head{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+.ui-dialog-icon{width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; background:var(--neutral-bg, #eee); color:var(--text);}
+.ui-dialog-danger .ui-dialog-icon{background:var(--danger-bg); color:var(--danger);} .ui-dialog-warn .ui-dialog-icon{background:var(--urgent-bg); color:var(--urgent);} .ui-dialog-info .ui-dialog-icon{background:#E3EDF8; color:#2F6FB0;}
+.ui-dialog-title{font-weight:700; font-size:15px;}
+.ui-dialog-body{font-size:13.5px; line-height:1.5; white-space:pre-line; color:var(--text); max-height:55vh; overflow:auto;}
+.ui-dialog-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:16px;}
+.ui-dialog .btn.primary.ui-dialog-ok-danger{background:var(--danger) !important; border-color:var(--danger) !important; color:#fff !important;}
+.backup-mod-list{display:grid; grid-template-columns:1fr 1fr; gap:6px; max-height:46vh; overflow:auto;}
+@media (max-width:640px){ .backup-mod-list{grid-template-columns:1fr;} }
+.backup-mod{display:flex; gap:8px; align-items:flex-start; padding:6px 8px; border:1px solid var(--border); border-radius:8px; cursor:pointer; font-size:13px;}
+.backup-mod.same{opacity:.6;}
+.backup-mod input{margin-top:3px;}
+.photo-viewer{position:fixed; inset:0; z-index:100000; background:rgba(20,20,20,.85); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; cursor:zoom-out;}
+.photo-viewer img{max-width:92vw; max-height:82vh; border-radius:8px; box-shadow:0 10px 40px rgba(0,0,0,.5); background:#fff;}
+img.blob-thumb{min-width:40px; min-height:30px; background:var(--neutral-bg, #eee); cursor:zoom-in; object-fit:cover;}
 .bain-chip{display:inline-block; padding:2px 10px; border-radius:10px; background:var(--bain); color:#fff; font-weight:700; letter-spacing:.02em; text-transform:none;}
 .releve-modal{max-width:500px; border-top:5px solid var(--bain);}
 .bain-tabs{display:grid; grid-template-columns:repeat(2,1fr); gap:8px;}
@@ -811,6 +871,28 @@ function renderKpiWidget(w){
   return picker + '<div class="eyebrow">'+esc(defs[w.indicator].label)+'</div>'+
     '<div style="font-family:var(--mono); font-weight:700; font-size:28px; color:var(--'+(res.level||'text')+');">'+res.value+'</div>';
 }
+// Dispositions recommandées : un tableau de bord court, adapté à l'usage. Les autres cartes restent disponibles dans "Personnaliser".
+var DASHBOARD_PRESETS = {
+  pilotage:{label:'Pilotage (RQ)', hint:'score, actions, Pareto, CHOKKO, échéances', ids:['w_score','w_actions','w_causes_bar','w_chokko','w_planning','w_indicateurs','w_scorehist']},
+  terrain:{label:'Terrain', hint:'mes actions, échéances, CHOKKO, relevés', ids:['w_my_actions','w_planning','w_chokko','w_indicateurs','w_contamination','w_vidange']},
+  complet:{label:'Complète', hint:'toutes les cartes', ids:null}
+};
+function dashboardPresetLayout(key){
+  var p = DASHBOARD_PRESETS[key] || DASHBOARD_PRESETS.complet;
+  if(!p.ids) return DASHBOARD_WIDGETS_DEFAULT.map(function(w){ return {id:w.id, size:w.size, hidden:false}; });
+  var out = p.ids.map(function(id){ var d = DASHBOARD_WIDGETS_DEFAULT.find(function(w){ return w.id===id; }) || {}; return {id:id, size:d.size, hidden:false}; });
+  DASHBOARD_WIDGETS_DEFAULT.forEach(function(w){ if(p.ids.indexOf(w.id)<0) out.push({id:w.id, size:w.size, hidden:true}); });
+  return out;
+}
+// Disposition proposée par défaut selon le rôle (tant que la personne n'a rien personnalisé)
+function defaultPresetForUser(u){
+  if(!u) return 'pilotage';
+  if(u.roleId===ADMIN_ROLE_ID) return 'pilotage';
+  var role = DATA.roles.find(function(r){ return r.id===u.roleId; }) || {};
+  if(/qualit|\bRQ\b|respons|manager|chef|direct/i.test((role.name||'')+' '+(u.displayName||''))) return 'pilotage';
+  if(role.tabs && role.tabs.indexOf('comptes')>=0) return 'pilotage';
+  return 'terrain';
+}
 function getDashboardLayout(){
   if(currentUser && Array.isArray(currentUser.dashboardLayout) && currentUser.dashboardLayout.length){
     // Compléter avec les widgets manquants (nouveaux widgets ajoutés depuis la dernière sauvegarde)
@@ -820,7 +902,7 @@ function getDashboardLayout(){
     });
     return layout;
   }
-  return DASHBOARD_WIDGETS_DEFAULT.map(function(w){ return {id:w.id, size:w.size, hidden:false}; });
+  return dashboardPresetLayout(defaultPresetForUser(currentUser));
 }
 async function saveDashboardLayout(layout){
   if(!currentUser) return;
@@ -933,7 +1015,7 @@ var app = document.getElementById('app');
 var view = document.getElementById('view');
 
 // ---------- utils ----------
-function todayStr(){ return new Date().toISOString().slice(0,10); }
+function todayStr(){ return fmtISOLocal(new Date()); }  // date du jour en heure de Paris (et non UTC)
 function fmtDate(s){ if(!s) return '-'; var p=s.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
 function daysBetween(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
 function uid(prefix){ return (prefix||'id')+'-'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
@@ -999,13 +1081,482 @@ function backendSet(key, value){
   return backendSetLocal(key, value);
 }
 
+// ====================================================================
+// SYNCHRONISATION MULTI-UTILISATEURS
+// - Fusion à l'enregistrement : on relit la version du serveur juste avant d'écrire et on fusionne
+//   ligne par ligne (par identifiant). Deux personnes qui enregistrent en même temps ne s'écrasent plus.
+// - Écriture conditionnelle (updated_at) : si quelqu'un a écrit entre notre lecture et notre écriture,
+//   on recommence la fusion au lieu d'écraser.
+// - Synchro allégée : toutes les 10 s on ne lit que les dates de modification, et on ne télécharge
+//   que les modules qui ont changé.
+// ====================================================================
+var SERVER_BASE = {};   // module -> JSON de la dernière version connue du serveur (base de la fusion)
+var SERVER_TS = {};     // module -> updated_at de cette version
+var saveQueues = {};    // module -> promesse : les enregistrements d'un même module passent l'un après l'autre
+var SYNC_STATS = {polls:0, metaOnly:0, fetchedKeys:0, merges:0, conflicts:0};
+
+function syncJson(v){ return JSON.stringify(v===undefined ? null : v); }
+function syncIsPlainObject(v){ return v!==null && typeof v==='object' && !Array.isArray(v); }
+function syncItemKey(it){ return (it && typeof it==='object' && it.id!==undefined && it.id!==null) ? 'id:'+it.id : 'v:'+JSON.stringify(it); }
+// Fusion à trois versions : base (dernière version commune), mine (ce poste), theirs (serveur)
+function mergeValues(base, mine, theirs){
+  var jm = syncJson(mine), jt = syncJson(theirs);
+  if(jm===jt) return mine;
+  var jb = syncJson(base);
+  if(jm===jb) return theirs;        // je n'ai rien changé : je prends la version serveur
+  if(jt===jb) return mine;          // personne d'autre n'a changé : ma version
+  if(Array.isArray(mine) && Array.isArray(theirs)) return mergeArrays(Array.isArray(base)?base:[], mine, theirs);
+  if(syncIsPlainObject(mine) && syncIsPlainObject(theirs)) return mergeObjects(syncIsPlainObject(base)?base:{}, mine, theirs);
+  return mine;                      // conflit sur une même valeur simple : la dernière saisie l'emporte
+}
+function mergeObjects(base, mine, theirs){
+  var out = {}, seen = {};
+  Object.keys(mine).concat(Object.keys(theirs)).concat(Object.keys(base)).forEach(function(f){
+    if(seen[f]) return; seen[f] = true;
+    var inM = Object.prototype.hasOwnProperty.call(mine, f), inT = Object.prototype.hasOwnProperty.call(theirs, f), inB = Object.prototype.hasOwnProperty.call(base, f);
+    if(inM && inT){ out[f] = mergeValues(inB? base[f] : undefined, mine[f], theirs[f]); return; }
+    if(inM && !inT){ if(!inB || syncJson(mine[f])!==syncJson(base[f])) out[f] = mine[f]; return; }   // supprimé ailleurs sauf si je l'ai modifié
+    if(!inM && inT){ if(!inB || syncJson(theirs[f])!==syncJson(base[f])) out[f] = theirs[f]; return; }
+  });
+  return out;
+}
+function mergeArrays(base, mine, theirs){
+  var B = {}, M = {}, T = {};
+  base.forEach(function(x){ B[syncItemKey(x)] = x; });
+  mine.forEach(function(x){ M[syncItemKey(x)] = x; });
+  theirs.forEach(function(x){ T[syncItemKey(x)] = x; });
+  var out = [], placed = {};
+  mine.forEach(function(x){
+    var k = syncItemKey(x);
+    if(placed[k]) return;
+    var inB = k in B, inT = k in T;
+    if(inT){ out.push(mergeValues(inB? B[k] : undefined, x, T[k])); placed[k] = true; return; }
+    // absent du serveur : nouveau chez moi → je garde ; supprimé par un autre → je garde seulement si je l'ai modifié
+    if(!inB || syncJson(x)!==syncJson(B[k])){ out.push(x); placed[k] = true; }
+  });
+  // Éléments présents seulement sur le serveur : ajoutés par un autre (on garde, à leur place dans l'ordre du serveur),
+  // ou supprimés par moi (on retire, sauf s'ils ont été modifiés ailleurs entre-temps)
+  var inserts = {}, headInserts = [], anchor = null;
+  theirs.forEach(function(x){
+    var k = syncItemKey(x);
+    if(placed[k]){ anchor = k; return; }
+    if((k in B) && syncJson(x)===syncJson(B[k])) return;
+    placed[k] = true;
+    if(anchor===null) headInserts.push(x); else (inserts[anchor] = inserts[anchor] || []).push(x);
+  });
+  if(!headInserts.length && !Object.keys(inserts).length) return out;
+  var res = headInserts.slice();
+  out.forEach(function(x){ res.push(x); var k = syncItemKey(x); if(inserts[k]) res.push.apply(res, inserts[k]); });
+  return res;
+}
+
+// ---------- Accès Supabase avec date de modification ----------
+function sbGetWithTs(name){
+  return supabaseClient.from('kv_store').select('value,updated_at').eq('key', name).maybeSingle().then(function(res){
+    if(res.error) throw new Error(res.error.message);
+    return res.data ? {value:res.data.value, ts:res.data.updated_at} : null;
+  });
+}
+function sbGetMany(names, withValue){
+  return supabaseClient.from('kv_store').select(withValue? 'key,value,updated_at' : 'key,updated_at').in('key', names).then(function(res){
+    if(res.error) throw new Error(res.error.message);
+    return res.data || [];
+  });
+}
+// Écrit seulement si la ligne n'a pas changé depuis notre lecture (sinon {conflict:true})
+function sbWriteIf(name, value, expectedTs, rowExists){
+  var now = new Date().toISOString();
+  if(rowExists && !expectedTs){
+    // Ligne existante sans date de modification (base ancienne) : écriture simple, la date est posée au passage
+    return supabaseClient.from('kv_store').update({value:value, updated_at:now}).eq('key', name).select('updated_at').then(function(res){
+      if(res.error) throw new Error(res.error.message);
+      return {ts: res.data && res.data[0] ? res.data[0].updated_at : now};
+    });
+  }
+  if(!expectedTs){
+    return supabaseClient.from('kv_store').insert({key:name, value:value, updated_at:now}).select('updated_at').then(function(res){
+      if(res.error){ if(String(res.error.code)==='23505' || /duplicate|conflict/i.test(res.error.message||'')) return {conflict:true}; throw new Error(res.error.message); }
+      return {ts: res.data && res.data[0] ? res.data[0].updated_at : now};
+    });
+  }
+  return supabaseClient.from('kv_store').update({value:value, updated_at:now}).eq('key', name).eq('updated_at', expectedTs).select('updated_at').then(function(res){
+    if(res.error) throw new Error(res.error.message);
+    if(!res.data || !res.data.length) return {conflict:true};
+    return {ts: res.data[0].updated_at};
+  });
+}
+async function saveMerged(k){
+  var name = KEYS[k];
+  for(var attempt=0; attempt<5; attempt++){
+    var sent = DATA[k], sentJson = syncJson(sent);
+    var cur = await sbGetWithTs(name);
+    var merged = sent;
+    if(cur){
+      var serverJson = syncJson(cur.value);
+      if(SERVER_BASE[k]!==undefined && serverJson!==SERVER_BASE[k]){
+        merged = mergeValues(JSON.parse(SERVER_BASE[k]), sent, cur.value);
+        SYNC_STATS.merges++;
+      } else if(SERVER_BASE[k]===undefined && serverJson!==sentJson){
+        merged = mergeValues(undefined, sent, cur.value);   // pas de base connue : union prudente
+        SYNC_STATS.merges++;
+      }
+    }
+    var res = await sbWriteIf(name, merged, cur ? cur.ts : null, !!cur);
+    if(res.conflict){ SYNC_STATS.conflicts++; await new Promise(function(r){ setTimeout(r, 120 + Math.random()*250); }); continue; }
+    var mergedJson = syncJson(merged);
+    SERVER_BASE[k] = mergedJson; SERVER_TS[k] = res.ts;
+    if(mergedJson!==sentJson){
+      // Des modifications d'autres personnes ont été intégrées : on les reprend localement sans perdre ce qui a été saisi pendant l'envoi
+      DATA[k] = syncJson(DATA[k])===sentJson ? merged : mergeValues(sent, DATA[k], merged);
+      pendingRemoteRender = true;
+    }
+    return;
+  }
+  throw new Error('Trop de modifications simultanées sur « '+k+' », réessayez dans un instant.');
+}
+async function saveDirect(k){
+  var json = syncJson(DATA[k]);
+  await backendSet(KEYS[k], json);
+  SERVER_BASE[k] = json;
+}
+function saveSerialized(k){
+  var run = function(){ return (STORAGE_MODE==='supabase' && supabaseClient) ? saveMerged(k) : saveDirect(k); };
+  var p = (saveQueues[k] || Promise.resolve()).then(run, run);
+  saveQueues[k] = p.catch(function(){});
+  return p;
+}
+// Chargement initial en une seule requête (au lieu d'une par module)
+async function loadAllSupabase(){
+  var names = Object.keys(KEYS).map(function(k){ return KEYS[k]; });
+  var rows = await sbGetMany(names, true);
+  var byName = {};
+  rows.forEach(function(r){ byName[r.key] = r; });
+  var missing = [];
+  Object.keys(KEYS).forEach(function(k){
+    var r = byName[KEYS[k]];
+    if(r && r.value!==null && r.value!==undefined){
+      DATA[k] = r.value; SERVER_BASE[k] = syncJson(r.value); SERVER_TS[k] = r.updated_at;
+    } else missing.push(k);
+  });
+  return missing;
+}
+// Synchro allégée : lit seulement les dates de modification, télécharge ce qui a changé.
+// Toutes les 5 minutes, relecture complète par sécurité (postes pas encore mis à jour, etc.).
+async function pollChangedKeys(){
+  SYNC_STATS.polls++;
+  var names = Object.keys(KEYS).map(function(k){ return KEYS[k]; });
+  var full = SYNC_STATS.polls % 30 === 0;
+  var toFetch = [];
+  if(full){ toFetch = names; }
+  else {
+    var meta = await sbGetMany(names, false);
+    meta.forEach(function(r){
+      var k = Object.keys(KEYS).filter(function(x){ return KEYS[x]===r.key; })[0];
+      if(k && r.updated_at!==SERVER_TS[k]) toFetch.push(r.key);
+    });
+    if(!toFetch.length){ SYNC_STATS.metaOnly++; return false; }
+  }
+  var t0 = Date.now();
+  var rows = await sbGetMany(toFetch, true);
+  SYNC_STATS.fetchedKeys += rows.length;
+  var changed = false;
+  rows.forEach(function(r){
+    var k = Object.keys(KEYS).filter(function(x){ return KEYS[x]===r.key; })[0];
+    if(!k) return;
+    // Ne jamais toucher un module en cours d'envoi depuis ce poste
+    if(savesInFlight[k] || (lastSaveStart[k]||0) >= t0 - 1500 || (lastSaveEnd[k]||0) >= t0) return;
+    var sj = syncJson(r.value);
+    SERVER_TS[k] = r.updated_at;
+    if(sj===SERVER_BASE[k]) return;
+    var base = SERVER_BASE[k]!==undefined ? JSON.parse(SERVER_BASE[k]) : undefined;
+    var before = syncJson(DATA[k]);
+    DATA[k] = mergeValues(base, DATA[k], r.value);
+    SERVER_BASE[k] = sj;
+    if(syncJson(DATA[k])!==before) changed = true;
+  });
+  return changed;
+}
+
+// ====================================================================
+// PHOTOS ET PIÈCES JOINTES : stockées à part (une ligne par fichier), jamais relues par la synchro.
+// Les enregistrements ne gardent qu'une référence "blob:app_blob_xxx".
+// ====================================================================
+var BLOB_CACHE = {};
+function isDataUrl(v){ return typeof v==='string' && v.indexOf('data:')===0; }
+function isBlobRef(v){ return typeof v==='string' && v.indexOf('blob:app_blob_')===0; }
+async function blobPut(dataUrl){
+  var name = 'app_blob_'+uid('f').replace(/[^a-z0-9_-]/gi,'');
+  await backendSet(name, JSON.stringify(dataUrl));
+  BLOB_CACHE['blob:'+name] = dataUrl;
+  return 'blob:'+name;
+}
+async function blobGet(ref){
+  if(!isBlobRef(ref)) return isDataUrl(ref) ? ref : null;
+  if(BLOB_CACHE[ref]) return BLOB_CACHE[ref];
+  var r = await backendGet(ref.slice(5));
+  var v = r && r.value ? JSON.parse(r.value) : null;
+  if(v) BLOB_CACHE[ref] = v;
+  return v;
+}
+// Remplace les photos intégrées (data:...) par des références, dans tout objet ou tableau
+async function externalizeBlobs(obj){
+  var changed = false;
+  async function walk(o){
+    if(Array.isArray(o)){ for(var i=0;i<o.length;i++){ if(isDataUrl(o[i]) && o[i].length>2000){ o[i] = await blobPut(o[i]); changed = true; } else if(o[i] && typeof o[i]==='object') await walk(o[i]); } return; }
+    if(o && typeof o==='object'){
+      for(var f in o){
+        if(!Object.prototype.hasOwnProperty.call(o,f)) continue;
+        if(isDataUrl(o[f]) && o[f].length>2000){ o[f] = await blobPut(o[f]); changed = true; }
+        else if(o[f] && typeof o[f]==='object') await walk(o[f]);
+      }
+    }
+  }
+  await walk(obj);
+  return changed;
+}
+var BLOB_MODULES = ['propAudits','actions','metro'];
+async function migrateInlineBlobs(){
+  if(LOAD_DEGRADED) return;
+  for(var i=0;i<BLOB_MODULES.length;i++){
+    var k = BLOB_MODULES[i];
+    try{ if(await externalizeBlobs(DATA[k])) await save(k); }catch(e){ console.error('migration photos', k, e); }
+  }
+}
+// Vignette : affiche un espace réservé puis charge le fichier à la demande
+function blobThumb(ref, label){
+  if(!ref) return '-';
+  return '<img class="thumb blob-thumb" alt="'+esc(label||'Photo')+'" data-blob="'+esc(ref)+'" data-action="view-photo" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">';
+}
+function hydrateBlobThumbs(){
+  Array.prototype.forEach.call(document.querySelectorAll('img[data-blob]:not([data-loaded])'), function(img){
+    img.setAttribute('data-loaded','1');
+    blobGet(img.dataset.blob).then(function(v){
+      if(!v){ img.replaceWith(document.createTextNode('(fichier introuvable)')); return; }
+      if(v.indexOf('data:image/')===0){ img.src = v; }
+      else { var a = document.createElement('a'); a.href = '#'; a.textContent = '📄 Ouvrir'; a.dataset.action = 'view-photo'; a.dataset.blob = img.dataset.blob; img.replaceWith(a); }
+    }).catch(function(){ img.setAttribute('data-loaded','err'); });
+  });
+}
+// Visionneuse (les navigateurs bloquent l'ouverture directe d'une image "data:" dans un nouvel onglet)
+async function openBlobViewer(ref, directSrc){
+  var v = directSrc || await blobGet(ref);
+  if(!v){ toast('Fichier introuvable.', 'error'); return; }
+  if(v.indexOf('data:image/')!==0){
+    // PDF ou autre : on l'ouvre via une URL temporaire
+    try{
+      var parts = v.split(','), mime = (parts[0].match(/data:([^;]+)/)||[])[1] || 'application/octet-stream';
+      var bin = atob(parts[1]), arr = new Uint8Array(bin.length);
+      for(var i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+      window.open(URL.createObjectURL(new Blob([arr], {type:mime})), '_blank');
+    }catch(e){ toast('Impossible d\'ouvrir ce fichier.', 'error'); }
+    return;
+  }
+  var ov = document.createElement('div');
+  ov.className = 'photo-viewer';
+  ov.innerHTML = '<img src="'+v+'" alt="Photo"><button class="btn" type="button">Fermer</button>';
+  ov.addEventListener('click', function(){ ov.remove(); });
+  document.body.appendChild(ov);
+}
+
+// ====================================================================
+// FENÊTRES DE L'APPLICATION (remplacent alert() / confirm() du navigateur)
+// uiAlert(message)            -> Promise (fermée par OK / Entrée / Échap)
+// uiConfirm(message, options) -> Promise<boolean>
+// Le texte garde ses retours à la ligne. Les fenêtres s'empilent au-dessus de tout le reste.
+// ====================================================================
+function uiDialog(message, opts){
+  opts = opts || {};
+  return new Promise(function(resolve){
+    var prevFocus = document.activeElement;
+    var ov = document.createElement('div');
+    ov.className = 'ui-dialog-overlay';
+    var isConfirm = opts.kind==='confirm';
+    var lvl = opts.danger ? 'danger' : opts.level || (isConfirm ? 'neutral' : 'info');
+    var icon = {danger:'⚠', warn:'⚠', info:'ℹ', ok:'✓', neutral:'?'}[lvl] || 'ℹ';
+    ov.innerHTML = '<div class="ui-dialog ui-dialog-'+lvl+'" role="dialog" aria-modal="true">'+
+      '<div class="ui-dialog-head"><span class="ui-dialog-icon">'+icon+'</span><span class="ui-dialog-title"></span></div>'+
+      '<div class="ui-dialog-body"></div>'+
+      '<div class="ui-dialog-actions">'+
+        (isConfirm? '<button type="button" class="btn ui-dialog-cancel"></button>' : '')+
+        '<button type="button" class="btn primary ui-dialog-ok'+(opts.danger?' ui-dialog-ok-danger':'')+'"></button>'+
+      '</div></div>';
+    ov.querySelector('.ui-dialog-title').textContent = opts.title || (isConfirm ? 'Confirmation' : (lvl==='danger'||lvl==='warn' ? 'Attention' : 'Information'));
+    ov.querySelector('.ui-dialog-body').textContent = String(message==null ? '' : message);
+    ov.querySelector('.ui-dialog-ok').textContent = opts.okLabel || (isConfirm ? 'Confirmer' : 'OK');
+    if(isConfirm) ov.querySelector('.ui-dialog-cancel').textContent = opts.cancelLabel || 'Annuler';
+    var done = false;
+    function close(val){
+      if(done) return; done = true;
+      document.removeEventListener('keydown', onKey, true);
+      ov.remove();
+      try{ if(prevFocus && prevFocus.focus && document.contains(prevFocus)) prevFocus.focus({preventScroll:true}); }catch(e){}
+      resolve(val);
+    }
+    function onKey(e){
+      if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); close(isConfirm ? false : undefined); }
+      else if(e.key==='Enter'){ e.preventDefault(); e.stopPropagation(); close(isConfirm ? true : undefined); }
+    }
+    ov.querySelector('.ui-dialog-ok').addEventListener('click', function(){ close(isConfirm ? true : undefined); });
+    if(isConfirm) ov.querySelector('.ui-dialog-cancel').addEventListener('click', function(){ close(false); });
+    ov.addEventListener('mousedown', function(e){ if(e.target===ov && isConfirm) close(false); });
+    document.addEventListener('keydown', onKey, true);
+    document.body.appendChild(ov);
+    setTimeout(function(){ var b = ov.querySelector(isConfirm && opts.danger ? '.ui-dialog-cancel' : '.ui-dialog-ok'); if(b) b.focus(); }, 0);
+  });
+}
+function uiAlert(message, opts){
+  opts = opts || {};
+  var m = String(message||'');
+  if(!opts.level) opts.level = /^\s*(⚠|🚨)|erreur|impossible|non conforme|NON CONFORME/i.test(m) ? 'warn' : 'info';
+  return uiDialog(m.replace(/^\s*(⚠️|⚠|🚨|ℹ️)\s*/, ''), Object.assign({kind:'alert'}, opts));
+}
+function uiConfirm(message, opts){
+  opts = opts || {};
+  if(opts.danger===undefined && /supprimer|effacer|vider|définitivement|abandonner|restaurer/i.test(String(message))) opts.danger = true;
+  return uiDialog(message, Object.assign({kind:'confirm'}, opts));
+}
+
+// ====================================================================
+// SAUVEGARDES AUTOMATIQUES
+// Une copie complète des données est faite automatiquement par le premier poste connecté :
+// chaque jour (7 dernières conservées, une par jour de la semaine) et chaque semaine (8 dernières).
+// Stockées à part (non synchronisées), restaurables module par module par un administrateur.
+// ====================================================================
+var BACKUP_INDEX_KEY = 'app_backups_index_v1';
+var BACKUP_LABELS = {metro:'Métrologie', planning:'Planning échéances', ateq:'Défauts ATEQ', actions:"Plan d'actions",
+  resultats:'Résultats propreté', releves:'Relevés bains MCU0', checklist:'Grilles d\'audit propreté', propAudits:'Audits propreté',
+  contamination:'Contamination', vidange:'Vidange', accounts:'Comptes', roles:'Profils', changelog:'Historique des modifications',
+  scoreHistory:'Historique du score', particules:'Relevés particules', esd:'Formations ESD', perf:'Audits de perf', secteurs:'Secteurs',
+  formations:'Formations SREM', postits:'Post-it', labelOverrides:'Libellés personnalisés', cicl:'Formations CI/CL', chokko:'Suivi CHOKKO',
+  chokkoNotes:'Notes CHOKKO', ciclPersons:'Personnes CI/CL', chokkoColors:'Couleurs CHOKKO', chokkoHighlights:'Surlignages CHOKKO',
+  chokkoRecentColors:'Couleurs récentes CHOKKO', chokkoPosteLabels:'Libellés postes CHOKKO', chokkoUnitCost:'Coût par pièce CHOKKO',
+  chokkoPosteConfig:'Postes CHOKKO', bibliotheque:'Bibliothèque', prisonLots:'Prison qualité', prisonSnapshots:'Prison qualité (historique)',
+  actionsSnapshots:'Évolution des actions', uiSettings:'Réglages d\'affichage'};
+var BACKUP_NO_DEFAULT_RESTORE = ['accounts','roles','uiSettings'];
+var backupIndexCache = null;
+var backupRestoreState = null;   // {slot, snapshot, label}
+async function backupReadIndex(){
+  var r = await backendGet(BACKUP_INDEX_KEY);
+  var idx = r && r.value ? JSON.parse(r.value) : null;
+  if(!idx || typeof idx!=='object') idx = {};
+  idx.slots = idx.slots || {};
+  backupIndexCache = idx;
+  return idx;
+}
+function backupSnapshotJson(){
+  var data = {};
+  Object.keys(KEYS).forEach(function(k){ data[k] = DATA[k]; });
+  return JSON.stringify({version:1, createdAt:new Date().toISOString(), by: currentUser ? currentUser.displayName : '?', data:data});
+}
+async function backupWriteSlot(idx, slot, kind, label){
+  var json = backupSnapshotJson();
+  await backendSet('app_backup_'+slot, json);
+  idx.slots[slot] = {kind:kind, label:label, date:todayStr(), createdAt:new Date().toISOString(), by: currentUser ? currentUser.displayName : '?', size:json.length};
+}
+var backupRunning = false;
+async function autoBackupTick(){
+  if(backupRunning || LOAD_DEGRADED || !currentUser) return;
+  backupRunning = true;
+  try{
+    var idx = await backupReadIndex();
+    var today = todayStr();
+    var dslot = 'd'+new Date().getDay();
+    var wk = isoWeekInfo(today), wlabel = wk.year+'-S'+String(wk.week).padStart(2,'0'), wslot = 'w'+(wk.week % 8);
+    var changed = false;
+    if(!idx.slots[dslot] || idx.slots[dslot].date!==today){ await backupWriteSlot(idx, dslot, 'daily', 'Quotidienne'); changed = true; }
+    if(!idx.slots[wslot] || idx.slots[wslot].week!==wlabel){ await backupWriteSlot(idx, wslot, 'weekly', 'Hebdomadaire '+wlabel); idx.slots[wslot].week = wlabel; changed = true; }
+    if(changed) await backendSet(BACKUP_INDEX_KEY, JSON.stringify(idx));
+  }catch(e){ console.error('sauvegarde automatique', e); }
+  finally{ backupRunning = false; }
+}
+function backupFmtSize(n){ return n>1048576 ? (n/1048576).toFixed(1)+' Mo' : Math.max(1, Math.round(n/1024))+' Ko'; }
+function backupCardHtml(){
+  if(!currentUser || currentUser.roleId!==ADMIN_ROLE_ID) return '';
+  var h = '<div class="card" style="margin-top:18px;"><div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap;"><div class="eyebrow">Sauvegardes automatiques</div>'+
+    '<button class="btn small" data-action="backup-refresh">Actualiser</button></div>'+
+    '<p class="tiny" style="margin:8px 0 12px;">Une copie complète est faite automatiquement chaque jour (7 derniers jours conservés) et chaque semaine (8 dernières semaines). En cas d\'erreur (module vidé, suppression accidentelle), vous pouvez restaurer un ou plusieurs modules. Une copie de l\'état actuel est toujours faite juste avant une restauration.</p>';
+  if(!backupIndexCache){ return h+'<div class="tiny">Chargement…</div></div>'; }
+  var slots = Object.keys(backupIndexCache.slots).map(function(s){ return Object.assign({slot:s}, backupIndexCache.slots[s]); })
+    .sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
+  if(!slots.length) return h+emptyState('Aucune sauvegarde pour le moment (la première se fait à la prochaine connexion).')+'</div>';
+  h += '<div class="table-wrap"><table><thead><tr><th>Type</th><th>Date</th><th>Faite par</th><th class="num">Taille</th><th></th></tr></thead><tbody>'+
+    slots.map(function(s){
+      var dt = s.createdAt ? new Date(s.createdAt) : null;
+      var when = dt ? fmtDate(fmtISOLocal(dt))+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0') : fmtDate(s.date);
+      return '<tr><td>'+badge(s.kind==='weekly'?'ok':s.kind==='prerestore'?'warn':'neutral', s.label||s.kind)+'</td><td class="num">'+when+'</td><td>'+esc(s.by||'')+'</td><td class="num">'+backupFmtSize(s.size||0)+'</td>'+
+        '<td style="white-space:nowrap;"><button class="btn small" data-action="backup-download" data-slot="'+esc(s.slot)+'">Télécharger</button> '+
+        '<button class="btn small" data-action="backup-restore-open" data-slot="'+esc(s.slot)+'">Restaurer…</button></td></tr>';
+    }).join('')+'</tbody></table></div>';
+  return h+'</div>'+backupRestoreModalHtml();
+}
+async function backupLoadSlot(slot){
+  var r = await backendGet('app_backup_'+slot);
+  if(!r || !r.value) throw new Error('Sauvegarde introuvable.');
+  return JSON.parse(r.value);
+}
+function backupCount(v){ return Array.isArray(v) ? v.length+' élément(s)' : (v && typeof v==='object') ? Object.keys(v).length+' entrée(s)' : '-'; }
+function backupRestoreModalHtml(){
+  var st = backupRestoreState; if(!st) return '';
+  var snap = st.snapshot, keys = Object.keys(snap.data||{}).filter(function(k){ return KEYS[k]; });
+  return '<div class="modal-overlay backup-restore-backdrop"><div class="modal-box" style="max-width:640px;">'+
+    '<h3>Restaurer la sauvegarde du '+esc(fmtDate(fmtISOLocal(new Date(snap.createdAt))))+'</h3>'+
+    '<p class="tiny" style="margin-bottom:10px;">Cochez les modules à remettre dans l\'état de cette sauvegarde. Les autres modules ne sont pas touchés. Les comptes et profils ne sont pas cochés par défaut (pour ne pas remettre d\'anciens mots de passe).</p>'+
+    '<div style="display:flex; gap:8px; margin-bottom:8px;"><button class="btn small" data-action="backup-check-all">Tout cocher</button><button class="btn small" data-action="backup-check-none">Tout décocher</button></div>'+
+    '<div class="backup-mod-list">'+keys.map(function(k){
+      var same = syncJson(snap.data[k])===syncJson(DATA[k]);
+      return '<label class="backup-mod'+(same?' same':'')+'"><input type="checkbox" class="backup-mod-cb" value="'+k+'"'+(!same && BACKUP_NO_DEFAULT_RESTORE.indexOf(k)<0 ? ' checked' : '')+'> '+
+        '<span><b>'+esc(BACKUP_LABELS[k]||k)+'</b><br><span class="tiny">Sauvegarde : '+backupCount(snap.data[k])+' · Actuel : '+backupCount(DATA[k])+(same?' · identique':'')+'</span></span></label>';
+    }).join('')+'</div>'+
+    '<div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="backup-restore-cancel">Annuler</button><button class="btn primary" data-action="backup-restore-confirm">Restaurer les modules cochés</button></div>'+
+  '</div></div>';
+}
+async function backupRestoreSelected(){
+  var st = backupRestoreState; if(!st) return;
+  var picked = Array.prototype.map.call(document.querySelectorAll('.backup-mod-cb:checked'), function(cb){ return cb.value; });
+  if(!picked.length){ toast('Aucun module coché.', 'error'); return; }
+  var ok = await uiConfirm('Restaurer '+picked.length+' module(s) à l\'état du '+fmtDate(fmtISOLocal(new Date(st.snapshot.createdAt)))+' ?\n\n'+picked.map(function(k){ return '• '+(BACKUP_LABELS[k]||k); }).join('\n')+'\n\nUne copie de l\'état actuel est faite juste avant.', {okLabel:'Restaurer', danger:true});
+  if(!ok) return;
+  // Filet de sécurité : copie de l'état actuel
+  var idx = await backupReadIndex();
+  await backupWriteSlot(idx, 'prerestore', 'prerestore', 'Avant restauration');
+  await backendSet(BACKUP_INDEX_KEY, JSON.stringify(idx));
+  for(var i=0;i<picked.length;i++){
+    var k = picked[i];
+    DATA[k] = JSON.parse(syncJson(st.snapshot.data[k]));
+    await save(k);
+  }
+  logChange('Sauvegardes', 'Restauration', picked.map(function(k){ return BACKUP_LABELS[k]||k; }).join(', ')+' - sauvegarde du '+fmtDate(fmtISOLocal(new Date(st.snapshot.createdAt))));
+  backupRestoreState = null;
+  toast(picked.length+' module(s) restauré(s).');
+  render();
+}
+function backupDownload(snap, slot){
+  var blob = new Blob([JSON.stringify(snap, null, 1)], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sauvegarde-suivi-qualite-'+fmtISOLocal(new Date(snap.createdAt))+'-'+slot+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
 async function loadAll(){
+  if(supabaseClient){
+    // Supabase : tout en une seule requête, avec les dates de modification (base de la fusion)
+    try{
+      var missingKeys = await loadAllSupabase();
+      STORAGE_MODE = 'supabase';
+      for(var mi=0; mi<missingKeys.length; mi++) await seedKey(missingKeys[mi]);
+    }catch(e){
+      console.error('load error', e);
+      LOAD_DEGRADED = true;
+    }
+    if(!LOAD_DEGRADED){ setTimeout(function(){ migrateInlineBlobs(); }, 1500); return; }
+  }
   var pairs = Object.keys(KEYS);
   for(var i=0;i<pairs.length;i++){
     var k = pairs[i];
     try{
       var r = await backendGet(KEYS[k]);
-      if(r && r.value){ DATA[k] = JSON.parse(r.value); }
+      if(r && r.value){ DATA[k] = JSON.parse(r.value); SERVER_BASE[k] = syncJson(DATA[k]); }
       else {
         // Clé réellement absente côté serveur (réponse propre) → seed légitime
         await seedKey(k);
@@ -1054,12 +1605,15 @@ async function save(k){
   showSyncIndicator();
   savesInFlight[k] = (savesInFlight[k]||0) + 1;
   lastSaveStart[k] = Date.now();
-  try{ await backendSet(KEYS[k], JSON.stringify(DATA[k])); }
+  try{
+    if(BLOB_MODULES.indexOf(k)>=0) await externalizeBlobs(DATA[k]);   // photos rangées à part, hors synchro
+    await saveSerialized(k);
+  }
   catch(e){
     console.error('storage error', k, e);
     if(!saveErrorShown){
       saveErrorShown = true;
-      alert('⚠ ERREUR D\'ENREGISTREMENT\n\nVotre dernière modification n\'a PAS été sauvegardée sur le serveur ('+k+').\nVérifiez votre connexion puis réessayez.');
+      uiAlert('⚠ ERREUR D\'ENREGISTREMENT\n\nVotre dernière modification n\'a PAS été sauvegardée sur le serveur ('+k+').\nVérifiez votre connexion puis réessayez.');
       setTimeout(function(){ saveErrorShown = false; }, 10000);
     }
   }
@@ -1623,19 +2177,19 @@ function excelCellToDateStr(v){
 }
 
 function handleImportAuditExcelFile(file){
-  if(typeof XLSX==='undefined'){ alert('La librairie de lecture Excel n\'a pas pu être chargée (connexion internet requise). Réessayez.'); return; }
+  if(typeof XLSX==='undefined'){ uiAlert('La librairie de lecture Excel n\'a pas pu être chargée (connexion internet requise). Réessayez.'); return; }
   var reader = new FileReader();
   reader.onload = function(e){
     try{
       var data = new Uint8Array(e.target.result);
       var wb = XLSX.read(data, {type:'array', cellDates:true});
       var result = parseAuditWorkbook(wb);
-      if(!result){ alert('Fichier non reconnu. Attendu : un export du modèle "Audit propreté MCU1/MCU2" ou "Audit propreté MCU3".'); return; }
+      if(!result){ uiAlert('Fichier non reconnu. Attendu : un export du modèle "Audit propreté MCU1/MCU2" ou "Audit propreté MCU3".'); return; }
       auditImportPreview = result;
       render();
     }catch(err){
       console.error('Import audit error', err);
-      alert('Erreur lors de la lecture du fichier : '+err.message);
+      uiAlert('Erreur lors de la lecture du fichier : '+err.message);
     }
   };
   reader.readAsArrayBuffer(file);
@@ -1727,7 +2281,7 @@ async function handleConfirmAuditImport(){
   var date = document.getElementById('ai-date').value || p.date;
   var auditeur = document.getElementById('ai-auditeur').value;
   var service = document.getElementById('ai-service').value;
-  if(!auditeur){ alert('Merci de renseigner le nom de l\'auditeur.'); return; }
+  if(!auditeur){ toast('Merci de renseigner le nom de l\'auditeur.', 'error'); return; }
   // Réutilise exactement le circuit de sauvegarde standard (mêmes effets : score, plan d'actions, résultat du mois)
   auditWizard = {ligne:ligne, date:date, auditeur:auditeur, service:service, items:p.items};
   await handleSaveAudit(true);
@@ -1847,13 +2401,13 @@ async function handleWizardNext(){
     w.date = document.getElementById('aw-date').value || todayStr();
     w.auditeur = document.getElementById('aw-auditeur').value;
     w.service = document.getElementById('aw-service').value;
-    if(!w.auditeur){ alert('Merci de renseigner le nom de l\'auditeur.'); return; }
+    if(!w.auditeur){ toast('Merci de renseigner le nom de l\'auditeur.', 'error'); return; }
   }
   w.step++;
   render();
 }
 function handleWizardPrev(){ auditWizard.step--; render(); }
-function handleCancelAudit(){ if(confirm('Abandonner cet audit ? Les réponses saisies seront perdues.')){ auditWizard=null; render(); } }
+async function handleCancelAudit(){ if(await uiConfirm('Abandonner cet audit ? Les réponses saisies seront perdues.')){ auditWizard=null; render(); } }
 function handleStartAudit(){ auditWizard = {step:0, ligne:'MCU1', date:todayStr(), auditeur:'', service:'', items:{}}; render(); }
 
 async function handleSaveAudit(fromImport){
@@ -1890,7 +2444,7 @@ async function handleSaveAudit(fromImport){
 
   auditWizard = null;
   logChange('Propreté', fromImport?'Audit importé (Excel)':'Audit réalisé', w.ligne+' - score '+(sc.score!==null?sc.score+'%':'n/a'));
-  alert((fromImport?'Audit importé et enregistré':'Audit enregistré')+(sc.score!==null? ' - score '+sc.score+'%.':' (aucun critère renseigné).')+' '+created+' non-conformité(s) ajoutée(s) au plan d\'actions.');
+  uiAlert((fromImport?'Audit importé et enregistré':'Audit enregistré')+(sc.score!==null? ' - score '+sc.score+'%.':' (aucun critère renseigné).')+' '+created+' non-conformité(s) ajoutée(s) au plan d\'actions.');
   render();
 }
 async function recomputeResultatMois(ligne, moisLabel, annee){
@@ -1913,7 +2467,7 @@ async function recomputeResultatMois(ligne, moisLabel, annee){
 async function handleDeleteAudit(id){
   var a = DATA.propAudits.find(function(x){ return x.id===id; });
   if(!a) return;
-  if(!confirm('Supprimer cet audit propreté ? Le résultat du mois sera recalculé sur la base des audits restants.')) return;
+  if(!await uiConfirm('Supprimer cet audit propreté ? Le résultat du mois sera recalculé sur la base des audits restants.')) return;
   DATA.propAudits = DATA.propAudits.filter(function(x){ return x.id!==id; });
   await save('propAudits');
   var d = a.date.split('-');
@@ -1934,7 +2488,7 @@ function renderAuditDetailModal(){
   if(ngItems.length){
     html += '<div class="eyebrow" style="margin-bottom:8px;">Non-conformités</div>';
     ngItems.forEach(function(it){
-      html += '<div style="padding:6px 0; border-bottom:1px solid var(--border); font-size:12.5px;"><b>'+esc(it.critere)+'</b> ('+esc(it.poste)+')'+(it.remarque?' - '+esc(it.remarque):'')+(it.action?'<br><span class="tiny">Action : '+esc(it.action)+'</span>':'')+'</div>';
+      html += '<div style="padding:6px 0; border-bottom:1px solid var(--border); font-size:12.5px; display:flex; gap:10px; align-items:flex-start;"><div style="flex:1;"><b>'+esc(it.critere)+'</b> ('+esc(it.poste)+')'+(it.remarque?' - '+esc(it.remarque):'')+(it.action?'<br><span class="tiny">Action : '+esc(it.action)+'</span>':'')+'</div>'+(it.photo? blobThumb(it.photo, 'Photo de la non-conformité') : '')+'</div>';
     });
   } else {
     html += emptyState('Aucune non-conformité sur cet audit.');
@@ -2459,7 +3013,7 @@ async function handleContamNoProd(){
 async function handleDeleteCollecte(id){
   var c = DATA.contamination.find(function(x){ return x.id===id; });
   if(!c) return;
-  if(!confirm('Supprimer cette collecte ('+c.ligne+' · '+c.ref+') ?\nL\'échéance planning associée sera remise en statut Planifié ou En retard.')) return;
+  if(!await uiConfirm('Supprimer cette collecte ('+c.ligne+' · '+c.ref+') ?\nL\'échéance planning associée sera remise en statut Planifié ou En retard.')) return;
 
   // Retrouver l'échéance planning associée et annuler sa réalisation
   // Seules les échéances cochées automatiquement par une ancienne version (collecte) sont annulées
@@ -2573,7 +3127,7 @@ async function handleSaveContamDirect(){
     ? DATA.contamination.find(function(c){ return c.id===editId; })
     : DATA.contamination.find(function(c){ return c.ligne===ligne && c.ref===ref && c.mois===mois && c.annee===annee && !c.isRetest; });
 
-  if(!editId && existing && !confirm('Un résultat existe déjà pour '+ligne+' · '+ref+' ('+MONTHS_FR[mois]+' '+annee+'). Le remplacer ?')) return;
+  if(!editId && existing && !await uiConfirm('Un résultat existe déjà pour '+ligne+' · '+ref+' ('+MONTHS_FR[mois]+' '+annee+'). Le remplacer ?')) return;
 
   var values = {}, statut, rapport;
   if(noProd){
@@ -2583,7 +3137,7 @@ async function handleSaveContamDirect(){
     Array.prototype.forEach.call(document.querySelectorAll('.cd-crit'), function(inp){
       if(inp.value!==''){ values[inp.dataset.crit] = parseFloat(inp.value); hasValue = true; }
     });
-    if(!hasValue){ alert('Merci de renseigner au moins une valeur mesurée, ou cochez "non produite ce mois".'); return; }
+    if(!hasValue){ toast('Merci de renseigner au moins une valeur mesurée, ou cochez "non produite ce mois".', 'error'); return; }
     statut = contamConformite(ref, values);
     rapport = document.getElementById('cd-rapport').value || null;
   }
@@ -2610,7 +3164,7 @@ async function handleDeleteContam(id){
   var c = DATA.contamination.find(function(x){ return x.id===id; });
   if(!c) return;
   var moisLabel = MONTHS_FR[c.mois].charAt(0).toUpperCase()+MONTHS_FR[c.mois].slice(1);
-  if(!confirm('Supprimer ce relevé ('+c.ligne+' · '+c.ref+' - '+moisLabel+' '+c.annee+') ?')) return;
+  if(!await uiConfirm('Supprimer ce relevé ('+c.ligne+' · '+c.ref+' - '+moisLabel+' '+c.annee+') ?')) return;
   // Si c'est un NC avec retest marqué, annuler le flag retested sur l'original
   if(c.isRetest){
     var original = DATA.contamination.find(function(x){
@@ -2628,7 +3182,7 @@ async function handleDismissRetest(id){
   var c = DATA.contamination.find(function(x){ return x.id===id; });
   if(!c) return;
   var moisLabel = MONTHS_FR[c.mois].charAt(0).toUpperCase()+MONTHS_FR[c.mois].slice(1)+' '+c.annee;
-  if(!confirm('Clore la contre-analyse de '+c.ligne+' · '+c.ref+' ('+moisLabel+') sans re-test ?\n\nCela indique que ce résultat NC ne sera pas re-testé (délai dépassé, décision qualité, etc.).')) return;
+  if(!await uiConfirm('Clore la contre-analyse de '+c.ligne+' · '+c.ref+' ('+moisLabel+') sans re-test ?\n\nCela indique que ce résultat NC ne sera pas re-testé (délai dépassé, décision qualité, etc.).')) return;
   c.retested = true;
   c.dismissedAt = todayStr();
   await save('contamination');
@@ -2677,7 +3231,7 @@ async function handleSaveAnalyseContam(id){
     }
     DATA.actions.push({id:uid('act'), origine:'Propreté', secteur:currentSecteur, description:description, ligne:rec.ligne, responsable:'', echeance:null, statut:'planifiee', dateCreation:todayStr()});
     await save('actions');
-    alert(msg);
+    uiAlert(msg);
   }
   contamAnalyseEditId = null;
   render();
@@ -2965,7 +3519,7 @@ async function handleRetraitSemaine(datePose){
   var dateRetrait = todayStr();
   var toUpdate = DATA.particules.filter(function(p){ return p.datePose===datePose && p.statut==='en_pose'; });
   if(!toUpdate.length) return;
-  if(!confirm('Marquer les '+toUpdate.length+' pastilles du '+fmtDate(datePose)+' comme retirées et envoyées au labo ?')) return;
+  if(!await uiConfirm('Marquer les '+toUpdate.length+' pastilles du '+fmtDate(datePose)+' comme retirées et envoyées au labo ?')) return;
   toUpdate.forEach(function(p){ p.statut='en_analyse'; p.dateRetrait=dateRetrait; });
   await save('particules');
   logChange('Propreté', 'Retrait pastilles', datePose+' → '+toUpdate.length+' en analyse');
@@ -2981,7 +3535,7 @@ async function handleSaveDT(id){
 }
 async function handleSaveResultat(id){
   var el = document.getElementById('res-nb-'+id);
-  if(!el || el.value===''){ alert('Merci de renseigner le nombre de particules.'); return; }
+  if(!el || el.value===''){ toast('Merci de renseigner le nombre de particules.', 'error'); return; }
   var p = DATA.particules.find(function(x){ return x.id===id; });
   if(p){
     p.nbParticules = parseInt(el.value, 10);
@@ -3258,7 +3812,7 @@ async function handleSaveReleveDirect(type, nextBain){
   render();
 }
 async function handleDeleteReleveDirect(id){
-  if(!confirm('Supprimer ce relevé ?')) return;
+  if(!await uiConfirm('Supprimer ce relevé ?')) return;
   DATA.releves = DATA.releves.filter(function(x){return x.id!==id;});
   await save('releves');
   releveDirectFormOpen = false;
@@ -3534,6 +4088,7 @@ function actionDetailModalHtml(){
     '</div>'+
     (src? '<div class="ad-source"><span>Origine : <b>'+esc(src)+'</b></span>'+(a.source? '<button class="btn small" data-action="action-goto-source"'+(isNew?' disabled title="Disponible une fois l\'action enregistrée"':'')+'>Voir la source →</button>' : '')+'</div>' : '')+
     '<label class="field" style="margin-bottom:10px;">Description<textarea id="ad-desc" rows="3" style="width:100%; font-family:inherit; font-size:13.5px;">'+esc(a.description||'')+'</textarea></label>'+
+    (a.photo? '<div class="tiny" style="margin:-4px 0 10px; display:flex; align-items:center; gap:8px;">Photo jointe : '+blobThumb(a.photo, 'Photo de l\'action')+'</div>' : '')+
     '<div class="ad-grid">'+
       '<label class="field">Ligne<select id="ad-ligne"><option value="">-</option>'+lignes.map(function(l){ return '<option'+(l===a.ligne?' selected':'')+'>'+esc(l)+'</option>'; }).join('')+'</select></label>'+
       actionResponsableSelect(a.responsable||'')+
@@ -3699,7 +4254,7 @@ function esdEcheance(p){ // date d'échéance = date formation + 1 an
   if(!p.dateFormation) return null;
   var d = new Date(p.dateFormation+'T00:00:00');
   d.setFullYear(d.getFullYear()+1);
-  return d.toISOString().slice(0,10);
+  return fmtISOLocal(d);
 }
 function esdStatus(p){
   var ech = esdEcheance(p);
@@ -3797,7 +4352,7 @@ function esdEditRow(p){
 }
 async function handleSaveEsd(){
   var nom = document.getElementById('ef-nom').value.trim();
-  if(!nom){ alert('Merci de saisir un nom.'); return; }
+  if(!nom){ toast('Merci de saisir un nom.', 'error'); return; }
   var entry = {id:uid('esd'), nom:nom, dateFormation:document.getElementById('ef-date').value||null};
   DATA.esd.push(entry);
   await save('esd');
@@ -3810,7 +4365,7 @@ async function handleSaveEsdEdit(id){
   if(!p) return;
   var nom = document.getElementById('esd-edit-nom').value.trim();
   var date = document.getElementById('esd-edit-date').value;
-  if(!nom){ alert('Merci de saisir un nom.'); return; }
+  if(!nom){ toast('Merci de saisir un nom.', 'error'); return; }
   var oldDate = p.dateFormation;
   p.nom = nom; p.dateFormation = date||null;
   await save('esd');
@@ -3821,7 +4376,7 @@ async function handleSaveEsdEdit(id){
 async function handleDeleteEsd(id){
   var p = DATA.esd.find(function(x){ return x.id===id; });
   if(!p) return;
-  if(!confirm('Supprimer '+p.nom+' de la liste ESD ?')) return;
+  if(!await uiConfirm('Supprimer '+p.nom+' de la liste ESD ?')) return;
   DATA.esd = DATA.esd.filter(function(x){ return x.id!==id; });
   await save('esd');
   logChange('ESD', 'Suppression', p.nom);
@@ -3906,7 +4461,7 @@ function ciclEcheance(p){
   if(!p.dateFormation) return null;
   var d = new Date(p.dateFormation+'T00:00:00');
   d.setFullYear(d.getFullYear()+1);
-  return d.toISOString().slice(0,10);
+  return fmtISOLocal(d);
 }
 function ciclStatus(p){
   var ech = ciclEcheance(p);
@@ -4216,7 +4771,7 @@ function ciclEditRow(p, ref){
 }
 async function handleSaveCicl(ref){
   var nom = document.getElementById('cf-nom').value.trim();
-  if(!nom){ alert('Merci de saisir un nom.'); return; }
+  if(!nom){ toast('Merci de saisir un nom.', 'error'); return; }
   var poste = document.getElementById('cf-poste').value;
   var date = document.getElementById('cf-date').value||null;
   DATA.cicl.push({id:uid('cicl'), ref:ref, poste:poste, nom:nom, dateFormation:date});
@@ -4232,7 +4787,7 @@ async function handleSaveCiclEdit(id){
   var nom = document.getElementById('cicl-edit-nom').value.trim();
   var poste = document.getElementById('cicl-edit-poste').value;
   var date = document.getElementById('cicl-edit-date').value;
-  if(!nom){ alert('Merci de saisir un nom.'); return; }
+  if(!nom){ toast('Merci de saisir un nom.', 'error'); return; }
   p.nom = nom; p.poste = poste; p.dateFormation = date||null;
   await save('cicl');
   logChange('CI/CL', 'Mise à jour', nom+' - '+p.ref+' / '+poste);
@@ -4242,7 +4797,7 @@ async function handleSaveCiclEdit(id){
 async function handleDeleteCicl(id){
   var p = DATA.cicl.find(function(x){ return x.id===id; });
   if(!p) return;
-  if(!confirm('Supprimer '+p.nom+' ('+p.ref+' / '+p.poste+') ?'+(REF_CICL_LIGNES[p.ref].length>1?' Cette formation est commune a '+REF_CICL_LIGNES[p.ref].join(' et ')+', elle disparaitra des deux.':''))) return;
+  if(!await uiConfirm('Supprimer '+p.nom+' ('+p.ref+' / '+p.poste+') ?'+(REF_CICL_LIGNES[p.ref].length>1?' Cette formation est commune a '+REF_CICL_LIGNES[p.ref].join(' et ')+', elle disparaitra des deux.':''))) return;
   DATA.cicl = DATA.cicl.filter(function(x){ return x.id!==id; });
   await save('cicl');
   logChange('CI/CL', 'Suppression', p.nom+' - '+p.ref+' / '+p.poste);
@@ -4250,10 +4805,10 @@ async function handleDeleteCicl(id){
 }
 async function handleSaveCiclPerson(existingId){
   var nom = document.getElementById('cpf-nom').value.trim();
-  if(!nom){ alert('Merci de saisir un nom.'); return; }
+  if(!nom){ toast('Merci de saisir un nom.', 'error'); return; }
   var role = document.getElementById('cpf-role').value;
   var lignes = role==='pilote' ? [] : Array.prototype.map.call(document.querySelectorAll('.cpf-ligne-chk:checked'), function(c){return c.value;});
-  if(role==='regleur' && !lignes.length){ alert('Sélectionnez au moins une ligne pour un régleur.'); return; }
+  if(role==='regleur' && !lignes.length){ toast('Sélectionnez au moins une ligne pour un régleur.', 'error'); return; }
   if(existingId){
     var p = DATA.ciclPersons.find(function(x){ return x.id===existingId; });
     if(p){ p.nom = nom; p.role = role; p.lignes = lignes; }
@@ -4270,7 +4825,7 @@ async function handleSaveCiclPerson(existingId){
 async function handleDeleteCiclPerson(id){
   var p = DATA.ciclPersons.find(function(x){ return x.id===id; });
   if(!p) return;
-  if(!confirm('Retirer '+p.nom+' de la liste du personnel CI/CL ? (les formations déjà appliquées ne seront pas supprimées)')) return;
+  if(!await uiConfirm('Retirer '+p.nom+' de la liste du personnel CI/CL ? (les formations déjà appliquées ne seront pas supprimées)')) return;
   DATA.ciclPersons = DATA.ciclPersons.filter(function(x){ return x.id!==id; });
   await save('ciclPersons');
   logChange('CI/CL', 'Personnel retiré', p.nom);
@@ -4353,7 +4908,7 @@ function perfForm(){
 }
 async function handleSavePerf(){
   var pct = document.getElementById('pf-pct').value;
-  if(pct===''){ alert('Merci de saisir le résultat.'); return; }
+  if(pct===''){ toast('Merci de saisir le résultat.', 'error'); return; }
   var ligne = document.getElementById('pf-ligne').value;
   var mois = Number(document.getElementById('pf-mois').value);
   var annee = Number(document.getElementById('pf-annee').value);
@@ -4371,7 +4926,7 @@ async function handleSavePerf(){
 async function handleDeletePerfCell(id){
   var r = DATA.perf.find(function(x){ return x.id===id; });
   if(!r) return;
-  if(!confirm('Supprimer le résultat '+r.ligne+' - '+MONTHS_FR[r.mois]+' ('+r.resultatPct+'%) ?')) return;
+  if(!await uiConfirm('Supprimer le résultat '+r.ligne+' - '+MONTHS_FR[r.mois]+' ('+r.resultatPct+'%) ?')) return;
   DATA.perf = DATA.perf.filter(function(x){ return x.id!==id; });
   await save('perf');
   render();
@@ -4413,7 +4968,7 @@ function formationEcheance(p){
   if(!p.dateFormation) return null;
   var d = new Date(p.dateFormation+'T00:00:00');
   d.setFullYear(d.getFullYear()+1);
-  return d.toISOString().slice(0,10);
+  return fmtISOLocal(d);
 }
 // ---------- PRISON QUALITE (stock de pièces bloquées) ----------
 var PRISON_QTY_COLS = [['complet','Complet'],['sansCapot','Sans capot'],['sansPcb','Sans PCB']];
@@ -4664,7 +5219,7 @@ async function handleSavePrisonLot(){
 async function handleDeletePrisonLot(id){
   var lot = DATA.prisonLots.find(function(l){ return l.id===id; });
   if(!lot) return;
-  if(!confirm('Supprimer le défaut "'+lot.defaut+'" et ses '+prisonLotTotal(lot)+' pièce(s) de la prison qualité ?\n\nÀ faire uniquement quand le stock est réellement sorti (rebut, recyclage, réintroduction...).')) return;
+  if(!await uiConfirm('Supprimer le défaut "'+lot.defaut+'" et ses '+prisonLotTotal(lot)+' pièce(s) de la prison qualité ?\n\nÀ faire uniquement quand le stock est réellement sorti (rebut, recyclage, réintroduction...).')) return;
   DATA.prisonLots = DATA.prisonLots.filter(function(l){ return l.id!==id; });
   await prisonCommit('Sortie du défaut', lot.defaut+' ('+prisonLotTotal(lot)+' pcs)');
   toast('Défaut retiré de la prison qualité.');
@@ -4687,7 +5242,7 @@ async function handleDeletePrisonLine(lotId, lineId){
   if(!lot) return;
   var line = (lot.lignes||[]).find(function(x){ return x.id===lineId; });
   if(!line) return;
-  if(prisonLineTotal(line)>0 && !confirm('Supprimer la référence '+line.ref+' ('+prisonLineTotal(line)+' pièce(s)) de ce défaut ?')) return;
+  if(prisonLineTotal(line)>0 && !await uiConfirm('Supprimer la référence '+line.ref+' ('+prisonLineTotal(line)+' pièce(s)) de ce défaut ?')) return;
   lot.lignes = lot.lignes.filter(function(x){ return x.id!==lineId; });
   await prisonCommit('Suppression référence', lot.defaut+' · '+line.ref);
   render();
@@ -4725,7 +5280,7 @@ function prisonSheetSeed(){
 }
 async function handleImportPrisonSheet(){
   if(DATA.prisonLots.length){ toast('Des données existent déjà, reprise annulée.', 'error'); return; }
-  if(!confirm('Reprendre les 8 défauts de la synthèse papier du 23/03/2026 (1689 pièces) ?\n\nPensez à vérifier les quantités par rapport à la feuille, puis à les mettre à jour.')) return;
+  if(!await uiConfirm('Reprendre les 8 défauts de la synthèse papier du 23/03/2026 (1689 pièces) ?\n\nPensez à vérifier les quantités par rapport à la feuille, puis à les mettre à jour.')) return;
   DATA.prisonLots = prisonSheetSeed();
   prisonUpsertSnapshot('2026-03-23'); // point de référence daté de la feuille papier
   await prisonCommit('Reprise de la feuille du 23/03/2026', DATA.prisonLots.length+' défauts');
@@ -5111,6 +5666,229 @@ function paretoRowByKey(key){
   return r ? {cur:cur, row:r} : null;
 }
 
+// ====================================================================
+// RAPPORT MENSUEL - REVUE DE DIRECTION (PDF, A4 portrait, une rubrique par page)
+// Toutes les valeurs sont recalculées à partir des données saisies pour le mois choisi.
+// Les états "à date" (métrologie, stock prison, formations) sont ceux du jour d'édition.
+// ====================================================================
+function rptMonthLabel(key){ var mi = Number(key.slice(5,7))-1; return MONTHS_FR[mi].charAt(0).toUpperCase()+MONTHS_FR[mi].slice(1)+' '+key.slice(0,4); }
+function rptPct(v, d){ return v===null || v===undefined || isNaN(v) ? '-' : (Math.round(v*Math.pow(10,d||0))/Math.pow(10,d||0)).toLocaleString('fr-FR')+' %'; }
+function rptLvlColor(l){ return {ok:'#2E7D4F', warn:'#B8730A', urgent:'#C25A00', danger:'#B23B2E'}[l] || '#555'; }
+function rptKpi(label, value, level, sub){
+  return '<div class="mr-kpi"><div class="mr-kpi-l">'+esc(label)+'</div><div class="mr-kpi-v" style="color:'+rptLvlColor(level)+';">'+value+'</div>'+(sub?'<div class="mr-kpi-s">'+sub+'</div>':'')+'</div>';
+}
+// Graphique dessiné hors écran puis transformé en image (pour l'impression)
+function rptChartImage(config, w, h){
+  if(typeof Chart==='undefined') return '';
+  var c = document.createElement('canvas'); c.width = w; c.height = h;
+  c.style.cssText = 'position:fixed; left:-10000px; top:0; width:'+w+'px; height:'+h+'px;';
+  document.body.appendChild(c);
+  var url = '';
+  try{
+    config.options = config.options || {};
+    config.options.responsive = false; config.options.animation = false; config.options.devicePixelRatio = 2;
+    var ch = new Chart(c, config);
+    url = c.toDataURL('image/png');
+    ch.destroy();
+  }catch(e){ console.error('rapport graphique', e); }
+  c.remove();
+  return url ? '<img class="mr-chart" src="'+url+'" alt="">' : '';
+}
+function rptScoreForMonth(key){
+  var vals = (DATA.scoreHistory||[]).filter(function(s){ return s.date && s.date.slice(0,7)===key && s.score!==null && s.score!==undefined; });
+  if(!vals.length) return null;
+  var last = vals[vals.length-1];
+  return {score: Math.round(vals.reduce(function(a,s){ return a+s.score; },0)/vals.length), detail: last.detail||[]};
+}
+function rptInMonth(dateStr, key){ return !!dateStr && dateStr.slice(0,7)===key; }
+
+function buildMonthlyReport(key){
+  var y = Number(key.slice(0,4)), m = Number(key.slice(5,7))-1;
+  var prevKey = paretoShiftMonth(key, -1);
+  var isMCU = currentSecteur==='MCU';
+  var lines = secteurLines();
+  var pages = [];
+  var head = function(title){ return '<div class="mr-head"><div><div class="mr-sup">Revue qualité mensuelle · Secteur '+esc(currentSecteur)+'</div><div class="mr-title">'+esc(title)+'</div></div><div class="mr-month">'+esc(rptMonthLabel(key))+'</div></div>'; };
+
+  // ---------- Page 1 : synthèse ----------
+  var sc = rptScoreForMonth(key), scPrev = rptScoreForMonth(prevKey);
+  if(!sc && key===todayStr().slice(0,7)){ var g = globalConformityScore(); if(g && g.score!==null) sc = {score:g.score, detail:g.detail}; }
+  var acts = bySecteur(DATA.actions);
+  var created = acts.filter(function(a){ return rptInMonth(a.dateCreation, key); });
+  var closed = acts.filter(function(a){ return rptInMonth(a.dateVerification, key) || (a.sansVerif && rptInMonth(a.dateRealisation, key)); });
+  var realised = acts.filter(function(a){ return rptInMonth(a.dateRealisation, key); });
+  var openA = acts.filter(function(a){ var c = actionPanelCategory(a); return c==='late' || c==='encours' || c==='realisee'; });
+  var lateA = acts.filter(isActionLate);
+  var verifLate = acts.filter(isVerifLate);
+  var p1 = head('Synthèse du mois');
+  p1 += '<div class="mr-kpis">'+
+    rptKpi('Score de conformité', sc? sc.score+' %' : '-', sc? scoreLevel(sc.score) : 'neutral', scPrev && sc ? (sc.score-scPrev.score>=0?'+':'')+(sc.score-scPrev.score)+' pt vs '+esc(rptMonthLabel(prevKey).toLowerCase()) : (sc? 'pas de comparaison' : 'pas d\'historique ce mois'))+
+    rptKpi('Actions ouvertes', openA.length, openA.length? 'warn':'ok', created.length+' créée(s) · '+realised.length+' réalisée(s) ce mois')+
+    rptKpi('Actions en retard', lateA.length, lateA.length? 'danger':'ok', verifLate.length+' vérification(s) d\'efficacité en retard')+
+    rptKpi('Actions clôturées', closed.length, 'ok', 'vérifiées / pérennisées dans le mois')+
+  '</div>';
+  if(sc && sc.detail && sc.detail.length){
+    p1 += '<h3 class="mr-h3">Détail du score</h3><table class="mr-table"><thead><tr><th>Composante</th><th class="n">Valeur</th><th>Niveau</th></tr></thead><tbody>'+
+      sc.detail.map(function(d){ var l = scoreLevel(d.val); return '<tr><td>'+esc(d.label)+'</td><td class="n"><b>'+d.val+' %</b></td><td style="color:'+rptLvlColor(l)+';">'+(l==='ok'?'Conforme':l==='warn'?'Attention':'En danger')+'</td></tr>'; }).join('')+'</tbody></table>';
+  }
+  if(isMCU){
+    p1 += '<h3 class="mr-h3">CHOKKO du mois</h3><table class="mr-table"><thead><tr><th>Ligne</th><th class="n">% CHOKKO</th><th class="n">Objectif</th><th class="n">Pièces produites</th><th class="n">Pièces NC</th><th class="n">Coût / pièce</th></tr></thead><tbody>'+
+      ['MCU1','MCU2','MCU3'].map(function(l){
+        var avg = chokkoMonthAverage(l, y, m), days = chokkoMonthDays(l, y, m);
+        var prod = days.reduce(function(s,d){ return s+d.totals.totalProd; },0), nc = days.reduce(function(s,d){ return s+d.totals.totalNC; },0);
+        var cost = DATA.chokkoUnitCost && DATA.chokkoUnitCost[l];
+        return '<tr><td><b>'+l+'</b></td><td class="n" style="color:'+rptLvlColor(chokkoLevelVsObjectif(avg, l))+';"><b>'+(avg!==null? avg.toFixed(1)+' %' : '-')+'</b></td><td class="n">≥ '+chokkoObjectif(l)+' %</td><td class="n">'+prod.toLocaleString('fr-FR')+'</td><td class="n">'+nc.toLocaleString('fr-FR')+'</td>'+
+          '<td class="n" style="color:'+(cost? rptLvlColor(chokkoCostLevel(cost, l)) : '#555')+';">'+(cost? cost.toLocaleString('fr-FR',{minimumFractionDigits:3})+' €' : '-')+' <span class="mr-dim">(obj. &lt; '+chokkoCostObjectif(l).toLocaleString('fr-FR',{minimumFractionDigits:3})+' €)</span></td></tr>';
+      }).join('')+'</tbody></table>';
+  }
+  p1 += '<h3 class="mr-h3">Points marquants</h3><ul class="mr-list">'+rptHighlights(key, isMCU, lateA, verifLate).map(function(t){ return '<li>'+t+'</li>'; }).join('')+'</ul>';
+  pages.push(p1);
+
+  // ---------- Page 2 : CHOKKO (évolution + Pareto) ----------
+  if(isMCU){
+    var p2 = head('CHOKKO : évolution et causes');
+    var ds = ['MCU1','MCU2','MCU3'].map(function(l, i){
+      var data = []; for(var mm=0; mm<=m; mm++){ var a = chokkoMonthAverage(l, y, mm); data.push(a===null? null : Math.round(a*10)/10); }
+      return {label:l, data:data, borderColor:['#1F5C5C','#B8730A','#7B4FA3'][i], backgroundColor:['#1F5C5C','#B8730A','#7B4FA3'][i], borderWidth:2, pointRadius:3, spanGaps:true, tension:0.2};
+    });
+    p2 += '<h3 class="mr-h3">% CHOKKO mensuel '+y+' (janvier → '+esc(MONTHS_FR[m])+')</h3>';
+    p2 += rptChartImage({type:'line', data:{labels:MONTHS_FR.slice(0,m+1).map(function(x){ return x.slice(0,3); }), datasets:ds},
+      options:{plugins:{legend:{position:'bottom'}}, scales:{y:{min:90, max:100, ticks:{callback:function(v){ return v+' %'; }}}}}}, 1000, 360);
+    var psrc = paretoSourceById('chokko'), prange = paretoRange('mois', key), pres = paretoCompute(psrc, prange, '');
+    p2 += '<h3 class="mr-h3">Pareto des défauts du mois (toutes lignes)</h3>';
+    if(pres.total){
+      p2 += '<p class="mr-reading">'+paretoReading(pres, psrc, prange)+'</p>';
+      p2 += rptChartImage(paretoChartConfig(pres, psrc, false), 1000, 420);
+      p2 += '<table class="mr-table"><thead><tr><th>#</th><th>Cause</th><th class="n">Défauts</th><th class="n">%</th><th class="n">Cumul</th><th class="n">Évol.</th></tr></thead><tbody>'+
+        pres.rows.slice(0,8).map(function(r,i){ var d = pres.prev ? r.value-(pres.prev.byKey[r.key]||0) : null;
+          return '<tr'+(r.cls==='A'?' class="mr-a"':'')+'><td>'+(i+1)+'</td><td>'+esc(r.label)+'</td><td class="n"><b>'+r.value+'</b></td><td class="n">'+paretoFmtPct(r.pct)+'</td><td class="n">'+paretoFmtPct(r.cum)+'</td><td class="n">'+(d===null?'-':d>0?'+'+d:d<0?String(d):'=')+'</td></tr>'; }).join('')+'</tbody></table>';
+    } else p2 += '<p class="mr-dim">Aucun défaut CHOKKO saisi sur le mois.</p>';
+    pages.push(p2);
+  }
+
+  // ---------- Page 3 : propreté, contamination, audits de perf ----------
+  var p3 = head(isMCU ? 'Propreté, contamination et audits de perf' : 'Audits de perf');
+  if(isMCU){
+    p3 += '<h3 class="mr-h3">Audits propreté</h3><table class="mr-table"><thead><tr><th>Ligne</th><th class="n">Résultat du mois</th><th class="n">Mois précédent</th><th class="n">Audits réalisés</th><th class="n">Écarts (NG)</th></tr></thead><tbody>'+
+      ['MCU1','MCU2','MCU3'].map(function(l){
+        var r = monthRecapValue(l, m, y), rp = monthRecapValue(l, Number(prevKey.slice(5,7))-1, Number(prevKey.slice(0,4)));
+        var auds = DATA.propAudits.filter(function(a){ return a.ligne===l && rptInMonth(a.date, key); });
+        var ng = auds.reduce(function(s,a){ return s+(a.ng||0); },0);
+        return '<tr><td><b>'+l+'</b></td><td class="n" style="color:'+rptLvlColor(r? scoreLevel(r.val):'neutral')+';"><b>'+(r? r.val+' %' : '-')+'</b></td><td class="n">'+(rp? rp.val+' %' : '-')+'</td><td class="n">'+auds.length+'</td><td class="n">'+ng+'</td></tr>';
+      }).join('')+'</tbody></table>';
+    var prc = paretoCompute(paretoSourceById('propre_critere'), paretoRange('mois', key), '');
+    if(prc.total) p3 += '<p class="mr-reading">Écarts propreté : '+paretoReading(prc, paretoSourceById('propre_critere'), paretoRange('mois', key))+'</p>';
+    // Contamination du mois
+    var cm = DATA.contamination.filter(function(c){ return c.annee===y && c.mois===m; });
+    p3 += '<h3 class="mr-h3">Contamination des pièces</h3>';
+    if(cm.length){
+      p3 += '<table class="mr-table"><thead><tr><th>Ligne · réf.</th><th>Statut</th><th>Dépassement(s)</th><th class="n">Masse</th></tr></thead><tbody>'+
+        CONTAM_COMBOS.map(function(cb){
+          var rs = cm.filter(function(c){ return c.ligne===cb.ligne && c.ref===cb.ref; });
+          if(!rs.length) return '<tr><td>'+cb.ligne+' · '+cb.ref+'</td><td class="mr-dim">Non saisi</td><td></td><td></td></tr>';
+          var c = rs[rs.length-1], an = c.statut==='nc' ? contamNcAnalysis(c) : null;
+          var st = c.statut==='nc' ? 'NC · gravité '+CONTAM_GRAVITES[an.grav].label.toLowerCase() : contamStatutLabel(c.statut);
+          var col = c.statut==='nc' ? rptLvlColor(CONTAM_GRAVITES[an.grav].level) : c.statut==='ok' ? rptLvlColor('ok') : '#555';
+          var masse = c.values && (c.values.masse!==undefined ? c.values.masse : c.values.masse_a);
+          return '<tr><td>'+cb.ligne+' · '+cb.ref+(c.isRetest?' <span class="mr-dim">(contre-analyse)</span>':'')+'</td><td style="color:'+col+';"><b>'+esc(st)+'</b></td><td class="mr-small">'+(an? esc(an.over.map(contamOverShort).join(' · ')) : '')+'</td><td class="n">'+(masse!==undefined && masse!==null ? masse+' mg' : '-')+'</td></tr>';
+        }).join('')+'</tbody></table>';
+    } else p3 += '<p class="mr-dim">Aucun relevé de contamination pour ce mois.</p>';
+    // Relevés bains MCU0
+    var rb = DATA.releves.filter(function(r){ return r.date && r.date.slice(0,7)===key; });
+    if(rb.length){
+      var chl = rb.filter(function(r){ return r.type==='chlorure'; }), mas = rb.filter(function(r){ return r.type==='masse'; });
+      var chlNc = chl.filter(function(r){ return chlorureStatus(r).level==='danger'; }).length, masNc = mas.filter(function(r){ return masseStatus(r).level==='danger'; }).length;
+      p3 += '<p class="mr-reading"><b>Bains MCU0</b> : '+chl.length+' relevé(s) chlorure dont <b style="color:'+(chlNc?rptLvlColor('danger'):rptLvlColor('ok'))+';">'+chlNc+' hors tolérance</b> · '+mas.length+' relevé(s) masse polluante dont <b style="color:'+(masNc?rptLvlColor('danger'):rptLvlColor('ok'))+';">'+masNc+' NC</b>.</p>';
+    }
+  }
+  var perfRows = lines.map(function(l){
+    var r = DATA.perf.filter(function(x){ return (x.secteur||'MCU')===currentSecteur && x.ligne===l && x.annee===y && x.mois===m && x.resultatPct!==null && x.resultatPct!==undefined; })[0];
+    return '<tr><td><b>'+esc(l)+'</b></td><td class="n" style="color:'+rptLvlColor(r? scoreLevel(r.resultatPct):'neutral')+';"><b>'+(r? r.resultatPct+' %' : 'Non réalisé')+'</b></td></tr>';
+  });
+  p3 += '<h3 class="mr-h3">Audits de perf du mois</h3><table class="mr-table" style="max-width:420px;"><thead><tr><th>Ligne</th><th class="n">Résultat</th></tr></thead><tbody>'+perfRows.join('')+'</tbody></table>';
+  pages.push(p3);
+
+  // ---------- Page 4 : actions, métrologie, prison, formations, décisions ----------
+  var p4 = head('Plan d\'actions et états à date');
+  p4 += '<h3 class="mr-h3">Actions en retard ('+lateA.length+')</h3>';
+  if(lateA.length){
+    p4 += '<table class="mr-table"><thead><tr><th>Action</th><th>Ligne</th><th>Responsable</th><th class="n">Échéance</th><th class="n">Retard</th></tr></thead><tbody>'+
+      lateA.slice().sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); }).slice(0,14).map(function(a){
+        return '<tr><td class="mr-small">'+esc((a.description||'').slice(0,110))+'</td><td>'+esc(a.ligne||'-')+'</td><td>'+esc(a.responsable||'Non assigné')+'</td><td class="n">'+fmtDate(a.echeance)+'</td><td class="n" style="color:'+rptLvlColor('danger')+';">'+(-daysBetween(todayStr(), a.echeance))+' j</td></tr>';
+      }).join('')+'</tbody></table>'+(lateA.length>14? '<p class="mr-dim">+ '+(lateA.length-14)+' autre(s) action(s) en retard.</p>' : '');
+  } else p4 += '<p class="mr-dim">Aucune action en retard.</p>';
+  if(closed.length){
+    p4 += '<h3 class="mr-h3">Actions clôturées dans le mois ('+closed.length+')</h3><ul class="mr-list mr-small">'+closed.slice(0,10).map(function(a){ return '<li>'+esc((a.description||'').slice(0,120))+(a.resultatVerif? ' <span class="mr-dim">- '+esc(a.resultatVerif.slice(0,80))+'</span>' : '')+'</li>'; }).join('')+'</ul>';
+  }
+  var mo = bySecteur(DATA.metro), moLate = mo.filter(function(e){ return metroStatus(e).level==='danger'; }), moSoon = mo.filter(function(e){ return metroStatus(e).level==='urgent'; });
+  p4 += '<h3 class="mr-h3">États à la date d\'édition ('+fmtDate(todayStr())+')</h3><div class="mr-kpis">'+
+    rptKpi('Instruments hors validité', moLate.length, moLate.length?'danger':'ok', moSoon.length+' expire(nt) ce mois · '+mo.length+' suivis');
+  if(isMCU){
+    var pTot = prisonCurrentSnapshotData().total;
+    var pPrev = (DATA.prisonSnapshots||[]).filter(function(s){ return s.date && s.date.slice(0,7)<=prevKey; }).pop();
+    p4 += rptKpi('Stock prison qualité', pTot.toLocaleString('fr-FR')+' pcs', 'neutral', pPrev? ((pTot-pPrev.total)>=0?'+':'')+(pTot-pPrev.total)+' pcs vs fin '+esc(rptMonthLabel(prevKey).toLowerCase()) : 'pas d\'historique');
+    var esdLate = DATA.esd.filter(function(p){ return esdStatus(p).level==='danger'; }).length, esdSoon = DATA.esd.filter(function(p){ var l = esdStatus(p).level; return l==='urgent'||l==='warn'; }).length;
+    var ciclLate = DATA.cicl.filter(function(p){ return ciclStatus(p).level==='danger'; }).length;
+    p4 += rptKpi('Formations ESD expirées', esdLate, esdLate?'danger':'ok', esdSoon+' à renouveler sous 2 mois')+
+      rptKpi('Formations CI/CL expirées', ciclLate, ciclLate?'danger':'ok', DATA.cicl.length+' habilitations suivies');
+  }
+  p4 += '</div>';
+  if(moLate.length) p4 += '<p class="mr-small"><b>Instruments hors validité :</b> '+moLate.slice(0,12).map(function(e){ return esc(e.ligne)+' · '+esc((e.designation||'').split('\n')[0].slice(0,40))+' ('+fmtDate(e.echeance)+')'; }).join(' ; ')+(moLate.length>12?' ; …':'')+'</p>';
+  p4 += '<h3 class="mr-h3">Décisions et actions décidées en revue</h3><div class="mr-notes">'+[1,2,3,4,5,6].map(function(){ return '<div class="mr-note-line"></div>'; }).join('')+'</div>'+
+    '<div class="mr-sign"><div>Animateur :</div><div>Participants :</div><div>Date :</div></div>';
+  pages.push(p4);
+
+  return '<div class="mr-doc">'+pages.map(function(p, i){ return '<section class="mr-page">'+p+'<div class="mr-foot">Suivi qualité · rapport généré le '+fmtDate(todayStr())+' par '+esc(currentUser? currentUser.displayName : '')+' · page '+(i+1)+'/'+pages.length+'</div></section>'; }).join('')+'</div>';
+}
+function rptHighlights(key, isMCU, lateA, verifLate){
+  var out = [], y = Number(key.slice(0,4)), m = Number(key.slice(5,7))-1;
+  if(isMCU){
+    ['MCU1','MCU2','MCU3'].forEach(function(l){
+      var a = chokkoMonthAverage(l, y, m);
+      if(a!==null && a<chokkoObjectif(l)) out.push('CHOKKO '+l+' sous l\'objectif : <b>'+a.toFixed(1)+' %</b> (objectif '+chokkoObjectif(l)+' %).');
+    });
+    var pres = paretoCompute(paretoSourceById('chokko'), paretoRange('mois', key), '');
+    if(pres.total) out.push('Première cause de non-CHOKKO : <b>'+esc(pres.rows[0].label)+'</b> ('+pres.rows[0].value+' défauts, '+paretoFmtPct(pres.rows[0].pct)+').');
+    var nc = DATA.contamination.filter(function(c){ return c.annee===y && c.mois===m && c.statut==='nc'; });
+    if(nc.length) out.push(nc.length+' résultat(s) de contamination non conforme(s) : '+nc.map(function(c){ return c.ligne+' · '+c.ref+' (gravité '+CONTAM_GRAVITES[contamNcAnalysis(c).grav].label.toLowerCase()+')'; }).join(', ')+'.');
+  }
+  if(lateA.length) out.push('<b>'+lateA.length+'</b> action(s) en retard, dont '+lateA.filter(function(a){ return !(a.responsable||'').trim(); }).length+' sans responsable.');
+  if(verifLate.length) out.push(verifLate.length+' vérification(s) d\'efficacité en retard.');
+  if(!out.length) out.push('Aucun écart notable sur le mois.');
+  return out;
+}
+function openMonthlyReportPicker(){
+  var ov = document.createElement('div');
+  ov.className = 'ui-dialog-overlay';
+  var def = todayStr().slice(0,7);
+  if(Number(todayStr().slice(8,10)) <= 7) def = paretoShiftMonth(def, -1);   // en début de mois, on propose le mois écoulé
+  ov.innerHTML = '<div class="ui-dialog ui-dialog-info"><div class="ui-dialog-head"><span class="ui-dialog-icon">📄</span><span class="ui-dialog-title">Rapport mensuel - revue de direction</span></div>'+
+    '<div class="ui-dialog-body" style="white-space:normal;">Synthèse du mois sur 3 à 4 pages A4 (secteur '+esc(currentSecteur)+') : score, CHOKKO et Pareto, propreté, contamination, audits de perf, actions, métrologie, prison et formations, avec un cadre pour noter les décisions.'+
+    '<label class="field" style="margin-top:12px;">Mois<input type="month" id="mr-month" value="'+def+'"></label></div>'+
+    '<div class="ui-dialog-actions"><button type="button" class="btn" data-k="cancel">Annuler</button><button type="button" class="btn primary" data-k="ok">Générer le PDF</button></div></div>';
+  document.body.appendChild(ov);
+  function close(){ ov.remove(); }
+  ov.addEventListener('mousedown', function(e){ if(e.target===ov) close(); });
+  ov.querySelector('[data-k="cancel"]').addEventListener('click', close);
+  ov.querySelector('[data-k="ok"]').addEventListener('click', function(){
+    var v = ov.querySelector('#mr-month').value; if(!v) return;
+    close(); printMonthlyReport(v);
+  });
+}
+function printMonthlyReport(key){
+  var old = document.getElementById('monthly-report'); if(old) old.remove();
+  var sheet = document.createElement('div'); sheet.id = 'monthly-report';
+  try{ sheet.innerHTML = buildMonthlyReport(key); }
+  catch(e){ console.error('rapport mensuel', e); uiAlert('Le rapport n\'a pas pu être généré : '+e.message); return; }
+  document.body.appendChild(sheet);
+  document.body.classList.add('print-monthly-report');
+  logChange('Rapport', 'Rapport mensuel', 'Secteur '+currentSecteur+' - '+rptMonthLabel(key));
+  var cleanup = function(){ document.body.classList.remove('print-monthly-report'); var s = document.getElementById('monthly-report'); if(s) s.remove(); window.removeEventListener('afterprint', cleanup); };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(cleanup, 6000);
+  setTimeout(function(){ printWithPageSize('A4 portrait'); }, 80);
+}
+
 RENDERERS.bibliotheque = function(){
   var links = DATA.bibliotheque.slice().sort(function(a,b){ return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'}); });
   var html = '<div class="section">';
@@ -5151,7 +5929,7 @@ async function handleSaveBiblio(){
   render();
 }
 async function handleDeleteBiblio(id){
-  if(!confirm('Supprimer ce lien ?')) return;
+  if(!await uiConfirm('Supprimer ce lien ?')) return;
   DATA.bibliotheque = DATA.bibliotheque.filter(function(l){ return l.id!==id; });
   await save('bibliotheque');
   toast('Lien supprimé.');
@@ -5215,7 +5993,7 @@ RENDERERS.formations = function(){
 };
 async function handleSaveFormation(){
   var nom = document.getElementById('ff-nom').value.trim();
-  if(!nom){ alert('Merci de saisir un nom.'); return; }
+  if(!nom){ toast('Merci de saisir un nom.', 'error'); return; }
   DATA.formations.push({id:uid('form'), secteur:currentSecteur, nom:nom, dateFormation:document.getElementById('ff-date').value||null});
   await save('formations');
   logChange('Formations', 'Ajout', currentSecteur+' · '+nom);
@@ -5226,7 +6004,7 @@ async function handleSaveFormationEdit(id){
   var p = DATA.formations.find(function(x){ return x.id===id; });
   if(!p) return;
   var nom = document.getElementById('formation-edit-nom').value.trim();
-  if(!nom){ alert('Nom requis.'); return; }
+  if(!nom){ toast('Nom requis.', 'error'); return; }
   p.nom = nom;
   p.dateFormation = document.getElementById('formation-edit-date').value||null;
   await save('formations');
@@ -5236,7 +6014,7 @@ async function handleSaveFormationEdit(id){
 async function handleDeleteFormation(id){
   var p = DATA.formations.find(function(x){ return x.id===id; });
   if(!p) return;
-  if(!confirm('Supprimer '+p.nom+' ?')) return;
+  if(!await uiConfirm('Supprimer '+p.nom+' ?')) return;
   DATA.formations = DATA.formations.filter(function(x){ return x.id!==id; });
   await save('formations');
   render();
@@ -5976,7 +6754,7 @@ function renderChokkoChart(){
         {label:'% Chokko', data:data, backgroundColor:'#1F5C5C99', borderColor:'#1F5C5C', borderWidth:1.5, borderRadius:3},
         {label:'Objectif '+chokkoLigne, type:'line', data:Array(12).fill(chokkoObjectif(chokkoLigne)), borderColor:'#B8730A88', borderWidth:1.5, borderDash:[5,4], pointRadius:0}
       ]},
-      options:{responsive:true, maintainAspectRatio:false, scales:{y:{min:80, max:100, ticks:{callback:function(v){return v+'%';}}}}}
+      options:{responsive:true, maintainAspectRatio:false, scales:{y:{min:(function(){ var v = data.filter(function(x){ return x!==null; }); var lo = v.length? Math.min.apply(null, v) : 100; return lo<90 ? Math.floor(lo) : 90; })(), max:100, ticks:{callback:function(v){return v+'%';}}}}}
     });
   }catch(err){ console.error('chokko year chart error', err); }
 }
@@ -6206,7 +6984,7 @@ function downloadBlob(blob, filename){
   setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
 }
 async function handleExportChokkoExcel(){
-  if(typeof ExcelJS==='undefined'){ alert('La librairie Excel n\'a pas pu être chargée (connexion internet requise). Réessayez.'); return; }
+  if(typeof ExcelJS==='undefined'){ uiAlert('La librairie Excel n\'a pas pu être chargée (connexion internet requise). Réessayez.'); return; }
   var ligne = chokkoLigne;
   var postes = chokkoPostes(ligne);
   var wb = new ExcelJS.Workbook();
@@ -6442,6 +7220,9 @@ RENDERERS.archives = function(){
   html += archiveCard('Plan d\'actions', 'Actions créées ou échéant ce mois.', 'actions');
   html += '</div>';
   html += '<div class="card" style="margin-top:18px;"><div class="eyebrow">Sauvegarde complète</div><p class="tiny" style="margin:8px 0 12px;">Export brut de la totalité des données (tous modules, tout historique) au format JSON - utile en cas de migration ou de demande d\'audit complète. À ouvrir avec un éditeur de texte ou à réimporter techniquement si besoin.</p><button class="btn primary" data-action="export-full-json">Télécharger la sauvegarde complète (JSON)</button></div>';
+  html += '<div class="card" style="margin-top:18px;"><div class="eyebrow">Rapport mensuel - revue de direction</div><p class="tiny" style="margin:8px 0 12px;">Synthèse du mois choisi sur 3 à 4 pages A4 : score, CHOKKO et Pareto, propreté, contamination, audits de perf, actions, métrologie, prison et formations, avec un cadre pour noter les décisions de la revue.</p><button class="btn primary" data-action="monthly-report">📄 Générer le rapport mensuel</button></div>';
+  html += backupCardHtml();
+  if(currentUser && currentUser.roleId===ADMIN_ROLE_ID && !backupIndexCache){ backupReadIndex().then(function(){ if(currentTab==='archives') render(); }).catch(function(){}); }
   html += renderChangelogSection();
   html += '</div>';
   return html;
@@ -6487,7 +7268,7 @@ function handleExportCsv(mod){
     columns = [['origine','Origine'],['description','Description'],['ligne','Ligne'],['responsable','Responsable'],['echeance','Échéance'],['statut','Statut'],['dateCreation','Créée le']];
     filename = 'Actions_'+month+'.csv';
   }
-  if(!rows || !rows.length){ alert('Aucune donnée pour ce module sur la période sélectionnée.'); return; }
+  if(!rows || !rows.length){ toast('Aucune donnée pour ce module sur la période sélectionnée.', 'error'); return; }
   downloadText(filename, toCSV(rows, columns));
 }
 function handleExportFullJson(){
@@ -6549,6 +7330,7 @@ function render(){
   var scrollSnap = captureScrollPositions();
   var fn = RENDERERS[currentTab] || RENDERERS.dashboard;
   view.innerHTML = fn() + (actionDetailId ? actionDetailModalHtml() : '');
+  try{ hydrateBlobThumbs(); }catch(e){}
   restoreScrollPositions(scrollSnap);
   if(focusInfo){
     var el = document.getElementById(focusInfo.id);
@@ -6588,7 +7370,7 @@ function render(){
 var secteurGaugeScore = null;
 function renderTodayBanner(){
   var yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
-  var yStr = yesterday.toISOString().slice(0,10);
+  var yStr = fmtISOLocal(yesterday);
   var lignes = ['MCU1','MCU2','MCU3'];
   var prodYesterday = lignes.reduce(function(s,l){ return s+chokkoDayTotals(l, yStr).totalProd; },0);
 
@@ -7080,7 +7862,7 @@ RENDERERS.dashboard = function(){
     var days = [];
     for(var i=1;i<=35;i++){
       var d = new Date(); d.setDate(d.getDate()-i);
-      var dateStr = d.toISOString().slice(0,10);
+      var dateStr = fmtISOLocal(d);
       var total = lignes.reduce(function(s,l){ return s+chokkoDayTotals(l,dateStr).totalProd; },0);
       days.push({date:dateStr, total:total});
     }
@@ -7168,6 +7950,7 @@ RENDERERS.dashboard = function(){
   html += '<button class="btn" data-action="add-postit" data-page="dashboard">+ Post-it</button>';
   html += '<button class="btn'+(dashboardCustomizing?' primary':'')+'" data-action="toggle-customize">'+(dashboardCustomizing?'Terminer la personnalisation':'Personnaliser mon tableau de bord')+'</button>';
   html += '<button class="btn" data-action="weekly-digest">Générer le résumé hebdomadaire</button>';
+  html += '<button class="btn" data-action="monthly-report" title="Rapport de revue de direction sur 3-4 pages A4">📄 Rapport mensuel</button>';
   html += '<button class="btn primary" data-action="print-dashboard">Exporter le tableau de bord en PDF</button>';
   html += '</div><div id="digest-box"></div>';
 
@@ -7178,6 +7961,9 @@ RENDERERS.dashboard = function(){
       '<div style="display:flex; gap:8px; flex-wrap:wrap;">'+
       '<button class="btn small primary" data-action="add-kpi-widget">+ Indicateur personnalisé</button>'+
       '<button class="btn small" data-action="reset-dashboard-layout">Réinitialiser</button>'+
+      '</div></div>'+
+      '<div class="card dash-presets" style="margin-bottom:14px;"><div class="eyebrow" style="margin-bottom:8px;">Dispositions recommandées</div><div style="display:flex; gap:8px; flex-wrap:wrap;">'+
+      Object.keys(DASHBOARD_PRESETS).map(function(k){ var p = DASHBOARD_PRESETS[k]; return '<button class="btn small" data-action="apply-dashboard-preset" data-preset="'+k+'" title="'+esc(p.hint)+'"><b>'+esc(p.label)+'</b> <span class="tiny">· '+esc(p.hint)+'</span></button>'; }).join('')+
       '</div></div>';
     var allIds = layout.map(function(w){return w.id;});
     var catalog = DASHBOARD_WIDGETS_DEFAULT.filter(function(w){ return allIds.indexOf(w.id)<0; });
@@ -7320,7 +8106,7 @@ async function handlePlanningRecurGenerate(){
   var dates = [];
   var d = new Date(start+'T00:00:00');
   for(var i=0; i<count; i++){
-    dates.push(d.toISOString().slice(0,10));
+    dates.push(fmtISOLocal(d));
     d.setDate(d.getDate()+interval);
   }
 
@@ -7413,13 +8199,13 @@ function metroRow(e){
       '<td><input type="text" id="metro-edit-desig" value="'+esc(e.designation)+'" style="width:160px;"></td>'+
       '<td><input type="text" id="metro-edit-lieu" value="'+esc(val(e.lieu,''))+'" style="width:100px;"></td>'+
       '<td><input type="date" id="metro-edit-date" value="'+esc(e.echeance||'')+'" style="width:140px;"></td>'+
-      '<td>'+(e.certificat? '<img class="thumb" src="'+e.certificat+'" data-action="view-photo">' : '-')+'</td>'+
+      '<td>'+(e.certificat? blobThumb(e.certificat, 'Certificat') : '-')+'</td>'+
       '<td><button class="btn small primary" data-action="save-echeance" data-id="'+e.id+'">Valider</button> '+
       '<button class="btn small" data-action="cancel-echeance">Annuler</button></td></tr>';
   }
   return '<tr data-row-ligne="'+e.ligne+'">'+
     '<td>'+badge(s.level,s.label)+'</td><td>'+esc(e.ligne)+'</td><td class="num">'+esc(e.numMoyen)+'</td><td>'+esc(e.designation)+'</td><td>'+esc(val(e.lieu,''))+'</td>'+
-    '<td class="num">'+fmtDate(e.echeance)+'</td><td>'+(e.certificat? '<img class="thumb" src="'+e.certificat+'" data-action="view-photo">' : '-')+'</td>'+
+    '<td class="num">'+fmtDate(e.echeance)+'</td><td>'+(e.certificat? blobThumb(e.certificat, 'Certificat') : '-')+'</td>'+
     '<td><button class="btn small" data-action="edit-echeance" data-id="'+e.id+'">Modifier</button> '+
     '<button class="btn small danger-outline" data-action="delete" data-module="metro" data-id="'+e.id+'">Suppr.</button></td></tr>';
 }
@@ -7624,7 +8410,7 @@ function ateqActionForm(){
 }
 async function handleSaveAteqAction(){
   var description = document.getElementById('aa-description').value.trim();
-  if(!description){ alert('Merci de décrire l\'action corrective.'); return; }
+  if(!description){ toast('Merci de décrire l\'action corrective.', 'error'); return; }
   var entry = {
     id: uid('act'), origine:'ATEQ', secteur:currentSecteur, description:description,
     ligne: document.getElementById('aa-ligne').value,
@@ -8492,6 +9278,7 @@ async function handleLogin(){
     renderUserbox();
     render();
     startPolling();
+    startAutoBackup();
     var myOpenActions = bySecteur(DATA.actions).filter(function(a){ return a.responsable===acc.displayName && isActionOpen(a); });
     if(myOpenActions.length){
       var lateCount = myOpenActions.filter(isActionLate).length;
@@ -8543,19 +9330,7 @@ async function pollForUpdates(){
   if(STORAGE_MODE!=='supabase' || !currentUser || pollRunning) return;
   pollRunning = true;
   try{
-    var changed = false;
-    for(var k in KEYS){
-      var t0 = Date.now();
-      var res = await backendGet(KEYS[k]);
-      // Ne jamais écraser une donnée que l'utilisateur est en train d'envoyer ou vient d'envoyer :
-      // la version lue sur le serveur pourrait être antérieure à sa saisie.
-      if(savesInFlight[k] || (lastSaveStart[k]||0) >= t0 - 1500 || (lastSaveEnd[k]||0) >= t0) continue;
-      var newVal = res ? JSON.parse(res.value) : (Array.isArray(DATA[k]) ? [] : DATA[k]);
-      if(res && JSON.stringify(newVal) !== JSON.stringify(DATA[k])){
-        DATA[k] = newVal;
-        changed = true;
-      }
-    }
+    var changed = await pollChangedKeys();
     if(changed) pendingRemoteRender = true;
     // L'écran n'est redessiné qu'une fois la saisie terminée : rien de ce qui est en cours de frappe n'est perdu
     if(pendingRemoteRender && !isUserMidEdit()){
@@ -8567,6 +9342,12 @@ async function pollForUpdates(){
     }
   }catch(e){ console.error('poll error', e); }
   finally{ pollRunning = false; }
+}
+var backupTimer = null;
+function startAutoBackup(){
+  if(backupTimer) clearInterval(backupTimer);
+  setTimeout(autoBackupTick, 8000);                       // après le chargement, sans ralentir l'ouverture
+  backupTimer = setInterval(autoBackupTick, 3600000);     // vérifie chaque heure (une seule sauvegarde par jour)
 }
 function startPolling(){
   stopPolling();
@@ -8715,12 +9496,12 @@ async function handleSaveAccount(){
   var username = document.getElementById('af2-username').value.trim();
   var password = document.getElementById('af2-password').value;
   var roleId = document.getElementById('af2-roleId').value;
-  if(!displayName || !username){ alert('Nom et identifiant requis.'); return; }
+  if(!displayName || !username){ toast('Nom et identifiant requis.', 'error'); return; }
   var dup = DATA.accounts.find(function(a){ return a.username===username && a.id!==accountFormState.id; });
-  if(dup){ alert('Cet identifiant est déjà utilisé.'); return; }
+  if(dup){ toast('Cet identifiant est déjà utilisé.', 'error'); return; }
   var allSecteurs = document.getElementById('af2-allSecteurs').checked;
   var secteurs = allSecteurs ? [] : Array.prototype.map.call(document.querySelectorAll('.af2-secteur-chk:checked'), function(c){return c.value;});
-  if(!allSecteurs && !secteurs.length){ alert('Sélectionnez au moins un secteur.'); return; }
+  if(!allSecteurs && !secteurs.length){ toast('Sélectionnez au moins un secteur.', 'error'); return; }
   if(accountFormState.id){
     var a = DATA.accounts.find(function(x){ return x.id===accountFormState.id; });
     a.displayName = displayName; a.username = username; a.roleId = roleId;
@@ -8730,7 +9511,7 @@ async function handleSaveAccount(){
     await save('accounts');
     logChange('Comptes', 'Modification', displayName+' ('+username+')');
   } else {
-    if(!password){ alert('Mot de passe requis.'); return; }
+    if(!password){ toast('Mot de passe requis.', 'error'); return; }
     DATA.accounts.push({id:uid('acc'), displayName:displayName, username:username, passwordHash:makePasswordHash(password), roleId:roleId, allSecteurs:allSecteurs, secteurs:secteurs});
     await save('accounts');
     logChange('Comptes', 'Création', displayName+' ('+username+')');
@@ -8739,7 +9520,7 @@ async function handleSaveAccount(){
   renderNav(); renderUserbox(); render();
 }
 async function handleDeleteAccount(id){
-  if(!confirm('Supprimer ce compte ?')) return;
+  if(!await uiConfirm('Supprimer ce compte ?')) return;
   var acc = DATA.accounts.find(function(a){ return a.id===id; });
   DATA.accounts = DATA.accounts.filter(function(a){ return a.id!==id; });
   await save('accounts');
@@ -8750,7 +9531,7 @@ async function handleDeleteAccount(id){
 function handleNewRole(){ roleFormState = {name:''}; render(); }
 async function handleSaveRole(){
   var name = document.getElementById('rf2-name').value.trim();
-  if(!name){ alert('Nom du profil requis.'); return; }
+  if(!name){ toast('Nom du profil requis.', 'error'); return; }
   DATA.roles.push({id:uid('role'), name:name, tabs:[], canAudit:false});
   await save('roles');
   roleFormState = null;
@@ -8758,8 +9539,8 @@ async function handleSaveRole(){
 }
 async function handleDeleteRole(id){
   if(id===ADMIN_ROLE_ID) return;
-  if(DATA.accounts.some(function(a){ return a.roleId===id; })){ alert('Réassignez les comptes utilisant ce profil avant de le supprimer.'); return; }
-  if(!confirm('Supprimer ce profil ?')) return;
+  if(DATA.accounts.some(function(a){ return a.roleId===id; })){ toast('Réassignez les comptes utilisant ce profil avant de le supprimer.', 'error'); return; }
+  if(!await uiConfirm('Supprimer ce profil ?')) return;
   DATA.roles = DATA.roles.filter(function(r){ return r.id!==id; });
   await save('roles');
   render();
@@ -8795,14 +9576,14 @@ async function handleSaveSecteur(){
   var id = document.getElementById('sf-id').value.trim().toUpperCase();
   var nom = document.getElementById('sf-nom').value.trim() || id;
   var lignes = document.getElementById('sf-lignes').value.split(',').map(function(x){return x.trim();}).filter(Boolean);
-  if(!id){ alert('Code requis.'); return; }
-  if(!lignes.length){ alert('Au moins une ligne requise.'); return; }
+  if(!id){ toast('Code requis.', 'error'); return; }
+  if(!lignes.length){ toast('Au moins une ligne requise.', 'error'); return; }
   var existing = DATA.secteurs.find(function(s){ return s.id===id; });
   if(secteurFormState.id){
     var sec = DATA.secteurs.find(function(s){ return s.id===secteurFormState.id; });
     if(sec){ sec.nom = nom; sec.lignes = lignes; }
   } else {
-    if(existing){ alert('Ce code de secteur existe déjà.'); return; }
+    if(existing){ toast('Ce code de secteur existe déjà.', 'error'); return; }
     DATA.secteurs.push({id:id, nom:nom, lignes:lignes, tabs:['dashboard','perf','metro','actions','planning','archives']});
   }
   await save('secteurs');
@@ -8824,7 +9605,7 @@ async function handleDeleteSecteur(id){
   await ensureSecteursData();
   var sec = DATA.secteurs.find(function(s){ return s.id===id; });
   if(!sec) return;
-  if(!confirm('Supprimer le secteur '+sec.nom+' ? Les données associées ne seront plus visibles.')) return;
+  if(!await uiConfirm('Supprimer le secteur '+sec.nom+' ? Les données associées ne seront plus visibles.')) return;
   DATA.secteurs = DATA.secteurs.filter(function(s){ return s.id!==id; });
   await save('secteurs');
   logChange('Secteurs', 'Suppression', id);
@@ -8842,7 +9623,7 @@ async function handleSaveRoleRename(id){
   var el = document.getElementById('rename-role-input');
   if(!el) return;
   var name = el.value.trim();
-  if(!name){ alert('Nom requis.'); return; }
+  if(!name){ toast('Nom requis.', 'error'); return; }
   var role = DATA.roles.find(function(r){ return r.id===id; });
   if(role) role.name = name;
   await save('roles');
@@ -8960,12 +9741,12 @@ function renderChokkoTrendChart(){
     var weeks = []; // {label, avg}
     for(var w=7; w>=0; w--){
       var d = new Date(); d.setDate(d.getDate() - w*7);
-      var wk = isoWeekInfo(d.toISOString().slice(0,10));
+      var wk = isoWeekInfo(fmtISOLocal(d));
       var vals = [];
       lignes.forEach(function(l){
         for(var i=0;i<7;i++){
           var dd = new Date(d); dd.setDate(dd.getDate()-dd.getDay()+1+i);
-          var dateStr = dd.toISOString().slice(0,10);
+          var dateStr = fmtISOLocal(dd);
           var t = chokkoDayTotals(l, dateStr);
           if(t.pct!==null) vals.push(t.pct);
         }
@@ -9095,7 +9876,7 @@ function getWizardCritEntry(id){
 
 // ---------- CRUD handlers ----------
 async function handleDelete(mod, id){
-  if(!confirm('Supprimer cette entrée ?')) return;
+  if(!await uiConfirm('Supprimer cette entrée ?')) return;
   var item = DATA[mod].find(function(x){ return x.id===id; });
   DATA[mod] = DATA[mod].filter(function(x){ return x.id!==id; });
   await save(mod);
@@ -9143,7 +9924,7 @@ async function handleFormSubmit(form){
     try{
       var isImg = fileInput.files[0].type.indexOf('image')===0;
       entry[fileInput.name] = await fileFromInput(fileInput, isImg);
-    }catch(err){ alert(err.message); return; }
+    }catch(err){ uiAlert(err.message); return; }
   }
   if(mod==='ateq'){ entry.nbDefauts = parseInt(entry.nbDefauts||0,10); entry.nb2nd = parseInt(entry.nb2nd||0,10); }
   if(['actions','planning','metro'].indexOf(mod)>=0 && entry.responsable==='__autre__'){
@@ -9315,7 +10096,7 @@ app.addEventListener('click', async function(e){
   var savePlanningBtn = e.target.closest('[data-action="save-planning-edit"]');
   if(savePlanningBtn){
     var newEch = document.getElementById('planning-edit-echeance').value;
-    if(!newEch){ alert('Merci de sélectionner une échéance.'); return; }
+    if(!newEch){ toast('Merci de sélectionner une échéance.', 'error'); return; }
     var pitem = DATA.planning.find(function(x){ return x.id===savePlanningBtn.dataset.id; });
     if(pitem){
       var beforeP = pitem.ligne+' / '+pitem.type+' / '+fmtDate(pitem.echeance);
@@ -9336,7 +10117,7 @@ app.addEventListener('click', async function(e){
   var saveEcheanceBtn = e.target.closest('[data-action="save-echeance"]');
   if(saveEcheanceBtn){
     var newDate = document.getElementById('metro-edit-date').value;
-    if(!newDate){ alert('Merci de sélectionner une date.'); return; }
+    if(!newDate){ toast('Merci de sélectionner une date.', 'error'); return; }
     var item = DATA.metro.find(function(x){ return x.id===saveEcheanceBtn.dataset.id; });
     if(item){
       var before = item.ligne+' / '+item.numMoyen+' / '+item.designation+' / '+val(item.lieu,'')+' / '+fmtDate(item.echeance);
@@ -9363,6 +10144,16 @@ app.addEventListener('click', async function(e){
   var exportCsvBtn = e.target.closest('[data-action="export-csv"]');
   if(exportCsvBtn){ handleExportCsv(exportCsvBtn.dataset.module); return; }
   if(e.target.closest('[data-action="export-full-json"]')){ handleExportFullJson(); return; }
+  if(e.target.closest('[data-action="monthly-report"]')){ openMonthlyReportPicker(); return; }
+  if(e.target.closest('[data-action="backup-refresh"]')){ backupIndexCache = null; await backupReadIndex(); render(); return; }
+  var bkDl = e.target.closest('[data-action="backup-download"]');
+  if(bkDl){ try{ backupDownload(await backupLoadSlot(bkDl.dataset.slot), bkDl.dataset.slot); }catch(err){ uiAlert(err.message); } return; }
+  var bkOpen = e.target.closest('[data-action="backup-restore-open"]');
+  if(bkOpen){ try{ backupRestoreState = {slot:bkOpen.dataset.slot, snapshot: await backupLoadSlot(bkOpen.dataset.slot)}; render(); }catch(err){ uiAlert(err.message); } return; }
+  if(e.target.closest('[data-action="backup-restore-cancel"]') || (e.target.classList && e.target.classList.contains('backup-restore-backdrop'))){ backupRestoreState = null; render(); return; }
+  if(e.target.closest('[data-action="backup-check-all"]')){ document.querySelectorAll('.backup-mod-cb').forEach(function(cb){ cb.checked = true; }); return; }
+  if(e.target.closest('[data-action="backup-check-none"]')){ document.querySelectorAll('.backup-mod-cb').forEach(function(cb){ cb.checked = false; }); return; }
+  if(e.target.closest('[data-action="backup-restore-confirm"]')){ await backupRestoreSelected(); return; }
 
   if(e.target.closest('[data-action="new-collecte-contam"]')){ contamCollecteFormOpen = true; render(); return; }
   if(e.target.closest('[data-action="cancel-collecte-contam"]')){ contamCollecteFormOpen = false; render(); return; }
@@ -9517,7 +10308,7 @@ app.addEventListener('click', async function(e){
   var delManualBtn = e.target.closest('[data-action="delete-manual-result"]');
   if(delManualBtn){
     var mr = DATA.resultats.find(function(r){ return r.id===delManualBtn.dataset.id; });
-    if(mr && confirm('Supprimer la saisie manuelle '+mr.ligne+' - '+mr.mois+(mr.semaine?' S'+mr.semaine:'')+' ('+mr.resultatPct+'%) ?')){
+    if(mr && await uiConfirm('Supprimer la saisie manuelle '+mr.ligne+' - '+mr.mois+(mr.semaine?' S'+mr.semaine:'')+' ('+mr.resultatPct+'%) ?')){
       DATA.resultats = DATA.resultats.filter(function(r){ return r.id!==delManualBtn.dataset.id; });
       await save('resultats');
       logChange('Propreté', 'Suppression résultat manuel', mr.ligne+' - '+mr.mois+(mr.semaine?' S'+mr.semaine:''));
@@ -9738,9 +10529,17 @@ app.addEventListener('click', async function(e){
     render();
     return;
   }
+  var presetBtn = e.target.closest('[data-action="apply-dashboard-preset"]');
+  if(presetBtn){
+    var pk = presetBtn.dataset.preset;
+    if(await uiConfirm('Appliquer la disposition « '+DASHBOARD_PRESETS[pk].label+' » ?\nVos cartes actuelles seront remplacées (les cartes retirées restent disponibles ici).', {okLabel:'Appliquer'})){
+      await saveDashboardLayout(dashboardPresetLayout(pk)); toast('Disposition « '+DASHBOARD_PRESETS[pk].label+' » appliquée.'); render();
+    }
+    return;
+  }
   if(e.target.closest('[data-action="reset-dashboard-layout"]')){
-    if(confirm('Réinitialiser la disposition du tableau de bord à sa configuration par défaut ?')){
-      await saveDashboardLayout(DASHBOARD_WIDGETS_DEFAULT.map(function(w){return {id:w.id, size:w.size, hidden:false};}));
+    if(await uiConfirm('Réinitialiser la disposition du tableau de bord à sa configuration par défaut ?')){
+      await saveDashboardLayout(dashboardPresetLayout(defaultPresetForUser(currentUser)));
       widgetPickerOpen = false;
       render();
     }
@@ -9838,7 +10637,7 @@ app.addEventListener('click', async function(e){
     var rmLigne = posteRemoveBtn.dataset.ligne, rmIdx = Number(posteRemoveBtn.dataset.index);
     var rmConfig = chokkoPosteConfigFor(rmLigne);
     var rmPoste = rmConfig[rmIdx];
-    if(confirm('Supprimer définitivement le poste "'+rmPoste[0]+' - '+rmPoste[1]+'" et toutes ses valeurs saisies sur '+rmLigne+' ?\n\nCette action est irréversible.')){
+    if(await uiConfirm('Supprimer définitivement le poste "'+rmPoste[0]+' - '+rmPoste[1]+'" et toutes ses valeurs saisies sur '+rmLigne+' ?\n\nCette action est irréversible.')){
       rmConfig.splice(rmIdx, 1);
       await save('chokkoPosteConfig');
       await handleDeleteChokkoPosteRow(rmLigne, rmPoste[0]);
@@ -9912,7 +10711,7 @@ app.addEventListener('click', async function(e){
   var deletePosteRowBtn = e.target.closest('[data-action="chokko-delete-poste-row"]');
   if(deletePosteRowBtn){
     var dpLigne = deletePosteRowBtn.dataset.ligne, dpPoste = deletePosteRowBtn.dataset.poste;
-    if(confirm('Supprimer définitivement la ligne "'+dpPoste+'" (poste hors configuration actuelle) et toutes ses valeurs saisies sur '+dpLigne+' ?\n\nCette action est irréversible.')){
+    if(await uiConfirm('Supprimer définitivement la ligne "'+dpPoste+'" (poste hors configuration actuelle) et toutes ses valeurs saisies sur '+dpLigne+' ?\n\nCette action est irréversible.')){
       await handleDeleteChokkoPosteRow(dpLigne, dpPoste);
     }
     return;
@@ -10013,7 +10812,7 @@ app.addEventListener('click', async function(e){
   if(exportBtn){ showExport(exportBtn.dataset.module); return; }
 
   var photoImg = e.target.closest('[data-action="view-photo"]');
-  if(photoImg){ window.open(photoImg.src, '_blank'); return; }
+  if(photoImg){ e.preventDefault(); openBlobViewer(photoImg.dataset.blob || null, photoImg.dataset.blob ? null : photoImg.src); return; }
 
   var startAuditBtn = e.target.closest('[data-action="start-audit"]');
   if(startAuditBtn){ handleStartAudit(); return; }
@@ -10219,7 +11018,7 @@ app.addEventListener('change', async function(e){
     var entry = getWizardCritEntry(critId);
     if(fld==='photo'){
       if(e.target.files[0]){
-        try{ entry.photo = await readImageResized(e.target.files[0]); }catch(err){ alert(err.message); }
+        try{ entry.photo = await readImageResized(e.target.files[0]); }catch(err){ uiAlert(err.message); }
       }
     } else { entry[fld] = e.target.value; }
     return;
@@ -10469,6 +11268,7 @@ async function init(){
       renderUserbox();
       render();
       startPolling();
+      startAutoBackup();
     } else {
       renderLoginOverlay();
     }
