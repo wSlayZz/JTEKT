@@ -207,7 +207,7 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .grav-pill.grav-medium{background:var(--urgent-bg); color:var(--urgent);}
 .grav-pill.grav-low{background:#FBF1D3; color:#6E5300;}
 .chart-box{position:relative; height:260px;}
-.modal-overlay{position:fixed; inset:0; background:rgba(28,27,24,0.5); display:flex; align-items:center; justify-content:center; z-index:50; padding:20px;}
+.modal-overlay{position:fixed; inset:0; background:rgba(28,27,24,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;}
 .modal-box{background:#fff; border-radius:var(--radius); padding:22px; max-width:560px; width:100%; max-height:80vh; overflow-y:auto;}
 .modal-box h3{margin-bottom:14px; font-size:16px;}
 .userbox{display:flex; align-items:center; gap:10px;}
@@ -285,22 +285,22 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 
 /* ===== Post-its ===== */
 #postit-layer{position:absolute; top:0; left:0; right:0; height:0; overflow:visible; pointer-events:none;}
-.postit{position:absolute; width:190px; min-height:110px; padding:10px 10px 26px; border-radius:2px; box-shadow:2px 4px 10px rgba(0,0,0,0.18); font-size:12.5px; line-height:1.4; transform:rotate(-1.2deg); pointer-events:auto; cursor:grab; z-index:500;}
+.postit{position:absolute; width:190px; min-height:110px; padding:10px 10px 26px; border-radius:2px; box-shadow:2px 4px 10px rgba(0,0,0,0.18); font-size:12.5px; line-height:1.4; transform:rotate(-1.2deg); pointer-events:auto; cursor:grab; z-index:40;}  /* sous les menus (70) et sous toutes les fenêtres (1000) */
 .postit:nth-child(3n+2){transform:rotate(1deg);}
 .postit:nth-child(3n){transform:rotate(-0.5deg);}
-.postit.dragging{cursor:grabbing; z-index:600; box-shadow:4px 8px 18px rgba(0,0,0,0.28);}
+.postit.dragging{cursor:grabbing; z-index:45; box-shadow:4px 8px 18px rgba(0,0,0,0.28);}
 .postit-meta{position:absolute; bottom:6px; left:10px; right:10px; font-size:10px; color:rgba(0,0,0,0.5); display:flex; justify-content:space-between; align-items:center;}
 .postit-del{background:none; border:none; cursor:pointer; font-size:13px; color:rgba(0,0,0,0.45); padding:0 4px;}
 .postit-colors{display:flex; gap:4px; margin-top:6px;}
 .postit-color-dot{width:13px; height:13px; border-radius:50%; border:1.5px solid rgba(0,0,0,0.15); cursor:pointer; padding:0;}
 .postit-color-dot.active{border-color:rgba(0,0,0,0.55); box-shadow:0 0 0 1.5px rgba(255,255,255,0.8) inset;}
 .postit-pin-badge{position:absolute; top:-8px; left:-8px; font-size:15px; transform:rotate(-25deg);}
-.postit-modal-backdrop{z-index:300 !important;}
+.postit-modal-backdrop{z-index:1000 !important;}
 .postit-del:hover{color:#a02020;}
 #dashboard-canvas{position:relative;}
 
 /* ===== Toasts (remplacent les alert() bloquants pour les confirmations) ===== */
-#toast-layer{position:fixed; bottom:22px; right:22px; z-index:200; display:flex; flex-direction:column; gap:8px; align-items:flex-end;}
+#toast-layer{position:fixed; bottom:22px; right:22px; z-index:100002; display:flex; flex-direction:column; gap:8px; align-items:flex-end;}
 .toast{background:#1C1B18; color:#fff; padding:11px 16px; border-radius:8px; font-size:13px; font-weight:500; box-shadow:0 6px 20px rgba(0,0,0,0.22); display:flex; align-items:center; gap:9px; max-width:340px; opacity:0; transform:translateY(8px); transition:opacity 0.18s ease, transform 0.18s ease;}
 .toast.show{opacity:1; transform:translateY(0);}
 .toast.hide{opacity:0; transform:translateY(8px);}
@@ -8689,7 +8689,7 @@ function renderPostits(page){
       var canToggleDone = canEdit || (p.assignedTo && p.assignedTo===currentUser.displayName);
       var curColor = p.color||POSTIT_COLORS[0];
       var overdue = p.dueDate && p.dueDate<todayStr() && !p.done;
-      var extraStyle = (p.pinned? 'z-index:5; box-shadow:3px 6px 16px rgba(0,0,0,0.3);':'')+(overdue? ' outline:2.5px solid var(--danger);':'');
+      var extraStyle = (p.pinned? 'z-index:42; box-shadow:3px 6px 16px rgba(0,0,0,0.3);':'')+(overdue? ' outline:2.5px solid var(--danger);':'');
       var pit = '<div class="postit'+(p.done?' postit-done':'')+'" data-id="'+p.id+'" style="left:'+(p.x||20)+'px; top:'+(p.y||20)+'px; background:'+esc(curColor)+'; '+extraStyle+'">';
       if(p.pinned) pit += '<span class="postit-pin-badge" title="Épinglé">📌</span>';
       pit += '<div style="white-space:pre-wrap; word-break:break-word; text-decoration:'+(p.done?'line-through':'none')+'; opacity:'+(p.done?'0.55':'1')+';">'+esc(p.text)+'</div>';
