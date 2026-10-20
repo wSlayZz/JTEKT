@@ -484,6 +484,17 @@ tr.releve-recap-sel td:first-child{font-weight:700; box-shadow:inset 4px 0 0 #1F
 .backup-mod{display:flex; gap:8px; align-items:flex-start; padding:6px 8px; border:1px solid var(--border); border-radius:8px; cursor:pointer; font-size:13px;}
 .backup-mod.same{opacity:.6;}
 .backup-mod input{margin-top:3px;}
+.pq{display:inline-flex; align-items:center; gap:2px;}
+.prison-detail table th, .prison-detail table td{padding-left:3px; padding-right:3px;}
+.pq input{width:44px; text-align:center; padding-left:2px; padding-right:2px; -moz-appearance:textfield;}
+.pq input::-webkit-outer-spin-button, .pq input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+.pq-btn{width:22px; height:28px; border-radius:6px; border:1px solid var(--border); background:var(--card, #fff); color:var(--text); font-size:16px; font-weight:700; line-height:1; cursor:pointer; padding:0; flex:none; user-select:none; touch-action:manipulation;}
+.pq-btn:hover{background:var(--neutral-bg, #eee);}
+.pq-btn[data-d="1"]{color:#2E7D4F;} .pq-btn[data-d="-1"]{color:#B23B2E;}
+.pq-btn:active{transform:scale(.92);}
+@keyframes pqflash{from{background:#E5F3E9;} to{background:transparent;}}
+.pq-flash{animation:pqflash .6s ease-out;}
+@media print{ .pq-btn{display:none !important;} .pq input{border:none;} }
 .photo-viewer{position:fixed; inset:0; z-index:100000; background:rgba(20,20,20,.85); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; cursor:zoom-out;}
 .photo-viewer img{max-width:92vw; max-height:82vh; border-radius:8px; box-shadow:0 10px 40px rgba(0,0,0,.5); background:#fff;}
 img.blob-thumb{min-width:40px; min-height:30px; background:var(--neutral-bg, #eee); cursor:zoom-in; object-fit:cover;}
@@ -1097,7 +1108,14 @@ var SYNC_STATS = {polls:0, metaOnly:0, fetchedKeys:0, merges:0, conflicts:0};
 
 function syncJson(v){ return JSON.stringify(v===undefined ? null : v); }
 function syncIsPlainObject(v){ return v!==null && typeof v==='object' && !Array.isArray(v); }
-function syncItemKey(it){ return (it && typeof it==='object' && it.id!==undefined && it.id!==null) ? 'id:'+it.id : 'v:'+JSON.stringify(it); }
+function syncItemKey(it){
+  if(it && typeof it==='object'){
+    if(it.id!==undefined && it.id!==null) return 'id:'+it.id;
+    if(typeof it.week==='string' && it.lots!==undefined) return 'week:'+it.week;                 // photos hebdomadaires de la prison
+    if(typeof it.date==='string' && it.score!==undefined && it.detail!==undefined) return 'date:'+it.date;  // historique du score
+  }
+  return 'v:'+JSON.stringify(it);
+}
 // Fusion à trois versions : base (dernière version commune), mine (ce poste), theirs (serveur)
 function mergeValues(base, mine, theirs){
   var jm = syncJson(mine), jt = syncJson(theirs);
@@ -5056,29 +5074,33 @@ function prisonDetailCard(lot){
   var html = '<div class="card prison-detail" id="prison-detail-'+lot.id+'" style="break-inside:avoid;">'+
     '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; gap:8px;">'+
       '<div style="font-weight:700; text-transform:uppercase; font-size:13px;">'+esc(lot.defaut)+(lot.type?' <span class="tiny" style="text-transform:none;">· '+esc(lot.type)+'</span>':'')+'</div>'+
-      '<div style="font-family:var(--mono); font-weight:700;">'+prisonLotTotal(lot)+' pcs</div>'+
+      '<div style="font-family:var(--mono); font-weight:700;"><span data-ptot-lot="1">'+prisonLotTotal(lot)+'</span> pcs</div>'+
     '</div>'+
     '<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Réf.</th>'+
       PRISON_QTY_COLS.map(function(c){ return '<th style="text-align:center;">'+c[1]+'</th>'; }).join('')+
       '<th style="text-align:center;">Total</th><th class="row-actions-noprint"></th></tr></thead><tbody>';
   lignes.forEach(function(l){
     html += '<tr>'+
-      '<td><select class="prison-cell" data-lot="'+lot.id+'" data-line="'+l.id+'" data-field="ligne" style="font-size:12px; padding:2px 4px;">'+
+      '<td><select class="prison-cell" data-lot="'+lot.id+'" data-line="'+l.id+'" data-field="ligne" style="font-size:12px; padding:2px 2px; width:64px;">'+
         ['','MCU1','MCU2','MCU3'].map(function(x){ return '<option value="'+x+'"'+((l.ligne||'')===x?' selected':'')+'>'+(x||'-')+'</option>'; }).join('')+
       '</select></td>'+
-      '<td><input type="text" class="prison-cell" data-lot="'+lot.id+'" data-line="'+l.id+'" data-field="ref" value="'+esc(l.ref||'')+'" style="width:110px; font-size:12.5px;"></td>'+
+      '<td><input type="text" class="prison-cell" data-lot="'+lot.id+'" data-line="'+l.id+'" data-field="ref" value="'+esc(l.ref||'')+'" style="width:78px; font-size:12.5px;"></td>'+
       PRISON_QTY_COLS.map(function(c){
         var v = Number(l[c[0]])||0;
-        return '<td style="text-align:center;"><input type="number" min="0" class="prison-cell chk-cell" data-lot="'+lot.id+'" data-line="'+l.id+'" data-field="'+c[0]+'" value="'+(v||'')+'" style="width:64px; text-align:center;"></td>';
+        return '<td style="text-align:center;"><div class="pq">'+
+          '<button type="button" class="pq-btn row-actions-noprint" data-action="prison-step" data-d="-1" data-lot="'+lot.id+'" data-line="'+l.id+'" data-field="'+c[0]+'" title="Retirer 1" tabindex="-1">−</button>'+
+          '<input type="number" min="0" inputmode="numeric" class="prison-cell chk-cell" data-lot="'+lot.id+'" data-line="'+l.id+'" data-field="'+c[0]+'" value="'+(v||'')+'">'+
+          '<button type="button" class="pq-btn row-actions-noprint" data-action="prison-step" data-d="1" data-lot="'+lot.id+'" data-line="'+l.id+'" data-field="'+c[0]+'" title="Ajouter 1" tabindex="-1">+</button>'+
+        '</div></td>';
       }).join('')+
-      '<td style="text-align:center; font-family:var(--mono); font-weight:700;">'+prisonLineTotal(l)+'</td>'+
+      '<td style="text-align:center; font-family:var(--mono); font-weight:700;" data-ptot-line="'+l.id+'">'+prisonLineTotal(l)+'</td>'+
       '<td class="row-actions-noprint"><button class="postit-del" data-action="prison-delete-line" data-lot="'+lot.id+'" data-line="'+l.id+'" title="Supprimer cette ligne" style="color:var(--danger);">✕</button></td>'+
     '</tr>';
   });
   if(!lignes.length) html += '<tr><td colspan="7" class="tiny" style="color:var(--text-faint);">Aucune pièce détaillée pour ce défaut.</td></tr>';
   html += '</tbody><tfoot><tr style="font-weight:700;"><td colspan="2">Total</td>'+
-    colTotals.map(function(t){ return '<td style="text-align:center; font-family:var(--mono);">'+(t||'-')+'</td>'; }).join('')+
-    '<td style="text-align:center; font-family:var(--mono);">'+prisonLotTotal(lot)+'</td><td class="row-actions-noprint"></td></tr></tfoot></table></div>'+
+    colTotals.map(function(t, ci){ return '<td style="text-align:center; font-family:var(--mono);" data-ptot-col="'+PRISON_QTY_COLS[ci][0]+'">'+(t||'-')+'</td>'; }).join('')+
+    '<td style="text-align:center; font-family:var(--mono);" data-ptot-lot="1">'+prisonLotTotal(lot)+'</td><td class="row-actions-noprint"></td></tr></tfoot></table></div>'+
     '<div class="row-actions-noprint" style="display:flex; gap:6px; align-items:center; margin-top:8px; flex-wrap:wrap;">'+
       '<select id="prison-new-ligne-'+lot.id+'" style="font-size:12px; padding:3px 5px;"><option value="">Ligne -</option><option>MCU1</option><option>MCU2</option><option>MCU3</option></select>'+
       '<input type="text" id="prison-new-ref-'+lot.id+'" placeholder="Réf. (ex. 18889)" style="width:130px; font-size:12.5px;">'+
@@ -5139,7 +5161,7 @@ RENDERERS.prison = function(){
   html += '<div class="card" style="margin-bottom:16px; display:flex; align-items:center; gap:28px; flex-wrap:wrap;">'+
     '<div><div class="eyebrow">Synthèse du stock en prison qualité</div>'+
       '<div class="tiny" style="margin-top:4px;">'+(lastUpd?'Mis à jour le '+fmtDate(lastUpd):'Aucune mise à jour enregistrée')+'</div></div>'+
-    '<div style="text-align:center;"><div class="tiny">Total pièces</div><div style="font-family:var(--mono); font-size:30px; font-weight:700;">'+total+'</div></div>'+
+    '<div style="text-align:center;"><div class="tiny">Total pièces</div><div id="prison-grand-total" style="font-family:var(--mono); font-size:30px; font-weight:700;">'+total+'</div></div>'+
     '<div style="text-align:center;"><div class="tiny">vs semaine précédente'+(prev?' ('+fmtDate(prev.date)+')':'')+'</div><div style="font-size:20px;">'+prisonDeltaHtml(prev? total-prev.total : null)+'</div></div>'+
     '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-left:auto;">'+
       '<button class="btn small'+(!prisonZoneFilter?' primary':'')+'" data-action="prison-zone-filter" data-zone="">Toutes zones</button>'+
@@ -5247,17 +5269,74 @@ async function handleDeletePrisonLine(lotId, lineId){
   await prisonCommit('Suppression référence', lot.defaut+' · '+line.ref);
   render();
 }
-async function handlePrisonCellChange(el){
+// Saisie prison : la valeur est prise en compte tout de suite (totaux mis à jour sur place),
+// l'enregistrement part en arrière-plan, regroupé (plusieurs clics +/− = un seul envoi),
+// et l'écran n'est jamais redessiné pendant qu'on saisit : rien de ce qui est tapé ne se perd.
+var prisonCommitTimer = null, prisonPendingSummary = [], prisonRenderPending = false, prisonSaving = false;
+function prisonApplyCell(el){
   var lot = DATA.prisonLots.find(function(l){ return l.id===el.dataset.lot; });
-  if(!lot) return;
+  if(!lot) return null;
   var line = (lot.lignes||[]).find(function(x){ return x.id===el.dataset.line; });
-  if(!line) return;
+  if(!line) return null;
   var f = el.dataset.field;
   if(f==='ref' || f==='ligne'){ line[f] = el.value.trim(); }
   else { line[f] = Math.max(0, parseInt(el.value,10)||0); }
-  await prisonCommit('Mise à jour quantité', lot.defaut+' · '+line.ref);
+  // la valeur affichée devient la référence : le champ n'est plus considéré "en cours de modification"
+  if(el.tagName==='SELECT'){ Array.prototype.forEach.call(el.options, function(o){ o.defaultSelected = o.selected; }); }
+  else el.defaultValue = el.value;
+  prisonRefreshTotals(lot);
+  prisonScheduleCommit(lot.defaut+' · '+(line.ref||'?'));
+  return {lot:lot, line:line};
+}
+function prisonRefreshTotals(lot){
+  var card = document.getElementById('prison-detail-'+lot.id);
+  if(!card) return;
+  (lot.lignes||[]).forEach(function(l){ var c = card.querySelector('[data-ptot-line="'+l.id+'"]'); if(c) c.textContent = prisonLineTotal(l); });
+  PRISON_QTY_COLS.forEach(function(c){
+    var t = (lot.lignes||[]).reduce(function(s,l){ return s+(Number(l[c[0]])||0); },0);
+    var cell = card.querySelector('[data-ptot-col="'+c[0]+'"]'); if(cell) cell.textContent = t || '-';
+  });
+  Array.prototype.forEach.call(card.querySelectorAll('[data-ptot-lot]'), function(e){ e.textContent = prisonLotTotal(lot); });
+  var g = document.getElementById('prison-grand-total'); if(g) g.textContent = prisonCurrentSnapshotData().total.toLocaleString('fr-FR');
+}
+function prisonScheduleCommit(summary){
+  if(summary && prisonPendingSummary.indexOf(summary)<0) prisonPendingSummary.push(summary);
+  showSyncIndicator();
+  clearTimeout(prisonCommitTimer);
+  prisonCommitTimer = setTimeout(prisonFlushCommit, 800);
+}
+async function prisonFlushCommit(){
+  clearTimeout(prisonCommitTimer); prisonCommitTimer = null;
+  if(prisonSaving){ prisonCommitTimer = setTimeout(prisonFlushCommit, 400); return; }
+  if(!prisonPendingSummary.length) return;
+  var summary = prisonPendingSummary.join(', '); prisonPendingSummary = [];
+  prisonSaving = true;
+  try{ await prisonCommit('Mise à jour quantité', summary.slice(0,240)); }
+  finally{ prisonSaving = false; }
+  prisonRenderPending = true;
+  prisonMaybeRender();
+}
+// Redessine (synthèse, zones…) seulement quand plus personne ne saisit dans la page
+function prisonMaybeRender(){
+  if(!prisonRenderPending || currentTab!=='prison') { prisonRenderPending = false; return; }
+  if(prisonCommitTimer || prisonSaving) return;
+  var a = document.activeElement;
+  if(a && a.closest && a.closest('#view') && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;   // on attend la sortie du champ
+  prisonRenderPending = false;
   render();
 }
+document.addEventListener('focusout', function(){ if(prisonRenderPending) setTimeout(prisonMaybeRender, 350); });
+async function handlePrisonCellChange(el){ prisonApplyCell(el); }
+function handlePrisonStep(btn){
+  var cell = btn.parentNode.querySelector('input.prison-cell');
+  if(!cell) return;
+  var v = Math.max(0, (parseInt(cell.value,10)||0) + Number(btn.dataset.d));
+  cell.value = v || '';
+  prisonApplyCell(cell);
+  cell.classList.remove('pq-flash'); void cell.offsetWidth; cell.classList.add('pq-flash');
+}
+// Ne pas quitter la page avec une saisie non envoyée
+window.addEventListener('beforeunload', function(e){ if(prisonCommitTimer || prisonSaving){ prisonFlushCommit(); e.preventDefault(); e.returnValue = ''; } });
 // Reprise de la feuille papier "Synthèse du stock de MCU en prison qualité" mise à jour le 23/03/2026
 function prisonSheetSeed(){
   function L(ligne, ref, complet, sansCapot, sansPcb){ return {id:uid('pline'), ligne:ligne, ref:String(ref), complet:complet||0, sansCapot:sansCapot||0, sansPcb:sansPcb||0}; }
@@ -10356,6 +10435,8 @@ app.addEventListener('click', async function(e){
   if(prisonZoneBtn){ prisonZoneFilter = prisonZoneBtn.dataset.zone; render(); return; }
   var prisonGotoBtn = e.target.closest('[data-action="prison-goto-detail"]');
   if(prisonGotoBtn){ e.preventDefault(); var tgt = document.getElementById('prison-detail-'+prisonGotoBtn.dataset.id); if(tgt && tgt.scrollIntoView) tgt.scrollIntoView({behavior:'smooth', block:'start'}); return; }
+  var pStep = e.target.closest('[data-action="prison-step"]');
+  if(pStep){ handlePrisonStep(pStep); return; }
   if(e.target.closest('[data-action="prison-import-sheet"]')){ await handleImportPrisonSheet(); return; }
   if(e.target.closest('[data-action="prison-print"]')){
     document.body.classList.add('print-prison');
@@ -11190,6 +11271,7 @@ app.addEventListener('keydown', function(e){
   }
 });
 app.addEventListener('input', function(e){
+  if(e.target.classList && e.target.classList.contains('prison-cell') && e.target.type==='number'){ prisonApplyCell(e.target); return; }
   if(e.target.id==='esd-search'){ esdSearch = e.target.value; render(); }
   if(e.target.id==='formation-search'){ formationSearch = e.target.value; render(); }
   if(e.target.classList && e.target.classList.contains('cicl-person-apply-date')){
