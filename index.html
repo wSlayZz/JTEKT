@@ -495,6 +495,8 @@ tr.releve-recap-sel td:first-child{font-weight:700; box-shadow:inset 4px 0 0 #1F
 @keyframes pqflash{from{background:#E5F3E9;} to{background:transparent;}}
 .pq-flash{animation:pqflash .6s ease-out;}
 @media print{ .pq-btn{display:none !important;} .pq input{border:none;} }
+.future-banner{display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:16px; padding:12px 14px; border-radius:10px; background:var(--warn-bg, #FBEEDC); border:1px solid var(--warn-border, #F0D6A6); color:#5A3D00; font-size:13px;}
+.future-banner-actions{display:flex; gap:8px; flex-wrap:wrap;}
 .photo-viewer{position:fixed; inset:0; z-index:100000; background:rgba(20,20,20,.85); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; cursor:zoom-out;}
 .photo-viewer img{max-width:92vw; max-height:82vh; border-radius:8px; box-shadow:0 10px 40px rgba(0,0,0,.5); background:#fff;}
 img.blob-thumb{min-width:40px; min-height:30px; background:var(--neutral-bg, #eee); cursor:zoom-in; object-fit:cover;}
@@ -950,7 +952,6 @@ function secteurTabs(){
   // migration de données côté Supabase.
   if(currentSecteur==='MCU' && tabs.indexOf('formations')<0) tabs.push('formations');
   if(currentSecteur==='MCU' && tabs.indexOf('perf')<0) tabs.push('perf');
-  if(currentSecteur==='MCU' && tabs.indexOf('prison')<0) tabs.push('prison');
   if(tabs.indexOf('bibliotheque')<0) tabs.push('bibliotheque');
   if(tabs.indexOf('pareto')<0) tabs.push('pareto');
   return tabs;
@@ -1111,7 +1112,7 @@ function syncIsPlainObject(v){ return v!==null && typeof v==='object' && !Array.
 function syncItemKey(it){
   if(it && typeof it==='object'){
     if(it.id!==undefined && it.id!==null) return 'id:'+it.id;
-    if(typeof it.week==='string' && it.lots!==undefined) return 'week:'+it.week;                 // photos hebdomadaires de la prison
+    if(typeof it.week==='string' && it.lots!==undefined) return 'week:'+(it.secteur||'MCU')+':'+it.week;                 // photos hebdomadaires de la prison
     if(typeof it.date==='string' && it.score!==undefined && it.detail!==undefined) return 'date:'+it.date;  // historique du score
   }
   return 'v:'+JSON.stringify(it);
@@ -4995,9 +4996,12 @@ var prisonZoneFilter = '';
 function prisonLineTotal(l){ return (Number(l.complet)||0)+(Number(l.sansCapot)||0)+(Number(l.sansPcb)||0); }
 function prisonLotTotal(lot){ return (lot.lignes||[]).reduce(function(s,l){ return s+prisonLineTotal(l); },0); }
 function prisonWeekKey(dateStr){ var w = isoWeekInfo(dateStr); return w.year+'-S'+String(w.week).padStart(2,'0'); }
+// Chaque secteur a sa propre prison qualité (les données historiques sans secteur appartiennent à MCU)
+function prisonLotsSect(){ return DATA.prisonLots.filter(function(l){ return (l.secteur||'MCU')===currentSecteur; }); }
+function prisonSnapsSect(){ return DATA.prisonSnapshots.filter(function(s){ return (s.secteur||'MCU')===currentSecteur; }); }
 function prisonCurrentSnapshotData(){
   var lots = {};
-  DATA.prisonLots.forEach(function(l){ lots[l.id] = prisonLotTotal(l); });
+  prisonLotsSect().forEach(function(l){ lots[l.id] = prisonLotTotal(l); });
   var total = Object.keys(lots).reduce(function(s,k){ return s+lots[k]; },0);
   return {total:total, lots:lots};
 }
@@ -5006,18 +5010,18 @@ function prisonUpsertSnapshot(dateStr){
   dateStr = dateStr || todayStr();
   var key = prisonWeekKey(dateStr);
   var snap = prisonCurrentSnapshotData();
-  var existing = DATA.prisonSnapshots.find(function(s){ return s.week===key; });
+  var existing = prisonSnapsSect().find(function(s){ return s.week===key; });
   if(existing){ existing.date = dateStr; existing.total = snap.total; existing.lots = snap.lots; }
-  else DATA.prisonSnapshots.push({week:key, date:dateStr, total:snap.total, lots:snap.lots});
+  else DATA.prisonSnapshots.push({week:key, secteur:currentSecteur, date:dateStr, total:snap.total, lots:snap.lots});
   DATA.prisonSnapshots.sort(function(a,b){ return a.week.localeCompare(b.week); });
 }
 function prisonPreviousSnapshot(){
   var cur = prisonWeekKey(todayStr());
-  var prev = DATA.prisonSnapshots.filter(function(s){ return s.week<cur; });
+  var prev = prisonSnapsSect().filter(function(s){ return s.week<cur; });
   return prev.length? prev[prev.length-1] : null;
 }
 function prisonLastUpdate(){
-  var s = DATA.prisonSnapshots;
+  var s = prisonSnapsSect();
   return s.length? s[s.length-1].date : null;
 }
 async function prisonCommit(action, summary){
@@ -5028,7 +5032,7 @@ async function prisonCommit(action, summary){
 }
 function prisonZones(){
   var z = [];
-  DATA.prisonLots.forEach(function(l){ if(l.stockage && z.indexOf(l.stockage)<0) z.push(l.stockage); });
+  prisonLotsSect().forEach(function(l){ if(l.stockage && z.indexOf(l.stockage)<0) z.push(l.stockage); });
   return z.sort();
 }
 function prisonDeltaHtml(delta){
@@ -5046,7 +5050,7 @@ function prisonAgeHtml(lot){
 function prisonLotForm(){
   var lot = prisonLotFormOpen==='new' ? {} : (DATA.prisonLots.find(function(l){ return l.id===prisonLotFormOpen; })||{});
   var analyses = [], responsables = [];
-  DATA.prisonLots.forEach(function(l){
+  prisonLotsSect().forEach(function(l){
     if(l.analyse && analyses.indexOf(l.analyse)<0) analyses.push(l.analyse);
     if(l.responsable && responsables.indexOf(l.responsable)<0) responsables.push(l.responsable);
   });
@@ -5082,7 +5086,7 @@ function prisonDetailCard(lot){
   lignes.forEach(function(l){
     html += '<tr>'+
       '<td><select class="prison-cell" data-lot="'+lot.id+'" data-line="'+l.id+'" data-field="ligne" style="font-size:12px; padding:2px 2px; width:64px;">'+
-        ['','MCU1','MCU2','MCU3'].map(function(x){ return '<option value="'+x+'"'+((l.ligne||'')===x?' selected':'')+'>'+(x||'-')+'</option>'; }).join('')+
+        [''].concat(secteurLines()).concat(l.ligne && secteurLines().indexOf(l.ligne)<0 ? [l.ligne] : []).map(function(x){ return '<option value="'+x+'"'+((l.ligne||'')===x?' selected':'')+'>'+(x||'-')+'</option>'; }).join('')+
       '</select></td>'+
       '<td><input type="text" class="prison-cell" data-lot="'+lot.id+'" data-line="'+l.id+'" data-field="ref" value="'+esc(l.ref||'')+'" style="width:78px; font-size:12.5px;"></td>'+
       PRISON_QTY_COLS.map(function(c){
@@ -5102,7 +5106,7 @@ function prisonDetailCard(lot){
     colTotals.map(function(t, ci){ return '<td style="text-align:center; font-family:var(--mono);" data-ptot-col="'+PRISON_QTY_COLS[ci][0]+'">'+(t||'-')+'</td>'; }).join('')+
     '<td style="text-align:center; font-family:var(--mono);" data-ptot-lot="1">'+prisonLotTotal(lot)+'</td><td class="row-actions-noprint"></td></tr></tfoot></table></div>'+
     '<div class="row-actions-noprint" style="display:flex; gap:6px; align-items:center; margin-top:8px; flex-wrap:wrap;">'+
-      '<select id="prison-new-ligne-'+lot.id+'" style="font-size:12px; padding:3px 5px;"><option value="">Ligne -</option><option>MCU1</option><option>MCU2</option><option>MCU3</option></select>'+
+      '<select id="prison-new-ligne-'+lot.id+'" style="font-size:12px; padding:3px 5px;"><option value="">Ligne -</option>'+secteurLines().map(function(x){ return '<option>'+esc(x)+'</option>'; }).join('')+'</select>'+
       '<input type="text" id="prison-new-ref-'+lot.id+'" placeholder="Réf. (ex. 18889)" style="width:130px; font-size:12.5px;">'+
       '<button class="btn small" data-action="prison-add-line" data-lot="'+lot.id+'">+ Ajouter une réf.</button>'+
     '</div>'+
@@ -5149,7 +5153,7 @@ function prisonPrintView(lots){
   return h;
 }
 RENDERERS.prison = function(){
-  var lots = DATA.prisonLots.slice();
+  var lots = prisonLotsSect();
   var shown = prisonZoneFilter ? lots.filter(function(l){ return l.stockage===prisonZoneFilter; }) : lots;
   var total = lots.reduce(function(s,l){ return s+prisonLotTotal(l); },0);
   var shownTotal = shown.reduce(function(s,l){ return s+prisonLotTotal(l); },0);
@@ -5173,7 +5177,7 @@ RENDERERS.prison = function(){
   '</div>';
 
   html += '<div class="toolbar row-actions-noprint"><div class="left"></div><div style="display:flex; gap:8px;">'+
-    (!lots.length? '<button class="btn" data-action="prison-import-sheet" title="Reprendre les données de la feuille papier du 23/03/2026">📥 Reprendre la synthèse du 23/03/2026</button>' : '')+
+    (!lots.length && currentSecteur==='MCU'? '<button class="btn" data-action="prison-import-sheet" title="Reprendre les données de la feuille papier du 23/03/2026">📥 Reprendre la synthèse du 23/03/2026</button>' : '')+
     '<button class="btn" data-action="prison-print" title="Exporter en PDF">🖨️ Exporter en PDF</button>'+
     '<button class="btn primary" data-action="prison-new-lot">+ Nouveau défaut</button>'+
   '</div></div>';
@@ -5228,7 +5232,7 @@ async function handleSavePrisonLot(){
   };
   var isNew = prisonLotFormOpen==='new';
   if(isNew){
-    DATA.prisonLots.push(Object.assign({id:uid('prison'), lignes:[]}, fields));
+    DATA.prisonLots.push(Object.assign({id:uid('prison'), secteur:currentSecteur, lignes:[]}, fields));
   } else {
     var lot = DATA.prisonLots.find(function(l){ return l.id===prisonLotFormOpen; });
     if(lot) Object.assign(lot, fields);
@@ -5358,11 +5362,13 @@ function prisonSheetSeed(){
   ];
 }
 async function handleImportPrisonSheet(){
-  if(DATA.prisonLots.length){ toast('Des données existent déjà, reprise annulée.', 'error'); return; }
+  if(currentSecteur!=='MCU'){ toast('La feuille du 23/03/2026 concerne le secteur MCU.', 'error'); return; }
+  if(prisonLotsSect().length){ toast('Des données existent déjà, reprise annulée.', 'error'); return; }
   if(!await uiConfirm('Reprendre les 8 défauts de la synthèse papier du 23/03/2026 (1689 pièces) ?\n\nPensez à vérifier les quantités par rapport à la feuille, puis à les mettre à jour.')) return;
-  DATA.prisonLots = prisonSheetSeed();
+  var seeded = prisonSheetSeed().map(function(l){ l.secteur = 'MCU'; return l; });
+  DATA.prisonLots = DATA.prisonLots.concat(seeded);
   prisonUpsertSnapshot('2026-03-23'); // point de référence daté de la feuille papier
-  await prisonCommit('Reprise de la feuille du 23/03/2026', DATA.prisonLots.length+' défauts');
+  await prisonCommit('Reprise de la feuille du 23/03/2026', seeded.length+' défauts');
   toast('Synthèse reprise : '+prisonCurrentSnapshotData().total+' pièces.');
   render();
 }
@@ -5374,8 +5380,8 @@ var PARETO_SOURCES = [
   {id:'propre_critere',  group:'Production', label:'Propreté · écarts (NG) par critère',          unit:'écarts',  tab:'proprete', mcu:true, period:true,  lines:['MCU1','MCU2','MCU3']},
   {id:'propre_poste',    group:'Production', label:'Propreté · écarts (NG) par poste',            unit:'écarts',  tab:'proprete', mcu:true, period:true,  lines:['MCU1','MCU2','MCU3']},
   {id:'contam',          group:'Production', label:'Contamination · résultats non conformes',     unit:'NC',      tab:'proprete', mcu:true, period:true,  lines:['MCU0','MCU1','MCU2','MCU3']},
-  {id:'prison_defaut',   group:'Qualité',    label:'Prison qualité · pièces bloquées par défaut', unit:'pièces',  tab:'prison',   mcu:true, period:false, lines:['MCU1','MCU2','MCU3']},
-  {id:'prison_ref',      group:'Qualité',    label:'Prison qualité · pièces bloquées par réf.',   unit:'pièces',  tab:'prison',   mcu:true, period:false, lines:['MCU1','MCU2','MCU3']},
+  {id:'prison_defaut',   group:'Qualité',    label:'Prison qualité · pièces bloquées par défaut', unit:'pièces',  tab:'prison',   period:false, lines:'secteur'},
+  {id:'prison_ref',      group:'Qualité',    label:'Prison qualité · pièces bloquées par réf.',   unit:'pièces',  tab:'prison',   period:false, lines:'secteur'},
   {id:'actions_origine', group:'Qualité',    label:"Plan d'actions · actions ouvertes par origine",     unit:'actions', tab:'actions', period:false, lines:'secteur'},
   {id:'actions_resp',    group:'Qualité',    label:"Plan d'actions · actions ouvertes par responsable", unit:'actions', tab:'actions', period:false, lines:'secteur'},
   {id:'actions_late',    group:'Qualité',    label:"Plan d'actions · actions en retard par responsable", unit:'actions', tab:'actions', period:false, lines:'secteur'}
@@ -5466,7 +5472,7 @@ function paretoRaw(src, range, ligne){
       add(c.ligne+'|'+c.ref, c.ligne+' · '+c.ref, 1, {ligne:c.ligne});
     });
   } else if(src.id==='prison_defaut' || src.id==='prison_ref'){
-    DATA.prisonLots.forEach(function(lot){
+    prisonLotsSect().forEach(function(lot){
       (lot.lignes||[]).forEach(function(pl){
         if(ligne && pl.ligne!==ligne) return;
         var n = prisonLineTotal(pl);
@@ -5902,10 +5908,12 @@ function buildMonthlyReport(key){
   var mo = bySecteur(DATA.metro), moLate = mo.filter(function(e){ return metroStatus(e).level==='danger'; }), moSoon = mo.filter(function(e){ return metroStatus(e).level==='urgent'; });
   p4 += '<h3 class="mr-h3">États à la date d\'édition ('+fmtDate(todayStr())+')</h3><div class="mr-kpis">'+
     rptKpi('Instruments hors validité', moLate.length, moLate.length?'danger':'ok', moSoon.length+' expire(nt) ce mois · '+mo.length+' suivis');
-  if(isMCU){
+  if(prisonLotsSect().length || secteurTabs().indexOf('prison')>=0){
     var pTot = prisonCurrentSnapshotData().total;
-    var pPrev = (DATA.prisonSnapshots||[]).filter(function(s){ return s.date && s.date.slice(0,7)<=prevKey; }).pop();
+    var pPrev = prisonSnapsSect().filter(function(s){ return s.date && s.date.slice(0,7)<=prevKey; }).pop();
     p4 += rptKpi('Stock prison qualité', pTot.toLocaleString('fr-FR')+' pcs', 'neutral', pPrev? ((pTot-pPrev.total)>=0?'+':'')+(pTot-pPrev.total)+' pcs vs fin '+esc(rptMonthLabel(prevKey).toLowerCase()) : 'pas d\'historique');
+  }
+  if(isMCU){
     var esdLate = DATA.esd.filter(function(p){ return esdStatus(p).level==='danger'; }).length, esdSoon = DATA.esd.filter(function(p){ var l = esdStatus(p).level; return l==='urgent'||l==='warn'; }).length;
     var ciclLate = DATA.cicl.filter(function(p){ return ciclStatus(p).level==='danger'; }).length;
     p4 += rptKpi('Formations ESD expirées', esdLate, esdLate?'danger':'ok', esdSoon+' à renouveler sous 2 mois')+
@@ -6304,8 +6312,75 @@ function chokkoNote(ligne, poste, year, monthIdx){
   return DATA.chokkoNotes.find(function(n){ return n.ligne===ligne && n.poste===poste && n.annee===year && n.mois===monthIdx; });
 }
 
+// ---------- Données datées dans le futur (ex. fichier 2025 importé comme 2026) : détection et réparation ----------
+function chokkoEntryHasValues(e){
+  return Object.keys(e.defects||{}).some(function(k){ return Number(e.defects[k])>0; }) ||
+    Object.keys(e.prod||{}).some(function(k){ return Number(e.prod[k])>0; }) ||
+    (e.prodOverride!==undefined && e.prodOverride!==null && Number(e.prodOverride)>0);
+}
+function futureDataReport(){
+  var today = todayStr();
+  var ch = DATA.chokko.filter(function(e){ return e.date>today && chokkoEntryHasValues(e); });
+  var at = DATA.ateq.filter(function(a){ return a.date>today && ((a.nbDefauts||0)>0 || (a.nb2nd||0)>0); });
+  var months = {};
+  ch.concat(at).forEach(function(x){ var k = x.ligne+' '+x.date.slice(0,7); months[k] = true; });
+  var labels = Object.keys(months).sort().map(function(k){ var p = k.split(' '); return p[0]+' '+rptMonthLabel(p[1]).toLowerCase(); });
+  var emptyFuture = DATA.chokko.filter(function(e){ return e.date>today && !chokkoEntryHasValues(e); }).length +
+    DATA.ateq.filter(function(a){ return a.date>today && !((a.nbDefauts||0)>0 || (a.nb2nd||0)>0); }).length;
+  return {chokko:ch, ateq:at, labels:labels, emptyFuture:emptyFuture, total: ch.length+at.length};
+}
+function futureDataBannerHtml(){
+  var r = futureDataReport();
+  if(!r.total) return '';
+  return '<div class="future-banner">'+
+    '<div><b>⚠ '+r.total+' saisie(s) datée(s) dans le futur</b> ('+(r.chokko.length? r.chokko.length+' jour(s) CHOKKO' : '')+(r.chokko.length&&r.ateq.length?' · ':'')+(r.ateq.length? r.ateq.length+' jour(s) ATEQ' : '')+') : '+esc(r.labels.slice(0,6).join(', '))+(r.labels.length>6?'…':'')+'.'+
+    '<br><span class="tiny">Il s\'agit très probablement de données de l\'année précédente importées avec la mauvaise année (le poste OP1120 alimente aussi les défauts ATEQ).</span></div>'+
+    '<div class="future-banner-actions"><button class="btn small primary" data-action="future-fix" data-mode="move">Les remettre un an plus tôt</button>'+
+    '<button class="btn small danger-outline" data-action="future-fix" data-mode="delete">Les supprimer</button></div>'+
+  '</div>';
+}
+async function handleFutureFix(mode){
+  var r = futureDataReport();
+  if(!r.total && !r.emptyFuture) return;
+  var msg = mode==='move'
+    ? 'Déplacer '+r.total+' saisie(s) un an plus tôt (ex. 15/11/2026 → 15/11/2025) ?\n\nSi le même jour de l\'année précédente contient déjà une saisie, celle-ci est conservée et la saisie datée dans le futur est supprimée.'
+    : 'Supprimer définitivement '+r.total+' saisie(s) datée(s) dans le futur ?';
+  if(!await uiConfirm(msg, {okLabel: mode==='move' ? 'Déplacer' : 'Supprimer', danger: mode!=='move'})) return;
+  var today = todayStr(), moved = 0, kept = 0, removed = 0;
+  var minus1 = function(d){ return (Number(d.slice(0,4))-1)+d.slice(4); };
+  function relocate(list, hasVals){
+    var past = list.filter(function(x){ return x.date<=today; });
+    var future = list.filter(function(x){ return x.date>today; });
+    var index = {}; past.forEach(function(x){ index[x.ligne+'|'+x.date] = x; });
+    var out = past.slice();
+    future.forEach(function(x){
+      if(mode!=='move' || !hasVals(x)){ removed++; return; }
+      var nd = minus1(x.date), target = index[x.ligne+'|'+nd];
+      if(target && hasVals(target)){ kept++; return; }            // le vrai jour existe déjà : on le garde
+      if(target){ out = out.filter(function(o){ return o!==target; }); }
+      x.date = nd; out.push(x); index[x.ligne+'|'+nd] = x; moved++;
+    });
+    return out;
+  }
+  DATA.chokko = relocate(DATA.chokko, chokkoEntryHasValues);
+  DATA.ateq = relocate(DATA.ateq, function(a){ return (a.nbDefauts||0)>0 || (a.nb2nd||0)>0; });
+  // Notes d'actions CHOKKO rattachées à un mois futur
+  var curY = Number(today.slice(0,4)), curM = Number(today.slice(5,7))-1;
+  DATA.chokkoNotes = DATA.chokkoNotes.filter(function(n){
+    if(!(n.annee>curY || (n.annee===curY && n.mois>curM))) return true;
+    if(mode!=='move') return false;
+    var dup = DATA.chokkoNotes.find(function(x){ return x!==n && x.ligne===n.ligne && x.poste===n.poste && x.annee===n.annee-1 && x.mois===n.mois; });
+    if(dup) return false;
+    n.annee--; return true;
+  });
+  await save('chokko'); await save('ateq'); await save('chokkoNotes');
+  logChange('CHOKKO / ATEQ', mode==='move' ? 'Correction de l\'année' : 'Suppression données futures', moved+' déplacée(s), '+kept+' doublon(s) écarté(s), '+removed+' supprimée(s)');
+  toast(mode==='move' ? moved+' saisie(s) remise(s) un an plus tôt'+(kept? ', '+kept+' doublon(s) écarté(s)' : '')+'.' : removed+' saisie(s) supprimée(s).');
+  render();
+}
+
 RENDERERS.chokko = function(){
-  var html = '<div class="section"><div class="subtabs">'+
+  var html = futureDataBannerHtml()+'<div class="section"><div class="subtabs">'+
     ['MCU1','MCU2','MCU3'].map(function(l){ return '<button data-action="chokko-ligne" data-ligne="'+l+'" class="'+(chokkoLigne===l?'active':'')+'">'+l+'</button>'; }).join('')+
   '</div>';
   html += '<div class="toolbar"><div class="left">'+
@@ -6481,6 +6556,7 @@ function chokkoParseSheetAoa(aoa, ligne, year, monthIdx, summary){
         var val = row[dc.col];
         if(typeof val==='number'){
           var dateStr = year+'-'+String(monthIdx+1).padStart(2,'0')+'-'+String(dc.day).padStart(2,'0');
+          if(dateStr>todayStr()){ summary.futureSkipped = (summary.futureSkipped||0)+1; return; }   // jamais de donnée dans le futur (mauvaise année)
           var e = chokkoGetOrCreate(ligne, dateStr);
           e.defects[posteId] = val;
           nbImportedDefects++;
@@ -6506,6 +6582,7 @@ function chokkoParseSheetAoa(aoa, ligne, year, monthIdx, summary){
         var val = row[dc.col];
         if(typeof val==='number'){
           var dateStr2 = year+'-'+String(monthIdx+1).padStart(2,'0')+'-'+String(dc.day).padStart(2,'0');
+          if(dateStr2>todayStr()){ summary.futureSkipped = (summary.futureSkipped||0)+1; return; }
           var e2 = chokkoGetOrCreate(ligne, dateStr2);
           e2.prod[teamId] = val;
           nbImportedProd++;
@@ -6575,6 +6652,7 @@ async function handleChokkoImportRun(){
     summary.sheets+' feuille(s) importée(s) pour '+ligne+' ('+year+') : '+summary.defects+' valeurs de défauts, '+summary.prod+' valeurs de production, '+summary.notes+' note(s).'+
     (summary.ateqLinked? ' '+summary.ateqLinked+' valeur(s) liée(s) automatiquement à l\'onglet ATEQ (OP1120).' : '')+
     (summary.duplicateMonths&&summary.duplicateMonths.length? ' Mois en double détecté(s) : '+summary.duplicateMonths.join(', ')+'.' : '')+
+    (summary.futureSkipped? ' ⚠ '+summary.futureSkipped+' valeur(s) ignorée(s) car datées dans le futur : vérifiez l\'« Année des données ».' : '')+
     (summary.skipped.length? ' Feuilles ignorées (non reconnues) : '+summary.skipped.join(', ')+'.' : '');
   chokkoLigne = ligne;
   chokkoYear = year;
@@ -7013,7 +7091,7 @@ async function handleChokkoDefectChange(ligne, date, poste, val){
   refreshChokkoTotals(ligne);
   // Le poste OP1120 "Contrôle ATEQ" alimente directement l'onglet ATEQ (évite une double saisie).
   // Limité à MCU1/MCU2 : l'onglet ATEQ ne couvre pas MCU3 aujourd'hui.
-  if(poste==='OP1120' && (ligne==='MCU1' || ligne==='MCU2')){
+  if(poste==='OP1120' && (ligne==='MCU1' || ligne==='MCU2') && date<=todayStr()){
     var nbDefauts = val===''? 0 : Math.max(0, parseInt(val,10)||0);
     var ateqEntry = DATA.ateq.find(function(a){ return a.date===date && a.ligne===ligne; });
     if(ateqEntry){ ateqEntry.nbDefauts = nbDefauts; }
@@ -8379,7 +8457,7 @@ function trendBadge(current, previous){
 }
 
 RENDERERS.ateq = function(){
-  var html = '<div class="section">';
+  var html = futureDataBannerHtml()+'<div class="section">';
   html += '<h2 style="margin-bottom:6px;">'+esc(t('ateq_saisie','Saisie de la semaine'))+'</h2><p class="tiny" style="margin-bottom:12px;">Renseignez les chiffres du jour directement dans la grille, puis enregistrez la semaine en une fois.</p>';
   html += renderAteqWeekGrid();
   html += '</div>';
@@ -9078,6 +9156,12 @@ function bootstrapAdmin(){
       mcuSec.tabs.push('cicl');
       changed = true;
     }
+    // Prison qualité : auparavant toujours affichée pour MCU ; on coche la case une seule fois pour qu'elle devienne réglable
+    if(mcuSec && !mcuSec.prisonTabMigrated){
+      if(mcuSec.tabs.indexOf('prison')<0) mcuSec.tabs.push('prison');
+      mcuSec.prisonTabMigrated = true;
+      changed = true;
+    }
   }
   // Fonctionnalité de personnalisation des libellés retirée : purge des éventuels renommages existants
   if(DATA.labelOverrides && Object.keys(DATA.labelOverrides).length){
@@ -9472,7 +9556,7 @@ RENDERERS.comptes = function(){
   html += '<div class="toolbar"><div></div><button class="btn primary" data-action="new-secteur">+ Ajouter un secteur</button></div>';
   if(secteurFormState) html += secteurForm();
   var allSecteursList = (DATA.secteurs && DATA.secteurs.length? DATA.secteurs : SECTEURS_DEFAULT);
-  var CONFIGURABLE_TABS = [['perf','Audits perf'],['proprete','Propreté'],['metro','Métrologie'],['ateq','ATEQ'],['chokko','CHOKKO'],['actions','Actions'],['planning','Planning'],['esd','ESD'],['cicl','CI/CL'],['formations','SREM']];
+  var CONFIGURABLE_TABS = [['perf','Audits perf'],['proprete','Propreté'],['metro','Métrologie'],['ateq','ATEQ'],['chokko','CHOKKO'],['actions','Actions'],['planning','Planning'],['prison','Prison qualité'],['esd','ESD'],['cicl','CI/CL'],['formations','SREM']];
   html += '<div class="table-wrap" style="overflow-x:auto;"><table class="perm-table"><thead><tr><th style="min-width:80px;">Secteur</th><th style="min-width:180px;">Lignes</th>'+
     CONFIGURABLE_TABS.map(function(t){return '<th style="font-size:10px;">'+t[1]+'</th>';}).join('')+'<th></th></tr></thead><tbody>';
   html += allSecteursList.map(function(sec){
@@ -10437,6 +10521,8 @@ app.addEventListener('click', async function(e){
   if(prisonGotoBtn){ e.preventDefault(); var tgt = document.getElementById('prison-detail-'+prisonGotoBtn.dataset.id); if(tgt && tgt.scrollIntoView) tgt.scrollIntoView({behavior:'smooth', block:'start'}); return; }
   var pStep = e.target.closest('[data-action="prison-step"]');
   if(pStep){ handlePrisonStep(pStep); return; }
+  var futBtn = e.target.closest('[data-action="future-fix"]');
+  if(futBtn){ await handleFutureFix(futBtn.dataset.mode); return; }
   if(e.target.closest('[data-action="prison-import-sheet"]')){ await handleImportPrisonSheet(); return; }
   if(e.target.closest('[data-action="prison-print"]')){
     document.body.classList.add('print-prison');
