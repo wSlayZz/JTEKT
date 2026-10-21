@@ -501,6 +501,9 @@ tr.releve-recap-sel td:first-child{font-weight:700; box-shadow:inset 4px 0 0 #1F
 .defs-select{display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;}
 .defs-select select{min-width:300px; max-width:100%;}
 .defs-periods{display:flex; gap:6px; flex-wrap:wrap;}
+.defs-dates{display:flex; gap:8px; align-items:flex-end;}
+.defs-trend-hausse{color:var(--danger);} .defs-trend-baisse{color:var(--ok);} .defs-trend-stable{color:var(--text-faint);}
+.defs-v.defs-trend-hausse, .defs-v.defs-trend-baisse, .defs-v.defs-trend-stable{font-size:19px;}
 .defs-kpis{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; margin-bottom:14px;}
 @media (max-width:900px){ .defs-kpis{grid-template-columns:repeat(2, minmax(0,1fr));} .defs-select select{min-width:0; width:100%;} }
 .defs-kpi{border:1px solid var(--border); border-radius:10px; padding:10px 12px;}
@@ -4095,7 +4098,7 @@ function gotoActionSource(a){
   if(s.secteur && userSecteurs().indexOf(s.secteur)>=0) currentSecteur = s.secteur;
   if(s.type==='prison'){ currentTab = 'prison'; prisonZoneFilter = ''; renderNav(); render(); var el = document.getElementById('prison-detail-'+s.ref); if(el && el.scrollIntoView) el.scrollIntoView({behavior:'smooth', block:'start'}); return; }
   if(s.type==='chokko'){ currentTab = 'chokko'; chokkoView = 'saisie'; chokkoLigne = s.ligne; chokkoYear = s.annee; chokkoMonth = s.mois; renderNav(); render(); return; }
-  if(s.type==='ateq'){ currentTab = 'chokko'; chokkoView = 'defauts'; chokkoDefPoste = 'OP1120'; if(s.ligne) chokkoLigne = s.ligne; renderNav(); render(); return; }
+  if(s.type==='ateq'){ currentTab = 'chokko'; chokkoView = 'defauts'; if(s.ligne) chokkoLigne = s.ligne; chokkoDefPosteByLigne[chokkoLigne] = 'OP1120'; renderNav(); render(); return; }
   if(s.type==='pareto'){ paretoState = {src:s.src, ligne:s.ligne||'', period:s.period||'mois', month:s.month||null}; currentTab = 'pareto'; renderNav(); render(); return; }
 }
 // ---------- Fiche action ----------
@@ -6902,16 +6905,17 @@ function chokkoSaisieView(){
 
 // ====================================================================
 // CHOKKO - SUIVI D'UN DÉFAUT (remplace l'ancien onglet ATEQ)
-// On choisit une ligne et un défaut (poste) : tendance par jour / semaine / mois,
-// nombre de pièces NC, taux en ppm rapporté à la production, comparaison avec la période précédente.
+// Simple : on choisit un défaut et une période, on voit le nombre de défauts dans le temps + une ligne de tendance.
+// Le défaut choisi est mémorisé pour chaque ligne (MCU1, MCU2, MCU3).
 // ====================================================================
-var chokkoDefPoste = null;          // poste suivi (ex. OP1120)
-var chokkoDefPeriod = 'jour';       // 'jour' (30 j) | 'semaine' (26 sem.) | 'mois' (12 mois)
-var chartChokkoDef = null, chartChokkoDefShare = null;
-var CHOKKO_DEF_PERIODS = [['jour','30 derniers jours'],['semaine','26 dernières semaines'],['mois','12 derniers mois']];
+var chokkoDefPosteByLigne = {};     // ligne -> poste choisi
+var chokkoDefPoste = null;          // poste de la ligne affichée (tenu à jour)
+var chokkoDefPeriod = '30j';
+var chokkoDefFrom = null, chokkoDefTo = null;   // période personnalisée
+var chartChokkoDef = null;
+var CHOKKO_DEF_PERIODS = [['30j','30 jours'],['3m','3 mois'],['6m','6 mois'],['12m','12 mois'],['perso','Personnalisée']];
 
 function chokkoDefPostesWithCounts(ligne){
-  // Postes de la ligne avec le nombre de pièces NC sur 90 jours (pour trier la liste par importance)
   var since = fmtISOLocal(new Date(Date.now()-90*86400000)), today = todayStr();
   var counts = {};
   DATA.chokko.forEach(function(e){
@@ -6920,111 +6924,134 @@ function chokkoDefPostesWithCounts(ligne){
   });
   return chokkoPostes(ligne).map(function(p){ return {id:p[0], label:p[1], n90:counts[p[0]]||0}; });
 }
-// Découpage de la période en "tranches" (jours, semaines ISO ou mois), de la plus ancienne à la plus récente
-function chokkoDefBuckets(period, offset){
-  offset = offset || 0;   // 1 = période précédente de même durée
-  var out = [], today = new Date(); today.setHours(12,0,0,0);
-  if(period==='jour'){
-    for(var i=29+30*offset; i>=30*offset; i--){
-      var d = new Date(today); d.setDate(d.getDate()-i);
-      var ds = fmtISOLocal(d);
-      out.push({label: ds.slice(8,10)+'/'+ds.slice(5,7), from:ds, to:ds});
-    }
-  } else if(period==='semaine'){
-    var monday = new Date(today); monday.setDate(monday.getDate() - ((monday.getDay()+6)%7));
-    for(var w=25+26*offset; w>=26*offset; w--){
-      var m = new Date(monday); m.setDate(m.getDate()-7*w);
-      var sun = new Date(m); sun.setDate(sun.getDate()+6);
-      out.push({label:'S'+isoWeekInfo(fmtISOLocal(m)).week+(w===0?' (en cours)':''), from:fmtISOLocal(m), to:fmtISOLocal(sun)});
-    }
-  } else {
-    for(var k=11+12*offset; k>=12*offset; k--){
-      var first = new Date(today.getFullYear(), today.getMonth()-k, 1), last = new Date(today.getFullYear(), today.getMonth()-k+1, 0);
-      out.push({label: ['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'][first.getMonth()]+' '+String(first.getFullYear()).slice(2)+(k===0?' (en cours)':''), from:fmtISOLocal(first), to:fmtISOLocal(last)});
-    }
+// Période choisie -> {from, to, gran} ; gran = 'jour' | 'semaine' | 'mois'
+function chokkoDefRange(){
+  var today = todayStr(), d = new Date();
+  var back = function(days){ var x = new Date(); x.setDate(x.getDate()-days); return fmtISOLocal(x); };
+  var backM = function(m){ var x = new Date(d.getFullYear(), d.getMonth()-m+1, 1); return fmtISOLocal(x); };
+  var mondayBack = function(weeks){ var x = new Date(); x.setDate(x.getDate() - ((x.getDay()+6)%7) - 7*weeks); return fmtISOLocal(x); };
+  if(chokkoDefPeriod==='3m') return {from:mondayBack(12), to:today, gran:'semaine'};   // 13 semaines complètes (dont la semaine en cours)
+  if(chokkoDefPeriod==='6m') return {from:mondayBack(25), to:today, gran:'semaine'};
+  if(chokkoDefPeriod==='12m') return {from:backM(12), to:today, gran:'mois'};
+  if(chokkoDefPeriod==='perso'){
+    var f = chokkoDefFrom || back(59), t = chokkoDefTo || today;
+    if(f>t){ var tmp = f; f = t; t = tmp; }
+    var len = daysBetween(f, t)+1;
+    return {from:f, to:t, gran: len<=62 ? 'jour' : len<=200 ? 'semaine' : 'mois'};
+  }
+  return {from:back(29), to:today, gran:'jour'};
+}
+function chokkoDefBucketsFor(range){
+  var out = [], MS = ['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
+  var cur = new Date(range.from+'T12:00:00'), end = range.to;
+  if(range.gran==='semaine'){ cur.setDate(cur.getDate() - ((cur.getDay()+6)%7)); }
+  if(range.gran==='mois'){ cur = new Date(cur.getFullYear(), cur.getMonth(), 1, 12); }
+  while(fmtISOLocal(cur) <= end){
+    var a = fmtISOLocal(cur), b, label;
+    if(range.gran==='jour'){ b = a; label = a.slice(8,10)+'/'+a.slice(5,7); cur.setDate(cur.getDate()+1); }
+    else if(range.gran==='semaine'){ var sun = new Date(cur); sun.setDate(sun.getDate()+6); b = fmtISOLocal(sun); label = 'S'+isoWeekInfo(a).week; cur.setDate(cur.getDate()+7); }
+    else { var last = new Date(cur.getFullYear(), cur.getMonth()+1, 0, 12); b = fmtISOLocal(last); label = MS[cur.getMonth()]+' '+String(cur.getFullYear()).slice(2); cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1, 12); }
+    var inProgress = b>todayStr() && a<=todayStr();
+    out.push({label:label+(inProgress && range.gran!=='jour' ? ' (en cours)' : ''), from: a<range.from ? range.from : a, to: b>end ? end : b, inProgress:inProgress});
   }
   return out;
 }
-function chokkoDefSeries(ligne, poste, period, offset){
-  var buckets = chokkoDefBuckets(period, offset), today = todayStr();
-  var idx = {};
+function chokkoDefFill(ligne, poste, buckets){
+  var idx = {}, today = todayStr();
   DATA.chokko.forEach(function(e){ if(e.ligne===ligne) idx[e.date] = e; });
-  buckets.forEach(function(b){
-    var n = 0, prod = 0, allNc = 0, days = 0;
-    var d = new Date(b.from+'T12:00:00'), end = b.to > today ? today : b.to;
+  buckets.forEach(function(bk){
+    var n = 0, days = 0, d = new Date(bk.from+'T12:00:00'), end = bk.to>today ? today : bk.to;
     while(fmtISOLocal(d) <= end){
-      var ds = fmtISOLocal(d), e = idx[ds];
-      if(e){
-        var t = chokkoDayTotals(ligne, ds);
-        if(t.totalProd>0 || t.totalNC>0){ days++; prod += t.totalProd; allNc += t.totalNC; n += Number((e.defects||{})[poste])||0; }
-      }
+      var e = idx[fmtISOLocal(d)];
+      if(e && chokkoEntryHasValues(e)){ days++; n += Number((e.defects||{})[poste])||0; }
       d.setDate(d.getDate()+1);
     }
-    b.n = n; b.prod = prod; b.allNc = allNc; b.days = days;
-    b.ppm = prod>0 ? n/prod*1e6 : null;
+    bk.n = n; bk.days = days;
   });
   return buckets;
 }
-function chokkoDefSum(series){
-  var r = {n:0, prod:0, allNc:0, days:0};
-  series.forEach(function(b){ r.n += b.n; r.prod += b.prod; r.allNc += b.allNc; r.days += b.days; });
-  r.ppm = r.prod>0 ? r.n/r.prod*1e6 : null;
-  r.share = r.allNc>0 ? r.n/r.allNc*100 : null;
-  return r;
+// Période précédente de même durée (pour l'évolution)
+function chokkoDefPrevRange(range){
+  var len = daysBetween(range.from, range.to)+1;
+  var to = addDays(range.from, -1), from = addDays(to, -(len-1));
+  return {from:from, to:to, gran:range.gran};
 }
-function fmtPpm(v){ return v===null || v===undefined ? '-' : Math.round(v).toLocaleString('fr-FR')+' ppm'; }
-function chokkoDefTrendBadge(cur, prev){
-  if(prev===null || prev===undefined || cur===null || cur===undefined) return '<span class="tiny" style="color:var(--text-faint);">pas de comparaison</span>';
-  if(prev===0 && cur===0) return '<span class="tiny" style="color:var(--text-faint);">= stable</span>';
-  if(prev===0) return '<span class="tiny" style="color:var(--danger); font-weight:700;">▲ apparition</span>';
-  var pc = Math.round((cur-prev)/prev*100);
-  var lvl = pc>10 ? 'danger' : pc<-10 ? 'ok' : 'text-faint';
-  return '<span class="tiny" style="color:var(--'+lvl+'); font-weight:700;">'+(pc>0?'▲ +':pc<0?'▼ ':'= ')+pc+' %</span>';
+function chokkoDefTotals(series){
+  var t = {n:0, days:0, buckets:0};
+  series.forEach(function(b){ t.n += b.n; t.days += b.days; if(b.days) t.buckets++; });
+  return t;
+}
+// Droite de tendance (moindres carrés) sur les périodes renseignées
+function chokkoDefTrendLine(series){
+  // la période en cours (incomplète) n'entre pas dans le calcul de tendance
+  var pts = []; series.forEach(function(b, i){ if(b.days && !b.inProgress) pts.push([i, b.n]); });
+  if(pts.length<3) return null;
+  var n = pts.length, sx=0, sy=0, sxy=0, sxx=0;
+  pts.forEach(function(p){ sx+=p[0]; sy+=p[1]; sxy+=p[0]*p[1]; sxx+=p[0]*p[0]; });
+  var den = n*sxx - sx*sx; if(!den) return null;
+  var a = (n*sxy - sx*sy)/den, b = (sy - a*sx)/n;
+  var first = pts[0][0], last = pts[n-1][0], mean = sy/n;
+  var startV = a*first+b, endV = a*last+b;
+  var change = mean>0 ? (endV-startV)/mean : 0;
+  return {a:a, b:b, first:first, last:last, dir: change>0.15 ? 'hausse' : change<-0.15 ? 'baisse' : 'stable'};
+}
+function chokkoDefSelectedPoste(ligne, postes){
+  var p = chokkoDefPosteByLigne[ligne];
+  if(!p || !postes.some(function(x){ return x.id===p; })){
+    p = postes.slice().sort(function(a,b){ return b.n90-a.n90; })[0].id;
+    chokkoDefPosteByLigne[ligne] = p;
+  }
+  chokkoDefPoste = p;
+  return p;
 }
 function chokkoDefautsView(){
   var ligne = chokkoLigne;
   var postes = chokkoDefPostesWithCounts(ligne);
   if(!postes.length) return '<div class="card">'+emptyState('Aucun poste configuré pour '+esc(ligne)+'.')+'</div>';
-  if(!chokkoDefPoste || !postes.some(function(p){ return p.id===chokkoDefPoste; })){
-    var top = postes.slice().sort(function(a,b){ return b.n90-a.n90; })[0];
-    chokkoDefPoste = top.id;
-  }
-  var poste = postes.filter(function(p){ return p.id===chokkoDefPoste; })[0];
-  var cur = chokkoDefSeries(ligne, poste.id, chokkoDefPeriod, 0), prev = chokkoDefSeries(ligne, poste.id, chokkoDefPeriod, 1);
-  var S = chokkoDefSum(cur), P = chokkoDefSum(prev);
-  var perLabel = {jour:'30 jours', semaine:'26 semaines', mois:'12 mois'}[chokkoDefPeriod];
-  // Comparaison seulement si la période précédente est suffisamment renseignée (sinon l'évolution est trompeuse)
+  var posteId = chokkoDefSelectedPoste(ligne, postes);
+  var poste = postes.filter(function(p){ return p.id===posteId; })[0];
+  var range = chokkoDefRange();
+  var cur = chokkoDefFill(ligne, posteId, chokkoDefBucketsFor(range));
+  var prevRange = chokkoDefPrevRange(range);
+  var prev = chokkoDefFill(ligne, posteId, chokkoDefBucketsFor(prevRange));
+  var S = chokkoDefTotals(cur), P = chokkoDefTotals(prev);
+  var unit = {jour:'jour', semaine:'semaine', mois:'mois'}[range.gran];
+  // moyenne calculée sur les périodes complètes (la semaine / le mois en cours fausserait la moyenne)
+  var full = cur.filter(function(b){ return b.days && !b.inProgress; });
+  var avg = full.length ? full.reduce(function(a,b){ return a+b.n; },0)/full.length : (S.buckets ? S.n/S.buckets : null);
   var comparable = P.days>0 && P.days >= S.days*0.5;
-  var noCmp = '<span class="tiny" style="color:var(--text-faint);">période précédente trop peu renseignée pour comparer</span>';
+  var evo = '';
+  if(comparable){
+    if(P.n===0 && S.n===0) evo = '<span style="color:var(--text-faint);">=</span>';
+    else if(P.n===0) evo = '<span style="color:var(--danger);">nouveau</span>';
+    else { var pc = Math.round((S.n-P.n)/P.n*100); evo = '<span style="color:var(--'+(pc>10?'danger':pc<-10?'ok':'text-faint')+');">'+(pc>0?'+':'')+pc+' %</span>'; }
+  }
+  var trend = chokkoDefTrendLine(cur);
   var worst = cur.filter(function(b){ return b.n>0; }).sort(function(a,b){ return b.n-a.n; })[0];
-  var linked = actionsLinkedTo('chokko', ligne+'|'+poste.id);
+  var linked = actionsLinkedTo('chokko', ligne+'|'+posteId);
   var openLinked = linked.filter(function(a){ var c = actionPanelCategory(a); return c==='late'||c==='encours'||c==='realisee'; });
   var sorted = postes.slice().sort(function(a,b){ return b.n90-a.n90 || a.id.localeCompare(b.id); });
 
   var h = '<div class="card defs-card">';
   h += '<div class="defs-head"><div class="defs-select">'+
     '<label class="field" style="margin:0;">Défaut suivi<select id="chokko-def-poste">'+
-      sorted.map(function(p){ return '<option value="'+esc(p.id)+'"'+(p.id===poste.id?' selected':'')+'>'+esc(p.id+' - '+p.label)+(p.n90? '  ('+p.n90+' NC / 90 j)' : '')+'</option>'; }).join('')+
+      sorted.map(function(p){ return '<option value="'+esc(p.id)+'"'+(p.id===posteId?' selected':'')+'>'+esc(p.id+' - '+p.label)+'</option>'; }).join('')+
     '</select></label>'+
     '<div class="defs-periods">'+CHOKKO_DEF_PERIODS.map(function(pp){ return '<button class="btn small'+(pp[0]===chokkoDefPeriod?' primary':'')+'" data-action="chokko-def-period" data-p="'+pp[0]+'">'+pp[1]+'</button>'; }).join('')+'</div>'+
+    (chokkoDefPeriod==='perso'? '<div class="defs-dates"><label class="field" style="margin:0;">Du<input type="date" id="chokko-def-from" value="'+esc(range.from)+'"></label><label class="field" style="margin:0;">Au<input type="date" id="chokko-def-to" value="'+esc(range.to)+'"></label></div>' : '')+
   '</div>'+
   '<button class="btn small" data-action="chokko-def-action" title="Créer une action sur ce défaut">+ Action'+(openLinked.length? ' <span class="tiny">('+openLinked.length+' en cours)</span>' : '')+'</button></div>';
 
   h += '<div class="defs-kpis">'+
-    '<div class="defs-kpi"><div class="tiny">Pièces NC sur '+perLabel+'</div><div class="defs-v">'+S.n.toLocaleString('fr-FR')+'</div>'+(comparable? chokkoDefTrendBadge(S.n, P.n)+' <span class="tiny" style="color:var(--text-faint);">vs période précédente ('+P.n+')</span>' : noCmp)+'</div>'+
-    '<div class="defs-kpi"><div class="tiny">Taux rapporté à la production</div><div class="defs-v">'+fmtPpm(S.ppm)+'</div>'+(comparable? chokkoDefTrendBadge(S.ppm, P.ppm)+' <span class="tiny" style="color:var(--text-faint);">avant : '+fmtPpm(P.ppm)+'</span>' : noCmp)+'</div>'+
-    '<div class="defs-kpi"><div class="tiny">Part des pièces NC de '+esc(ligne)+'</div><div class="defs-v">'+(S.share===null?'-':pct1(S.share).replace('.',',')+' %')+'</div><span class="tiny" style="color:var(--text-faint);">sur '+S.allNc.toLocaleString('fr-FR')+' pièces NC au total</span></div>'+
-    '<div class="defs-kpi"><div class="tiny">Pic de la période</div><div class="defs-v">'+(worst? worst.n : '-')+'</div><span class="tiny" style="color:var(--text-faint);">'+(worst? esc(worst.label)+(worst.ppm!==null?' · '+fmtPpm(worst.ppm):'') : 'aucun défaut')+'</span></div>'+
+    '<div class="defs-kpi"><div class="tiny">Défauts du '+(range.from.slice(0,4)===range.to.slice(0,4) ? fmtDate(range.from).slice(0,5) : fmtDate(range.from))+' au '+fmtDate(range.to)+'</div><div class="defs-v">'+S.n.toLocaleString('fr-FR')+'</div></div>'+
+    '<div class="defs-kpi"><div class="tiny">Moyenne par '+unit+'</div><div class="defs-v">'+(avg===null?'-':(Math.round(avg*10)/10).toLocaleString('fr-FR'))+'</div></div>'+
+    '<div class="defs-kpi"><div class="tiny">Évolution vs période précédente</div><div class="defs-v">'+(comparable? evo : '<span class="tiny" style="color:var(--text-faint); font-family:inherit; font-weight:400;">pas assez d\'historique</span>')+'</div>'+(comparable? '<span class="tiny" style="color:var(--text-faint);">'+P.n.toLocaleString('fr-FR')+' défauts avant</span>' : '')+'</div>'+
+    '<div class="defs-kpi"><div class="tiny">Tendance</div><div class="defs-v defs-trend-'+(trend? trend.dir : 'none')+'">'+(trend? (trend.dir==='hausse'?'↗ En hausse':trend.dir==='baisse'?'↘ En baisse':'→ Stable') : '-')+'</div>'+(worst? '<span class="tiny" style="color:var(--text-faint);">Pic : '+worst.n+' ('+esc(worst.label)+')</span>' : '')+'</div>'+
   '</div>';
 
-  if(!S.days){
-    h += emptyState('Aucune saisie CHOKKO sur cette période pour '+esc(ligne)+'.');
-  } else {
-    h += '<div class="chart-box" style="height:340px;"><canvas id="chart-chokko-def"></canvas></div>'+
-      '<p class="tiny" style="margin-top:6px; color:var(--text-faint);">Barres : nombre de pièces NC sur ce défaut. Courbe : taux en ppm (pièces NC par million de pièces produites), qui corrige l\'effet des variations de production.'+(chokkoDefPeriod==='jour'?' Pointillés : moyenne glissante sur 7 jours.':'')+'</p>';
-  }
-  // Notes CHOKKO et actions liées à ce défaut
-  var notes = DATA.chokkoNotes.filter(function(n){ return n.ligne===ligne && n.poste===poste.id && (n.texte||'').trim(); })
+  h += S.days ? '<div class="chart-box" style="height:320px;"><canvas id="chart-chokko-def"></canvas></div>' : emptyState('Aucune saisie CHOKKO sur cette période pour '+esc(ligne)+'.');
+
+  var notes = DATA.chokkoNotes.filter(function(n){ return n.ligne===ligne && n.poste===posteId && (n.texte||'').trim(); })
     .sort(function(a,b){ return (b.annee*12+b.mois)-(a.annee*12+a.mois); }).slice(0,4);
   if(notes.length || linked.length){
     h += '<div class="defs-bottom">';
@@ -7041,37 +7068,26 @@ function chokkoDefautsView(){
     }
     h += '</div>';
   }
-  h += '</div>';
-  return h;
+  return h+'</div>';
 }
 function renderChokkoDefChart(){
   if(typeof Chart==='undefined') return;
   var ctx = document.getElementById('chart-chokko-def'); if(!ctx) return;
   if(chartChokkoDef){ chartChokkoDef.destroy(); chartChokkoDef = null; }
-  var series = chokkoDefSeries(chokkoLigne, chokkoDefPoste, chokkoDefPeriod, 0);
-  var ds = [
-    {type:'bar', label:'Pièces NC', data:series.map(function(b){ return b.days? b.n : null; }), backgroundColor:'#B2764ACC', borderColor:'#B2764A', borderWidth:1, borderRadius:3, yAxisID:'y', order:2},
-    {type:'line', label:'Taux (ppm)', data:series.map(function(b){ return b.ppm===null? null : Math.round(b.ppm); }), borderColor:'#1F3864', backgroundColor:'#1F3864', borderWidth:2, pointRadius:2.5, spanGaps:true, tension:0.2, yAxisID:'y1', order:1}
-  ];
-  if(chokkoDefPeriod==='jour'){
-    var mm = series.map(function(b, i){
-      var win = series.slice(Math.max(0, i-6), i+1).filter(function(x){ return x.days; });
-      var n = win.reduce(function(s,x){ return s+x.n; },0), p = win.reduce(function(s,x){ return s+x.prod; },0);
-      return p>0 ? Math.round(n/p*1e6) : null;
-    });
-    ds.push({type:'line', label:'Moyenne 7 j (ppm)', data:mm, borderColor:'#C25A00', borderDash:[6,4], borderWidth:2, pointRadius:0, spanGaps:true, tension:0.3, yAxisID:'y1', order:0});
+  var series = chokkoDefFill(chokkoLigne, chokkoDefPoste, chokkoDefBucketsFor(chokkoDefRange()));
+  var trend = chokkoDefTrendLine(series);
+  var ds = [{type:'bar', label:'Défauts', data:series.map(function(b){ return b.days? b.n : null; }), backgroundColor:series.map(function(b){ return b.inProgress ? '#B2764A55' : '#B2764ACC'; }), borderColor:'#B2764A', borderWidth:1, borderRadius:3, order:2}];
+  if(trend){
+    ds.push({type:'line', label:'Tendance', data:series.map(function(b, i){ return (i>=trend.first && i<=trend.last) ? Math.max(0, Math.round((trend.a*i+trend.b)*10)/10) : null; }),
+      borderColor:'#1F3864', borderDash:[7,5], borderWidth:2, pointRadius:0, spanGaps:true, order:1});
   }
   try{
     chartChokkoDef = new Chart(ctx, {data:{labels:series.map(function(b){ return b.label; }), datasets:ds},
-      options:{responsive:true, maintainAspectRatio:false, animation:false, interaction:{mode:'index', intersect:false},
-        plugins:{legend:{position:'bottom'}, tooltip:{callbacks:{
-          afterBody:function(items){ var b = series[items[0].dataIndex]; return b.days ? ['Production : '+b.prod.toLocaleString('fr-FR')+' pièces ('+b.days+' j saisis)'] : ['Pas de saisie']; },
-          label:function(c){ return ' '+c.dataset.label+' : '+(c.raw===null?'-':Number(c.raw).toLocaleString('fr-FR')); }
+      options:{responsive:true, maintainAspectRatio:false, animation:false,
+        plugins:{legend:{position:'bottom'}, tooltip:{filter:function(it){ return it.datasetIndex===0; }, callbacks:{
+          label:function(c){ return c.raw===null ? ' Pas de saisie' : ' '+c.raw+' défaut'+(c.raw>1?'s':''); }
         }}},
-        scales:{
-          y:{beginAtZero:true, position:'left', title:{display:true, text:'Pièces NC'}, ticks:{precision:0}},
-          y1:{beginAtZero:true, position:'right', grid:{drawOnChartArea:false}, title:{display:true, text:'ppm'}, ticks:{callback:function(v){ return Number(v).toLocaleString('fr-FR'); }}}
-        }}});
+        scales:{y:{beginAtZero:true, title:{display:true, text:'Nombre de défauts'}, ticks:{precision:0}}, x:{ticks:{maxRotation:50, autoSkip:true}}}}});
   }catch(err){ console.error('suivi défaut', err); }
 }
 
@@ -7126,11 +7142,28 @@ function contrastTextColor(hex){
   var lum = (0.299*r + 0.587*g + 0.114*b)/255;
   return lum < 0.55 ? '#FFFFFF' : '#1C1B18';
 }
+// Enregistrement en arrière-plan, regroupé par module : l'écran se met à jour tout de suite,
+// plusieurs clics rapprochés ne font qu'un seul envoi (utilisé pour les couleurs et le coloriage CHOKKO)
+var saveSoonTimers = {};
+function saveSoon(k, delay){
+  showSyncIndicator();
+  clearTimeout(saveSoonTimers[k]);
+  saveSoonTimers[k] = setTimeout(function(){ delete saveSoonTimers[k]; save(k); }, delay||700);
+}
+function flushSaveSoon(){ Object.keys(saveSoonTimers).forEach(function(k){ clearTimeout(saveSoonTimers[k]); delete saveSoonTimers[k]; save(k); }); }
+window.addEventListener('beforeunload', function(e){ if(Object.keys(saveSoonTimers).length){ flushSaveSoon(); e.preventDefault(); e.returnValue = ''; } });
+// Colorie une case directement dans la page (sans redessiner toute la grille)
+function chokkoPaintCellInPlace(td, color){
+  td.style.background = color || '';
+  var inp = td.querySelector('input');
+  var txt = color ? contrastTextColor(color) : '';
+  if(inp) inp.style.color = txt; else td.style.color = txt;
+}
 async function chokkoRememberColor(color){
   var arr = DATA.chokkoRecentColors.filter(function(c){ return c.toLowerCase()!==color.toLowerCase(); });
   arr.unshift(color);
   DATA.chokkoRecentColors = arr.slice(0,10);
-  await save('chokkoRecentColors');
+  saveSoon('chokkoRecentColors', 1500);
 }
 function chokkoColorSwatches(idPrefix, activeColor){
   // Rangée de pastilles cliquables : palette standard + couleurs récemment utilisées
@@ -10923,11 +10956,11 @@ app.addEventListener('click', async function(e){
   if(defPer){ chokkoDefPeriod = defPer.dataset.p; render(); return; }
   if(e.target.closest('[data-action="chokko-def-action"]')){
     var pdef = chokkoPostes(chokkoLigne).filter(function(p){ return p[0]===chokkoDefPoste; })[0];
-    var sm = chokkoDefSum(chokkoDefSeries(chokkoLigne, chokkoDefPoste, chokkoDefPeriod, 0));
+    var rg = chokkoDefRange(), tot = chokkoDefTotals(chokkoDefFill(chokkoLigne, chokkoDefPoste, chokkoDefBucketsFor(rg)));
     var td = new Date();
     openActionFromSource({type:'chokko', ref:chokkoLigne+'|'+chokkoDefPoste, secteur:currentSecteur, ligne:chokkoLigne, annee:td.getFullYear(), mois:td.getMonth(),
       label:'CHOKKO · '+chokkoLigne+' · '+chokkoDefPoste+(pdef?' - '+pdef[1]:'')+' (suivi des défauts)', typeLabel:'CHOKKO'}, chokkoLigne,
-      'Défaut '+chokkoDefPoste+(pdef?' - '+pdef[1]:'')+' sur '+chokkoLigne+' : '+sm.n+' pièces NC ('+fmtPpm(sm.ppm)+') sur la période. Action : ');
+      'Défaut '+chokkoDefPoste+(pdef?' - '+pdef[1]:'')+' sur '+chokkoLigne+' : '+tot.n+' défauts du '+fmtDate(rg.from)+' au '+fmtDate(rg.to)+'. Action : ');
     return;
   }
   var chokkoViewBtn = e.target.closest('[data-action="chokko-view"]');
@@ -11060,7 +11093,7 @@ app.addEventListener('click', async function(e){
   var swatchBtn = e.target.closest('.chokko-swatch');
   if(swatchBtn){
     var swColor = swatchBtn.dataset.color, swTarget = swatchBtn.dataset.target;
-    await chokkoRememberColor(swColor);
+    chokkoRememberColor(swColor);
     if(swTarget==='paint'){
       chokkoPaintMode = swColor;
       chokkoPaintPickerOpen = false;
@@ -11068,19 +11101,19 @@ app.addEventListener('click', async function(e){
       var parts = swTarget.split('|'); // poste|LIGNE|POSTE
       if(!DATA.chokkoColors[parts[1]]) DATA.chokkoColors[parts[1]] = {};
       DATA.chokkoColors[parts[1]][parts[2]] = swColor;
-      await save('chokkoColors');
+      saveSoon('chokkoColors');
       renderChokkoPostesChart();
     } else if(swTarget==='sidebarcolor'){
       if(!DATA.uiSettings) DATA.uiSettings = {sidebarColor:null, iconStyle:'svg'};
       DATA.uiSettings.sidebarColor = swColor;
-      await save('uiSettings');
+      saveSoon('uiSettings');
       renderNav();
     } else if(swTarget.indexOf('statuscolor|')===0){
       var statusKey = swTarget.split('|')[1];
       if(!DATA.uiSettings) DATA.uiSettings = {sidebarColor:null, iconStyle:'svg'};
       if(!DATA.uiSettings.statusColors) DATA.uiSettings.statusColors = {};
       DATA.uiSettings.statusColors[statusKey] = swColor;
-      await save('uiSettings');
+      saveSoon('uiSettings');
       applyStatusColorSettings();
     }
     render();
@@ -11102,10 +11135,9 @@ app.addEventListener('click', async function(e){
       : paintableCell.dataset.labelcell ? 'label_'+plPoste
       : paintableCell.dataset.date+'_'+plPoste;
     if(!DATA.chokkoHighlights[plLigne]) DATA.chokkoHighlights[plLigne] = {};
-    if(DATA.chokkoHighlights[plLigne][key]===chokkoPaintMode){ delete DATA.chokkoHighlights[plLigne][key]; }
-    else { DATA.chokkoHighlights[plLigne][key] = chokkoPaintMode; }
-    await save('chokkoHighlights');
-    render();
+    if(DATA.chokkoHighlights[plLigne][key]===chokkoPaintMode){ delete DATA.chokkoHighlights[plLigne][key]; chokkoPaintCellInPlace(paintableCell, null); }
+    else { DATA.chokkoHighlights[plLigne][key] = chokkoPaintMode; chokkoPaintCellInPlace(paintableCell, chokkoPaintMode); }
+    saveSoon('chokkoHighlights');
     return;
   }
   if(e.target.closest('[data-action="toggle-chokko-colors"]')){ chokkoColorsPanelOpen = !chokkoColorsPanelOpen; render(); return; }
@@ -11234,7 +11266,12 @@ app.addEventListener('change', async function(e){
     paretoState[pk] = e.target.value;
     render(); return;
   }
-  if(e.target && e.target.id==='chokko-def-poste'){ chokkoDefPoste = e.target.value; render(); return; }
+  if(e.target && e.target.id==='chokko-def-poste'){ chokkoDefPoste = e.target.value; chokkoDefPosteByLigne[chokkoLigne] = e.target.value; render(); return; }
+  if(e.target && (e.target.id==='chokko-def-from' || e.target.id==='chokko-def-to')){
+    if(!e.target.value) return;
+    if(e.target.id==='chokko-def-from') chokkoDefFrom = e.target.value; else chokkoDefTo = e.target.value;
+    render(); return;
+  }
   if(e.target && e.target.id==='pareto-w-src'){ paretoWidgetSrc = e.target.value; render(); return; }
   if(e.target && e.target.id==='ad-sansverif'){
     var on = e.target.checked;
@@ -11281,8 +11318,8 @@ app.addEventListener('change', async function(e){
     var pcLigne = e.target.dataset.ligne, pcPoste = e.target.dataset.poste;
     if(!DATA.chokkoColors[pcLigne]) DATA.chokkoColors[pcLigne] = {};
     DATA.chokkoColors[pcLigne][pcPoste] = e.target.value;
-    await chokkoRememberColor(e.target.value);
-    await save('chokkoColors');
+    chokkoRememberColor(e.target.value);
+    saveSoon('chokkoColors');
     renderChokkoPostesChart();
     render();
     return;
@@ -11290,7 +11327,7 @@ app.addEventListener('change', async function(e){
   if(e.target.id==='chokko-paint-custom-input'){
     chokkoPaintMode = e.target.value;
     chokkoPaintPickerOpen = false;
-    await chokkoRememberColor(e.target.value);
+    chokkoRememberColor(e.target.value);
     render();
     return;
   }
@@ -11701,139 +11738,6 @@ window.addEventListener('blur', uiTipHide);
 init();
 
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </script>
 </body>
 </html>
