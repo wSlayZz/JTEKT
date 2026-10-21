@@ -510,6 +510,10 @@ tr.releve-recap-sel td:first-child{font-weight:700; box-shadow:inset 4px 0 0 #1F
 .defs-v{font-family:var(--mono); font-weight:700; font-size:24px; margin:2px 0;}
 .defs-bottom{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:16px; padding-top:12px; border-top:1px solid var(--border);}
 @media (max-width:900px){ .defs-bottom{grid-template-columns:1fr;} }
+/* CHOKKO : TOTAL NC en rouge, production par équipe (A, B, C ou D) en noir gras */
+.chokko-grid td.chk-tnc{color:#C0272D; font-weight:700;}
+.chokko-grid tr.chk-team-row input.chokko-prod-cell{color:#000 !important; font-weight:700;}
+@media print{ .chokko-grid td.chk-tnc{color:#C0272D !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;} .chokko-grid tr.chk-team-row input.chokko-prod-cell{color:#000 !important; font-weight:700 !important;} }
 .photo-viewer{position:fixed; inset:0; z-index:100000; background:rgba(20,20,20,.85); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; cursor:zoom-out;}
 .photo-viewer img{max-width:92vw; max-height:82vh; border-radius:8px; box-shadow:0 10px 40px rgba(0,0,0,.5); background:#fff;}
 img.blob-thumb{min-width:40px; min-height:30px; background:var(--neutral-bg, #eee); cursor:zoom-in; object-fit:cover;}
@@ -6870,7 +6874,7 @@ function chokkoSaisieView(){
       var tncHl = DATA.chokkoHighlights[ligne] && DATA.chokkoHighlights[ligne]['totalnc_'+d.date];
       var tncStyle = tncHl? 'background:'+tncHl+'; color:'+contrastTextColor(tncHl)+';' : '';
       var tncClass = chokkoPaintMode? ' chokko-paintable' : '';
-      return '<td id="chokko-total-nc-'+d.date+'" class="'+tncClass.trim()+'" style="'+tncStyle+'" data-ligne="'+ligne+'" data-date="'+d.date+'" data-totalnc="1">'+(d.totals.totalNC||'-')+'</td>';
+      return '<td id="chokko-total-nc-'+d.date+'" class="chk-tnc'+tncClass+'" style="'+tncStyle+'" data-ligne="'+ligne+'" data-date="'+d.date+'" data-totalnc="1">'+(d.totals.totalNC||'-')+'</td>';
     }).join('')+'<td></td><td></td></tr>';
   // CHOKKO DU JOUR : calcule automatiquement
   html += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky" style="background:#E2EFDA;">CHOKKO DU JOUR</td>'+
@@ -11738,6 +11742,139 @@ window.addEventListener('blur', uiTipHide);
 init();
 
 })();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </script>
 </body>
 </html>
