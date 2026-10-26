@@ -273,6 +273,21 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
   .chokko-grid .chk-label{min-width:0 !important;}
   .subtabs{display:none !important;}
   .chokko-chart-print img{width:100%; height:auto; display:block; margin-top:4px;}
+  .chokko-week-table{width:100%; border-collapse:collapse; font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#000;}
+  .chokko-week-table th, .chokko-week-table td{border:1px solid #9aa3b2; padding:3px 6px; text-align:center;}
+  .chokko-week-table th{background:#D9E1F2; color:#000 !important; text-transform:none; letter-spacing:0; font-size:11px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .chokko-week-table th span{display:block; font-weight:400; font-size:9.5px; color:#333;}
+  .chokko-week-table .cw-lab{text-align:left; white-space:nowrap;}
+  .chokko-week-table .cw-month{background:#F2F2F2; font-weight:700; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .chokko-week-table th.cw-month{background:#BDD7EE;}
+  .chokko-week-table .cw-notes{text-align:left; font-size:9px; width:22%;}
+  .chokko-week-table tr.cw-team td{font-weight:700;}
+  .chokko-week-table tr.cw-prod td{font-weight:700; color:#2E7D4F;}
+  .chokko-week-table tr.cw-nc td{font-weight:700; color:#C0272D;}
+  .chokko-week-table tr.cw-chokko td{font-weight:700; background:#E2EFDA; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .chokko-week-table tr.cw-cost td{font-weight:700; color:#B23B2E;}
+  .chokko-week-table tr.cw-team td:first-child, .chokko-week-table tr.cw-prod td:first-child, .chokko-week-table tr.cw-nc td:first-child, .chokko-week-table tr.cw-chokko td:first-child, .chokko-week-table tr.cw-cost td:first-child{color:#000;}
+  .cw-foot{font-size:9px; color:#555; margin-top:3px;}
   .chokko-synth{font-family:Arial, Helvetica, sans-serif; color:#000;}
   .chokko-synth-title{font-size:20px; font-weight:700; margin-bottom:10px;}
   .chokko-synth-kpis{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px;}
@@ -345,10 +360,11 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 .chokko-grid .chk-team-row td{background:#fff; font-weight:400;}
 .chokko-grid .chk-team-row .chk-label-bold{background:#fff;}
 .chokko-grid .chk-total-row td{background:#fff; color:#548235; font-weight:700;}
-.chokko-grid .chk-chokko-row td{background:#E2EFDA; color:#548235; font-weight:700;}
+.chokko-grid .chk-chokko-row td{background:#fff; color:#548235; font-weight:700;}
 .chokko-grid td.chokko-paintable{cursor:crosshair;}
 .chokko-grid td.chokko-paintable:hover{outline:2px dashed var(--accent); outline-offset:-2px;}
-.chokko-swatch-row{display:flex; gap:4px; flex-wrap:wrap;}
+.chokko-swatch-row{display:flex; gap:4px; flex-wrap:wrap; max-width:440px;}
+.param-swatches{display:flex; gap:3px; flex-wrap:wrap; max-width:330px;}
 .chokko-swatch{width:20px; height:20px; border-radius:5px; border:1.5px solid rgba(0,0,0,0.15); cursor:pointer; padding:0;}
 .chokko-swatch.active{border-color:rgba(0,0,0,0.7); box-shadow:0 0 0 1.5px #fff inset;}
 .chokko-custom-color-btn{position:relative; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:5px; border:1.5px dashed var(--border-strong); cursor:pointer; font-size:13px; font-weight:700; color:var(--text-faint); background:repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 50%/8px 8px;}
@@ -695,7 +711,12 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 .trace-table td{vertical-align:top;}
 
 .chokko-grid td.chk-cost-label{background:#FCE9D9 !important;}
-.chokko-grid tr.chk-cost-row td{background:#FFF8F1;}
+.chokko-grid tr.chk-cost-row td{background:#fff;}
+/* Colonne des intitulés (postes, équipes, totaux…) : même mise en forme que le coût par pièce ; les cases restent blanches */
+.chokko-grid.chokko-grid tbody td.chk-sticky{background:#FCE9D9;}
+.chokko-grid tbody td.chk-team-label{text-align:center; vertical-align:middle;}
+.chokko-grid tbody td.chk-sticky{vertical-align:middle;}
+@media print{ .chokko-grid tbody td.chk-sticky{-webkit-print-color-adjust:exact; print-color-adjust:exact;} }
 .chokko-grid input.chokko-cost-cell{font-size:10.5px; font-weight:700; padding-left:1px; padding-right:1px;}
 .chokko-grid input.chokko-cost-cell::-webkit-outer-spin-button, .chokko-grid input.chokko-cost-cell::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
 .chokko-grid .lvl-ok{color:var(--ok);} .chokko-grid .lvl-warn{color:var(--warn);} .chokko-grid .lvl-danger{color:var(--danger);}
@@ -7146,6 +7167,60 @@ function rebutAmountInput(el){
   window.__rebutParetoT = setTimeout(function(){ var box = document.getElementById('rebut-pareto-box'); if(box){ box.innerHTML = rebutParetoBoxHtml(); renderRebutParetoChart(); } }, 600);
 }
 
+// ---- Export : tableau CHOKKO regroupé par semaine (semaines complètes lundi → dimanche, y compris les jours du mois précédent / suivant) ----
+function chokkoMonthWeeks(year, monthIdx){
+  var first = new Date(year, monthIdx, 1, 12), last = new Date(year, monthIdx+1, 0, 12);
+  var mon = new Date(first); mon.setDate(mon.getDate() - ((mon.getDay()+6)%7));
+  var weeks = [];
+  while(mon <= last){
+    var days = [];
+    for(var i=0;i<7;i++){ var d = new Date(mon); d.setDate(d.getDate()+i); days.push(fmtISOLocal(d)); }
+    weeks.push({week:isoWeekInfo(days[0]).week, from:days[0], to:days[6], days:days});
+    mon.setDate(mon.getDate()+7);
+  }
+  return weeks;
+}
+function chokkoPeriodStats(ligne, dates){
+  var postes = chokkoPostes(ligne), st = {nc:{}, team:{}, prod:0, totalNC:0, pcts:[], costs:[]};
+  dates.forEach(function(ds){
+    var e = chokkoEntry(ligne, ds); if(!e) return;
+    var t = chokkoDayTotals(ligne, ds);
+    st.prod += t.totalProd; st.totalNC += t.totalNC;
+    if(t.pct!==null) st.pcts.push(t.pct);
+    postes.forEach(function(p){ var v = Number((e.defects||{})[p[0]])||0; if(v) st.nc[p[0]] = (st.nc[p[0]]||0)+v; });
+    CHOKKO_TEAMS.forEach(function(tm){ var v = Number((e.prod||{})[tm[0]])||0; if(v) st.team[tm[0]] = (st.team[tm[0]]||0)+v; });
+    var c = chokkoDayCost(ligne, ds); if(c!==null) st.costs.push(c);
+  });
+  st.pct = st.pcts.length ? st.pcts.reduce(function(a,b){ return a+b; },0)/st.pcts.length : null;
+  st.cost = st.costs.length ? st.costs.reduce(function(a,b){ return a+b; },0)/st.costs.length : null;
+  return st;
+}
+function chokkoWeeklyPrintHtml(){
+  var l = chokkoLigne, y = chokkoYear, m = chokkoMonth;
+  var weeks = chokkoMonthWeeks(y, m);
+  var monthDates = chokkoMonthDays(l, y, m).map(function(d){ return d.date; });
+  var cols = weeks.map(function(w){ return {label:'S'+w.week, sub:fmtDate(w.from).slice(0,5)+' → '+fmtDate(w.to).slice(0,5), st:chokkoPeriodStats(l, w.days)}; });
+  var tot = {label:'Mois', sub:MONTHS_FR[m], st:chokkoPeriodStats(l, monthDates), month:true};
+  var all = cols.concat([tot]);
+  var postes = chokkoPostes(l);
+  var lvlColor = {ok:'#2E7D4F', warn:'#B8730A', danger:'#B23B2E', neutral:'#555'};
+  var num = function(v){ return v ? v.toLocaleString('fr-FR') : ''; };
+  var h = '<div class="print-only chokko-week-print"><table class="chokko-week-table"><thead><tr><th class="cw-lab">Défauts / semaines</th>'+
+    all.map(function(c){ return '<th class="'+(c.month?'cw-month':'')+'"><b>'+esc(c.label)+'</b><span>'+esc(c.sub)+'</span></th>'; }).join('')+'<th class="cw-notes">Actions</th></tr></thead><tbody>';
+  postes.forEach(function(p){
+    var note = chokkoNote(l, p[0], y, m);
+    h += '<tr><td class="cw-lab">'+esc(p[0]+' - '+p[1])+'</td>'+all.map(function(c){ return '<td class="'+(c.month?'cw-month':'')+'">'+num(c.st.nc[p[0]])+'</td>'; }).join('')+'<td class="cw-notes">'+esc(note && note.texte || '')+'</td></tr>';
+  });
+  CHOKKO_TEAMS.forEach(function(tm){
+    h += '<tr class="cw-team"><td class="cw-lab">'+esc(tm[2]||tm[1])+'</td>'+all.map(function(c){ return '<td class="'+(c.month?'cw-month':'')+'">'+num(c.st.team[tm[0]])+'</td>'; }).join('')+'<td></td></tr>';
+  });
+  h += '<tr class="cw-prod"><td class="cw-lab">TOTAL PROD</td>'+all.map(function(c){ return '<td class="'+(c.month?'cw-month':'')+'">'+num(c.st.prod)+'</td>'; }).join('')+'<td></td></tr>';
+  h += '<tr class="cw-nc"><td class="cw-lab">TOTAL NC</td>'+all.map(function(c){ return '<td class="'+(c.month?'cw-month':'')+'">'+num(c.st.totalNC)+'</td>'; }).join('')+'<td></td></tr>';
+  h += '<tr class="cw-chokko"><td class="cw-lab">'+'CHOKKO (%)'+'</td>'+all.map(function(c){ var v = c.st.pct; return '<td class="'+(c.month?'cw-month':'')+'" style="color:'+lvlColor[chokkoLevelVsObjectif(v, l)]+';">'+(v!==null? pct1(v) : '-')+'</td>'; }).join('')+'<td class="tiny">objectif ≥ '+chokkoObjectif(l)+' %</td></tr>';
+  h += '<tr class="cw-cost"><td class="cw-lab">COÛT / PIÈCE (€)</td>'+all.map(function(c){ var v = c.st.cost; return '<td class="'+(c.month?'cw-month':'')+'">'+(v!==null? fmtCost(v) : '-')+'</td>'; }).join('')+'<td></td></tr>';
+  h += '</tbody></table><div class="cw-foot">Semaines complètes du lundi au dimanche : la première et la dernière semaine peuvent inclure des jours du mois précédent ou suivant. La colonne « Mois » ne compte que les jours du mois. CHOKKO et coût par pièce : moyenne des jours saisis.</div></div>';
+  return h;
+}
 // ---- PDF de synthèse CHOKKO : grille du mois + coût rebut (tableau + Pareto) ----
 function rebutParetoResFor(l, y, months){
   var acc = {}, names = {};
@@ -7208,6 +7283,16 @@ async function printChokkoSynthese(){
       box.classList.add('screen-only');
     }
   }
+  // Tableau journalier remplacé à l'impression par le tableau regroupé par semaine
+  var gridWrap = document.querySelector('#view table.chokko-grid');
+  gridWrap = gridWrap ? (gridWrap.closest('.table-wrap') || gridWrap) : null;
+  var weekDiv = null;
+  if(gridWrap){
+    weekDiv = document.createElement('div'); weekDiv.innerHTML = chokkoWeeklyPrintHtml();
+    weekDiv = weekDiv.firstChild;
+    gridWrap.parentNode.insertBefore(weekDiv, gridWrap.nextSibling);
+    gridWrap.classList.add('screen-only');
+  }
   var host = document.querySelector('#view .section') || document.getElementById('view');
   var div = document.createElement('div'); div.id = 'chokko-synth-print';
   div.innerHTML = chokkoSynthRebutHtml();
@@ -7219,6 +7304,8 @@ async function printChokkoSynthese(){
     window.removeEventListener('afterprint', cleanup);
     var d = document.getElementById('chokko-synth-print'); if(d) d.remove();
     if(chartImg) chartImg.remove();
+    if(weekDiv) weekDiv.remove();
+    if(gridWrap) gridWrap.classList.remove('screen-only');
     if(box) box.classList.remove('screen-only');
     if(savedView!=='saisie'){ chokkoView = savedView; render(); }
   };
@@ -7633,7 +7720,7 @@ function chokkoSaisieView(){
         '<div class="tiny" id="chokko-month-objectif" style="margin-top:2px; color:var(--text-faint);">Objectif : ≥ '+chokkoObjectif(ligne)+'%</div>'+
       '</div>'+
       '<div class="statcard" style="padding:12px 20px; min-width:150px;"><div class="tiny">Coût par pièce du mois</div>'+
-        '<div id="chokko-month-cost" style="font-family:var(--mono); font-weight:700; font-size:28px; color:var(--'+chokkoCostLevel(monthCost, ligne)+');">'+(monthCost!==null? fmtCost(monthCost)+' €' : '-')+'</div>'+
+        '<div id="chokko-month-cost" style="font-family:var(--mono); font-weight:700; font-size:28px; color:#C0272D;">'+(monthCost!==null? fmtCost(monthCost)+' €' : '-')+'</div>'+
         '<div class="tiny" style="margin-top:2px; color:var(--text-faint);">Objectif : &lt; '+chokkoCostObjectif(ligne).toFixed(3).replace('.',',')+' €</div>'+
       '</div>'+
     '</div>'+
@@ -7683,7 +7770,7 @@ function chokkoSaisieView(){
   // Lignes production par équipe
   CHOKKO_TEAMS.forEach(function(team){
     html += '<tr class="chk-team-row">';
-    html += '<td class="chk-label-bold chk-sticky">'+esc(team[2]||team[0])+'</td>';
+    html += '<td class="chk-label-bold chk-sticky chk-team-label">'+esc(team[2]||team[0])+'</td>';
     html += days.map(function(d){
       var e = chokkoEntry(ligne, d.date);
       var v = e && e.prod[team[0]]!==undefined ? e.prod[team[0]] : '';
@@ -7706,17 +7793,17 @@ function chokkoSaisieView(){
       return '<td id="chokko-total-nc-'+d.date+'" class="chk-tnc'+tncClass+'" style="'+tncStyle+'" data-ligne="'+ligne+'" data-date="'+d.date+'" data-totalnc="1">'+(d.totals.totalNC||'-')+'</td>';
     }).join('')+'<td></td><td></td></tr>';
   // CHOKKO DU JOUR : calcule automatiquement
-  html += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky" style="background:#E2EFDA;">CHOKKO DU JOUR</td>'+
+  html += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky">CHOKKO DU JOUR</td>'+
     days.map(function(d){
       return '<td id="chokko-total-pct-'+d.date+'">'+(d.totals.pct!==null?pct1(d.totals.pct):'-')+'</td>';
     }).join('')+'<td></td><td></td></tr>';
   // CHOKKO DE LA SEMAINE : une valeur fusionnee par semaine (comme dans le fichier Excel)
-  html += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky" style="background:#E2EFDA;">CHOKKO DE LA SEMAINE</td>'+
+  html += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky">CHOKKO DE LA SEMAINE</td>'+
     weeks.map(function(w, wi){
       return '<td colspan="'+w.span+'" id="chokko-week-'+wi+'">'+(w.avg!==null?pct1(w.avg):'-')+'</td>';
     }).join('')+'<td></td><td></td></tr>';
   // CHOKKO DU MOIS : une seule valeur fusionnee sur tout le mois
-  html += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky" style="background:#E2EFDA;">CHOKKO DU MOIS</td>'+
+  html += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky">CHOKKO DU MOIS</td>'+
     '<td colspan="'+days.length+'" id="chokko-month-row">'+(monthAvg!==null?pct1(monthAvg):'-')+'</td>'+
     '<td></td><td></td></tr>';
   // COÛT PAR PIÈCE : saisie par jour + moyenne du mois (comme le CHOKKO, sans la semaine)
@@ -7975,7 +8062,16 @@ function renderChokkoChart(){
   }catch(err){ console.error('chokko year chart error', err); }
 }
 // Palette "standard" façon Excel + mémoire des couleurs récemment utilisées
-var CHOKKO_PRESET_COLORS = ['#C00000','#FF0000','#FFC000','#FFFF00','#92D050','#00B050','#00B0F0','#0070C0','#002060','#7030A0','#FFFFFF','#000000'];
+// Palette unique de l'application (pas de couleur libre) : surtout des pastels, puis des tons moyens et foncés pour les contrastes
+var APP_PALETTE = [
+  ['#FFD6D6','Rose clair'],['#FFC9DE','Rose'],['#FFDCC2','Pêche'],['#FFE8B8','Abricot'],['#FFF3A3','Jaune pâle'],['#F4F1C1','Crème'],
+  ['#DFF2C2','Vert anis'],['#C9F0D8','Vert menthe'],['#BFE8E0','Aqua'],['#C6E7F5','Bleu ciel'],['#CFE3FF','Bleu pervenche'],['#D9D4F7','Lavande'],
+  ['#E8D4F5','Lilas'],['#F3D1EC','Mauve'],['#E6DCCF','Sable'],['#DDE3E8','Gris bleuté'],['#EEEEEE','Gris perle'],['#FFFFFF','Blanc'],
+  ['#E8877F','Corail'],['#F2B35E','Orange doux'],['#E6CF5C','Moutarde'],['#8FCB9B','Vert sauge'],['#6FB8C9','Bleu canard'],['#7FA7E0','Bleu moyen'],
+  ['#A98BD6','Violet'],['#D48FB8','Framboise'],
+  ['#B23B2E','Rouge'],['#B8730A','Ambre'],['#2E7D4F','Vert'],['#1F5C5C','Pétrole'],['#1F3864','Marine'],['#3A3A36','Anthracite']
+];
+var CHOKKO_PRESET_COLORS = APP_PALETTE.map(function(c){ return c[0]; });
 function contrastTextColor(hex){
   if(!hex || hex.charAt(0)!=='#') return '#1C1B18';
   var h = hex.slice(1);
@@ -8010,10 +8106,10 @@ async function chokkoRememberColor(color){
 }
 function chokkoColorSwatches(idPrefix, activeColor){
   // Rangée de pastilles cliquables : palette standard + couleurs récemment utilisées
-  var all = CHOKKO_PRESET_COLORS.concat(DATA.chokkoRecentColors.filter(function(c){ return CHOKKO_PRESET_COLORS.indexOf(c)<0; }));
   return '<div class="chokko-swatch-row" data-swatch-target="'+idPrefix+'">'+
-    all.map(function(c){
-      return '<button type="button" class="chokko-swatch'+(activeColor&&activeColor.toLowerCase()===c.toLowerCase()?' active':'')+'" data-color="'+c+'" data-target="'+idPrefix+'" style="background:'+c+';" title="'+c+'"></button>';
+    APP_PALETTE.map(function(pc){
+      var c = pc[0];
+      return '<button type="button" class="chokko-swatch'+(activeColor&&activeColor.toLowerCase()===c.toLowerCase()?' active':'')+'" data-color="'+c+'" data-target="'+idPrefix+'" style="background:'+c+';" title="'+pc[1]+'"></button>';
     }).join('')+
   '</div>';
 }
@@ -8043,13 +8139,12 @@ function chokkoPaintPickerPanel(){
   return '<div class="card" style="position:absolute; top:100%; left:0; margin-top:6px; z-index:60; width:260px; box-shadow:0 6px 20px rgba(0,0,0,0.18);">'+
     '<div class="tiny" style="margin-bottom:8px;">Choisissez une couleur pour surligner des cases</div>'+
     chokkoColorSwatches('paint', null)+
-    '<label class="chokko-custom-color-btn" style="margin-top:8px;" title="Couleur personnalisée">+<input type="color" id="chokko-paint-custom-input" value="#FFF3A3"></label>'+
   '</div>';
 }
 function chokkoColorsPanel(ligne){
   var postes = chokkoPostes(ligne);
   return '<div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">'+
-    '<div class="tiny" style="margin-bottom:10px;">Cliquez une couleur prédéfinie, ou "+" pour une couleur personnalisée. Les couleurs récemment utilisées apparaissent aussi ici.</div>'+
+    '<div class="tiny" style="margin-bottom:10px;">Cliquez une couleur de la palette (survolez une pastille pour voir son nom).</div>'+
     '<div style="display:flex; flex-direction:column; gap:8px;">'+
     postes.map(function(p){
       var c = chokkoPosteColor(ligne, p[0]);
@@ -8057,7 +8152,6 @@ function chokkoColorsPanel(ligne){
       return '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:6px 8px; border:1px solid var(--border); border-radius:var(--radius-sm);">'+
         '<span style="font-family:var(--mono); font-weight:700; min-width:60px; padding:2px 8px; border-radius:4px; background:'+c+'; color:'+contrastTextColor(c)+';">'+esc(p[0])+'</span>'+
         chokkoColorSwatches(targetId, c)+
-        '<label class="chokko-custom-color-btn" title="Couleur personnalisée">+<input type="color" class="chokko-poste-color-input" data-ligne="'+ligne+'" data-poste="'+p[0]+'" value="'+c+'"></label>'+
       '</div>';
     }).join('')+
     '</div>'+
@@ -8127,7 +8221,7 @@ function chokkoRefreshCost(ligne){
   var row = document.getElementById('chokko-month-cost-row');
   if(row){ row.textContent = mc!==null ? fmtCost(mc) : '-'; row.className = 'lvl-'+lvl; }
   var top = document.getElementById('chokko-month-cost');
-  if(top){ top.textContent = mc!==null ? fmtCost(mc)+' €' : '-'; top.style.color = 'var(--'+lvl+')'; }
+  if(top){ top.textContent = mc!==null ? fmtCost(mc)+' €' : '-'; top.style.color = '#C0272D'; }
   Array.prototype.forEach.call(document.querySelectorAll('.chokko-cost-cell[data-ligne="'+ligne+'"]'), function(inp){
     var c = chokkoDayCost(ligne, inp.dataset.date);
     inp.className = 'chk-cell chokko-cost-cell lvl-'+chokkoCostLevel(c, ligne);
@@ -8673,7 +8767,8 @@ function pRows(path, fields, opts){
       var p = path+'.'+i+(noKey?'':'.'+f.k), v = noKey ? item : item[f.k];
       var ro = f.readonly && f.readonly(item, i);
       if(f.type==='sel') return '<td><select data-pf="'+esc(p)+'"'+(ro?' disabled':'')+'>'+f.options.map(function(o){ return '<option value="'+esc(o[0])+'"'+(String(v||'')===o[0]?' selected':'')+'>'+esc(o[1])+'</option>'; }).join('')+'</select></td>';
-      var type = f.type==='num' ? 'number' : f.type==='color' ? 'color' : 'text';
+      if(f.type==='color') return '<td><div class="param-swatches">'+APP_PALETTE.map(function(pc){ return '<button type="button" class="chokko-swatch'+(String(v||'').toLowerCase()===pc[0].toLowerCase()?' active':'')+'" data-action="param-color" data-path="'+esc(p)+'" data-color="'+pc[0]+'" style="background:'+pc[0]+';" title="'+pc[1]+'"></button>'; }).join('')+'</div></td>';
+      var type = f.type==='num' ? 'number' : 'text';
       return '<td><input type="'+type+'"'+(f.type==='num'?' step="'+(f.step||'any')+'" data-pt="num"':'')+' data-pf="'+esc(p)+'" value="'+esc(v===null||v===undefined?'':v)+'"'+(ro?' disabled title="'+esc(typeof ro==='string'?ro:'Non modifiable')+'"':'')+(f.w?' style="width:'+f.w+';"':'')+(f.ph?' placeholder="'+esc(f.ph)+'"':'')+'></td>';
     }).join('');
     var lock = opts.lockDelete ? opts.lockDelete(item, i) : null;
@@ -8897,6 +8992,7 @@ async function handleParamClick(e){
   if(a==='param-add'){ var arr = pGet(path); if(!Array.isArray(arr)){ arr = []; pSet(path, arr); } arr.push(pTpl(JSON.parse(b.dataset.tpl))); }
   else if(a==='param-del'){ var arr2 = pGet(path); arr2.splice(Number(b.dataset.i), 1); }
   else if(a==='param-move'){ var arr3 = pGet(path), i = Number(b.dataset.i), j = i+Number(b.dataset.d); if(j<0 || j>=arr3.length) return true; var tmp = arr3[i]; arr3[i] = arr3[j]; arr3[j] = tmp; }
+  else if(a==='param-color'){ pSet(path, b.dataset.color); }
   else if(a==='param-chip-add'){
     var inp = document.getElementById(b.dataset.input), v = inp ? inp.value.trim() : '';
     if(!v) return true;
@@ -10942,7 +11038,6 @@ function sidebarSettingsModal(){
     '<h3>Personnaliser le menu</h3>'+
     '<label class="field" style="margin-bottom:6px;">Couleur du volet</label>'+
     chokkoColorSwatches('sidebarcolor', cur)+
-    '<label class="chokko-custom-color-btn" style="margin-top:8px;" title="Couleur personnalisée">+<input type="color" id="sidebar-color-custom-input" value="'+cur+'"></label>'+
     '<button class="btn small" data-action="reset-sidebar-color" style="margin-top:10px; display:block;">Couleur par défaut</button>'+
     '<div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--border);">'+
       '<label class="field" style="margin-bottom:8px;">Style des icônes</label>'+
@@ -10958,7 +11053,6 @@ function sidebarSettingsModal(){
         return '<div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">'+
           '<span style="min-width:150px; font-size:12.5px;">'+k[1]+'</span>'+
           chokkoColorSwatches('statuscolor|'+k[0], color)+
-          '<label class="chokko-custom-color-btn" title="Couleur personnalisée">+<input type="color" class="status-color-custom-input" data-key="'+k[0]+'" value="'+color+'"></label>'+
         '</div>';
       }).join('')+
       '<button class="btn small" data-action="reset-status-colors" style="margin-top:4px;">Couleurs par défaut</button>'+
