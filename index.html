@@ -272,6 +272,22 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
   .chk-note-empty{display:none;}
   .chokko-grid .chk-label{min-width:0 !important;}
   .subtabs{display:none !important;}
+  .chokko-synth{font-family:Arial, Helvetica, sans-serif; color:#000;}
+  .chokko-synth-title{font-size:20px; font-weight:700; margin-bottom:10px;}
+  .chokko-synth-kpis{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px;}
+  .chokko-synth-kpis div{border:1px solid #b8bfcc; border-radius:6px; padding:8px 12px; display:flex; flex-direction:column;}
+  .chokko-synth-kpis span{font-size:11px; color:#555;}
+  .chokko-synth-kpis b{font-size:22px; color:#B23B2E;}
+  .chokko-synth-reading{background:#F2F2F2; padding:7px 10px; border-radius:4px; font-size:12px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .chokko-synth-body{display:grid; grid-template-columns:3fr 2fr; gap:14px; align-items:start;}
+  .chokko-synth-chart img{width:100%; height:auto; border:1px solid #ddd;}
+  .chokko-synth-table{width:100%; border-collapse:collapse; font-size:11px;}
+  .chokko-synth-table th, .chokko-synth-table td{border:1px solid #b8bfcc; padding:3px 6px; text-align:left;}
+  .chokko-synth-table th{background:#D9E1F2; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .chokko-synth-table .n{text-align:right; white-space:nowrap;}
+  .chokko-synth-table td.n b{color:#B23B2E;}
+  .chokko-synth-table tr.a td{background:#F3E7DC; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .chokko-synth-table tr.t td{font-weight:700; border-top:2px solid #555;}
 }
 
 /* ===== Widgets dashboard personnalisable ===== */
@@ -7122,6 +7138,66 @@ function rebutAmountInput(el){
   window.__rebutParetoT = setTimeout(function(){ var box = document.getElementById('rebut-pareto-box'); if(box){ box.innerHTML = rebutParetoBoxHtml(); renderRebutParetoChart(); } }, 600);
 }
 
+// ---- PDF de synthèse CHOKKO : grille du mois + coût rebut (tableau + Pareto) ----
+function rebutParetoResFor(l, y, months){
+  var acc = {}, names = {};
+  rebutCodes(l).forEach(function(c){ names[c[0]] = c[1]; });
+  months.forEach(function(m){
+    var d = rebutMonthData(l, y, m);
+    Object.keys(d).forEach(function(code){
+      var v = Number(d[code])||0; if(!v) return;
+      if(!acc[code]) acc[code] = {key:code, label:code+(names[code]?' - '+names[code]:''), value:0};
+      acc[code].value += v;
+    });
+  });
+  var rows = Object.keys(acc).map(function(k){ acc[k].value = Math.round(acc[k].value*100)/100; return acc[k]; }).sort(function(a,b){ return b.value-a.value; });
+  var total = rows.reduce(function(s,r){ return s+r.value; },0), cum = 0;
+  rows.forEach(function(r){ var before = total? cum/total*100 : 0; cum += r.value; r.pct = total? r.value/total*100 : 0; r.cum = total? cum/total*100 : 0; r.cls = before<80 ? 'A' : 'B'; });
+  return {rows:rows, total:total, prev:null, nA:rows.filter(function(r){ return r.cls==='A'; }).length};
+}
+function chokkoSynthRebutHtml(){
+  var l = chokkoLigne, y = chokkoYear, m = chokkoMonth;
+  var moisNom = MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1);
+  var res = rebutParetoResFor(l, y, [m]);
+  var prevY = m===0 ? y-1 : y, prevM = m===0 ? 11 : m-1;
+  var prevTot = rebutMonthTotal(l, prevY, prevM);
+  var cumul = 0; for(var i=0;i<=m;i++) cumul += rebutMonthTotal(l, y, i);
+  var h = '<div class="print-only print-page-break chokko-synth">'+
+    '<div class="chokko-synth-title">Coût rebut - '+esc(l)+' - '+esc(moisNom)+' '+y+'</div>'+
+    '<div class="chokko-synth-kpis">'+
+      '<div><span>Coût rebut du mois</span><b>'+(res.total? fmtEur(res.total) : '0,00 €')+'</b></div>'+
+      '<div><span>Mois précédent ('+esc(MONTHS_FR[prevM])+')</span><b>'+(prevTot? fmtEur(prevTot) : '-')+'</b></div>'+
+      '<div><span>Cumul '+y+' (janvier → '+esc(MONTHS_FR[m])+')</span><b>'+(cumul? fmtEur(cumul) : '-')+'</b></div>'+
+    '</div>';
+  if(!res.total) return h+'<p>Aucun coût rebut saisi pour ce mois.</p></div>';
+  h += '<p class="chokko-synth-reading">'+res.nA+' code(s) défaut sur '+res.rows.length+' représentent '+paretoFmtPct(res.rows.filter(function(r){ return r.cls==='A'; }).reduce(function(s,r){ return s+r.pct; },0))+' du coût rebut du mois. Priorité n°1 : <b>'+esc(res.rows[0].label)+'</b> ('+fmtEur(res.rows[0].value)+').</p>';
+  h += '<div class="chokko-synth-body"><div class="chokko-synth-chart">'+rptChartImage(paretoChartConfig(res, {unit:'€'}, false), 1300, 520)+'</div>'+
+    '<table class="chokko-synth-table"><thead><tr><th>#</th><th>Code défaut</th><th class="n">Montant</th><th class="n">%</th><th class="n">Cumul</th></tr></thead><tbody>'+
+    res.rows.map(function(r, i){ return '<tr'+(r.cls==='A'?' class="a"':'')+'><td>'+(i+1)+'</td><td>'+esc(r.label)+'</td><td class="n"><b>'+fmtEur(r.value)+'</b></td><td class="n">'+paretoFmtPct(r.pct)+'</td><td class="n">'+paretoFmtPct(r.cum)+'</td></tr>'; }).join('')+
+    '<tr class="t"><td></td><td>Total</td><td class="n"><b>'+fmtEur(res.total)+'</b></td><td class="n">100 %</td><td></td></tr></tbody></table></div>';
+  return h+'</div>';
+}
+var chokkoPrintRestore = null;
+function printChokkoSynthese(){
+  var savedView = chokkoView;
+  chokkoView = 'saisie';
+  render();
+  var host = document.querySelector('#view .section') || document.getElementById('view');
+  var div = document.createElement('div'); div.id = 'chokko-synth-print';
+  div.innerHTML = chokkoSynthRebutHtml();
+  host.appendChild(div);
+  var done = false;
+  var cleanup = function(){
+    if(done) return; done = true;
+    window.removeEventListener('afterprint', cleanup);
+    var d = document.getElementById('chokko-synth-print'); if(d) d.remove();
+    if(savedView!=='saisie'){ chokkoView = savedView; render(); }
+  };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(cleanup, 5000);
+  logChange('CHOKKO', 'Export PDF', chokkoLigne+' - '+MONTHS_FR[chokkoMonth]+' '+chokkoYear);
+  printWithPageSize('A3 landscape');
+}
 RENDERERS.chokko = function(){
   var html = futureDataBannerHtml()+'<div class="section"><div class="subtabs">'+
     LINES.map(function(l){ return '<button data-action="chokko-ligne" data-ligne="'+l+'" class="'+(chokkoLigne===l?'active':'')+'">'+l+'</button>'; }).join('')+
@@ -7141,7 +7217,7 @@ RENDERERS.chokko = function(){
       (chokkoPaintMode? '<span class="chokko-paint-swatch" style="background:'+chokkoPaintMode+';"></span>' : '🖌️')+
     '</button>'+
     (chokkoPaintMode? '<button class="btn chokko-icon-btn" data-action="chokko-paint-stop" title="Terminer le coloriage">✅</button>' : '')+
-    '<button class="btn chokko-icon-btn" data-action="chokko-print" title="Exporter en PDF">🖨️</button>'+
+    '<button class="btn chokko-icon-btn" data-action="chokko-print" title="PDF de synthèse du mois : grille CHOKKO + coût rebut et Pareto">🖨️</button>'+
     (chokkoPaintPickerOpen? chokkoPaintPickerPanel() : '')+
     '</div></div>';
   html += '<div id="chokko-postit-canvas" style="position:relative;">'+renderPostits('chokko')+'</div>';
@@ -8933,7 +9009,7 @@ function sectorDetailHeading(){
 function renderSecteurDashboard(){
   var sec = getSecteur(currentSecteur);
   var lines = secteurLines();
-  var html = '<div class="section dash-actions-noprint prio-toolbar"><button class="btn" data-action="monthly-report">📄 Rapport mensuel</button><button class="btn primary" data-action="dashboard-mode" data-mode="priorites">← Retour aux priorités</button></div>';
+  var html = '<div class="section dash-actions-noprint prio-toolbar"><button class="btn" data-action="monthly-report">📄 Rapport mensuel</button></div>';
   if(userSecteurs().length>1) html += renderMultiSecteurBanner()+renderPerfAuditProgress()+sectorDetailHeading();
 
   var curM = Number(todayStr().split('-')[1])-1;
@@ -9312,7 +9388,6 @@ function renderPrioritiesDashboard(){
 }
 
 RENDERERS.dashboard = function(){
-  if(dashboardMode!=='detail') return renderPrioritiesDashboard();
   // Secteurs hors MCU : dashboard simplifié (perf + métro + actions + planning)
   if(currentSecteur!=='MCU') return renderSecteurDashboard();
 
@@ -9650,7 +9725,6 @@ RENDERERS.dashboard = function(){
   html += '<button class="btn'+(dashboardCustomizing?' primary':'')+'" data-action="toggle-customize">'+(dashboardCustomizing?'Terminer la personnalisation':'Personnaliser mon tableau de bord')+'</button>';
   html += '<button class="btn" data-action="weekly-digest">Générer le résumé hebdomadaire</button>';
   html += '<button class="btn" data-action="monthly-report" title="Rapport de revue de direction sur 3-4 pages A4">📄 Rapport mensuel</button>';
-  html += '<button class="btn primary" data-action="dashboard-mode" data-mode="priorites">← Retour aux priorités</button>';
   html += '</div><div id="digest-box"></div>';
 
   var WIDGET_COLORS = ['', '#1F5C5C', '#B8730A', '#B23B2E', '#2E7D4F', '#7B4FA3'];
@@ -12346,7 +12420,7 @@ app.addEventListener('click', async function(e){
   }
   var chokkoViewBtn = e.target.closest('[data-action="chokko-view"]');
   if(chokkoViewBtn){ chokkoView = chokkoViewBtn.dataset.view; render(); return; }
-  if(e.target.closest('[data-action="chokko-print"]')){ printWithPageSize('A3 landscape'); return; }
+  if(e.target.closest('[data-action="chokko-print"]')){ printChokkoSynthese(); return; }
   if(e.target.closest('[data-action="esd-print"]')){ printWithPageSize('A4 portrait'); return; }
   if(e.target.closest('[data-action="formations-print"]')){ printWithPageSize('A4 portrait'); return; }
   if(e.target.closest('[data-action="cicl-print"]')){ printWithPageSize('A4 portrait'); return; }
