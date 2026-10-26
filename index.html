@@ -533,59 +533,34 @@ a.chantier-link.chantier-termine{background:var(--ok-bg); color:var(--ok); borde
 .ch-bar{height:7px; border-radius:4px; background:var(--neutral-bg, #EEE); overflow:hidden; margin-bottom:3px;}
 .ch-bar > div{height:100%; background:var(--ok);}
 tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
-/* Rebuts */
-.rebut-toolbar{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px;}
-.rebut-toolbar > .btn.primary{margin-left:auto;}
-.rebut-month{display:flex; align-items:center; gap:8px;}
-.rebut-month b{min-width:120px; text-align:center;}
-.rebut-chips{display:flex; gap:6px; flex-wrap:wrap;}
-.rebut-kpis{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; margin-bottom:14px;}
-@media (max-width:900px){ .rebut-kpis{grid-template-columns:repeat(2, minmax(0,1fr));} }
+/* Coût rebut */
+.rebut-toolbar{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px; justify-content:space-between;}
+.rebut-month{display:flex; align-items:center; gap:10px;}
+.rebut-month b{font-size:15px;}
+.rebut-chips{display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+.rebut-kpis{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; margin-bottom:14px;}
+@media (max-width:700px){ .rebut-kpis{grid-template-columns:1fr;} }
 .rebut-kpi{border:1px solid var(--border); border-radius:10px; padding:9px 12px; display:flex; flex-direction:column; gap:2px;}
 .rebut-kpi b{font-family:var(--mono); font-size:22px;}
-.rebut-kpi b.rebut-top{font-family:inherit; font-size:13px; line-height:1.3;}
 .rebut-red{color:var(--danger);}
-.rebut-grid th, .rebut-grid td{text-align:center; font-size:11.5px; min-width:24px;}
-.rebut-grid .rebut-th-def, .rebut-grid td.rebut-def{text-align:left; min-width:250px; white-space:nowrap;}
-.rebut-code{font-family:var(--mono); color:var(--text-faint); font-size:10.5px;}
-.rebut-grid td.rebut-val{color:var(--danger); font-weight:700;}
-.rebut-grid th.rebut-we{background:var(--neutral-bg);}
-.rebut-grid th.rebut-today{background:var(--accent); color:#fff;}
-.rebut-grid tr.rebut-labo td{background:#EDEDED;}
-.rebut-grid td.rebut-rowtot{font-weight:700;}
-.rebut-grid tr.rebut-total td{font-weight:700; border-top:2px solid var(--border-strong); color:var(--danger);}
-.rebut-pareto{margin-top:18px;}
+.rebut-codes-edit{border:1px dashed var(--border-strong); border-radius:10px; padding:12px; margin-bottom:14px; background:var(--neutral-bg);}
+.rebut-cost{border-collapse:collapse; font-size:12.5px;}
+.rebut-cost th, .rebut-cost td{border:1px solid var(--border); padding:0; text-align:center;}
+.rebut-cost thead th{padding:6px 4px; background:var(--neutral-bg); font-size:11.5px; text-transform:capitalize;}
+.rebut-cost .rebut-c-code{font-family:var(--mono); padding:3px 8px; color:var(--text-muted); text-align:left;}
+.rebut-cost .rebut-c-lab{text-align:left; padding:3px 10px; min-width:230px; white-space:nowrap;}
+.rebut-cost input.rebut-amt{width:76px; border:none; background:transparent; text-align:right; padding:5px 6px; font-family:var(--mono); font-size:12px; color:var(--danger); font-weight:700; -moz-appearance:textfield;}
+.rebut-cost input.rebut-amt::-webkit-outer-spin-button, .rebut-cost input.rebut-amt::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+.rebut-cost input.rebut-amt:focus{outline:2px solid var(--accent); background:#fff;}
+.rebut-cost .rebut-curm{background:var(--accent-bg);}
+.rebut-cost thead th.rebut-curm{background:var(--accent); color:#fff;}
+.rebut-cost td.rebut-tot{font-family:var(--mono); font-weight:700; color:var(--danger); padding:3px 8px; text-align:right; white-space:nowrap;}
+.rebut-cost tr.rebut-total td{font-family:var(--mono); font-weight:700; color:var(--danger); padding:6px 6px; text-align:right; border-top:2px solid var(--border-strong); white-space:nowrap;}
+.rebut-cost tr.rebut-total td:first-child{font-family:inherit; color:var(--text); text-align:left;}
+.rebut-cost tr.rebut-orphan td{background:#F6EFE6; font-style:italic;}
+.rebut-pareto{margin-top:20px;}
 .rebut-pareto-head{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;}
-.rebut-decl tr.rebut-decl-row{cursor:pointer;} .rebut-decl tr.rebut-decl-row:hover td{background:var(--neutral-bg);}
-.rebut-refbadge{display:inline-block; color:#fff; font-weight:700; font-size:12px; border-radius:6px; padding:1px 8px;}
-.rebut-modal{max-width:1500px; width:calc(100vw - 40px); max-height:94vh; overflow:auto;}
-.rebut-sheet-head{display:flex; gap:18px; align-items:stretch;}
-.rebut-refblock{color:#fff; padding:10px 18px; display:flex; flex-direction:column; justify-content:center; min-width:150px; border-radius:4px;}
-.rebut-refblock span{font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; opacity:.9;}
-.rebut-refblock b{font-size:30px; line-height:1.05;}
-.rebut-sheet-title{flex:1;}
-.rebut-title{font-size:20px; font-weight:800; margin-bottom:8px;}
-.rebut-fields{display:flex; gap:10px; flex-wrap:wrap;}
-.rebut-fields label{display:flex; flex-direction:column; gap:3px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted);}
-.rebut-fields input, .rebut-fields select{font-size:13px; min-width:110px;}
-.rebut-help{margin:10px 0 8px; color:var(--text-muted);}
-.rebut-sheet{border-collapse:collapse; font-size:12px;}
-.rebut-sheet th, .rebut-sheet td{border:1px solid #9aa3b2; padding:0; text-align:center;}
-.rebut-sheet th.rebut-el, .rebut-sheet td.rebut-el{text-align:left; padding:3px 8px; min-width:190px; font-weight:600; white-space:nowrap; position:sticky; left:0; background:var(--surface); z-index:1;}
-.rebut-sheet th.rebut-vth{height:150px; vertical-align:bottom; padding:4px 0; width:38px; background:#F3F1EC;}
-.rebut-sheet th.rebut-vth span{writing-mode:vertical-rl; transform:rotate(180deg); font-weight:600; font-size:11.5px; white-space:nowrap;}
-.rebut-sheet tr.rebut-codes th{font-family:var(--mono); font-size:10.5px; padding:3px 2px; background:#F3F1EC;}
-.rebut-sheet .rebut-labo{background:#D9D9D9 !important;}
-.rebut-sheet input.rebut-q{width:38px; height:30px; border:none; text-align:center; font-weight:700; background:transparent; padding:0; -moz-appearance:textfield;}
-.rebut-sheet input.rebut-q::-webkit-outer-spin-button, .rebut-sheet input.rebut-q::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
-.rebut-sheet input.rebut-q:focus{outline:2px solid var(--accent); background:#fff;}
-.rebut-sheet input.rebut-q:not(:placeholder-shown){color:var(--danger);}
-.rebut-sheet tr.rebut-group td{text-align:left; padding:4px 8px; font-weight:800; font-size:12px; color:#fff;}
-.rebut-sheet tr.rebut-group-B td{background:#3A3A36;}
-.rebut-sheet td.rebut-rowtot{font-weight:800; min-width:40px; color:var(--danger);}
-.rebut-sheet-foot{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:8px;}
-.rebut-foot-tot{font-weight:600;}
-.rebut-foot-tot b{color:var(--danger); font-family:var(--mono);}
+.rebut-reading{background:var(--neutral-bg); padding:7px 10px; border-radius:6px; margin:4px 0 8px;}
 /* Paramètres */
 .param-page .param-intro{color:var(--text-faint); margin:0 0 10px;}
 .param-subtabs{flex-wrap:wrap;}
@@ -1006,9 +981,9 @@ var KEYS = {
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
   esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1',
-  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', chokkoPosteConfig:'mcu_chokko_poste_config_v1', bibliotheque:'app_bibliotheque_v1', prisonLots:'mcu_prison_lots_v1', prisonSnapshots:'mcu_prison_snapshots_v1', prisonChantiers:'mcu_prison_chantiers_v1', prisonMoves:'mcu_prison_moves_v1', rebuts:'mcu_rebuts_v1', actionsSnapshots:'mcu_actions_snapshots_v1', uiSettings:'app_ui_settings_v1', appConfig:'app_config_v1'
+  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', chokkoPosteConfig:'mcu_chokko_poste_config_v1', bibliotheque:'app_bibliotheque_v1', prisonLots:'mcu_prison_lots_v1', prisonSnapshots:'mcu_prison_snapshots_v1', prisonChantiers:'mcu_prison_chantiers_v1', prisonMoves:'mcu_prison_moves_v1', rebutCouts:'mcu_rebut_couts_v1', rebutCodes:'mcu_rebut_codes_v1', actionsSnapshots:'mcu_actions_snapshots_v1', uiSettings:'app_ui_settings_v1', appConfig:'app_config_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, bibliotheque:[], prisonLots:[], prisonSnapshots:[], prisonChantiers:[], prisonMoves:[], rebuts:[], actionsSnapshots:[], appConfig:{}, uiSettings:{sidebarColor:null, iconStyle:'svg'}};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, bibliotheque:[], prisonLots:[], prisonSnapshots:[], prisonChantiers:[], prisonMoves:[], rebutCouts:{}, rebutCodes:{}, actionsSnapshots:[], appConfig:{}, uiSettings:{sidebarColor:null, iconStyle:'svg'}};
 var RENDERERS = {};
 var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['pareto','Analyses Pareto'],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['prison','Prison qualité'],['bibliotheque','Bibliothèque'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
@@ -1678,7 +1653,7 @@ var BACKUP_LABELS = {metro:'Métrologie', planning:'Planning échéances', ateq:
   formations:'Formations SREM', postits:'Post-it', labelOverrides:'Libellés personnalisés', cicl:'Formations CI/CL', chokko:'Suivi CHOKKO',
   chokkoNotes:'Notes CHOKKO', ciclPersons:'Personnes CI/CL', chokkoColors:'Couleurs CHOKKO', chokkoHighlights:'Surlignages CHOKKO',
   chokkoRecentColors:'Couleurs récentes CHOKKO', chokkoPosteLabels:'Libellés postes CHOKKO', chokkoUnitCost:'Coût par pièce CHOKKO',
-  chokkoPosteConfig:'Postes CHOKKO', bibliotheque:'Bibliothèque', prisonLots:'Prison qualité', prisonSnapshots:'Prison qualité (historique)', prisonChantiers:'Prison qualité (chantiers)', prisonMoves:'Prison qualité (traçabilité des sorties)', rebuts:'Rebuts (déclarations)',
+  chokkoPosteConfig:'Postes CHOKKO', bibliotheque:'Bibliothèque', prisonLots:'Prison qualité', prisonSnapshots:'Prison qualité (historique)', prisonChantiers:'Prison qualité (chantiers)', prisonMoves:'Prison qualité (traçabilité des sorties)', rebutCouts:'Coût rebut (montants)', rebutCodes:'Coût rebut (codes défauts)',
   actionsSnapshots:'Évolution des actions', uiSettings:'Réglages d\'affichage', appConfig:'Paramètres de l\'application'};
 var BACKUP_NO_DEFAULT_RESTORE = ['accounts','roles','uiSettings'];
 var backupIndexCache = null;
@@ -6097,9 +6072,7 @@ var PARETO_SOURCES = [
   {id:'chokko',          group:'Production', label:'CHOKKO · défauts par poste',                 unit:'défauts', tab:'chokko',   mcu:true, period:true,  lines:'mcu'},
   {id:'propre_critere',  group:'Production', label:'Propreté · écarts (NG) par critère',          unit:'écarts',  tab:'proprete', mcu:true, period:true,  lines:'mcu'},
   {id:'propre_poste',    group:'Production', label:'Propreté · écarts (NG) par poste',            unit:'écarts',  tab:'proprete', mcu:true, period:true,  lines:'mcu'},
-  {id:'rebuts_A',        group:'Production', label:'Rebuts · pièces entières par défaut',         unit:'pièces',  tab:'chokko',   mcu:true, period:true,  lines:'mcu'},
-  {id:'rebuts_B',        group:'Production', label:'Rebuts · composants par défaut',              unit:'composants', tab:'chokko', mcu:true, period:true, lines:'mcu'},
-  {id:'rebuts_el',       group:'Production', label:'Rebuts · composants par type',                unit:'composants', tab:'chokko', mcu:true, period:true, lines:'mcu'},
+  {id:'rebuts_cout',     group:'Production', label:'Coût rebut · par code défaut',              unit:'€',       tab:'chokko',   mcu:true, period:true,  lines:'mcu'},
   {id:'contam',          group:'Production', label:'Contamination · résultats non conformes',     unit:'NC',      tab:'proprete', mcu:true, period:true,  lines:'contam'},
   {id:'prison_defaut',   group:'Qualité',    label:'Prison qualité · pièces bloquées par défaut', unit:'pièces',  tab:'prison',   period:false, lines:'secteur'},
   {id:'prison_ref',      group:'Qualité',    label:'Prison qualité · pièces bloquées par réf.',   unit:'pièces',  tab:'prison',   period:false, lines:'secteur'},
@@ -6176,16 +6149,13 @@ function paretoRaw(src, range, ligne){
         });
       });
     });
-  } else if(src.id==='rebuts_A' || src.id==='rebuts_B' || src.id==='rebuts_el'){
-    (DATA.rebuts||[]).forEach(function(r){
-      if((r.secteur||'MCU')!==currentSecteur || lines.indexOf(r.ligne)<0 || !paretoInRange(r.date, range)) return;
-      Object.keys(r.q||{}).forEach(function(k){
-        var p = k.split('|'), n = Number(r.q[k])||0, typ = rebutElementType(r.ligne, r.ref, p[0]);
-        if(src.id==='rebuts_A' && typ!=='A') return;
-        if(src.id!=='rebuts_A' && typ!=='B') return;
-        if(src.id==='rebuts_el'){ var lab = rebutElementLabel(r.ligne, r.ref, p[0]); add(lab, (ligne?'':r.ligne+' · ')+lab, n); }
-        else add((ligne?'':r.ligne+'|')+p[1], (ligne?'':r.ligne+' · ')+p[1]+' - '+rebutDefautLabel(r.ligne, p[1]), n);
-      });
+  } else if(src.id==='rebuts_cout'){
+    Object.keys(DATA.rebutCouts||{}).forEach(function(k){
+      var p = k.split('|'), l = p[0];
+      if(lines.indexOf(l)<0 || !paretoInRange(p[1]+'-01', range)) return;
+      var names = {}; rebutCodes(l).forEach(function(c){ names[c[0]] = c[1]; });
+      var d = DATA.rebutCouts[k] || {};
+      Object.keys(d).forEach(function(code){ add((ligne?'':l+'|')+code, (ligne?'':l+' · ')+code+(names[code]?' - '+names[code]:''), Math.round((Number(d[code])||0)*100)/100); });
     });
   } else if(src.id==='propre_critere' || src.id==='propre_poste'){
     DATA.propAudits.forEach(function(a){
@@ -6268,7 +6238,7 @@ function paretoChartConfig(res, src, compact){
       var meta = chart.getDatasetMeta(0); if(!meta || !meta.data) return;
       var c = chart.ctx; c.save();
       c.font = (compact?'600 10px ':'600 11px ')+'system-ui, sans-serif'; c.fillStyle = '#3b3b3b'; c.textAlign = 'center'; c.textBaseline = 'bottom';
-      meta.data.forEach(function(bar, i){ c.fillText(String(rows[i].value), bar.x, bar.y-3); });
+      meta.data.forEach(function(bar, i){ c.fillText(src.unit==='€' ? Number(rows[i].value).toLocaleString('fr-FR', {maximumFractionDigits:2})+' €' : String(rows[i].value), bar.x, bar.y-3); });
       c.restore();
     }
   };
@@ -6303,7 +6273,7 @@ function paretoChartConfig(res, src, compact){
       },
       scales:{
         x:{ticks:{autoSkip:false, maxRotation:compact?50:40, minRotation:0, font:{size:compact?9.5:11}}, grid:{display:false}},
-        y:{beginAtZero:true, grace:'8%', title:{display:!compact, text:'Nombre de '+src.unit}, ticks:{precision:0}},
+        y:{beginAtZero:true, grace:'8%', title:{display:!compact, text: src.unit==='€' ? 'Montant (€)' : 'Nombre de '+src.unit}, ticks:{precision:0}},
         y1:{min:0, max:100, position:'right', grid:{drawOnChartArea:false}, ticks:{callback:function(v){ return v+' %'; }, stepSize:20}}
       }
     },
@@ -7016,239 +6986,140 @@ async function handleFutureFix(mode){
 }
 
 // ====================================================================
-// SUIVI DES REBUTS (feuille « SUIVI DES REBUTS · LIGNE MCUx · EPS », SR-MCU-733)
-// Une déclaration = une feuille papier : date, équipe, régleur, référence, n° SAP,
-// et un tableau éléments rebutés (A · pièce entière 2e passage NC / B · composants) × défauts (codes SAP).
-// Vue mensuelle façon CHOKKO (défauts × jours) + Pareto. Listes modifiables dans Paramètres › Rebuts.
+// COÛT REBUT (suivi mensuel) : pour chaque ligne, un montant en € par code défaut et par mois.
+// Les codes défauts sont personnalisables par ligne (ajout, suppression, ordre, libellé), comme les postes CHOKKO.
+// Pareto en € par code défaut (dans la vue et dans Analyses Pareto).
 // ====================================================================
-var REBUT_DEFAUTS_DEFAULT = [['4954','Emmanchement moteur'],['4955','Cote position aimant'],['4956','Absence connecteur NTC'],['4957','Vissage relais'],
+var REBUT_CODES_DEFAULT = [['4954','Emmanchement moteur'],['4955','Cote position aimant'],['4956','Absence connecteur NTC'],['4957','Vissage relais'],
   ['4958','Dépose pâte thermique'],['4959','Dépose silicone'],['4960','Activation plasma'],['4961','Vissage powerbus'],['4962','Vissage contact'],
   ['4963','Calibration'],['4964','Sertissage couvercle'],['4965','Contrôle performance'],['4966','Impression étiquette'],['4967','Présence filament ou vis'],
   ['4968','Défaut lecture étiquette'],['1026','Étanchéité'],['2024','Orientation languette'],['2602','Non respect du mode opératoire'],
   ['4969','NG suite ouverture de porte'],['4760','Rayure et choc carter'],['5907','Temps de cycle dépassé'],['1108','Récupération après 5S'],
-  ['2114','Pièce tombée'],['4984','Pièces tombées / robot appro'],['4983','Contrôle propreté LABO (destructif)','labo']];
-function rebutElements(ref, withVis4x17){
-  var el = [['piece','Pièce entière (2e passage NC)','A'],['carter','Carter '+ref,'B'],['bague','Bague acier '+ref,'B'],['moteur','Moteur '+ref,'B'],
-    ['pcb','PCB '+ref,'B'],['capot','Capot '+ref,'B'],['vis3x115','Vis 3x11.5 (TT)','B'],['vis3x135','Vis 3x13.5','B']];
-  if(withVis4x17) el.push(['vis4x17','Vis 4x17','B']);
-  return el.concat([['pate','Pâte thermique (TT)','B'],['silicone','Silicone (TT)','B'],['etiquette','Étiquette (TT)','B']]);
-}
-var REBUT_CONFIG_DEFAULT = {
-  MCU2:{defauts:REBUT_DEFAUTS_DEFAULT, refs:[
-    {id:'143X-144P', label:'143X / 144P', couleur:'#1F4E8C', elements:rebutElements('143X', false)},
-    {id:'149X', label:'149X', couleur:'#A84B00', elements:rebutElements('149X', true)}
-  ]}
-};
-var rebutRef = '';            // '' = toutes les références
-var rebutMesure = 'A';        // 'A' = pièces entières, 'B' = composants
-var rebutMonth = null;        // 'YYYY-MM'
-var rebutDraft = null;        // déclaration en cours d'édition (fenêtre)
+  ['2114','Pièce tombée'],['4984','Pièces tombées / robot appro'],['4983','Contrôle propreté LABO (destructif)']];
+var rebutYear = null;                 // année affichée
+var rebutParetoPeriod = 'mois';       // 'mois' | 'annee'
+var rebutParetoMonth = null;          // index du mois (0-11) pour le Pareto
+var rebutEditCodes = false;           // mode « personnaliser les codes »
 var chartRebutPareto = null;
-function rebutCfgLigne(l){ var c = cfg('rebutConfig') || {}; return c[l] || null; }
-function rebutRefCfg(l, refId){ var c = rebutCfgLigne(l); return c ? (c.refs||[]).filter(function(r){ return r.id===refId; })[0] || null : null; }
-function rebutElementType(l, refId, elId){ var r = rebutRefCfg(l, refId); var e = r ? (r.elements||[]).filter(function(x){ return x[0]===elId; })[0] : null; return e ? (e[2]||'B') : (elId==='piece'?'A':'B'); }
-function rebutElementLabel(l, refId, elId){ var r = rebutRefCfg(l, refId); var e = r ? (r.elements||[]).filter(function(x){ return x[0]===elId; })[0] : null; return e ? e[1] : elId; }
-function rebutDefautLabel(l, code){ var c = rebutCfgLigne(l); var d = c ? (c.defauts||[]).filter(function(x){ return x[0]===code; })[0] : null; return d ? d[1] : '(code '+code+')'; }
-function rebutsOfMonth(l, key, refId){
-  return (DATA.rebuts||[]).filter(function(r){ return (r.secteur||'MCU')===currentSecteur && r.ligne===l && r.date && r.date.slice(0,7)===key && (!refId || r.ref===refId); });
+function rebutCodes(ligne){
+  var c = DATA.rebutCodes && DATA.rebutCodes[ligne];
+  return (c && c.length!==undefined) ? c : REBUT_CODES_DEFAULT;
 }
-// Totaux d'une déclaration : pièces entières (A) et composants (B)
-function rebutTotals(r){
-  var t = {A:0, B:0};
-  Object.keys(r.q||{}).forEach(function(k){ var el = k.split('|')[0]; t[rebutElementType(r.ligne, r.ref, el)] += Number(r.q[k])||0; });
-  return t;
+function rebutCodesEditable(ligne){
+  DATA.rebutCodes = DATA.rebutCodes || {};
+  if(!DATA.rebutCodes[ligne]) DATA.rebutCodes[ligne] = REBUT_CODES_DEFAULT.map(function(c){ return [c[0], c[1]]; });
+  return DATA.rebutCodes[ligne];
 }
-function rebutTeamLabel(id){ var t = CHOKKO_TEAMS.filter(function(x){ return x[0]===id; })[0]; return t ? t[2]||t[1] : (id||'-'); }
-// ---- Vue mensuelle ----
+function rebutKey(ligne, y, m){ return ligne+'|'+y+'-'+String(m+1).padStart(2,'0'); }
+function rebutMonthData(ligne, y, m){ return (DATA.rebutCouts||{})[rebutKey(ligne, y, m)] || {}; }
+function rebutAmount(ligne, y, m, code){ var v = rebutMonthData(ligne, y, m)[code]; return (v===undefined || v===null || v==='') ? null : Number(v); }
+function rebutMonthTotal(ligne, y, m){ var d = rebutMonthData(ligne, y, m); return Object.keys(d).reduce(function(s,k){ return s+(Number(d[k])||0); },0); }
+function rebutCodeYearTotal(ligne, y, code){ var t = 0; for(var m=0;m<12;m++) t += rebutAmount(ligne, y, m, code)||0; return t; }
+function rebutCodeHasData(ligne, code){
+  var c = DATA.rebutCouts||{};
+  return Object.keys(c).some(function(k){ return k.indexOf(ligne+'|')===0 && Number((c[k]||{})[code])>0; });
+}
+function fmtEur(v, dec){ if(v===null || v===undefined || v==='' || isNaN(v)) return ''; return Number(v).toLocaleString('fr-FR', {minimumFractionDigits:dec===undefined?2:dec, maximumFractionDigits:dec===undefined?2:dec})+' €'; }
 function rebutsView(){
-  var l = chokkoLigne, c = rebutCfgLigne(l);
-  if(!rebutMonth) rebutMonth = todayStr().slice(0,7);
-  if(!c || !(c.refs||[]).length){
-    return '<div class="card">'+emptyState('Le suivi des rebuts n\'est pas encore paramétré pour '+esc(l)+'. Il se configure dans Admin › Paramètres › Rebuts (défauts et éléments de la feuille de la ligne).')+'</div>';
-  }
-  if(rebutRef && !rebutRefCfg(l, rebutRef)) rebutRef = '';
-  var y = Number(rebutMonth.slice(0,4)), m = Number(rebutMonth.slice(5,7))-1, nb = daysInMonth(y, m);
-  var decl = rebutsOfMonth(l, rebutMonth, rebutRef);
-  var grid = {}, colTot = {}, rowTot = {}, all = 0, totA = 0, totB = 0;
-  decl.forEach(function(r){
-    var d = Number(r.date.slice(8,10));
-    var t = rebutTotals(r); totA += t.A; totB += t.B;
-    Object.keys(r.q||{}).forEach(function(k){
-      var p = k.split('|'), n = Number(r.q[k])||0;
-      if(!n || rebutElementType(l, r.ref, p[0])!==rebutMesure) return;
-      var key = p[1]+'|'+d;
-      grid[key] = (grid[key]||0)+n; colTot[d] = (colTot[d]||0)+n; rowTot[p[1]] = (rowTot[p[1]]||0)+n; all += n;
-    });
-  });
-  var defs = (c.defauts||[]).slice();
-  Object.keys(rowTot).forEach(function(code){ if(!defs.some(function(d){ return d[0]===code; })) defs.push([code, '(code '+code+', hors liste)']); });
-  var today = todayStr();
-  var monthLabel = MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1)+' '+y;
-  var top = Object.keys(rowTot).sort(function(a,b){ return rowTot[b]-rowTot[a]; })[0];
+  var l = chokkoLigne, today = todayStr();
+  if(rebutYear===null) rebutYear = Number(today.slice(0,4));
+  if(rebutParetoMonth===null) rebutParetoMonth = Number(today.slice(5,7))-1;
+  var y = rebutYear, codes = rebutCodes(l);
+  var curY = Number(today.slice(0,4)), curM = Number(today.slice(5,7))-1;
+  // codes présents dans les données mais retirés de la liste : affichés à part pour ne rien perdre
+  var orphans = [];
+  for(var mm=0; mm<12; mm++){ var md = rebutMonthData(l, y, mm); Object.keys(md).forEach(function(k){ if(Number(md[k])>0 && !codes.some(function(c){ return c[0]===k; }) && orphans.indexOf(k)<0) orphans.push(k); }); }
+  var rows = codes.concat(orphans.map(function(k){ return [k, '(code retiré de la liste)', 'orphan']; }));
+  var yearTot = 0; for(var m0=0;m0<12;m0++) yearTot += rebutMonthTotal(l, y, m0);
+  var monthTot = rebutMonthTotal(l, curY, curM), prevKeyY = curM===0 ? curY-1 : curY, prevM = curM===0 ? 11 : curM-1;
+  var prevTot = rebutMonthTotal(l, prevKeyY, prevM);
   var h = '<div class="card rebut-card">';
   h += '<div class="rebut-toolbar">'+
-    '<div class="rebut-month"><button class="btn small" data-action="rebut-month" data-d="-1">◀</button><b>'+esc(monthLabel)+'</b><button class="btn small" data-action="rebut-month" data-d="1">▶</button></div>'+
-    '<div class="rebut-chips">'+[['', 'Toutes les réf.']].concat((c.refs||[]).map(function(r){ return [r.id, r.label]; })).map(function(o){
-      var col = o[0] ? (rebutRefCfg(l, o[0])||{}).couleur : null;
-      return '<button class="btn small'+(rebutRef===o[0]?' primary':'')+'" data-action="rebut-ref" data-ref="'+esc(o[0])+'"'+(col && rebutRef!==o[0]?' style="border-color:'+col+'; color:'+col+';"':'')+'>'+esc(o[1])+'</button>';
-    }).join('')+'</div>'+
-    '<div class="rebut-chips"><button class="btn small'+(rebutMesure==='A'?' primary':'')+'" data-action="rebut-mesure" data-m="A">Pièces entières</button><button class="btn small'+(rebutMesure==='B'?' primary':'')+'" data-action="rebut-mesure" data-m="B">Composants</button></div>'+
-    '<button class="btn primary" data-action="rebut-new">+ Nouvelle déclaration</button>'+
+    '<div class="rebut-month"><button class="btn small" data-action="rebut-year" data-d="-1">◀</button><b>Coût rebut '+esc(l)+' · '+y+'</b><button class="btn small" data-action="rebut-year" data-d="1">▶</button></div>'+
+    '<button class="btn'+(rebutEditCodes?' primary':'')+'" data-action="rebut-edit-codes">'+(rebutEditCodes?'Terminer':'⚙ Personnaliser les codes défauts')+'</button>'+
   '</div>';
   h += '<div class="rebut-kpis">'+
-    '<div class="rebut-kpi"><span class="tiny">Pièces entières rebutées</span><b class="rebut-red">'+totA.toLocaleString('fr-FR')+'</b></div>'+
-    '<div class="rebut-kpi"><span class="tiny">Composants rebutés</span><b class="rebut-red">'+totB.toLocaleString('fr-FR')+'</b></div>'+
-    '<div class="rebut-kpi"><span class="tiny">Déclarations</span><b>'+decl.length+'</b></div>'+
-    '<div class="rebut-kpi"><span class="tiny">1er défaut ('+(rebutMesure==='A'?'pièces':'composants')+')</span><b class="rebut-top">'+(top? esc(top+' · '+rebutDefautLabel(l, top))+' ('+rowTot[top]+')' : '-')+'</b></div>'+
+    '<div class="rebut-kpi"><span class="tiny">Coût rebut '+esc(MONTHS_FR[curM])+' '+curY+'</span><b class="rebut-red">'+(monthTot? fmtEur(monthTot) : '-')+'</b></div>'+
+    '<div class="rebut-kpi"><span class="tiny">Mois précédent ('+esc(MONTHS_FR[prevM])+')</span><b class="rebut-red">'+(prevTot? fmtEur(prevTot) : '-')+'</b></div>'+
+    '<div class="rebut-kpi"><span class="tiny">Cumul '+y+'</span><b class="rebut-red">'+(yearTot? fmtEur(yearTot) : '-')+'</b></div>'+
   '</div>';
-  // Grille défauts × jours
-  h += '<div class="table-wrap rebut-grid-wrap"><table class="chokko-grid rebut-grid"><thead><tr><th class="chk-sticky rebut-th-def">'+(rebutMesure==='A'?'Pièces entières':'Composants')+' · défaut</th>';
-  for(var d=1; d<=nb; d++){
-    var ds = rebutMonth+'-'+String(d).padStart(2,'0'), wd = new Date(ds+'T12:00:00').getDay();
-    h += '<th class="'+((wd===0||wd===6)?'rebut-we':'')+(ds===today?' rebut-today':'')+'">'+d+'</th>';
+  if(rebutEditCodes){
+    h += '<div class="rebut-codes-edit"><p class="tiny" style="margin:0 0 8px; color:var(--text-faint);">Codes défauts de '+esc(l)+' : ajoutez, retirez, renommez ou réordonnez. Le code d\'un défaut qui a déjà des montants ne peut plus être modifié ; s\'il est retiré, ses montants restent affichés en bas du tableau.</p>'+
+      '<div class="table-wrap"><table class="param-table"><thead><tr><th>#</th><th>Code</th><th>Défaut</th><th></th></tr></thead><tbody>'+
+      codes.map(function(c, i){
+        var used = rebutCodeHasData(l, c[0]);
+        return '<tr><td class="tiny">'+(i+1)+'</td><td><input type="text" class="rebut-code-in" data-i="'+i+'" data-f="0" value="'+esc(c[0])+'" style="width:80px;"'+(used?' disabled title="Des montants sont saisis pour ce code"':'')+'></td>'+
+          '<td><input type="text" class="rebut-code-in" data-i="'+i+'" data-f="1" value="'+esc(c[1])+'" style="width:300px;"></td>'+
+          '<td class="param-row-actions"><button class="btn small" data-action="rebut-code-move" data-i="'+i+'" data-d="-1"'+(i===0?' disabled':'')+'>↑</button><button class="btn small" data-action="rebut-code-move" data-i="'+i+'" data-d="1"'+(i===codes.length-1?' disabled':'')+'>↓</button><button class="btn small danger-outline" data-action="rebut-code-del" data-i="'+i+'">✕</button></td></tr>';
+      }).join('')+'</tbody></table></div>'+
+      '<div class="param-addkey"><input type="text" id="rebut-new-code" placeholder="Code (ex. 4970)" style="width:110px;"><input type="text" id="rebut-new-label" placeholder="Libellé du défaut" style="width:260px;"><button class="btn small primary" data-action="rebut-code-add">+ Ajouter</button></div>'+
+      '<button class="btn small" data-action="rebut-code-reset" style="margin-top:8px;">Revenir à la liste d\'origine</button></div>';
   }
-  h += '<th>Total</th></tr></thead><tbody>';
-  defs.forEach(function(df){
-    var labo = df[2]==='labo';
-    h += '<tr class="'+(labo?'rebut-labo':'')+'"><td class="chk-sticky rebut-def"><span class="rebut-code">'+esc(df[0])+'</span> '+esc(df[1])+'</td>';
-    for(var d2=1; d2<=nb; d2++){ var v = grid[df[0]+'|'+d2]; h += '<td'+(v?' class="rebut-val"':'')+'>'+(v||'')+'</td>'; }
-    h += '<td class="rebut-rowtot">'+(rowTot[df[0]]||'')+'</td></tr>';
-  });
-  h += '<tr class="rebut-total"><td class="chk-sticky rebut-def"><b>TOTAL</b></td>';
-  for(var d3=1; d3<=nb; d3++) h += '<td>'+(colTot[d3]||'')+'</td>';
-  h += '<td><b>'+(all||'')+'</b></td></tr></tbody></table></div>';
-  // Pareto du mois
-  h += '<div class="rebut-pareto"><div class="rebut-pareto-head"><div class="eyebrow">Pareto du mois · '+(rebutMesure==='A'?'pièces entières':'composants')+' par défaut'+(rebutRef? ' · '+esc((rebutRefCfg(l, rebutRef)||{}).label||'') : '')+'</div>'+
-    '<button class="btn small" data-action="rebut-open-pareto">Ouvrir dans Analyses Pareto →</button></div>'+
-    (all ? '<div class="chart-box" style="height:300px;"><canvas id="chart-rebut-pareto"></canvas></div>' : emptyState('Aucun rebut déclaré sur le mois.'))+'</div>';
-  // Déclarations du mois
-  var sorted = decl.slice().sort(function(a,b){ return (b.date+(b.equipe||'')).localeCompare(a.date+(a.equipe||'')); });
-  h += '<div class="eyebrow" style="margin:18px 0 6px;">Déclarations du mois ('+decl.length+')</div>';
-  h += sorted.length ? '<div class="table-wrap"><table class="rebut-decl"><thead><tr><th>Date</th><th>Équipe</th><th>Référence</th><th>Régleur</th><th class="num">Pièces</th><th class="num">Composants</th><th>N° déclaration SAP</th><th>Saisie SAP</th></tr></thead><tbody>'+
-    sorted.map(function(r){
-      var t = rebutTotals(r), rc = rebutRefCfg(l, r.ref);
-      return '<tr class="rebut-decl-row" data-action="rebut-open" data-id="'+r.id+'"><td class="num">'+fmtDate(r.date)+'</td><td>'+esc(rebutTeamLabel(r.equipe))+'</td>'+
-        '<td><span class="rebut-refbadge" style="background:'+((rc&&rc.couleur)||'#5A6B7B')+';">'+esc(rc? rc.label : r.ref)+'</span></td><td>'+esc(r.regleur||'')+'</td>'+
-        '<td class="num"><b>'+(t.A||'')+'</b></td><td class="num">'+(t.B||'')+'</td><td>'+esc(r.sap||'')+'</td><td class="num">'+(r.dateSaisie? fmtDate(r.dateSaisie) : '<span class="tiny" style="color:var(--warn);">à saisir</span>')+'</td></tr>';
-    }).join('')+'</tbody></table></div>' : emptyState('Aucune déclaration pour ce mois.');
-  h += '</div>';
-  return h + rebutModalHtml();
+  // Tableau de saisie : codes × mois
+  h += '<div class="table-wrap"><table class="rebut-cost"><thead><tr><th class="rebut-c-code">Code</th><th class="rebut-c-lab">Défaut</th>'+
+    ['Janv','Févr','Mars','Avr','Mai','Juin','Juil','Août','Sept','Oct','Nov','Déc'].map(function(mn, i){ return '<th class="'+(y===curY && i===curM?'rebut-curm':'')+'">'+mn+'</th>'; }).join('')+'<th>Total '+y+'</th></tr></thead><tbody>'+
+    rows.map(function(c){
+      var tot = rebutCodeYearTotal(l, y, c[0]);
+      return '<tr'+(c[2]==='orphan'?' class="rebut-orphan"':'')+'><td class="rebut-c-code">'+esc(c[0])+'</td><td class="rebut-c-lab">'+esc(c[1])+'</td>'+
+        MONTHS_FR.map(function(mn, i){ var v = rebutAmount(l, y, i, c[0]); return '<td class="'+(y===curY && i===curM?'rebut-curm':'')+'"><input type="text" inputmode="decimal" class="rebut-amt" data-code="'+esc(c[0])+'" data-m="'+i+'" value="'+(v===null?'':String(v).replace('.', ','))+'"></td>'; }).join('')+
+        '<td class="rebut-tot" data-rtot="'+esc(c[0])+'">'+(tot? fmtEur(tot) : '')+'</td></tr>';
+    }).join('')+
+    '<tr class="rebut-total"><td colspan="2"><b>TOTAL COÛT REBUT</b></td>'+MONTHS_FR.map(function(mn, i){ var t = rebutMonthTotal(l, y, i); return '<td class="'+(y===curY && i===curM?'rebut-curm':'')+'" data-mtot="'+i+'">'+(t? fmtEur(t) : '')+'</td>'; }).join('')+
+    '<td data-ytot="1">'+(yearTot? fmtEur(yearTot) : '')+'</td></tr></tbody></table></div>';
+  // Pareto
+  h += '<div class="rebut-pareto"><div class="rebut-pareto-head"><div class="eyebrow">Pareto du coût rebut par code défaut</div>'+
+    '<div class="rebut-chips"><button class="btn small'+(rebutParetoPeriod==='mois'?' primary':'')+'" data-action="rebut-pareto-period" data-p="mois">Mois</button>'+
+    '<select id="rebut-pareto-month"'+(rebutParetoPeriod==='mois'?'':' disabled')+'>'+MONTHS_FR.map(function(mn, i){ return '<option value="'+i+'"'+(i===rebutParetoMonth?' selected':'')+'>'+esc(mn.charAt(0).toUpperCase()+mn.slice(1))+' '+y+'</option>'; }).join('')+'</select>'+
+    '<button class="btn small'+(rebutParetoPeriod==='annee'?' primary':'')+'" data-action="rebut-pareto-period" data-p="annee">Année '+y+'</button>'+
+    '<button class="btn small" data-action="rebut-open-pareto">Ouvrir dans Analyses Pareto →</button></div></div>'+
+    '<div id="rebut-pareto-box">'+rebutParetoBoxHtml()+'</div></div>';
+  return h+'</div>';
 }
-// Pareto (mêmes règles que l'onglet Analyses Pareto)
 function rebutParetoRes(){
-  var l = chokkoLigne, acc = {};
-  rebutsOfMonth(l, rebutMonth, rebutRef).forEach(function(r){
-    Object.keys(r.q||{}).forEach(function(k){
-      var p = k.split('|'), n = Number(r.q[k])||0;
-      if(!n || rebutElementType(l, r.ref, p[0])!==rebutMesure) return;
-      if(!acc[p[1]]) acc[p[1]] = {key:p[1], label:p[1]+' - '+rebutDefautLabel(l, p[1]), value:0};
-      acc[p[1]].value += n;
+  var l = chokkoLigne, y = rebutYear, acc = {}, names = {};
+  rebutCodes(l).forEach(function(c){ names[c[0]] = c[1]; });
+  var months = rebutParetoPeriod==='annee' ? [0,1,2,3,4,5,6,7,8,9,10,11] : [rebutParetoMonth];
+  months.forEach(function(m){
+    var d = rebutMonthData(l, y, m);
+    Object.keys(d).forEach(function(code){
+      var v = Number(d[code])||0; if(!v) return;
+      if(!acc[code]) acc[code] = {key:code, label:code+(names[code]?' - '+names[code]:''), value:0};
+      acc[code].value += v;
     });
   });
-  var rows = Object.keys(acc).map(function(k){ return acc[k]; }).sort(function(a,b){ return b.value-a.value; });
+  var rows = Object.keys(acc).map(function(k){ acc[k].value = Math.round(acc[k].value*100)/100; return acc[k]; }).sort(function(a,b){ return b.value-a.value; });
   var total = rows.reduce(function(s,r){ return s+r.value; },0), cum = 0;
   rows.forEach(function(r){ var before = total? cum/total*100 : 0; cum += r.value; r.pct = total? r.value/total*100 : 0; r.cum = total? cum/total*100 : 0; r.cls = before<80 ? 'A' : 'B'; });
-  return {rows:rows, total:total, prev:null};
+  return {rows:rows, total:total, prev:null, nA:rows.filter(function(r){ return r.cls==='A'; }).length};
+}
+function rebutParetoBoxHtml(){
+  var res = rebutParetoRes();
+  if(!res.total) return emptyState('Aucun coût rebut saisi sur cette période.');
+  var per = rebutParetoPeriod==='annee' ? 'l\'année '+rebutYear : MONTHS_FR[rebutParetoMonth]+' '+rebutYear;
+  return '<p class="tiny rebut-reading">'+res.nA+' code(s) sur '+res.rows.length+' représentent '+paretoFmtPct(res.rows.filter(function(r){ return r.cls==='A'; }).reduce(function(s,r){ return s+r.pct; },0))+' du coût rebut de '+esc(per)+' ('+fmtEur(res.total)+'). Priorité n°1 : <b>'+esc(res.rows[0].label)+'</b> ('+fmtEur(res.rows[0].value)+').</p>'+
+    '<div class="chart-box" style="height:300px;"><canvas id="chart-rebut-pareto"></canvas></div>';
 }
 function renderRebutParetoChart(){
   if(typeof Chart==='undefined') return;
   var ctx = document.getElementById('chart-rebut-pareto'); if(!ctx) return;
   if(chartRebutPareto){ chartRebutPareto.destroy(); chartRebutPareto = null; }
-  var res = rebutParetoRes();
-  if(!res.total) return;
-  try{ chartRebutPareto = new Chart(ctx, paretoChartConfig(res, {unit: rebutMesure==='A' ? 'pièces' : 'composants'}, false)); }catch(err){ console.error('pareto rebuts', err); }
+  var res = rebutParetoRes(); if(!res.total) return;
+  try{ chartRebutPareto = new Chart(ctx, paretoChartConfig(res, {unit:'€'}, false)); }catch(err){ console.error('pareto coût rebut', err); }
 }
-// ---- Déclaration (fenêtre au format de la feuille) ----
-function rebutOpen(idOrNew){
-  var l = chokkoLigne, c = rebutCfgLigne(l);
-  if(idOrNew==='new'){
-    var refId = rebutRef || ((c && c.refs && c.refs[0]) ? c.refs[0].id : '');
-    rebutDraft = {isNew:true, id:null, ligne:l, ref:refId, date:todayStr(), equipe:'', regleur:'', visa:'', sap:'', dateSaisie:'', q:{}};
-  } else {
-    var r = (DATA.rebuts||[]).filter(function(x){ return x.id===idOrNew; })[0];
-    if(!r) return;
-    rebutDraft = Object.assign({isNew:false}, JSON.parse(JSON.stringify(r)));
-  }
-}
-function rebutModalHtml(){
-  if(!rebutDraft) return '';
-  var d = rebutDraft, l = d.ligne, c = rebutCfgLigne(l), rc = rebutRefCfg(l, d.ref);
-  if(!c || !rc) return '';
-  var defs = c.defauts||[], els = rc.elements||[];
-  var col = rc.couleur || '#1F4E8C';
-  var cell = function(el, df){ var v = d.q[el[0]+'|'+df[0]]; return '<td class="'+(df[2]==='labo'?'rebut-labo':'')+'"><input type="number" min="0" class="rebut-q" data-k="'+esc(el[0]+'|'+df[0])+'" value="'+(v||'')+'"></td>'; };
-  var rowTot = function(el){ return defs.reduce(function(s,df){ return s+(Number(d.q[el[0]+'|'+df[0]])||0); },0); };
-  var groupRow = function(type, txt){ return '<tr class="rebut-group rebut-group-'+type+'"'+(type==='A'?' style="background:'+col+';"':'')+'><td colspan="'+(defs.length+2)+'">'+txt+'</td></tr>'; };
-  var rows = function(type){ return els.filter(function(e){ return (e[2]||'B')===type; }).map(function(el){
-    return '<tr><td class="rebut-el">'+esc(el[1])+'</td>'+defs.map(function(df){ return cell(el, df); }).join('')+'<td class="rebut-rowtot" data-rt="'+esc(el[0])+'">'+(rowTot(el)||'')+'</td></tr>';
-  }).join(''); };
-  var t = rebutTotals(d);
-  return '<div class="modal-overlay rebut-backdrop"><div class="modal-box rebut-modal">'+
-    '<div class="rebut-sheet-head"><div class="rebut-refblock" style="background:'+col+';"><span>Référence</span><b>'+esc(rc.label)+'</b></div>'+
-      '<div class="rebut-sheet-title"><div class="rebut-title">SUIVI DES REBUTS · LIGNE '+esc(l)+'</div>'+
-      '<div class="rebut-fields">'+
-        '<label>Référence<select data-rf="ref"'+(d.isNew?'':' disabled')+'>'+(c.refs||[]).map(function(r){ return '<option value="'+esc(r.id)+'"'+(r.id===d.ref?' selected':'')+'>'+esc(r.label)+'</option>'; }).join('')+'</select></label>'+
-        '<label>Date<input type="date" data-rf="date" value="'+esc(d.date||'')+'"></label>'+
-        '<label>Équipe<select data-rf="equipe"><option value="">-</option>'+CHOKKO_TEAMS.map(function(tm){ return '<option value="'+esc(tm[0])+'"'+(tm[0]===d.equipe?' selected':'')+'>'+esc(tm[1])+'</option>'; }).join('')+'</select></label>'+
-        '<label>Régleur<input type="text" data-rf="regleur" value="'+esc(d.regleur||'')+'"></label>'+
-        '<label>Visa chef d\'équipe<input type="text" data-rf="visa" value="'+esc(d.visa||'')+'"></label>'+
-        '<label>N° déclaration SAP<input type="text" data-rf="sap" value="'+esc(d.sap||'')+'"></label>'+
-        '<label>Date saisie SAP<input type="date" data-rf="dateSaisie" value="'+esc(d.dateSaisie||'')+'"></label>'+
-      '</div></div></div>'+
-    '<p class="tiny rebut-help"><b>A · Pièce entière :</b> 1 par pièce ressortie NC au 2e passage (le 1er passage se déclare sur la feuille de recyclage) ; ne pas compter les composants, ils sont déduits à la saisie SAP. <b>B · Composant seul (recyclage) :</b> 1 par composant rebuté (ex. 1 vis = 1).</p>'+
-    '<div class="table-wrap rebut-sheet-wrap"><table class="rebut-sheet"><thead><tr><th class="rebut-el">Défaut / poste →</th>'+
-      defs.map(function(df){ return '<th class="rebut-vth'+(df[2]==='labo'?' rebut-labo':'')+'"><span>'+esc(df[1])+'</span></th>'; }).join('')+'<th class="rebut-vth"><span>Total</span></th></tr>'+
-      '<tr class="rebut-codes"><th class="rebut-el">Code défaut</th>'+defs.map(function(df){ return '<th class="'+(df[2]==='labo'?'rebut-labo':'')+'">'+esc(df[0])+'</th>'; }).join('')+'<th></th></tr></thead><tbody>'+
-      groupRow('A', 'A · PIÈCE ENTIÈRE REBUTÉE (2e passage NC) - 1 par pièce')+rows('A')+
-      groupRow('B', 'B · COMPOSANT SEUL REBUTÉ - 1 par composant')+rows('B')+
-    '</tbody></table></div>'+
-    '<div class="rebut-sheet-foot"><span class="tiny">Colonne grisée : essai destructif labo, déclaré par la qualité.</span>'+
-      '<span class="rebut-foot-tot">Pièces entières : <b id="rebut-tot-A">'+t.A+'</b> · Composants : <b id="rebut-tot-B">'+t.B+'</b></span></div>'+
-    '<div class="actions-row" style="margin-top:12px; flex-wrap:wrap;">'+
-      (!d.isNew? '<button class="btn danger-outline" data-action="rebut-delete">Supprimer</button>' : '')+
-      '<button class="btn" data-action="rebut-close">Annuler</button>'+
-      '<button class="btn primary" data-action="rebut-save">Enregistrer</button></div>'+
-  '</div></div>';
-}
-function rebutLiveTotals(){
-  var d = rebutDraft; if(!d) return;
-  var c = rebutCfgLigne(d.ligne), rc = rebutRefCfg(d.ligne, d.ref); if(!c || !rc) return;
-  (rc.elements||[]).forEach(function(el){
-    var s = (c.defauts||[]).reduce(function(a,df){ return a+(Number(d.q[el[0]+'|'+df[0]])||0); },0);
-    var cellEl = document.querySelector('.rebut-sheet [data-rt="'+el[0]+'"]'); if(cellEl) cellEl.textContent = s || '';
-  });
-  var t = rebutTotals(d);
-  var a = document.getElementById('rebut-tot-A'), b = document.getElementById('rebut-tot-B');
-  if(a) a.textContent = t.A; if(b) b.textContent = t.B;
-}
-async function rebutSave(){
-  var d = rebutDraft; if(!d) return;
-  if(!d.date){ toast('Merci d\'indiquer la date.', 'error'); return; }
-  if(!d.equipe){ toast('Merci d\'indiquer l\'équipe.', 'error'); return; }
-  Object.keys(d.q).forEach(function(k){ var n = Math.max(0, parseInt(d.q[k],10)||0); if(n) d.q[k] = n; else delete d.q[k]; });
-  DATA.rebuts = DATA.rebuts || [];
-  var dup = DATA.rebuts.filter(function(r){ return r.id!==d.id && r.ligne===d.ligne && r.ref===d.ref && r.date===d.date && r.equipe===d.equipe; })[0];
-  if(dup){ toast('Une déclaration existe déjà pour '+fmtDate(d.date)+', équipe '+rebutTeamLabel(d.equipe)+', réf. '+((rebutRefCfg(d.ligne, d.ref)||{}).label||d.ref)+'. Ouvrez-la dans la liste pour la compléter.', 'error'); return; }
-  var rec = {id: d.id || uid('rebut'), secteur:currentSecteur, ligne:d.ligne, ref:d.ref, date:d.date, equipe:d.equipe, regleur:(d.regleur||'').trim(), visa:(d.visa||'').trim(),
-    sap:(d.sap||'').trim(), dateSaisie:d.dateSaisie||'', q:d.q, creePar: d.creePar || (currentUser? currentUser.displayName : ''), modifiePar: currentUser? currentUser.displayName : '', updatedAt: new Date().toISOString()};
-  var i = DATA.rebuts.findIndex(function(r){ return r.id===rec.id; });
-  if(i>=0) DATA.rebuts[i] = rec; else DATA.rebuts.push(rec);
-  var t = rebutTotals(rec);
-  rebutDraft = null;
-  rebutMonth = rec.date.slice(0,7);
-  await save('rebuts');
-  logChange('Rebuts', d.isNew? 'Déclaration' : 'Modification', rec.ligne+' · '+((rebutRefCfg(rec.ligne, rec.ref)||{}).label||rec.ref)+' · '+fmtDate(rec.date)+' · '+t.A+' pièce(s), '+t.B+' composant(s)');
-  toast('Déclaration enregistrée : '+t.A+' pièce(s) entière(s), '+t.B+' composant(s).');
-  render();
-}
-async function rebutDelete(){
-  var d = rebutDraft; if(!d || !d.id) return;
-  if(!await uiConfirm('Supprimer la déclaration du '+fmtDate(d.date)+' (équipe '+rebutTeamLabel(d.equipe)+') ?')) return;
-  DATA.rebuts = DATA.rebuts.filter(function(r){ return r.id!==d.id; });
-  rebutDraft = null;
-  await save('rebuts');
-  logChange('Rebuts', 'Suppression', d.ligne+' · '+fmtDate(d.date));
-  render();
+// Saisie d'un montant : mise à jour sur place, enregistrement groupé en arrière-plan
+function rebutAmountInput(el){
+  var l = chokkoLigne, y = rebutYear, m = Number(el.dataset.m), code = el.dataset.code;
+  var raw = String(el.value).replace(',', '.').trim(), k = rebutKey(l, y, m);
+  DATA.rebutCouts = DATA.rebutCouts || {};
+  var d = DATA.rebutCouts[k] = DATA.rebutCouts[k] || {};
+  if(raw==='' || isNaN(raw) || Number(raw)<=0) delete d[code]; else d[code] = Math.round(Number(raw)*100)/100;
+  if(!Object.keys(d).length) delete DATA.rebutCouts[k];
+  var rt = document.querySelector('[data-rtot="'+code+'"]'); if(rt){ var t = rebutCodeYearTotal(l, y, code); rt.textContent = t? fmtEur(t) : ''; }
+  var mt = document.querySelector('[data-mtot="'+m+'"]'); if(mt){ var t2 = rebutMonthTotal(l, y, m); mt.textContent = t2? fmtEur(t2) : ''; }
+  var yt = document.querySelector('[data-ytot]'); if(yt){ var t3 = 0; for(var i=0;i<12;i++) t3 += rebutMonthTotal(l, y, i); yt.textContent = t3? fmtEur(t3) : ''; }
+  saveSoon('rebutCouts', 800);
+  clearTimeout(window.__rebutParetoT);
+  window.__rebutParetoT = setTimeout(function(){ var box = document.getElementById('rebut-pareto-box'); if(box){ box.innerHTML = rebutParetoBoxHtml(); renderRebutParetoChart(); } }, 600);
 }
 
 RENDERERS.chokko = function(){
@@ -7259,7 +7130,7 @@ RENDERERS.chokko = function(){
     '<button class="btn small'+(chokkoView==='saisie'?' primary':'')+'" data-action="chokko-view" data-view="saisie">Saisie</button>'+
     '<button class="btn small'+(chokkoView==='recap'?' primary':'')+'" data-action="chokko-view" data-view="recap">Récapitulatif annuel</button>'+
     '<button class="btn small'+(chokkoView==='defauts'?' primary':'')+'" data-action="chokko-view" data-view="defauts">📈 Suivi des défauts</button>'+
-    '<button class="btn small'+(chokkoView==='rebuts'?' primary':'')+'" data-action="chokko-view" data-view="rebuts">♻ Rebuts</button>'+
+    '<button class="btn small'+(chokkoView==='rebuts'?' primary':'')+'" data-action="chokko-view" data-view="rebuts">♻ Coût rebut</button>'+
     '</div>'+
     '<div style="display:flex; gap:6px; align-items:center; position:relative;">'+
     '<button class="btn chokko-icon-btn" data-action="add-postit" data-page="chokko" title="Ajouter un post-it sur cet onglet">📝</button>'+
@@ -8610,8 +8481,7 @@ function ensureConfigDefaults(){
     chantierKakotora: CHANTIER_KAKOTORA,
     chantierHse: CHANTIER_HSE,
     chokkoTeams: CHOKKO_TEAMS,
-    bains: RELEVES_BAINS.map(function(b){ return {nom:b, couleur:BAIN_COLORS[b]||'#5A6B7B'}; }),
-    rebutConfig: REBUT_CONFIG_DEFAULT
+    bains: RELEVES_BAINS.map(function(b){ return {nom:b, couleur:BAIN_COLORS[b]||'#5A6B7B'}; })
   });
 }
 function cfg(k){
@@ -8666,8 +8536,7 @@ var PARAM_SECTIONS = [
   {id:'lignes',    label:'Lignes et références',     keys:['lineRefs','ciclLigneRefs','ciclRefLabels','ciclRefPostes']},
   {id:'contam',    label:'Critères contamination',   keys:['refCriteria']},
   {id:'prison',    label:'Prison et chantiers',      keys:['prisonEtats','prisonDest','chantierLieux','chantierRisques','chantierKakotora','chantierHse']},
-  {id:'divers',    label:'Équipes et bains',         keys:['chokkoTeams','bains']},
-  {id:'rebuts',    label:'Rebuts',                   keys:['rebutConfig']}
+  {id:'divers',    label:'Équipes et bains',         keys:['chokkoTeams','bains']}
 ];
 var paramSub = 'objectifs', paramDraft = null, paramDraftSub = null;
 function paramSection(){ return PARAM_SECTIONS.filter(function(s){ return s.id===paramSub; })[0] || PARAM_SECTIONS[0]; }
@@ -8833,43 +8702,12 @@ function paramDiversHtml(){
       {tpl:{nom:'', couleur:'#5A6B7B'}, addLabel:'Bain', lockDelete:bainUsed}), cfgIsCustom('bains'));
   return h;
 }
-function paramRebutsHtml(){
-  var rc = pGet('rebutConfig') || {};
-  var codeUsed = function(l, code){ return (DATA.rebuts||[]).some(function(r){ return r.ligne===l && Object.keys(r.q||{}).some(function(k){ return k.split('|')[1]===code && Number(r.q[k])>0; }); }); };
-  var elUsed = function(l, ref, el){ return (DATA.rebuts||[]).some(function(r){ return r.ligne===l && r.ref===ref && Object.keys(r.q||{}).some(function(k){ return k.split('|')[0]===el && Number(r.q[k])>0; }); }); };
-  var refUsed = function(l, ref){ return (DATA.rebuts||[]).some(function(r){ return r.ligne===l && r.ref===ref; }); };
-  var h = '<p class="tiny param-intro">Chaque ligne a sa feuille de rebuts : les défauts (colonnes, avec leur code SAP) et, pour chaque référence, les éléments rebutés (section A · pièce entière ou B · composant). Un code ou un élément déjà utilisé dans des déclarations ne peut plus être supprimé ni recodé, mais son libellé peut changer.</p>';
-  Object.keys(rc).forEach(function(l){
-    var c = rc[l] || {};
-    h += pCard('Rebuts '+l+' : défauts (colonnes de la feuille)', '',
-      pRows('rebutConfig.'+l+'.defauts', [
-        {k:0, label:'Code', w:'80px', readonly:function(it){ return it[0] && codeUsed(l, it[0]) ? 'Code utilisé dans des déclarations' : false; }},
-        {k:1, label:'Défaut / poste', w:'300px'},
-        {k:2, label:'Essai labo (colonne grisée)', type:'sel', options:[['','Non'],['labo','Oui']]}
-      ], {tpl:['','',''], addLabel:'Défaut', lockDelete:function(it){ return it[0] && codeUsed(l, it[0]) ? 'Code utilisé dans des déclarations' : null; }}), false);
-    (c.refs||[]).forEach(function(r, ri){
-      var base = 'rebutConfig.'+l+'.refs.'+ri;
-      h += pCard('Rebuts '+l+' : feuille '+(r.label||'(nouvelle référence)'), '',
-        '<div class="param-row" style="margin-top:0; margin-bottom:10px; align-items:flex-end;">'+
-          pField('Référence affichée', '<input type="text" data-pf="'+esc(base)+'.label" value="'+esc(r.label||'')+'" style="width:200px;">')+
-          pField('Couleur de la feuille', '<input type="color" data-pf="'+esc(base)+'.couleur" value="'+esc(r.couleur||'#5A6B7B')+'">')+
-          '<button class="btn small danger-outline" data-action="param-del" data-path="rebutConfig.'+esc(l)+'.refs" data-i="'+ri+'"'+(refUsed(l, r.id)?' disabled title="Des déclarations existent pour cette référence"':'')+'>✕ Supprimer la feuille</button></div>'+
-        pRows(base+'.elements', [
-          {k:1, label:'Élément rebuté', w:'280px'},
-          {k:2, label:'Section', type:'sel', options:[['A','A · Pièce entière'],['B','B · Composant']]}
-        ], {tpl:['el___ID__','','B'], addLabel:'Élément', lockDelete:function(it){ return elUsed(l, r.id, it[0]) ? 'Élément utilisé dans des déclarations' : null; }}), false);
-    });
-    h += '<button class="btn small" style="margin:-4px 0 18px;" data-action="param-add" data-path="rebutConfig.'+esc(l)+'.refs" data-tpl="'+esc(JSON.stringify({id:'__ID__', label:'', couleur:'#5A6B7B', elements:[['piece','Pièce entière (2e passage NC)','A']]}))+'">+ Feuille de référence pour '+esc(l)+'</button>';
-  });
-  h += '<div class="param-addkey"><input type="text" id="pk-rebuts" placeholder="Ligne (ex. MCU1)"><button class="btn small" data-action="param-addkey" data-path="rebutConfig" data-input="pk-rebuts" data-tpl="'+esc(JSON.stringify({defauts:REBUT_DEFAUTS_DEFAULT, refs:[]}))+'">+ Paramétrer une ligne</button></div>';
-  return h;
-}
 RENDERERS.parametres = function(){
   if(!currentUser || currentUser.roleId!==ADMIN_ROLE_ID) return '<div class="section">'+emptyState('Réservé à l\'administrateur.')+'</div>';
   if(!paramDraft || paramDraftSub!==paramSub) paramStartDraft();
   pChipSeq = 0;
   var sec = paramSection();
-  var body = sec.id==='objectifs' ? paramObjectifsHtml() : sec.id==='lignes' ? paramLignesHtml() : sec.id==='contam' ? paramContamHtml() : sec.id==='prison' ? paramPrisonHtml() : sec.id==='rebuts' ? paramRebutsHtml() : paramDiversHtml();
+  var body = sec.id==='objectifs' ? paramObjectifsHtml() : sec.id==='lignes' ? paramLignesHtml() : sec.id==='contam' ? paramContamHtml() : sec.id==='prison' ? paramPrisonHtml() : paramDiversHtml();
   var dirty = paramDirty();
   return '<div class="section param-page">'+
     '<p class="tiny param-intro" style="max-width:820px;">Les listes, références, objectifs et seuils de l\'application. Les modifications s\'appliquent à tous les utilisateurs dès l\'enregistrement. « Valeurs d\'origine » remet la section telle qu\'elle était à la livraison de l\'outil.</p>'+
@@ -8898,11 +8736,6 @@ function paramValidate(){
   if(d.chokkoTeams){ nonEmptyRows('chokkoTeams', 1, 'équipe'); d.chokkoTeams.forEach(function(t){ if(!String(t[2]||'').trim()) t[2] = t[1]; }); if(!d.chokkoTeams.length) err = 'Il faut au moins une équipe.'; }
   if(d.bains){ var noms = {}; d.bains.forEach(function(b){ b.nom = String(b.nom||'').trim(); if(!err && !b.nom) err = 'Un bain n\'a pas de nom.'; if(!err && noms[b.nom]) err = 'Deux bains portent le nom « '+b.nom+' ».'; noms[b.nom] = 1; }); }
   if(d.refCriteria) Object.keys(d.refCriteria).forEach(function(r){ (d.refCriteria[r]||[]).forEach(function(c){ if(!err && !String(c.label||'').trim()) err = 'Référence '+r+' : un critère n\'a pas de nom.'; if(!err && (c.seuil==='' || isNaN(c.seuil))) err = 'Référence '+r+' : seuil manquant pour « '+c.label+' ».'; if(c.grav==='') delete c.grav; }); });
-  if(d.rebutConfig) Object.keys(d.rebutConfig).forEach(function(l){
-    var c = d.rebutConfig[l], seen = {};
-    (c.defauts||[]).forEach(function(df){ df[0] = String(df[0]||'').trim(); if(!err && (!df[0] || !String(df[1]||'').trim())) err = 'Rebuts '+l+' : un défaut n\'a pas de code ou de libellé.'; if(!err && seen[df[0]]) err = 'Rebuts '+l+' : le code '+df[0]+' est en double.'; seen[df[0]] = 1; if(!df[2]) df.length = 2; });
-    (c.refs||[]).forEach(function(r){ if(!err && !String(r.label||'').trim()) err = 'Rebuts '+l+' : une feuille n\'a pas de nom de référence.'; (r.elements||[]).forEach(function(e){ if(!err && !String(e[1]||'').trim()) err = 'Rebuts '+l+' ('+r.label+') : un élément est vide.'; }); });
-  });
   if(d.ciclRefLabels) Object.keys(d.ciclRefLabels).forEach(function(r){ if(!String(d.ciclRefLabels[r]||'').trim()) delete d.ciclRefLabels[r]; });
   return err;
 }
@@ -12476,19 +12309,41 @@ app.addEventListener('click', async function(e){
       'Défaut '+chokkoDefPoste+(pdef?' - '+pdef[1]:'')+' sur '+chokkoLigne+' : '+tot.n+' défauts du '+fmtDate(rg.from)+' au '+fmtDate(rg.to)+'. Action : ');
     return;
   }
-  var rbMonth = e.target.closest('[data-action="rebut-month"]');
-  if(rbMonth){ rebutMonth = paretoShiftMonth(rebutMonth || todayStr().slice(0,7), Number(rbMonth.dataset.d)); render(); return; }
-  var rbRef = e.target.closest('[data-action="rebut-ref"]');
-  if(rbRef){ rebutRef = rbRef.dataset.ref; render(); return; }
-  var rbMes = e.target.closest('[data-action="rebut-mesure"]');
-  if(rbMes){ rebutMesure = rbMes.dataset.m; render(); return; }
-  if(e.target.closest('[data-action="rebut-new"]')){ rebutOpen('new'); render(); return; }
-  var rbOpen = e.target.closest('[data-action="rebut-open"]');
-  if(rbOpen){ rebutOpen(rbOpen.dataset.id); render(); return; }
-  if(e.target.closest('[data-action="rebut-close"]') || (e.target.classList && e.target.classList.contains('rebut-backdrop'))){ rebutDraft = null; render(); return; }
-  if(e.target.closest('[data-action="rebut-save"]')){ await rebutSave(); return; }
-  if(e.target.closest('[data-action="rebut-delete"]')){ await rebutDelete(); return; }
-  if(e.target.closest('[data-action="rebut-open-pareto"]')){ paretoState = {src:'rebuts_'+rebutMesure, ligne:chokkoLigne, period:'mois', month:rebutMonth}; currentTab = 'pareto'; renderNav(); render(); window.scrollTo(0,0); return; }
+  var rbYear = e.target.closest('[data-action="rebut-year"]');
+  if(rbYear){ rebutYear += Number(rbYear.dataset.d); render(); return; }
+  if(e.target.closest('[data-action="rebut-edit-codes"]')){ rebutEditCodes = !rebutEditCodes; render(); return; }
+  var rbPer = e.target.closest('[data-action="rebut-pareto-period"]');
+  if(rbPer){ rebutParetoPeriod = rbPer.dataset.p; render(); return; }
+  if(e.target.closest('[data-action="rebut-open-pareto"]')){
+    paretoState = {src:'rebuts_cout', ligne:chokkoLigne, period:rebutParetoPeriod, month: rebutYear+'-'+String((rebutParetoPeriod==='annee'?11:rebutParetoMonth)+1).padStart(2,'0')};
+    currentTab = 'pareto'; renderNav(); render(); window.scrollTo(0,0); return;
+  }
+  var rbMove = e.target.closest('[data-action="rebut-code-move"]');
+  if(rbMove){ var lst = rebutCodesEditable(chokkoLigne), i1 = Number(rbMove.dataset.i), i2 = i1+Number(rbMove.dataset.d); if(i2>=0 && i2<lst.length){ var tmpc = lst[i1]; lst[i1] = lst[i2]; lst[i2] = tmpc; saveSoon('rebutCodes', 500); render(); } return; }
+  var rbDel = e.target.closest('[data-action="rebut-code-del"]');
+  if(rbDel){
+    var lst2 = rebutCodesEditable(chokkoLigne), cd = lst2[Number(rbDel.dataset.i)];
+    if(!cd) return;
+    if(rebutCodeHasData(chokkoLigne, cd[0]) && !await uiConfirm('Retirer le code '+cd[0]+' ('+cd[1]+') de la liste ?\n\nDes montants sont saisis pour ce code : ils sont conservés et restent affichés en bas du tableau.', {okLabel:'Retirer'})) return;
+    lst2.splice(Number(rbDel.dataset.i), 1);
+    await save('rebutCodes'); logChange('Coût rebut', 'Code retiré', chokkoLigne+' · '+cd[0]); render(); return;
+  }
+  if(e.target.closest('[data-action="rebut-code-add"]')){
+    var nc = (document.getElementById('rebut-new-code')||{}).value, nl = (document.getElementById('rebut-new-label')||{}).value;
+    nc = String(nc||'').trim(); nl = String(nl||'').trim();
+    if(!nc){ toast('Merci d\'indiquer le code défaut.', 'error'); return; }
+    var lst3 = rebutCodesEditable(chokkoLigne);
+    if(lst3.some(function(c){ return c[0]===nc; })){ toast('Le code '+nc+' existe déjà.', 'error'); return; }
+    lst3.push([nc, nl || 'Défaut '+nc]);
+    await save('rebutCodes'); logChange('Coût rebut', 'Code ajouté', chokkoLigne+' · '+nc); render();
+    var ni = document.getElementById('rebut-new-code'); if(ni) ni.focus();
+    return;
+  }
+  if(e.target.closest('[data-action="rebut-code-reset"]')){
+    if(!await uiConfirm('Remettre la liste d\'origine des codes défauts pour '+chokkoLigne+' ?\n\nLes montants déjà saisis sont conservés.')) return;
+    if(DATA.rebutCodes) delete DATA.rebutCodes[chokkoLigne];
+    await save('rebutCodes'); render(); return;
+  }
   var chokkoViewBtn = e.target.closest('[data-action="chokko-view"]');
   if(chokkoViewBtn){ chokkoView = chokkoViewBtn.dataset.view; render(); return; }
   if(e.target.closest('[data-action="chokko-print"]')){ printWithPageSize('A3 landscape'); return; }
@@ -12794,9 +12649,17 @@ app.addEventListener('change', async function(e){
   }
   if(e.target.dataset && e.target.dataset.chf && e.target.closest('.chantier-modal')){ chantierDraftSet(e.target); return; }
   if(e.target.dataset && e.target.dataset.pf && e.target.closest('.param-page')){ pSet(e.target.dataset.pf, paramInputValue(e.target)); paramRefreshDirty(); return; }
-  if(e.target.dataset && e.target.dataset.rf && rebutDraft){
-    rebutDraft[e.target.dataset.rf] = e.target.value;
-    if(e.target.dataset.rf==='ref'){ var rrc = rebutRefCfg(rebutDraft.ligne, rebutDraft.ref), ids = (rrc&&rrc.elements||[]).map(function(x){ return x[0]; }); Object.keys(rebutDraft.q).forEach(function(k){ if(ids.indexOf(k.split('|')[0])<0) delete rebutDraft.q[k]; }); render(); }
+  if(e.target.classList && e.target.classList.contains('rebut-amt')){ rebutAmountInput(e.target); return; }
+  if(e.target.id==='rebut-pareto-month'){ rebutParetoMonth = Number(e.target.value); render(); return; }
+  if(e.target.classList && e.target.classList.contains('rebut-code-in')){
+    var lc = rebutCodesEditable(chokkoLigne), ci = Number(e.target.dataset.i), cf = Number(e.target.dataset.f), cv = e.target.value.trim();
+    if(!lc[ci]) return;
+    if(cf===0){
+      if(!cv){ toast('Le code ne peut pas être vide.', 'error'); e.target.value = lc[ci][0]; return; }
+      if(lc.some(function(c, j){ return j!==ci && c[0]===cv; })){ toast('Le code '+cv+' existe déjà.', 'error'); e.target.value = lc[ci][0]; return; }
+    }
+    lc[ci][cf] = cv;
+    saveSoon('rebutCodes', 500);
     return;
   }
   if(e.target.dataset && e.target.dataset.ptf && e.target.id!=='ptf-q'){ prisonTraceFilter[e.target.dataset.ptf] = e.target.value; render(); return; }
@@ -13149,8 +13012,7 @@ app.addEventListener('keydown', function(e){
   }
 });
 app.addEventListener('input', function(e){
-  if(e.target.classList && e.target.classList.contains('rebut-q') && rebutDraft){ var rq = Math.max(0, parseInt(e.target.value,10)||0); if(rq) rebutDraft.q[e.target.dataset.k] = rq; else delete rebutDraft.q[e.target.dataset.k]; rebutLiveTotals(); return; }
-  if(e.target.dataset && e.target.dataset.rf && rebutDraft && e.target.tagName==='INPUT' && e.target.type==='text'){ rebutDraft[e.target.dataset.rf] = e.target.value; return; }
+  if(e.target.classList && e.target.classList.contains('rebut-amt')){ rebutAmountInput(e.target); return; }
   if(e.target.dataset && e.target.dataset.pf && e.target.closest('.param-page')){ pSet(e.target.dataset.pf, paramInputValue(e.target)); paramRefreshDirty(); return; }
   if(e.target.dataset && e.target.dataset.chf && e.target.closest('.chantier-modal')){ chantierDraftSet(e.target); if(e.target.classList.contains('ch-qty')) chantierLiveTotals(); return; }
   if(e.target.id==='ptf-q'){ prisonTraceFilter.q = e.target.value; clearTimeout(window.__ptfT); window.__ptfT = setTimeout(function(){ render(); var q = document.getElementById('ptf-q'); if(q){ q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }, 300); return; }
