@@ -272,6 +272,7 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
   .chk-note-empty{display:none;}
   .chokko-grid .chk-label{min-width:0 !important;}
   .subtabs{display:none !important;}
+  .chokko-chart-print img{width:100%; height:auto; display:block; margin-top:4px;}
   .chokko-synth{font-family:Arial, Helvetica, sans-serif; color:#000;}
   .chokko-synth-title{font-size:20px; font-weight:700; margin-bottom:10px;}
   .chokko-synth-kpis{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px;}
@@ -6590,7 +6591,7 @@ function printMonthlyReport(key){
   var cleanup = function(){ document.body.classList.remove('print-monthly-report'); var s = document.getElementById('monthly-report'); if(s) s.remove(); window.removeEventListener('afterprint', cleanup); };
   window.addEventListener('afterprint', cleanup);
   setTimeout(cleanup, 6000);
-  setTimeout(function(){ printWithPageSize('A4 portrait'); }, 80);
+  waitImages(sheet).then(function(){ setTimeout(function(){ printWithPageSize('A4 portrait'); }, 60); });
 }
 
 RENDERERS.bibliotheque = function(){
@@ -7012,6 +7013,13 @@ var REBUT_CODES_DEFAULT = [['4954','Emmanchement moteur'],['4955','Cote position
   ['4968','Défaut lecture étiquette'],['1026','Étanchéité'],['2024','Orientation languette'],['2602','Non respect du mode opératoire'],
   ['4969','NG suite ouverture de porte'],['4760','Rayure et choc carter'],['5907','Temps de cycle dépassé'],['1108','Récupération après 5S'],
   ['2114','Pièce tombée'],['4984','Pièces tombées / robot appro'],['4983','Contrôle propreté LABO (destructif)']];
+var REBUT_CODES_BY_LINE = {
+  MCU3: [['4958','Dépose pâte thermique'],['4959','Dépose silicone'],['4960','Activation plasma'],['4989','Vissage Heat Sink'],['4990','Vissage contact ECU'],
+    ['4963','Calibration'],['4964','Sertissage couvercle'],['4965','Contrôle performance'],['4956','Défaut traçabilité'],['1026','Étanchéité'],
+    ['4991','Brasage NG défaut boule'],['4993','Brasage NG défaut pad'],['4994','Brasage NG défaut appro étain'],['5907','Temps de cycle dépassé'],
+    ['1108','Récupération après 5S'],['2114','Pièce tombée'],['4984','Pièces tombées / robot appro'],['4983','Contrôle propreté LABO (essai destructif)']]
+};
+function rebutCodesOrigine(ligne){ return REBUT_CODES_BY_LINE[ligne] || REBUT_CODES_DEFAULT; }
 var rebutYear = null;                 // année affichée
 var rebutParetoPeriod = 'mois';       // 'mois' | 'annee'
 var rebutParetoMonth = null;          // index du mois (0-11) pour le Pareto
@@ -7019,11 +7027,11 @@ var rebutEditCodes = false;           // mode « personnaliser les codes »
 var chartRebutPareto = null;
 function rebutCodes(ligne){
   var c = DATA.rebutCodes && DATA.rebutCodes[ligne];
-  return (c && c.length!==undefined) ? c : REBUT_CODES_DEFAULT;
+  return (c && c.length!==undefined) ? c : rebutCodesOrigine(ligne);
 }
 function rebutCodesEditable(ligne){
   DATA.rebutCodes = DATA.rebutCodes || {};
-  if(!DATA.rebutCodes[ligne]) DATA.rebutCodes[ligne] = REBUT_CODES_DEFAULT.map(function(c){ return [c[0], c[1]]; });
+  if(!DATA.rebutCodes[ligne]) DATA.rebutCodes[ligne] = rebutCodesOrigine(ligne).map(function(c){ return [c[0], c[1]]; });
   return DATA.rebutCodes[ligne];
 }
 function rebutKey(ligne, y, m){ return ligne+'|'+y+'-'+String(m+1).padStart(2,'0'); }
@@ -7178,25 +7186,46 @@ function chokkoSynthRebutHtml(){
   return h+'</div>';
 }
 var chokkoPrintRestore = null;
-function printChokkoSynthese(){
+// Attend que les images (graphiques convertis) soient prêtes : sinon le navigateur imprime des cadres vides
+function waitImages(root){
+  var imgs = Array.prototype.slice.call((root||document).querySelectorAll('img'));
+  return Promise.all(imgs.map(function(i){ return (i.decode ? i.decode() : Promise.resolve()).catch(function(){}); }));
+}
+async function printChokkoSynthese(){
   var savedView = chokkoView;
   chokkoView = 'saisie';
   render();
+  // Graphique CHOKKO : remplacé à l'impression par une image dessinée au format de la page (le graphique écran serait coupé)
+  var box = document.getElementById('chart-chokko-postes');
+  box = box ? box.closest('.chart-box') : null;
+  var chartImg = null;
+  if(box){
+    var imgHtml = '';
+    try{ imgHtml = rptChartImage(buildChokkoPostesChartConfig(chokkoLigne, chokkoYear, chokkoMonth), 1800, 430); }catch(err){ console.error('impression graphique CHOKKO', err); }
+    if(imgHtml){
+      chartImg = document.createElement('div'); chartImg.className = 'print-only chokko-chart-print'; chartImg.innerHTML = imgHtml;
+      box.parentNode.insertBefore(chartImg, box.nextSibling);
+      box.classList.add('screen-only');
+    }
+  }
   var host = document.querySelector('#view .section') || document.getElementById('view');
   var div = document.createElement('div'); div.id = 'chokko-synth-print';
   div.innerHTML = chokkoSynthRebutHtml();
   host.appendChild(div);
+  await waitImages(document.getElementById('view'));
   var done = false;
   var cleanup = function(){
     if(done) return; done = true;
     window.removeEventListener('afterprint', cleanup);
     var d = document.getElementById('chokko-synth-print'); if(d) d.remove();
+    if(chartImg) chartImg.remove();
+    if(box) box.classList.remove('screen-only');
     if(savedView!=='saisie'){ chokkoView = savedView; render(); }
   };
   window.addEventListener('afterprint', cleanup);
   setTimeout(cleanup, 5000);
   logChange('CHOKKO', 'Export PDF', chokkoLigne+' - '+MONTHS_FR[chokkoMonth]+' '+chokkoYear);
-  printWithPageSize('A3 landscape');
+  setTimeout(function(){ printWithPageSize('A3 landscape'); }, 60);
 }
 RENDERERS.chokko = function(){
   var html = futureDataBannerHtml()+'<div class="section"><div class="subtabs">'+
@@ -12420,7 +12449,7 @@ app.addEventListener('click', async function(e){
   }
   var chokkoViewBtn = e.target.closest('[data-action="chokko-view"]');
   if(chokkoViewBtn){ chokkoView = chokkoViewBtn.dataset.view; render(); return; }
-  if(e.target.closest('[data-action="chokko-print"]')){ printChokkoSynthese(); return; }
+  if(e.target.closest('[data-action="chokko-print"]')){ await printChokkoSynthese(); return; }
   if(e.target.closest('[data-action="esd-print"]')){ printWithPageSize('A4 portrait'); return; }
   if(e.target.closest('[data-action="formations-print"]')){ printWithPageSize('A4 portrait'); return; }
   if(e.target.closest('[data-action="cicl-print"]')){ printWithPageSize('A4 portrait'); return; }
@@ -13057,6 +13086,18 @@ app.addEventListener('keydown', function(e){
     e.preventDefault();
     var nextBtn = document.querySelector('[data-action="chokko-wizard-next"]');
     if(nextBtn) nextBtn.click();
+  }
+  // Coût rebut : flèches (et Entrée = case du dessous) pour se déplacer dans le tableau
+  if((['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.key)>=0 || e.key==='Enter') && e.target.classList && e.target.classList.contains('rebut-amt')){
+    e.preventDefault();
+    var all = Array.prototype.slice.call(document.querySelectorAll('.rebut-cost input.rebut-amt'));
+    var codesOrder = []; all.forEach(function(x){ if(codesOrder.indexOf(x.dataset.code)<0) codesOrder.push(x.dataset.code); });
+    var ci = codesOrder.indexOf(e.target.dataset.code), mi = Number(e.target.dataset.m);
+    if(e.key==='ArrowLeft') mi--; else if(e.key==='ArrowRight') mi++; else if(e.key==='ArrowUp') ci--; else ci++;
+    if(mi<0 || mi>11 || ci<0 || ci>=codesOrder.length) return;
+    var dest = document.querySelector('.rebut-cost input.rebut-amt[data-code="'+codesOrder[ci]+'"][data-m="'+mi+'"]');
+    if(dest){ dest.focus(); dest.select(); }
+    return;
   }
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.key)>=0 && e.target.classList && (e.target.classList.contains('chokko-defect-cell') || e.target.classList.contains('chokko-prodtotal-cell'))){
     e.preventDefault();
