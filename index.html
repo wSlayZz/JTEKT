@@ -716,6 +716,9 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 .chokko-grid.chokko-grid tbody td.chk-sticky{background:#FCE9D9;}
 .chokko-grid tbody td.chk-team-label{text-align:center; vertical-align:middle;}
 .chokko-grid tbody td.chk-sticky{vertical-align:middle;}
+/* Lignes importantes : une nuance plus claire de la couleur des intitulés */
+.chokko-grid tr.chk-total-row td:not(.chk-sticky), .chokko-grid tr.chk-chokko-row td:not(.chk-sticky), .chokko-grid tr.chk-cost-row td:not(.chk-sticky){background:#FDF0E5;}
+@media print{ .chokko-grid tr.chk-total-row td, .chokko-grid tr.chk-chokko-row td, .chokko-grid tr.chk-cost-row td{-webkit-print-color-adjust:exact; print-color-adjust:exact;} }
 @media print{ .chokko-grid tbody td.chk-sticky{-webkit-print-color-adjust:exact; print-color-adjust:exact;} }
 .chokko-grid input.chokko-cost-cell{font-size:10.5px; font-weight:700; padding-left:1px; padding-right:1px;}
 .chokko-grid input.chokko-cost-cell::-webkit-outer-spin-button, .chokko-grid input.chokko-cost-cell::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
@@ -7330,7 +7333,7 @@ RENDERERS.chokko = function(){
     '<button class="btn chokko-icon-btn" data-action="chokko-manage-postes-open" title="Gérer les postes">⚙️</button>'+
     '<button class="btn chokko-icon-btn'+(chokkoTotalsLocked?'':' primary')+'" data-action="chokko-toggle-totals-lock" title="'+(chokkoTotalsLocked?'Totaux verrouillés - cliquer pour déverrouiller':'Totaux déverrouillés - cliquer pour reverrouiller')+'">'+(chokkoTotalsLocked?'🔒':'🔓')+'</button>'+
     '<button class="btn chokko-icon-btn" data-action="chokko-paint-toggle" title="'+(chokkoPaintMode?'Mode coloriage actif - cliquez sur une case':'Colorier une case')+'">'+
-      (chokkoPaintMode? '<span class="chokko-paint-swatch" style="background:'+chokkoPaintMode+';"></span>' : '🖌️')+
+      (chokkoPaintMode==='erase'? '🧽' : chokkoPaintMode? '<span class="chokko-paint-swatch" style="background:'+chokkoPaintMode+';"></span>' : '🖌️')+
     '</button>'+
     (chokkoPaintMode? '<button class="btn chokko-icon-btn" data-action="chokko-paint-stop" title="Terminer le coloriage">✅</button>' : '')+
     '<button class="btn chokko-icon-btn" data-action="chokko-print" title="PDF de synthèse du mois : grille CHOKKO + coût rebut et Pareto">🖨️</button>'+
@@ -8139,6 +8142,10 @@ function chokkoPaintPickerPanel(){
   return '<div class="card" style="position:absolute; top:100%; left:0; margin-top:6px; z-index:60; width:260px; box-shadow:0 6px 20px rgba(0,0,0,0.18);">'+
     '<div class="tiny" style="margin-bottom:8px;">Choisissez une couleur pour surligner des cases</div>'+
     chokkoColorSwatches('paint', null)+
+    '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;">'+
+      '<button class="btn small" data-action="chokko-paint-erase" title="Cliquez ensuite sur une case pour retirer sa couleur">🧽 Gomme</button>'+
+      '<button class="btn small" data-action="chokko-clear-label-paint" title="Retire la couleur ajoutée sur les intitulés des postes de cette ligne">Effacer les couleurs des intitulés</button>'+
+    '</div>'+
   '</div>';
 }
 function chokkoColorsPanel(ligne){
@@ -12667,6 +12674,16 @@ app.addEventListener('click', async function(e){
   if(e.target.closest('[data-action="chokko-wizard-open"]')){ chokkoWizardOpen = true; render(); return; }
   if(e.target.closest('[data-action="chokko-toggle-totals-lock"]')){ chokkoTotalsLocked = !chokkoTotalsLocked; render(); return; }
   if(e.target.closest('[data-action="chokko-paint-toggle"]')){ chokkoPaintPickerOpen = !chokkoPaintPickerOpen; render(); return; }
+  if(e.target.closest('[data-action="chokko-paint-erase"]')){ chokkoPaintMode = 'erase'; chokkoPaintPickerOpen = false; render(); return; }
+  if(e.target.closest('[data-action="chokko-clear-label-paint"]')){
+    var hlL = DATA.chokkoHighlights[chokkoLigne] || {};
+    var labKeys = Object.keys(hlL).filter(function(k){ return k.indexOf('label_')===0; });
+    if(!labKeys.length){ toast('Aucun intitulé colorié sur '+chokkoLigne+'.'); return; }
+    if(!await uiConfirm('Retirer la couleur de '+labKeys.length+' intitulé(s) de poste sur '+chokkoLigne+' ?', {okLabel:'Retirer'})) return;
+    labKeys.forEach(function(k){ delete hlL[k]; });
+    chokkoPaintPickerOpen = false;
+    await save('chokkoHighlights'); render(); return;
+  }
   if(e.target.closest('[data-action="chokko-paint-stop"]')){ chokkoPaintMode = false; chokkoPaintPickerOpen = false; render(); return; }
   var swatchBtn = e.target.closest('.chokko-swatch');
   if(swatchBtn){
@@ -12713,7 +12730,7 @@ app.addEventListener('click', async function(e){
       : paintableCell.dataset.labelcell ? 'label_'+plPoste
       : paintableCell.dataset.date+'_'+plPoste;
     if(!DATA.chokkoHighlights[plLigne]) DATA.chokkoHighlights[plLigne] = {};
-    if(DATA.chokkoHighlights[plLigne][key]===chokkoPaintMode){ delete DATA.chokkoHighlights[plLigne][key]; chokkoPaintCellInPlace(paintableCell, null); }
+    if(chokkoPaintMode==='erase' || DATA.chokkoHighlights[plLigne][key]===chokkoPaintMode){ delete DATA.chokkoHighlights[plLigne][key]; chokkoPaintCellInPlace(paintableCell, null); }
     else { DATA.chokkoHighlights[plLigne][key] = chokkoPaintMode; chokkoPaintCellInPlace(paintableCell, chokkoPaintMode); }
     saveSoon('chokkoHighlights');
     return;
