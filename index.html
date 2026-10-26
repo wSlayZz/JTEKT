@@ -7256,9 +7256,15 @@ function chokkoWeeklyHtml(forPrint){
 }
 // Graphique par semaine : défauts cumulés par poste + CHOKKO de la semaine
 function buildChokkoWeekChartConfig(ligne, year, monthIdx){
-  var postes = chokkoPostes(ligne), weeks = chokkoMonthWeeks(year, monthIdx);
+  // Les 3 derniers mois (le mois affiché et les 2 précédents), une barre par semaine ; une semaine à cheval sur deux mois n'apparaît qu'une fois
+  var postes = chokkoPostes(ligne), weeks = [], seen = {};
+  for(var k=2; k>=0; k--){
+    var dt = new Date(year, monthIdx-k, 1);
+    chokkoMonthWeeks(dt.getFullYear(), dt.getMonth()).forEach(function(w){ if(!seen[w.from]){ seen[w.from] = 1; weeks.push(w); } });
+  }
+  var firstM = new Date(year, monthIdx-2, 1);
   var stats = weeks.map(function(w){ return chokkoPeriodStats(ligne, w.days); });
-  var labels = weeks.map(function(w){ return 'S'+w.week+' ('+fmtDate(w.from).slice(0,5)+' → '+fmtDate(w.to).slice(0,5)+')'; });
+  var labels = weeks.map(function(w){ return ['S'+w.week, fmtDate(w.from).slice(0,5)]; });
   var datasets = postes.map(function(p){
     return {type:'bar', stack:'defauts', label:p[0]+' - '+p[1], yAxisID:'y', order:2, backgroundColor:chokkoPosteColor(ligne, p[0]), borderWidth:0,
       data:stats.map(function(st){ return st.nc[p[0]]||0; })};
@@ -7270,7 +7276,8 @@ function buildChokkoWeekChartConfig(ligne, year, monthIdx){
   return {type:'bar', data:{labels:labels, datasets:datasets},
     options:{responsive:true, maintainAspectRatio:false, animation:false,
       plugins:{legend:{position:'bottom', labels:{boxWidth:11, font:{size:9.5}}},
-        title:{display:true, text:'Suivi des causes de non Chokko par semaine - '+ligne+'_'+MONTHS_FR[monthIdx].slice(0,4).toUpperCase()}},
+        title:{display:true, text:'Suivi des causes de non Chokko par semaine - '+ligne+' - '+MONTHS_FR[firstM.getMonth()]+' → '+MONTHS_FR[monthIdx]+' '+year+' (3 derniers mois)'},
+        tooltip:{callbacks:{title:function(items){ var w = weeks[items[0].dataIndex]; return 'Semaine '+w.week+' : '+fmtDate(w.from)+' → '+fmtDate(w.to); }}}},
       scales:{x:{stacked:true}, y:{stacked:true, beginAtZero:true, position:'left', title:{display:true, text:'Nombre de défauts'}, ticks:{precision:0}},
         y1:{min:Math.min(90, Math.floor(minP)), max:100, position:'right', grid:{drawOnChartArea:false}, title:{display:true, text:'% Chokko'}}}}};
 }
@@ -7881,7 +7888,7 @@ function chokkoSaisieView(){
   // Graphique "SUIVI DES CAUSES DE NON CHOKKO" - defauts par poste sur le mois
   html += '<div class="card" style="margin-top:18px;">'+
     '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">'+
-      '<div class="eyebrow">Suivi des causes de non Chokko - '+esc(ligne)+' ('+MONTHS_FR[chokkoMonth].charAt(0).toUpperCase()+MONTHS_FR[chokkoMonth].slice(1)+(chokkoGridMode==='semaine'?', par semaine':'')+')</div>'+
+      '<div class="eyebrow">Suivi des causes de non Chokko - '+esc(ligne)+' ('+(chokkoGridMode==='semaine'? 'par semaine, 3 derniers mois jusqu\'à '+MONTHS_FR[chokkoMonth] : MONTHS_FR[chokkoMonth].charAt(0).toUpperCase()+MONTHS_FR[chokkoMonth].slice(1))+')</div>'+
       '<button class="btn small chokko-noprint" data-action="toggle-chokko-colors">🎨 Couleurs du graphique</button>'+
     '</div>'+
     '<div class="chart-box" style="height:420px;"><canvas id="chart-chokko-postes"></canvas></div>'+
