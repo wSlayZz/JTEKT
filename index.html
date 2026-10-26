@@ -605,6 +605,9 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 .chokko-week-screen .chokko-week-table td, .chokko-week-screen .chokko-week-table th{padding:5px 8px;}
 .chokko-week-table tr.cw-prod td.cw-lab, .chokko-week-table tr.cw-nc td.cw-lab, .chokko-week-table tr.cw-chokko td.cw-lab, .chokko-week-table tr.cw-cost td.cw-lab{background:#D5EDCF;}
 .chokko-week-table tr.cw-prod td, .chokko-week-table tr.cw-nc td, .chokko-week-table tr.cw-cost td{background:#EEF8EA;}
+.chokko-grid .chk-wk-dates{font-size:9.5px; font-weight:400; color:#555; margin-top:1px;}
+.chokko-grid td.chk-wk-team{font-weight:700; color:#000;}
+.chokko-grid-week td{padding:4px 6px;}
 /* Paramètres */
 .param-page .param-intro{color:var(--text-faint); margin:0 0 10px;}
 .param-subtabs{flex-wrap:wrap;}
@@ -7218,26 +7221,58 @@ function chokkoWeeklyHtml(forPrint){
   var weeks = chokkoMonthWeeks(y, m);
   var monthDates = chokkoMonthDays(l, y, m).map(function(d){ return d.date; });
   var cols = weeks.map(function(w){ return {label:'S'+w.week, sub:fmtDate(w.from).slice(0,5)+' → '+fmtDate(w.to).slice(0,5), st:chokkoPeriodStats(l, w.days)}; });
-  var tot = {label:'Mois', sub:MONTHS_FR[m], st:chokkoPeriodStats(l, monthDates), month:true};
-  var all = cols.concat([tot]);
+  var mst = chokkoPeriodStats(l, monthDates);
   var postes = chokkoPostes(l);
-  var lvlColor = {ok:'#2E7D4F', warn:'#B8730A', danger:'#B23B2E', neutral:'#555'};
-  var num = function(v){ return v ? v.toLocaleString('fr-FR') : ''; };
-  var h = '<div class="'+(forPrint?'print-only chokko-week-print':'chokko-week-screen table-wrap')+'">'+(forPrint?'<div class="chokko-week-title">Vue par semaine - '+esc(l)+' - '+esc(MONTHS_FR[m])+' '+y+'</div>':'')+'<table class="chokko-week-table"><thead><tr><th class="cw-lab">Défauts / semaines</th>'+
-    all.map(function(c){ return '<th class="'+(c.month?'cw-month':'')+'"><b>'+esc(c.label)+'</b><span>'+esc(c.sub)+'</span></th>'; }).join('')+'<th class="cw-notes">Actions</th></tr></thead><tbody>';
+  var moisNom = MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1);
+  var num = function(v){ return v ? String(v) : ''; };
+  var lvlCls = function(v){ var lv = chokkoLevelVsObjectif(v, l); return lv==='ok' ? '' : ' lvl-'+lv; };
+  var h = '<div class="'+(forPrint?'print-only chokko-week-print':'chokko-week-screen')+'">'+
+    (forPrint?'<div class="chokko-week-title">Suivi CHOKKO par semaine - '+esc(l)+' - '+esc(moisNom)+' '+y+'</div>':'')+
+    '<div class="table-wrap" style="overflow-x:auto;"><table class="chokko-grid chokko-grid-week"><thead><tr>'+
+    '<th class="chk-sticky" style="min-width:230px; text-align:left; background:#F2F2F2;">DEFAUTS / SEMAINES</th>'+
+    cols.map(function(c){ return '<th style="min-width:90px;">'+esc(c.label)+'<div class="chk-wk-dates">'+esc(c.sub)+'</div></th>'; }).join('')+
+    '<th style="min-width:70px;">TOTAL MOIS</th><th style="min-width:200px; text-align:left;">ACTIONS</th></tr></thead><tbody>';
   postes.forEach(function(p){
-    var note = chokkoNote(l, p[0], y, m);
-    h += '<tr><td class="cw-lab">'+esc(p[0]+' - '+p[1])+'</td>'+all.map(function(c){ return '<td class="'+(c.month?'cw-month':'')+'">'+num(c.st.nc[p[0]])+'</td>'; }).join('')+'<td class="cw-notes">'+esc(note && note.texte || '')+'</td></tr>';
+    var note = chokkoNote(l, p[0], y, m), noteTxt = note ? (note.texte||'') : '';
+    h += '<tr><td class="chk-label chk-sticky">'+esc(p[0])+' - '+esc(p[1])+'</td>'+
+      cols.map(function(c){ return '<td>'+num(c.st.nc[p[0]])+'</td>'; }).join('')+
+      '<td style="font-weight:700;">'+(mst.nc[p[0]]||0)+'</td>'+
+      '<td class="chk-note-cell"'+(forPrint?'':' data-action="chokko-note-open" data-ligne="'+l+'" data-poste="'+p[0]+'" data-annee="'+y+'" data-mois="'+m+'"')+'><div class="chk-note-preview">'+(noteTxt? esc(noteTxt) : (forPrint?'':'<span class="chk-note-empty">+ Actions menées…</span>'))+'</div></td></tr>';
   });
   CHOKKO_TEAMS.forEach(function(tm){
-    h += '<tr class="cw-team"><td class="cw-lab">'+esc(tm[2]||tm[1])+'</td>'+all.map(function(c){ return '<td class="'+(c.month?'cw-month':'')+'">'+num(c.st.team[tm[0]])+'</td>'; }).join('')+'<td></td></tr>';
+    h += '<tr class="chk-team-row"><td class="chk-label-bold chk-sticky chk-team-label">'+esc(tm[2]||tm[0])+'</td>'+
+      cols.map(function(c){ return '<td class="chk-wk-team">'+num(c.st.team[tm[0]])+'</td>'; }).join('')+
+      '<td class="chk-wk-team">'+num(mst.team[tm[0]])+'</td><td></td></tr>';
   });
-  h += '<tr class="cw-prod"><td class="cw-lab">TOTAL PROD</td>'+all.map(function(c){ return '<td class="'+(c.month?'cw-month':'')+'">'+num(c.st.prod)+'</td>'; }).join('')+'<td></td></tr>';
-  h += '<tr class="cw-nc"><td class="cw-lab">TOTAL NC</td>'+all.map(function(c){ return '<td class="'+(c.month?'cw-month':'')+'">'+num(c.st.totalNC)+'</td>'; }).join('')+'<td></td></tr>';
-  h += '<tr class="cw-chokko"><td class="cw-lab">'+'CHOKKO (%)'+'</td>'+all.map(function(c){ var v = c.st.pct; return '<td class="'+(c.month?'cw-month':'')+'" style="color:'+lvlColor[chokkoLevelVsObjectif(v, l)]+';">'+(v!==null? pct1(v) : '-')+'</td>'; }).join('')+'<td class="tiny">objectif ≥ '+chokkoObjectif(l)+' %</td></tr>';
-  h += '<tr class="cw-cost"><td class="cw-lab">COÛT / PIÈCE (€)</td>'+all.map(function(c){ var v = c.st.cost; return '<td class="'+(c.month?'cw-month':'')+'">'+(v!==null? fmtCost(v) : '-')+'</td>'; }).join('')+'<td></td></tr>';
-  h += '</tbody></table><div class="cw-foot">Semaines complètes du lundi au dimanche : la première et la dernière semaine peuvent inclure des jours du mois précédent ou suivant. La colonne « Mois » ne compte que les jours du mois. CHOKKO et coût par pièce : moyenne des jours saisis.</div></div>';
-  return h;
+  h += '<tr class="chk-total-row"><td class="chk-label-bold chk-sticky">TOTAL PROD</td>'+cols.map(function(c){ return '<td>'+num(c.st.prod)+'</td>'; }).join('')+'<td>'+num(mst.prod)+'</td><td></td></tr>';
+  h += '<tr class="chk-total-row"><td class="chk-label-bold chk-sticky">TOTAL NC</td>'+cols.map(function(c){ return '<td class="chk-tnc">'+(c.st.prod||c.st.totalNC? c.st.totalNC : '-')+'</td>'; }).join('')+'<td class="chk-tnc">'+mst.totalNC+'</td><td></td></tr>';
+  h += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky">CHOKKO DE LA SEMAINE</td>'+cols.map(function(c){ var v = c.st.pct; return '<td class="'+(v!==null?lvlCls(v).trim():'')+'">'+(v!==null? pct1(v) : '-')+'</td>'; }).join('')+
+    '<td class="'+(mst.pct!==null?lvlCls(mst.pct).trim():'')+'">'+(mst.pct!==null? pct1(mst.pct) : '-')+'</td><td class="tiny" style="color:var(--text-faint); font-weight:400;">objectif ≥ '+chokkoObjectif(l)+' %</td></tr>';
+  h += '<tr class="chk-cost-row"><td class="chk-label-bold chk-sticky chk-cost-label">COÛT / PIÈCE (€)</td>'+cols.map(function(c){ var v = c.st.cost; return '<td class="lvl-danger" style="font-weight:700;">'+(v!==null? fmtCost(v) : '')+'</td>'; }).join('')+
+    '<td class="lvl-danger" style="font-weight:700;">'+(mst.cost!==null? fmtCost(mst.cost) : '')+'</td><td></td></tr>';
+  h += '</tbody></table></div><p class="tiny" style="margin-top:6px; color:var(--text-faint);">Semaines complètes du lundi au dimanche (la première et la dernière peuvent inclure des jours du mois précédent ou suivant). TOTAL MOIS ne compte que les jours de '+esc(MONTHS_FR[m])+'. CHOKKO et coût par pièce : moyenne des jours saisis.</p>';
+  if(forPrint) h += '<div class="chokko-chart-print">'+rptChartImage(buildChokkoWeekChartConfig(l, y, m), 1800, 430)+'</div>';
+  return h+'</div>';
+}
+// Graphique par semaine : défauts cumulés par poste + CHOKKO de la semaine
+function buildChokkoWeekChartConfig(ligne, year, monthIdx){
+  var postes = chokkoPostes(ligne), weeks = chokkoMonthWeeks(year, monthIdx);
+  var stats = weeks.map(function(w){ return chokkoPeriodStats(ligne, w.days); });
+  var labels = weeks.map(function(w){ return 'S'+w.week+' ('+fmtDate(w.from).slice(0,5)+' → '+fmtDate(w.to).slice(0,5)+')'; });
+  var datasets = postes.map(function(p){
+    return {type:'bar', stack:'defauts', label:p[0]+' - '+p[1], yAxisID:'y', order:2, backgroundColor:chokkoPosteColor(ligne, p[0]), borderWidth:0,
+      data:stats.map(function(st){ return st.nc[p[0]]||0; })};
+  });
+  var pcts = stats.map(function(st){ return st.pct; });
+  datasets.push({type:'line', label:'CHOKKO DE LA SEMAINE', yAxisID:'y1', order:1, data:pcts,
+    borderColor:'#3A7CA5', backgroundColor:'#3A7CA5', borderWidth:2.5, pointRadius:4, spanGaps:true, tension:0.15});
+  var minP = pcts.filter(function(v){ return v!==null; }).reduce(function(a,b){ return Math.min(a,b); }, 100);
+  return {type:'bar', data:{labels:labels, datasets:datasets},
+    options:{responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{legend:{position:'bottom', labels:{boxWidth:11, font:{size:9.5}}},
+        title:{display:true, text:'Suivi des causes de non Chokko par semaine - '+ligne+'_'+MONTHS_FR[monthIdx].slice(0,4).toUpperCase()}},
+      scales:{x:{stacked:true}, y:{stacked:true, beginAtZero:true, position:'left', title:{display:true, text:'Nombre de défauts'}, ticks:{precision:0}},
+        y1:{min:Math.min(90, Math.floor(minP)), max:100, position:'right', grid:{drawOnChartArea:false}, title:{display:true, text:'% Chokko'}}}}};
 }
 // ---- PDF de synthèse CHOKKO : grille du mois + coût rebut (tableau + Pareto) ----
 function rebutParetoResFor(l, y, months){
@@ -7308,7 +7343,8 @@ async function printChokkoSynthese(){
   if(gridWrap){
     weekDiv = document.createElement('div'); weekDiv.innerHTML = chokkoWeeklyPrintHtml();
     weekDiv = weekDiv.firstChild;
-    var afterGrid = gridWrap.nextElementSibling && gridWrap.nextElementSibling.tagName==='P' ? gridWrap.nextElementSibling : gridWrap;   // après la légende des objectifs
+    var chartCard = box ? box.closest('.card') : null;   // après le graphique par jour
+    var afterGrid = chartCard || (gridWrap.nextElementSibling && gridWrap.nextElementSibling.tagName==='P' ? gridWrap.nextElementSibling : gridWrap);
     afterGrid.parentNode.insertBefore(weekDiv, afterGrid.nextSibling);
   }
   var host = document.querySelector('#view .section') || document.getElementById('view');
@@ -7845,7 +7881,7 @@ function chokkoSaisieView(){
   // Graphique "SUIVI DES CAUSES DE NON CHOKKO" - defauts par poste sur le mois
   html += '<div class="card" style="margin-top:18px;">'+
     '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">'+
-      '<div class="eyebrow">Suivi des causes de non Chokko - '+esc(ligne)+' ('+MONTHS_FR[chokkoMonth].charAt(0).toUpperCase()+MONTHS_FR[chokkoMonth].slice(1)+')</div>'+
+      '<div class="eyebrow">Suivi des causes de non Chokko - '+esc(ligne)+' ('+MONTHS_FR[chokkoMonth].charAt(0).toUpperCase()+MONTHS_FR[chokkoMonth].slice(1)+(chokkoGridMode==='semaine'?', par semaine':'')+')</div>'+
       '<button class="btn small chokko-noprint" data-action="toggle-chokko-colors">🎨 Couleurs du graphique</button>'+
     '</div>'+
     '<div class="chart-box" style="height:420px;"><canvas id="chart-chokko-postes"></canvas></div>'+
@@ -8225,7 +8261,7 @@ function renderChokkoPostesChart(){
   if(!ctx) return;
   if(chartChokkoPostes){ chartChokkoPostes.destroy(); chartChokkoPostes=null; }
   try{
-    chartChokkoPostes = new Chart(ctx, buildChokkoPostesChartConfig(chokkoLigne, chokkoYear, chokkoMonth));
+    chartChokkoPostes = new Chart(ctx, chokkoGridMode==='semaine' ? buildChokkoWeekChartConfig(chokkoLigne, chokkoYear, chokkoMonth) : buildChokkoPostesChartConfig(chokkoLigne, chokkoYear, chokkoMonth));
   }catch(err){ console.error('chokko postes chart error', err); }
 }
 
