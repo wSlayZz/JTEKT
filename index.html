@@ -710,14 +710,16 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 .trace-dest{font-size:12px; padding:2px 4px; max-width:170px;}
 .trace-table td{vertical-align:top;}
 
-.chokko-grid td.chk-cost-label{background:#FCE9D9 !important;}
+.chokko-grid td.chk-cost-label{background:#D5EDCF !important;}
 .chokko-grid tr.chk-cost-row td{background:#fff;}
 /* Colonne des intitulés (postes, équipes, totaux…) : même mise en forme que le coût par pièce ; les cases restent blanches */
-.chokko-grid.chokko-grid tbody td.chk-sticky{background:#FCE9D9;}
+.chokko-grid.chokko-grid tbody td.chk-sticky{background:#fff;}
+/* Intitulés des lignes de synthèse (TOTAL PROD → COÛT / PIÈCE) : vert pastel */
+.chokko-grid.chokko-grid tbody tr.chk-total-row td.chk-sticky, .chokko-grid.chokko-grid tbody tr.chk-chokko-row td.chk-sticky, .chokko-grid.chokko-grid tbody tr.chk-cost-row td.chk-sticky{background:#D5EDCF;}
 .chokko-grid tbody td.chk-team-label{text-align:center; vertical-align:middle;}
 .chokko-grid tbody td.chk-sticky{vertical-align:middle;}
 /* Lignes importantes : une nuance plus claire de la couleur des intitulés */
-.chokko-grid tr.chk-total-row td:not(.chk-sticky), .chokko-grid tr.chk-chokko-row td:not(.chk-sticky), .chokko-grid tr.chk-cost-row td:not(.chk-sticky){background:#FDF0E5;}
+.chokko-grid tr.chk-total-row td:not(.chk-sticky), .chokko-grid tr.chk-chokko-row td:not(.chk-sticky), .chokko-grid tr.chk-cost-row td:not(.chk-sticky){background:#EEF8EA;}
 @media print{ .chokko-grid tr.chk-total-row td, .chokko-grid tr.chk-chokko-row td, .chokko-grid tr.chk-cost-row td{-webkit-print-color-adjust:exact; print-color-adjust:exact;} }
 @media print{ .chokko-grid tbody td.chk-sticky{-webkit-print-color-adjust:exact; print-color-adjust:exact;} }
 .chokko-grid input.chokko-cost-cell{font-size:10.5px; font-weight:700; padding-left:1px; padding-right:1px;}
