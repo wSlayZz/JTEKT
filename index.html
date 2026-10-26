@@ -273,21 +273,8 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
   .chokko-grid .chk-label{min-width:0 !important;}
   .subtabs{display:none !important;}
   .chokko-chart-print img{width:100%; height:auto; display:block; margin-top:4px;}
-  .chokko-week-table{width:100%; border-collapse:collapse; font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#000;}
-  .chokko-week-table th, .chokko-week-table td{border:1px solid #9aa3b2; padding:3px 6px; text-align:center;}
-  .chokko-week-table th{background:#D9E1F2; color:#000 !important; text-transform:none; letter-spacing:0; font-size:11px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
-  .chokko-week-table th span{display:block; font-weight:400; font-size:9.5px; color:#333;}
-  .chokko-week-table .cw-lab{text-align:left; white-space:nowrap;}
-  .chokko-week-table .cw-month{background:#F2F2F2; font-weight:700; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
-  .chokko-week-table th.cw-month{background:#BDD7EE;}
-  .chokko-week-table .cw-notes{text-align:left; font-size:9px; width:22%;}
-  .chokko-week-table tr.cw-team td{font-weight:700;}
-  .chokko-week-table tr.cw-prod td{font-weight:700; color:#2E7D4F;}
-  .chokko-week-table tr.cw-nc td{font-weight:700; color:#C0272D;}
-  .chokko-week-table tr.cw-chokko td{font-weight:700; background:#E2EFDA; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
-  .chokko-week-table tr.cw-cost td{font-weight:700; color:#B23B2E;}
-  .chokko-week-table tr.cw-team td:first-child, .chokko-week-table tr.cw-prod td:first-child, .chokko-week-table tr.cw-nc td:first-child, .chokko-week-table tr.cw-chokko td:first-child, .chokko-week-table tr.cw-cost td:first-child{color:#000;}
-  .cw-foot{font-size:9px; color:#555; margin-top:3px;}
+  .chokko-week-print{page-break-before:always; break-before:page;}
+  .chokko-week-title{font-size:15px; font-weight:700; margin-bottom:6px;}
   .chokko-synth{font-family:Arial, Helvetica, sans-serif; color:#000;}
   .chokko-synth-title{font-size:20px; font-weight:700; margin-bottom:10px;}
   .chokko-synth-kpis{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px;}
@@ -594,6 +581,30 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 .rebut-pareto{margin-top:20px;}
 .rebut-pareto-head{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;}
 .rebut-reading{background:var(--neutral-bg); padding:7px 10px; border-radius:6px; margin:4px 0 8px;}
+/* CHOKKO : vue par semaine (écran et impression) */
+.chokko-week-table{width:100%; border-collapse:collapse; font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#000;}
+.chokko-week-table th, .chokko-week-table td{border:1px solid #9aa3b2; padding:3px 6px; text-align:center;}
+.chokko-week-table th{background:#D9E1F2; color:#000 !important; text-transform:none; letter-spacing:0; font-size:11px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+.chokko-week-table th span{display:block; font-weight:400; font-size:9.5px; color:#333;}
+.chokko-week-table .cw-lab{text-align:left; white-space:nowrap;}
+.chokko-week-table .cw-month{background:#F2F2F2; font-weight:700; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+.chokko-week-table th.cw-month{background:#BDD7EE;}
+.chokko-week-table .cw-notes{text-align:left; font-size:9px; width:22%;}
+.chokko-week-table tr.cw-team td{font-weight:700;}
+.chokko-week-table tr.cw-team td.cw-lab{text-align:center;}
+.chokko-week-table tr.cw-prod td{font-weight:700; color:#2E7D4F;}
+.chokko-week-table tr.cw-nc td{font-weight:700; color:#C0272D;}
+.chokko-week-table tr.cw-chokko td{font-weight:700; background:#E2EFDA; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+.chokko-week-table tr.cw-cost td{font-weight:700; color:#B23B2E;}
+.chokko-week-table tr.cw-team td:first-child, .chokko-week-table tr.cw-prod td:first-child, .chokko-week-table tr.cw-nc td:first-child, .chokko-week-table tr.cw-chokko td:first-child, .chokko-week-table tr.cw-cost td:first-child{color:#000;}
+.cw-foot{font-size:9px; color:#555; margin-top:3px;}
+.chk-gridmode{display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:8px;}
+.chk-day-hidden{display:none !important;}
+.chokko-week-screen{margin-bottom:6px;}
+.chokko-week-screen .chokko-week-table{font-size:12.5px; min-width:760px;}
+.chokko-week-screen .chokko-week-table td, .chokko-week-screen .chokko-week-table th{padding:5px 8px;}
+.chokko-week-table tr.cw-prod td.cw-lab, .chokko-week-table tr.cw-nc td.cw-lab, .chokko-week-table tr.cw-chokko td.cw-lab, .chokko-week-table tr.cw-cost td.cw-lab{background:#D5EDCF;}
+.chokko-week-table tr.cw-prod td, .chokko-week-table tr.cw-nc td, .chokko-week-table tr.cw-cost td{background:#EEF8EA;}
 /* Paramètres */
 .param-page .param-intro{color:var(--text-faint); margin:0 0 10px;}
 .param-subtabs{flex-wrap:wrap;}
@@ -7200,7 +7211,9 @@ function chokkoPeriodStats(ligne, dates){
   st.cost = st.costs.length ? st.costs.reduce(function(a,b){ return a+b; },0)/st.costs.length : null;
   return st;
 }
-function chokkoWeeklyPrintHtml(){
+var chokkoGridMode = (function(){ try{ return localStorage.getItem('chokko_gridmode_v1') || 'jour'; }catch(e){ return 'jour'; } })();
+function chokkoWeeklyPrintHtml(){ return chokkoWeeklyHtml(true); }
+function chokkoWeeklyHtml(forPrint){
   var l = chokkoLigne, y = chokkoYear, m = chokkoMonth;
   var weeks = chokkoMonthWeeks(y, m);
   var monthDates = chokkoMonthDays(l, y, m).map(function(d){ return d.date; });
@@ -7210,7 +7223,7 @@ function chokkoWeeklyPrintHtml(){
   var postes = chokkoPostes(l);
   var lvlColor = {ok:'#2E7D4F', warn:'#B8730A', danger:'#B23B2E', neutral:'#555'};
   var num = function(v){ return v ? v.toLocaleString('fr-FR') : ''; };
-  var h = '<div class="print-only chokko-week-print"><table class="chokko-week-table"><thead><tr><th class="cw-lab">Défauts / semaines</th>'+
+  var h = '<div class="'+(forPrint?'print-only chokko-week-print':'chokko-week-screen table-wrap')+'">'+(forPrint?'<div class="chokko-week-title">Vue par semaine - '+esc(l)+' - '+esc(MONTHS_FR[m])+' '+y+'</div>':'')+'<table class="chokko-week-table"><thead><tr><th class="cw-lab">Défauts / semaines</th>'+
     all.map(function(c){ return '<th class="'+(c.month?'cw-month':'')+'"><b>'+esc(c.label)+'</b><span>'+esc(c.sub)+'</span></th>'; }).join('')+'<th class="cw-notes">Actions</th></tr></thead><tbody>';
   postes.forEach(function(p){
     var note = chokkoNote(l, p[0], y, m);
@@ -7272,8 +7285,8 @@ function waitImages(root){
   return Promise.all(imgs.map(function(i){ return (i.decode ? i.decode() : Promise.resolve()).catch(function(){}); }));
 }
 async function printChokkoSynthese(){
-  var savedView = chokkoView;
-  chokkoView = 'saisie';
+  var savedView = chokkoView, savedMode = chokkoGridMode;
+  chokkoView = 'saisie'; chokkoGridMode = 'jour';
   render();
   // Graphique CHOKKO : remplacé à l'impression par une image dessinée au format de la page (le graphique écran serait coupé)
   var box = document.getElementById('chart-chokko-postes');
@@ -7295,8 +7308,8 @@ async function printChokkoSynthese(){
   if(gridWrap){
     weekDiv = document.createElement('div'); weekDiv.innerHTML = chokkoWeeklyPrintHtml();
     weekDiv = weekDiv.firstChild;
-    gridWrap.parentNode.insertBefore(weekDiv, gridWrap.nextSibling);
-    gridWrap.classList.add('screen-only');
+    var afterGrid = gridWrap.nextElementSibling && gridWrap.nextElementSibling.tagName==='P' ? gridWrap.nextElementSibling : gridWrap;   // après la légende des objectifs
+    afterGrid.parentNode.insertBefore(weekDiv, afterGrid.nextSibling);
   }
   var host = document.querySelector('#view .section') || document.getElementById('view');
   var div = document.createElement('div'); div.id = 'chokko-synth-print';
@@ -7310,9 +7323,9 @@ async function printChokkoSynthese(){
     var d = document.getElementById('chokko-synth-print'); if(d) d.remove();
     if(chartImg) chartImg.remove();
     if(weekDiv) weekDiv.remove();
-    if(gridWrap) gridWrap.classList.remove('screen-only');
     if(box) box.classList.remove('screen-only');
-    if(savedView!=='saisie'){ chokkoView = savedView; render(); }
+    chokkoGridMode = savedMode;
+    if(savedView!=='saisie' || savedMode!=='jour'){ chokkoView = savedView; render(); }
   };
   window.addEventListener('afterprint', cleanup);
   setTimeout(cleanup, 5000);
@@ -7731,7 +7744,12 @@ function chokkoSaisieView(){
     '</div>'+
   '</div>';
 
-  html += '<div class="table-wrap" style="overflow-x:auto;"><table class="chokko-grid"><thead><tr>'+
+  html += '<div class="chk-gridmode chokko-noprint"><span class="tiny">Affichage :</span>'+
+    '<button class="btn small'+(chokkoGridMode==='jour'?' primary':'')+'" data-action="chokko-gridmode" data-m="jour">Par jour</button>'+
+    '<button class="btn small'+(chokkoGridMode==='semaine'?' primary':'')+'" data-action="chokko-gridmode" data-m="semaine">Par semaine</button>'+
+    (chokkoGridMode==='semaine'? '<span class="tiny" style="color:var(--text-faint);">Lecture seule : la saisie se fait dans la vue par jour.</span>' : '')+'</div>';
+  if(chokkoGridMode==='semaine') html += chokkoWeeklyHtml(false);
+  html += '<div class="table-wrap'+(chokkoGridMode==='semaine'?' chk-day-hidden':'')+'" style="overflow-x:auto;"><table class="chokko-grid"><thead><tr>'+
     '<th class="chk-sticky" style="min-width:230px; text-align:left; background:#F2F2F2;">DEFAUTS / JOURS</th>'+
     days.map(function(d){ return '<th style="min-width:34px;">'+d.day+'</th>'; }).join('')+
     '<th style="min-width:55px;">TOTAL NC</th>'+
@@ -12550,6 +12568,8 @@ app.addEventListener('click', async function(e){
     if(DATA.rebutCodes) delete DATA.rebutCodes[chokkoLigne];
     await save('rebutCodes'); render(); return;
   }
+  var gmBtn = e.target.closest('[data-action="chokko-gridmode"]');
+  if(gmBtn){ chokkoGridMode = gmBtn.dataset.m; try{ localStorage.setItem('chokko_gridmode_v1', chokkoGridMode); }catch(err){} render(); return; }
   var chokkoViewBtn = e.target.closest('[data-action="chokko-view"]');
   if(chokkoViewBtn){ chokkoView = chokkoViewBtn.dataset.view; render(); return; }
   if(e.target.closest('[data-action="chokko-print"]')){ await printChokkoSynthese(); return; }
