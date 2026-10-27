@@ -743,6 +743,7 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 .chokko-grid tbody tr.chk-team-row td.chk-team-total, .chokko-grid tbody tr.chk-team-row td.chk-wk-team:last-of-type{font-weight:700; color:#000;}
 @media print{ .chokko-grid.chokko-grid tbody tr.chk-nc-row td.chk-sticky{color:#C0272D !important;} }
 @media print{ .chokko-grid tbody td.chk-sticky{-webkit-print-color-adjust:exact; print-color-adjust:exact;} }
+@media print{ .chokko-grid-week td{-webkit-print-color-adjust:exact; print-color-adjust:exact;} }
 .chokko-grid input.chokko-cost-cell{font-size:10.5px; font-weight:700; padding-left:1px; padding-right:1px;}
 .chokko-grid input.chokko-cost-cell::-webkit-outer-spin-button, .chokko-grid input.chokko-cost-cell::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
 .chokko-grid .lvl-ok{color:var(--ok);} .chokko-grid .lvl-warn{color:var(--warn);} .chokko-grid .lvl-danger{color:var(--danger);}
@@ -7236,11 +7237,21 @@ function chokkoPeriodStats(ligne, dates){
 }
 var chokkoGridMode = (function(){ try{ return localStorage.getItem('chokko_gridmode_v1') || 'jour'; }catch(e){ return 'jour'; } })();
 function chokkoWeeklyPrintHtml(){ return chokkoWeeklyHtml(true); }
+// Couleurs posées dans la vue par jour, reportées sur la vue par semaine :
+// une cellule de semaine prend la couleur la plus présente parmi ses jours (à égalité, celle du jour le plus récent).
+function chokkoWeekHighlight(ligne, dates, suffixFn){
+  var hl = DATA.chokkoHighlights[ligne] || {}, cnt = {}, last = {}, best = null;
+  dates.forEach(function(d, i){ var c = hl[suffixFn(d)]; if(!c) return; cnt[c] = (cnt[c]||0)+1; last[c] = i; });
+  Object.keys(cnt).forEach(function(c){ if(!best || cnt[c]>cnt[best] || (cnt[c]===cnt[best] && last[c]>last[best])) best = c; });
+  return best;
+}
+function chokkoHlStyle(c, bold){ return c ? ' style="background:'+c+'; color:'+contrastTextColor(c)+';'+(bold?' font-weight:700;':'')+'"' : (bold?' style="font-weight:700;"':''); }
 function chokkoWeeklyHtml(forPrint){
   var l = chokkoLigne, y = chokkoYear, m = chokkoMonth;
+  var hlL = DATA.chokkoHighlights[l] || {};
   var weeks = chokkoMonthWeeks(y, m);
   var monthDates = chokkoMonthDays(l, y, m).map(function(d){ return d.date; });
-  var cols = weeks.map(function(w){ return {label:'S'+w.week, sub:fmtDate(w.from).slice(0,5)+' → '+fmtDate(w.to).slice(0,5), st:chokkoPeriodStats(l, w.days)}; });
+  var cols = weeks.map(function(w){ return {label:'S'+w.week, sub:fmtDate(w.from).slice(0,5)+' → '+fmtDate(w.to).slice(0,5), st:chokkoPeriodStats(l, w.days), days:w.days}; });
   var mst = chokkoPeriodStats(l, monthDates);
   var postes = chokkoPostes(l);
   var moisNom = MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1);
@@ -7254,9 +7265,9 @@ function chokkoWeeklyHtml(forPrint){
     '<th style="min-width:70px;">TOTAL MOIS</th><th style="min-width:200px; text-align:left;">ACTIONS</th></tr></thead><tbody>';
   postes.forEach(function(p){
     var note = chokkoNote(l, p[0], y, m), noteTxt = note ? (note.texte||'') : '';
-    h += '<tr><td class="chk-label chk-sticky">'+esc(p[0])+' - '+esc(p[1])+'</td>'+
-      cols.map(function(c){ return '<td>'+num(c.st.nc[p[0]])+'</td>'; }).join('')+
-      '<td style="font-weight:700;">'+(mst.nc[p[0]]||0)+'</td>'+
+    h += '<tr><td class="chk-label chk-sticky"'+chokkoHlStyle(hlL['label_'+p[0]])+'>'+esc(p[0])+' - '+esc(p[1])+'</td>'+
+      cols.map(function(c){ return '<td'+chokkoHlStyle(chokkoWeekHighlight(l, c.days, function(d){ return d+'_'+p[0]; }))+'>'+num(c.st.nc[p[0]])+'</td>'; }).join('')+
+      '<td'+chokkoHlStyle(hlL['rowtotal_'+p[0]], true)+'>'+(mst.nc[p[0]]||0)+'</td>'+
       '<td class="chk-note-cell"'+(forPrint?'':' data-action="chokko-note-open" data-ligne="'+l+'" data-poste="'+p[0]+'" data-annee="'+y+'" data-mois="'+m+'"')+'><div class="chk-note-preview">'+(noteTxt? esc(noteTxt) : (forPrint?'':'<span class="chk-note-empty">+ Actions menées…</span>'))+'</div></td></tr>';
   });
   CHOKKO_TEAMS.forEach(function(tm){
@@ -7265,7 +7276,7 @@ function chokkoWeeklyHtml(forPrint){
       '<td class="chk-wk-team">'+num(mst.team[tm[0]])+'</td><td></td></tr>';
   });
   h += '<tr class="chk-total-row chk-prod-row"><td class="chk-label-bold chk-sticky">TOTAL PROD</td>'+cols.map(function(c){ return '<td>'+num(c.st.prod)+'</td>'; }).join('')+'<td>'+num(mst.prod)+'</td><td></td></tr>';
-  h += '<tr class="chk-total-row chk-nc-row"><td class="chk-label-bold chk-sticky">TOTAL NC</td>'+cols.map(function(c){ return '<td class="chk-tnc">'+(c.st.prod||c.st.totalNC? c.st.totalNC : '-')+'</td>'; }).join('')+'<td class="chk-tnc">'+mst.totalNC+'</td><td></td></tr>';
+  h += '<tr class="chk-total-row chk-nc-row"><td class="chk-label-bold chk-sticky">TOTAL NC</td>'+cols.map(function(c){ return '<td class="chk-tnc"'+chokkoHlStyle(chokkoWeekHighlight(l, c.days, function(d){ return 'totalnc_'+d; }))+'>'+(c.st.prod||c.st.totalNC? c.st.totalNC : '-')+'</td>'; }).join('')+'<td class="chk-tnc">'+mst.totalNC+'</td><td></td></tr>';
   h += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky">CHOKKO DE LA SEMAINE</td>'+cols.map(function(c){ var v = c.st.pct; return '<td class="'+(v!==null?lvlCls(v).trim():'')+'">'+(v!==null? pct1(v) : '-')+'</td>'; }).join('')+
     '<td class="'+(mst.pct!==null?lvlCls(mst.pct).trim():'')+'">'+(mst.pct!==null? pct1(mst.pct) : '-')+'</td><td class="tiny" style="color:var(--text-faint); font-weight:400;">objectif ≥ '+chokkoObjectif(l)+' %</td></tr>';
   h += '<tr class="chk-cost-row"><td class="chk-label-bold chk-sticky chk-cost-label">COÛT / PIÈCE (€)</td>'+cols.map(function(c){ var v = c.st.cost; return '<td class="lvl-danger" style="font-weight:700;">'+(v!==null? fmtCost(v) : '')+'</td>'; }).join('')+
@@ -11173,10 +11184,9 @@ function applyStatusColorSettings(){
   });
 }
 // Couleur du volet gauche : propre à chaque compte (uiSettings.sidebarColorByUser[idCompte])
-function sidebarColorFor(acc){
-  var m = DATA.uiSettings && DATA.uiSettings.sidebarColorByUser;
-  return (acc && m && m[acc.id]) || null;
-}
+// Couleur du volet : fixe pour tout le monde (Gris bleuté), plus personnalisable
+var SIDEBAR_FIXED_COLOR = '#DDE3E8';
+function sidebarColorFor(acc){ return SIDEBAR_FIXED_COLOR; }
 function currentSidebarColor(){ return sidebarColorFor(currentUser); }
 function setCurrentSidebarColor(color){
   if(!currentUser) return;
@@ -11223,10 +11233,7 @@ function sidebarSettingsModal(){
   return '<div class="modal-overlay sidebar-settings-backdrop">'+
     '<div class="modal-box" style="max-width:460px; max-height:85vh; overflow-y:auto;">'+
     '<h3>Personnaliser le menu</h3>'+
-    '<label class="field" style="margin-bottom:6px;">Couleur du volet</label>'+
-    chokkoColorSwatches('sidebarcolor', cur)+
-    '<button class="btn small" data-action="reset-sidebar-color" style="margin-top:10px; display:block;">Couleur par défaut</button>'+
-    '<div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--border);">'+
+    '<div>'+
       '<label class="field" style="margin-bottom:8px;">Style des icônes</label>'+
       '<div style="display:flex; gap:8px;">'+
         '<button class="btn small'+(iconStyle==='svg'?' primary':'')+'" data-action="set-icon-style" data-style="svg">Icônes traits fins</button>'+
