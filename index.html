@@ -738,6 +738,10 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 /* Lignes importantes : une nuance plus claire de la couleur des intitulés */
 .chokko-grid tr.chk-total-row td:not(.chk-sticky), .chokko-grid tr.chk-chokko-row td:not(.chk-sticky), .chokko-grid tr.chk-cost-row td:not(.chk-sticky){background:#EEF8EA;}
 @media print{ .chokko-grid tr.chk-total-row td, .chokko-grid tr.chk-chokko-row td, .chokko-grid tr.chk-cost-row td{-webkit-print-color-adjust:exact; print-color-adjust:exact;} }
+.chokko-grid.chokko-grid tbody tr.chk-prod-row td, .chokko-grid.chokko-grid tbody tr.chk-prod-row td.chk-sticky{background:#fff;}
+.chokko-grid.chokko-grid tbody tr.chk-nc-row td.chk-sticky{color:#C0272D;}
+.chokko-grid tbody tr.chk-team-row td.chk-team-total, .chokko-grid tbody tr.chk-team-row td.chk-wk-team:last-of-type{font-weight:700; color:#000;}
+@media print{ .chokko-grid.chokko-grid tbody tr.chk-nc-row td.chk-sticky{color:#C0272D !important;} }
 @media print{ .chokko-grid tbody td.chk-sticky{-webkit-print-color-adjust:exact; print-color-adjust:exact;} }
 .chokko-grid input.chokko-cost-cell{font-size:10.5px; font-weight:700; padding-left:1px; padding-right:1px;}
 .chokko-grid input.chokko-cost-cell::-webkit-outer-spin-button, .chokko-grid input.chokko-cost-cell::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
@@ -7256,8 +7260,8 @@ function chokkoWeeklyHtml(forPrint){
       cols.map(function(c){ return '<td class="chk-wk-team">'+num(c.st.team[tm[0]])+'</td>'; }).join('')+
       '<td class="chk-wk-team">'+num(mst.team[tm[0]])+'</td><td></td></tr>';
   });
-  h += '<tr class="chk-total-row"><td class="chk-label-bold chk-sticky">TOTAL PROD</td>'+cols.map(function(c){ return '<td>'+num(c.st.prod)+'</td>'; }).join('')+'<td>'+num(mst.prod)+'</td><td></td></tr>';
-  h += '<tr class="chk-total-row"><td class="chk-label-bold chk-sticky">TOTAL NC</td>'+cols.map(function(c){ return '<td class="chk-tnc">'+(c.st.prod||c.st.totalNC? c.st.totalNC : '-')+'</td>'; }).join('')+'<td class="chk-tnc">'+mst.totalNC+'</td><td></td></tr>';
+  h += '<tr class="chk-total-row chk-prod-row"><td class="chk-label-bold chk-sticky">TOTAL PROD</td>'+cols.map(function(c){ return '<td>'+num(c.st.prod)+'</td>'; }).join('')+'<td>'+num(mst.prod)+'</td><td></td></tr>';
+  h += '<tr class="chk-total-row chk-nc-row"><td class="chk-label-bold chk-sticky">TOTAL NC</td>'+cols.map(function(c){ return '<td class="chk-tnc">'+(c.st.prod||c.st.totalNC? c.st.totalNC : '-')+'</td>'; }).join('')+'<td class="chk-tnc">'+mst.totalNC+'</td><td></td></tr>';
   h += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky">CHOKKO DE LA SEMAINE</td>'+cols.map(function(c){ var v = c.st.pct; return '<td class="'+(v!==null?lvlCls(v).trim():'')+'">'+(v!==null? pct1(v) : '-')+'</td>'; }).join('')+
     '<td class="'+(mst.pct!==null?lvlCls(mst.pct).trim():'')+'">'+(mst.pct!==null? pct1(mst.pct) : '-')+'</td><td class="tiny" style="color:var(--text-faint); font-weight:400;">objectif ≥ '+chokkoObjectif(l)+' %</td></tr>';
   h += '<tr class="chk-cost-row"><td class="chk-label-bold chk-sticky chk-cost-label">COÛT / PIÈCE (€)</td>'+cols.map(function(c){ var v = c.st.cost; return '<td class="lvl-danger" style="font-weight:700;">'+(v!==null? fmtCost(v) : '')+'</td>'; }).join('')+
@@ -7845,7 +7849,7 @@ function chokkoSaisieView(){
   html += '<div class="table-wrap'+(chokkoGridMode==='semaine'?' chk-day-hidden':'')+'" style="overflow-x:auto;"><table class="chokko-grid"><thead><tr>'+
     '<th class="chk-sticky" style="min-width:230px; text-align:left; background:#F2F2F2;">DEFAUTS / JOURS</th>'+
     days.map(function(d){ return '<th style="min-width:34px;">'+d.day+'</th>'; }).join('')+
-    '<th style="min-width:55px;">TOTAL NC</th>'+
+    '<th style="min-width:55px;">TOTAL</th>'+
     '<th style="min-width:200px; text-align:left;">ACTIONS</th>'+
   '</tr></thead><tbody>';
 
@@ -7892,16 +7896,16 @@ function chokkoSaisieView(){
       var v = e && e.prod[team[0]]!==undefined ? e.prod[team[0]] : '';
       return '<td><input type="number" min="0" class="chk-cell chokko-prod-cell" data-ligne="'+ligne+'" data-date="'+d.date+'" data-team="'+team[0]+'" value="'+v+'"></td>';
     }).join('');
-    html += '<td></td><td></td></tr>';
+    html += '<td id="chokko-team-total-'+team[0]+'" class="chk-team-total">'+chokkoTeamMonthTotal(ligne, days, team[0])+'</td><td></td></tr>';
   });
 
   // TOTAL PROD : modifiable manuellement (ecrase la somme des equipes si renseigne)
-  html += '<tr class="chk-total-row"><td class="chk-label-bold chk-sticky">TOTAL PROD</td>'+
+  html += '<tr class="chk-total-row chk-prod-row"><td class="chk-label-bold chk-sticky">TOTAL PROD</td>'+
     days.map(function(d){
       return '<td><input type="number" min="0" class="chk-cell chokko-prodtotal-cell" id="chokko-total-prod-'+d.date+'" data-ligne="'+ligne+'" data-date="'+d.date+'" value="'+(d.totals.totalProd||'')+'" style="font-weight:700; color:#548235; '+(chokkoTotalsLocked?'background:var(--neutral-bg); cursor:not-allowed;':'')+'" '+(chokkoTotalsLocked?'readonly title="Verrouillé - cliquez sur 🔓 dans la barre d\'outils pour modifier"':'')+'></td>';
     }).join('')+'<td></td><td></td></tr>';
   // TOTAL NC : calcule automatiquement (lecture seule)
-  html += '<tr class="chk-total-row"><td class="chk-label-bold chk-sticky">TOTAL NC</td>'+
+  html += '<tr class="chk-total-row chk-nc-row"><td class="chk-label-bold chk-sticky">TOTAL NC</td>'+
     days.map(function(d){
       var tncHl = DATA.chokkoHighlights[ligne] && DATA.chokkoHighlights[ligne]['totalnc_'+d.date];
       var tncStyle = tncHl? 'background:'+tncHl+'; color:'+contrastTextColor(tncHl)+';' : '';
@@ -8347,8 +8351,12 @@ function chokkoRefreshCost(ligne){
     inp.className = 'chk-cell chokko-cost-cell lvl-'+chokkoCostLevel(c, ligne);
   });
 }
+function chokkoTeamMonthTotal(ligne, days, team){
+  return days.reduce(function(s,d){ var e=chokkoEntry(ligne,d.date); return s+(e && e.prod? Number(e.prod[team]||0) : 0); },0);
+}
 function refreshChokkoTotals(ligne, excludeElId){
   var days = chokkoMonthDays(ligne, chokkoYear, chokkoMonth);
+  CHOKKO_TEAMS.forEach(function(t){ var el = document.getElementById('chokko-team-total-'+t[0]); if(el) el.textContent = chokkoTeamMonthTotal(ligne, days, t[0]); });
   days.forEach(function(d){
     var prodElId = 'chokko-total-prod-'+d.date;
     var prodEl = document.getElementById(prodElId);
@@ -13641,3 +13649,4 @@ init();
 </script>
 </body>
 </html>
+  
