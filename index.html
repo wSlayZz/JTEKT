@@ -460,6 +460,19 @@ tr.releve-recap-sel td:first-child{font-weight:700; box-shadow:inset 4px 0 0 #1F
 #monthly-report{display:none;}
 @media print{
   body.print-monthly-report > *:not(#monthly-report){display:none !important;}
+  body.print-def-report > *:not(#def-print){display:none !important;}
+  body.print-def-report #def-print{display:block !important; font-family:Arial, Helvetica, sans-serif; color:#111;}
+  #def-print .dp-head{display:flex; align-items:center; justify-content:space-between; padding-bottom:8px; margin-bottom:12px; border-bottom:2px solid #1F3864;}
+  #def-print .dp-head img{height:36px; width:auto;}
+  #def-print .dp-head div{text-align:right; font-size:15px;} #def-print .dp-head div span{display:block; font-size:11px; color:#555;}
+  #def-print .dp-title{font-size:22px; font-weight:700; margin-bottom:10px;} #def-print .dp-title span{display:block; font-size:12px; font-weight:400; color:#555; margin-top:2px;}
+  #def-print .dp-kpis{margin-bottom:10px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  #def-print .dp-chart img{width:100%; height:auto; border:1px solid #ddd; display:block;}
+  #def-print .dp-bottom{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px;}
+  #def-print .dp-h3{font-size:13px; font-weight:700; margin-bottom:5px; text-transform:uppercase; letter-spacing:.03em;}
+  #def-print .dp-table{width:100%; border-collapse:collapse; font-size:10.5px;}
+  #def-print .dp-table th{background:#D9E1F2; text-align:left; padding:4px 6px; border:1px solid #B7B7B7; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  #def-print .dp-table td{padding:4px 6px; border:1px solid #B7B7B7; vertical-align:top;}
   body.print-monthly-report #monthly-report{display:block !important; font-family:Arial, Helvetica, sans-serif; color:#111; font-size:11px;}
   .mr-page{page-break-after:always; break-after:page; position:relative; min-height:270mm;}
   .mr-page:last-child{page-break-after:auto; break-after:auto;}
@@ -609,6 +622,7 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 .chokko-grid td.chk-wk-team{font-weight:700; color:#000;}
 .chokko-grid-week td{padding:4px 6px;}
 #chokko-print-head{display:none;}
+#def-print{display:none;}
 @media print{
   body.print-chokko-synth header.top{display:none !important;}
   body.print-chokko-synth .chokko-grid th:last-child, body.print-chokko-synth .chokko-grid td:last-child{display:none !important;}
@@ -623,7 +637,8 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
   body.print-chokko-synth .chokko-grid-week td{padding:2px 6px !important;}
   body.print-chokko-synth .chokko-chart-print img{margin-top:2px;}
   body.print-chokko-synth .card{padding:8px 12px !important; margin-bottom:6px !important;}
-  .chokko-synth-rebut{break-inside:avoid; page-break-inside:avoid; margin-top:10px;}
+  .chokko-synth-rebut{margin-top:0;}
+  .chokko-synth-rebut + .chokko-actions-print{margin-top:18px;}
   .chokko-synth-rebut .chokko-synth-title{font-size:15px; margin-bottom:6px;}
   .chokko-synth-rebut .chokko-synth-kpis{margin-bottom:6px;}
   .chokko-synth-rebut .chokko-synth-kpis div{padding:4px 10px; flex-direction:row; justify-content:space-between; align-items:baseline;}
@@ -7325,7 +7340,7 @@ function chokkoWeeklyHtml(forPrint){
   h += '<tr class="chk-cost-row"><td class="chk-label-bold chk-sticky chk-cost-label">COÛT / PIÈCE (€)</td>'+cols.map(function(c){ var v = c.st.cost; return '<td class="lvl-danger" style="font-weight:700;">'+(v!==null? fmtCost(v) : '')+'</td>'; }).join('')+
     '<td class="lvl-danger" style="font-weight:700;">'+(mst.cost!==null? fmtCost(mst.cost) : '')+'</td><td></td></tr>';
   h += '</tbody></table></div><p class="tiny" style="margin-top:6px; color:var(--text-faint);">Semaines complètes du lundi au dimanche (la première et la dernière peuvent inclure des jours du mois précédent ou suivant). TOTAL MOIS ne compte que les jours de '+esc(MONTHS_FR[m])+'. CHOKKO et coût par pièce : moyenne des jours saisis.</p>';
-  if(forPrint) h += '<div class="chokko-chart-print">'+rptChartImage(buildChokkoWeekChartConfig(l, y, m), 1800, 240)+'</div>';
+  if(forPrint) h += '<div class="chokko-chart-print">'+rptChartImage(buildChokkoWeekChartConfig(l, y, m), 1800, 430)+'</div>';
   return h+'</div>';
 }
 // Graphique par semaine : défauts cumulés par poste + CHOKKO de la semaine
@@ -7390,7 +7405,7 @@ function chokkoSynthRebutHtml(){
   var prevY = m===0 ? y-1 : y, prevM = m===0 ? 11 : m-1;
   var prevTot = rebutMonthTotal(l, prevY, prevM);
   var cumul = 0; for(var i=0;i<=m;i++) cumul += rebutMonthTotal(l, y, i);
-  var h = '<div class="print-only chokko-synth chokko-synth-rebut">'+
+  var h = '<div class="print-only print-page-break chokko-synth chokko-synth-rebut">'+
     '<div class="chokko-synth-title">Coût rebut - '+esc(l)+' - '+esc(moisNom)+' '+y+'</div>'+
     '<div class="chokko-synth-kpis">'+
       '<div><span>Coût rebut du mois</span><b>'+(res.total? fmtEur(res.total) : '0,00 €')+'</b></div>'+
@@ -7399,7 +7414,7 @@ function chokkoSynthRebutHtml(){
     '</div>';
   if(!res.total) return h+'<p>Aucun coût rebut saisi pour ce mois.</p></div>';
   h += '<p class="chokko-synth-reading">'+res.nA+' code(s) défaut sur '+res.rows.length+' représentent '+paretoFmtPct(res.rows.filter(function(r){ return r.cls==='A'; }).reduce(function(s,r){ return s+r.pct; },0))+' du coût rebut du mois. Priorité n°1 : <b>'+esc(res.rows[0].label)+'</b> ('+fmtEur(res.rows[0].value)+').</p>';
-  h += '<div class="chokko-synth-body"><div class="chokko-synth-chart">'+rptChartImage(paretoChartConfig(res, {unit:'€'}, false), 1300, 330)+'</div>'+
+  h += '<div class="chokko-synth-body"><div class="chokko-synth-chart">'+rptChartImage(paretoChartConfig(res, {unit:'€'}, false), 1300, 520)+'</div>'+
     '<table class="chokko-synth-table"><thead><tr><th>#</th><th>Code défaut</th><th class="n">Montant</th><th class="n">%</th><th class="n">Cumul</th></tr></thead><tbody>'+
     res.rows.map(function(r, i){ return '<tr'+(r.cls==='A'?' class="a"':'')+'><td>'+(i+1)+'</td><td>'+esc(r.label)+'</td><td class="n"><b>'+fmtEur(r.value)+'</b></td><td class="n">'+paretoFmtPct(r.pct)+'</td><td class="n">'+paretoFmtPct(r.cum)+'</td></tr>'; }).join('')+
     '<tr class="t"><td></td><td>Total</td><td class="n"><b>'+fmtEur(res.total)+'</b></td><td class="n">100 %</td><td></td></tr></tbody></table></div>';
@@ -7438,12 +7453,11 @@ async function printChokkoSynthese(){
     var chartCard = box ? box.closest('.card') : null;   // après le graphique par jour
     var afterGrid = chartCard || (gridWrap.nextElementSibling && gridWrap.nextElementSibling.tagName==='P' ? gridWrap.nextElementSibling : gridWrap);
     afterGrid.parentNode.insertBefore(weekDiv, afterGrid.nextSibling);
-    actDiv = document.createElement('div'); actDiv.className = 'print-only'; actDiv.innerHTML = chokkoSynthActionsHtml();
-    afterGrid.parentNode.insertBefore(actDiv, weekDiv);
   }
   var host = document.querySelector('#view .section') || document.getElementById('view');
   var div = document.createElement('div'); div.id = 'chokko-synth-print';
-  div.innerHTML = (actDiv ? '' : chokkoSynthActionsHtml()) + chokkoSynthRebutHtml();
+  // Page 3 : coût rebut puis actions menées
+  div.innerHTML = chokkoSynthRebutHtml() + chokkoSynthActionsHtml();
   host.appendChild(div);
   // En-tête imprimé avec le logo Acurion ; la colonne ACTIONS des tableaux est masquée (reprise dans un tableau à part)
   var head = document.createElement('div'); head.id = 'chokko-print-head'; head.className = 'print-only';
@@ -8171,7 +8185,8 @@ function chokkoDefautsView(){
     '<div class="defs-periods">'+CHOKKO_DEF_PERIODS.map(function(pp){ return '<button class="btn small'+(pp[0]===chokkoDefPeriod?' primary':'')+'" data-action="chokko-def-period" data-p="'+pp[0]+'">'+pp[1]+'</button>'; }).join('')+'</div>'+
     (chokkoDefPeriod==='perso'? '<div class="defs-dates"><label class="field" style="margin:0;">Du<input type="date" id="chokko-def-from" value="'+esc(range.from)+'"></label><label class="field" style="margin:0;">Au<input type="date" id="chokko-def-to" value="'+esc(range.to)+'"></label></div>' : '')+
   '</div>'+
-  '<button class="btn small" data-action="chokko-def-action" title="Créer une action sur ce défaut">+ Action'+(openLinked.length? ' <span class="tiny">('+openLinked.length+' en cours)</span>' : '')+'</button></div>';
+  '<div style="display:flex; gap:6px; align-items:flex-start;"><button class="btn small" data-action="chokko-def-print" title="Imprimer le suivi de ce défaut (1 page A3)">🖨️ Imprimer</button>'+
+  '<button class="btn small" data-action="chokko-def-action" title="Créer une action sur ce défaut">+ Action'+(openLinked.length? ' <span class="tiny">('+openLinked.length+' en cours)</span>' : '')+'</button></div></div>';
 
   h += '<div class="defs-kpis">'+
     '<div class="defs-kpi"><div class="tiny">Défauts du '+(range.from.slice(0,4)===range.to.slice(0,4) ? fmtDate(range.from).slice(0,5) : fmtDate(range.from))+' au '+fmtDate(range.to)+'</div><div class="defs-v">'+S.n.toLocaleString('fr-FR')+'</div></div>'+
@@ -8205,6 +8220,9 @@ function renderChokkoDefChart(){
   if(typeof Chart==='undefined') return;
   var ctx = document.getElementById('chart-chokko-def'); if(!ctx) return;
   if(chartChokkoDef){ chartChokkoDef.destroy(); chartChokkoDef = null; }
+  try{ chartChokkoDef = new Chart(ctx, buildChokkoDefChartConfig()); }catch(err){ console.error('suivi défaut', err); }
+}
+function buildChokkoDefChartConfig(forPrint){
   var series = chokkoDefFill(chokkoLigne, chokkoDefPoste, chokkoDefBucketsFor(chokkoDefRange()));
   var trend = chokkoDefTrendLine(series);
   var ds = [{type:'bar', label:'Défauts', data:series.map(function(b){ return b.days? b.n : null; }), backgroundColor:series.map(function(b){ return b.inProgress ? '#B2764A55' : '#B2764ACC'; }), borderColor:'#B2764A', borderWidth:1, borderRadius:3, order:2}];
@@ -8212,14 +8230,57 @@ function renderChokkoDefChart(){
     ds.push({type:'line', label:'Tendance', data:series.map(function(b, i){ return (i>=trend.first && i<=trend.last) ? Math.max(0, Math.round((trend.a*i+trend.b)*10)/10) : null; }),
       borderColor:'#1F3864', borderDash:[7,5], borderWidth:2, pointRadius:0, spanGaps:true, order:1});
   }
-  try{
-    chartChokkoDef = new Chart(ctx, {data:{labels:series.map(function(b){ return b.label; }), datasets:ds},
+  var fs = forPrint ? 22 : undefined;
+  if(forPrint) ds[0].datalabels = {display:false};
+  return {data:{labels:series.map(function(b){ return b.label; }), datasets:ds},
       options:{responsive:true, maintainAspectRatio:false, animation:false,
-        plugins:{legend:{position:'bottom'}, tooltip:{filter:function(it){ return it.datasetIndex===0; }, callbacks:{
+        plugins:{legend:{position:'bottom', labels:fs?{font:{size:fs}}:{}}, tooltip:{filter:function(it){ return it.datasetIndex===0; }, callbacks:{
           label:function(c){ return c.raw===null ? ' Pas de saisie' : ' '+c.raw+' défaut'+(c.raw>1?'s':''); }
         }}},
-        scales:{y:{beginAtZero:true, title:{display:true, text:'Nombre de défauts'}, ticks:{precision:0}}, x:{ticks:{maxRotation:50, autoSkip:true}}}}});
-  }catch(err){ console.error('suivi défaut', err); }
+        scales:{y:{beginAtZero:true, title:{display:true, text:'Nombre de défauts', font:fs?{size:fs}:{}}, ticks:{precision:0, font:fs?{size:fs}:{}}}, x:{ticks:{maxRotation:50, autoSkip:true, font:fs?{size:fs-2}:{}}}}}};
+}
+// Impression du suivi du défaut affiché : une page A3 paysage
+async function printChokkoDefReport(){
+  var ligne = chokkoLigne, posteId = chokkoDefPoste;
+  var postes = chokkoDefPostesWithCounts(ligne);
+  var poste = postes.filter(function(p){ return p.id===posteId; })[0];
+  if(!poste){ toast('Aucun défaut sélectionné.', 'error'); return; }
+  var range = chokkoDefRange();
+  var per = (CHOKKO_DEF_PERIODS.filter(function(pp){ return pp[0]===chokkoDefPeriod; })[0]||['',''])[1];
+  var kpisEl = document.querySelector('.defs-kpis');
+  var linked = actionsLinkedTo('chokko', ligne+'|'+posteId);
+  var notes = DATA.chokkoNotes.filter(function(n){ return n.ligne===ligne && n.poste===posteId && (n.texte||'').trim(); })
+    .sort(function(a,b){ return (b.annee*12+b.mois)-(a.annee*12+a.mois); }).slice(0,8);
+  var logoEl = document.querySelector('.sidebar-logo-full');
+  var chart = '';
+  try{ chart = rptChartImage(buildChokkoDefChartConfig(true), 2200, 820); }catch(e){ console.error('impression suivi défaut', e); }
+  var h = '<div class="dp-head">'+(logoEl && logoEl.src ? '<img src="'+logoEl.src+'" alt="Acurion">' : '<span></span>')+
+      '<div><b>Suivi des défauts · '+esc(ligne)+'</b><span>Édité le '+fmtDate(todayStr())+(currentUser? ' par '+esc(currentUser.displayName) : '')+'</span></div></div>'+
+    '<div class="dp-title">'+esc(poste.id+' - '+poste.label)+'<span>Période : '+esc(per)+' · du '+fmtDate(range.from)+' au '+fmtDate(range.to)+'</span></div>'+
+    (kpisEl ? '<div class="defs-kpis dp-kpis">'+kpisEl.innerHTML+'</div>' : '')+
+    '<div class="dp-chart">'+(chart || '<p class="tiny">Aucune saisie CHOKKO sur cette période.</p>')+'</div>';
+  if(linked.length || notes.length){
+    h += '<div class="dp-bottom">';
+    h += '<div><div class="dp-h3">Actions sur ce défaut</div>'+(linked.length? '<table class="dp-table"><thead><tr><th>Statut</th><th>Action</th><th>Responsable</th><th>Échéance</th></tr></thead><tbody>'+linked.slice(0,8).map(function(a){
+        var meta = actionPanelCategory(a)==='late' ? {label:'En retard'} : actionMeta(a);
+        return '<tr><td>'+esc(meta.label)+'</td><td>'+esc(a.description||'')+'</td><td>'+esc(a.responsable||'')+'</td><td>'+(a.echeance? fmtDate(a.echeance) : '')+'</td></tr>';
+      }).join('')+'</tbody></table>' : '<p class="tiny">Aucune action liée.</p>')+'</div>';
+    h += '<div><div class="dp-h3">Notes d\'actions CHOKKO</div>'+(notes.length? '<table class="dp-table"><thead><tr><th>Mois</th><th>Actions menées</th></tr></thead><tbody>'+notes.map(function(n){
+        return '<tr><td style="white-space:nowrap;">'+esc(MONTHS_FR[n.mois])+' '+n.annee+'</td><td style="white-space:pre-wrap;">'+esc(n.texte)+'</td></tr>';
+      }).join('')+'</tbody></table>' : '<p class="tiny">Aucune note.</p>')+'</div>';
+    h += '</div>';
+  }
+  var old = document.getElementById('def-print'); if(old) old.remove();
+  var sheet = document.createElement('div'); sheet.id = 'def-print'; sheet.innerHTML = h;
+  document.body.appendChild(sheet);
+  document.body.classList.add('print-def-report');
+  await waitImages(sheet);
+  var done = false;
+  var cleanup = function(){ if(done) return; done = true; window.removeEventListener('afterprint', cleanup); document.body.classList.remove('print-def-report'); var sh = document.getElementById('def-print'); if(sh) sh.remove(); };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(cleanup, 5000);
+  logChange('CHOKKO', 'Impression suivi défaut', ligne+' - '+posteId);
+  setTimeout(function(){ printWithPageSize('A3 landscape'); }, 60);
 }
 
 function chokkoRecapView(){
@@ -12632,6 +12693,7 @@ app.addEventListener('click', async function(e){
   }
 
   if(e.target.closest('[data-action="logout"]')){ handleLogout(); return; }
+  if(e.target.closest('[data-action="chokko-def-print"]')){ printChokkoDefReport(); return; }
   var dashChk = e.target.closest('[data-action="dash-goto-chokko"]');
   if(dashChk){ currentTab = 'chokko'; chokkoView = 'saisie'; chokkoLigne = dashChk.dataset.ligne; renderNav(); render(); return; }
   var toggleRoleSub = e.target.closest('[data-action="toggle-role-sub"]');
