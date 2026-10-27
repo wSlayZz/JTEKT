@@ -609,6 +609,8 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 .chokko-grid td.chk-wk-team{font-weight:700; color:#000;}
 .chokko-grid-week td{padding:4px 6px;}
 .chk-empty-postes{background:var(--warn-bg); border-color:var(--warn-border); margin-bottom:14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+.chk-obj-edit{border:none; background:none; cursor:pointer; color:var(--accent); font-size:13px; padding:0 2px;}
+.chk-obj-edit:hover{color:var(--text);}
 /* Paramètres */
 .param-page .param-intro{color:var(--text-faint); margin:0 0 10px;}
 .param-subtabs{flex-wrap:wrap;}
@@ -7385,6 +7387,37 @@ async function printChokkoSynthese(){
   logChange('CHOKKO', 'Export PDF', chokkoLigne+' - '+MONTHS_FR[chokkoMonth]+' '+chokkoYear);
   setTimeout(function(){ printWithPageSize('A3 landscape'); }, 60);
 }
+// Objectifs de la ligne modifiables directement par les utilisateurs du suivi CHOKKO (même réglage que Paramètres › Objectifs)
+var chokkoObjEditOpen = false;
+function chokkoObjModalHtml(){
+  if(!chokkoObjEditOpen) return '';
+  var l = chokkoLigne;
+  return '<div class="modal-overlay chokko-obj-backdrop"><div class="modal-box" style="max-width:420px;">'+
+    '<h3>Objectifs de '+esc(l)+'</h3>'+
+    '<label class="field" style="margin-top:10px;">Objectif CHOKKO (%)<input type="text" inputmode="decimal" id="cobj-pct" value="'+String(chokkoObjectif(l)).replace('.',',')+'"></label>'+
+    '<label class="field" style="margin-top:10px;">Objectif coût par pièce (€)<input type="text" inputmode="decimal" id="cobj-cost" value="'+String(chokkoCostObjectif(l)).replace('.',',')+'"></label>'+
+    '<p class="tiny" style="margin-top:8px; color:var(--text-faint);">Le CHOKKO est vert au-dessus de l\'objectif, orange dans la marge de '+String(Number(cfg('chokkoMarge'))||0).replace('.',',')+' point(s) en dessous, rouge au-delà. Ces objectifs ne concernent que la ligne '+esc(l)+'.</p>'+
+    '<div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="chokko-obj-close">Annuler</button><button class="btn primary" data-action="chokko-obj-save">Enregistrer</button></div>'+
+  '</div></div>';
+}
+async function chokkoObjSave(){
+  var l = chokkoLigne;
+  var p = Number(String((document.getElementById('cobj-pct')||{}).value||'').replace(',', '.'));
+  var c = Number(String((document.getElementById('cobj-cost')||{}).value||'').replace(',', '.'));
+  if(!(p>0 && p<=100)){ toast('Objectif CHOKKO : une valeur entre 0 et 100 %.', 'error'); return; }
+  if(!(c>=0)){ toast('Objectif coût par pièce : valeur invalide.', 'error'); return; }
+  DATA.appConfig = DATA.appConfig || {};
+  var o1 = cfgClone(cfg('chokkoObj')) || {}, o2 = cfgClone(cfg('chokkoCostObj')) || {};
+  var before = chokkoObjectif(l)+' % / '+chokkoCostObjectif(l)+' €';
+  o1[l] = Math.round(p*100)/100; o2[l] = Math.round(c*10000)/10000;
+  DATA.appConfig.chokkoObj = o1; DATA.appConfig.chokkoCostObj = o2;
+  chokkoObjEditOpen = false;
+  await save('appConfig');
+  applyAppConfig(true);
+  logChange('CHOKKO', 'Objectifs '+l, before+' → '+o1[l]+' % / '+o2[l]+' €');
+  toast('Objectifs de '+l+' enregistrés.');
+  render();
+}
 RENDERERS.chokko = function(){
   if(chokkoLines().indexOf(chokkoLigne)<0) chokkoLigne = chokkoLines()[0];   // changement de secteur
   var html = futureDataBannerHtml()+'<div class="section"><div class="subtabs">'+
@@ -7412,6 +7445,7 @@ RENDERERS.chokko = function(){
   html += chokkoView==='saisie' ? chokkoSaisieView() : chokkoView==='defauts' ? chokkoDefautsView() : chokkoView==='rebuts' ? rebutsView() : chokkoRecapView();
   html += '</div>';
   if(chokkoWizardOpen) html += chokkoWizardPickerModal();
+  html += chokkoObjModalHtml();
   if(chokkoImportOpen) html += chokkoImportModal();
   if(chokkoManagePostesOpen) html += chokkoManagePostesModal(chokkoLigne);
   if(chokkoNoteModal) html += chokkoNoteModalHtml();
@@ -7794,11 +7828,11 @@ function chokkoSaisieView(){
     '<div style="display:flex; gap:12px; margin-left:auto;">'+
       '<div class="statcard" style="padding:12px 20px; min-width:150px;"><div class="tiny">Chokko du mois</div>'+
         '<div id="chokko-month-avg" style="font-family:var(--mono); font-weight:700; font-size:28px; color:var(--'+chokkoLevelVsObjectif(monthAvg, ligne)+');">'+(monthAvg!==null?pct1(monthAvg)+'%':'-')+'</div>'+
-        '<div class="tiny" id="chokko-month-objectif" style="margin-top:2px; color:var(--text-faint);">Objectif : ≥ '+chokkoObjectif(ligne)+'%</div>'+
+        '<div class="tiny" id="chokko-month-objectif" style="margin-top:2px; color:var(--text-faint);">Objectif : ≥ '+String(chokkoObjectif(ligne)).replace('.',',')+'% <button class="chk-obj-edit chokko-noprint" data-action="chokko-obj-open" title="Modifier les objectifs de '+esc(ligne)+'">✎</button></div>'+
       '</div>'+
       '<div class="statcard" style="padding:12px 20px; min-width:150px;"><div class="tiny">Coût par pièce du mois</div>'+
         '<div id="chokko-month-cost" style="font-family:var(--mono); font-weight:700; font-size:28px; color:#C0272D;">'+(monthCost!==null? fmtCost(monthCost)+' €' : '-')+'</div>'+
-        '<div class="tiny" style="margin-top:2px; color:var(--text-faint);">Objectif : &lt; '+chokkoCostObjectif(ligne).toFixed(3).replace('.',',')+' €</div>'+
+        '<div class="tiny" style="margin-top:2px; color:var(--text-faint);">Objectif : &lt; '+chokkoCostObjectif(ligne).toFixed(3).replace('.',',')+' € <button class="chk-obj-edit chokko-noprint" data-action="chokko-obj-open" title="Modifier les objectifs de '+esc(ligne)+'">✎</button></div>'+
       '</div>'+
     '</div>'+
   '</div>';
@@ -9331,7 +9365,7 @@ function secteurAllScore(sid, curY, curM){
   }
   return {score: secteurGaugeScoreFor(sid).score, label:'score de conformité'};
 }
-var MULTISECTEUR_METRIC_OPTIONS = [['all','Score de conformité'],['propr','Propreté'],['perf','Perf'],['metro','Métrologie'],['auto','Automatique (propreté MCU, perf ailleurs)']];
+var MULTISECTEUR_METRIC_OPTIONS = [['all','Score de conformité'],['propr','Propreté'],['perf','Perf'],['metro','Métrologie']];
 var perfProgressYear = null, perfProgressMonth = null;
 function renderPerfAuditProgress(){
   if(perfProgressYear===null){ perfProgressYear = Number(todayStr().split('-')[0]); perfProgressMonth = Number(todayStr().split('-')[1])-1; }
@@ -9379,6 +9413,7 @@ function renderMultiSecteurBanner(){
   var curY = Number(todayStr().split('-')[0]);
   var curM = Number(todayStr().split('-')[1])-1;
   var metric = (DATA.uiSettings && DATA.uiSettings.multiSecteurMetric) || 'all';
+  if(!MULTISECTEUR_METRIC_OPTIONS.some(function(o){ return o[0]===metric; })) metric = 'all';   // ancien choix « automatique » retiré
   var metricLabel = (MULTISECTEUR_METRIC_OPTIONS.find(function(o){return o[0]===metric;})||[])[1] || '';
   var html = '<div class="section card" style="margin-bottom:18px; border:2px solid var(--ok);">';
   html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;">'+
@@ -9393,9 +9428,7 @@ function renderMultiSecteurBanner(){
     var sec = getSecteur(sid);
     if(!sec) return;
     var result;
-    if(metric==='auto'){
-      result = sid==='MCU' ? secteurPropreteScore(sid,curY,curM) : secteurPerfScore(sid,curY,curM);
-    } else if(metric==='propr'){ result = secteurPropreteScore(sid,curY,curM); }
+    if(metric==='propr'){ result = secteurPropreteScore(sid,curY,curM); }
     else if(metric==='perf'){ result = secteurPerfScore(sid,curY,curM); }
     else if(metric==='metro'){ result = secteurMetroScore(sid); }
     else { result = secteurAllScore(sid,curY,curM); }
@@ -12635,6 +12668,9 @@ app.addEventListener('click', async function(e){
     if(DATA.rebutCodes) delete DATA.rebutCodes[chokkoLigne];
     await save('rebutCodes'); render(); return;
   }
+  if(e.target.closest('[data-action="chokko-obj-open"]')){ chokkoObjEditOpen = true; render(); var ci = document.getElementById('cobj-pct'); if(ci){ ci.focus(); ci.select(); } return; }
+  if(e.target.closest('[data-action="chokko-obj-close"]') || (e.target.classList && e.target.classList.contains('chokko-obj-backdrop'))){ chokkoObjEditOpen = false; render(); return; }
+  if(e.target.closest('[data-action="chokko-obj-save"]')){ await chokkoObjSave(); return; }
   var gmBtn = e.target.closest('[data-action="chokko-gridmode"]');
   if(gmBtn){ chokkoGridMode = gmBtn.dataset.m; try{ localStorage.setItem('chokko_gridmode_v1', chokkoGridMode); }catch(err){} render(); return; }
   var chokkoViewBtn = e.target.closest('[data-action="chokko-view"]');
