@@ -608,6 +608,7 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 .chokko-grid .chk-wk-dates{font-size:9.5px; font-weight:400; color:#555; margin-top:1px;}
 .chokko-grid td.chk-wk-team{font-weight:700; color:#000;}
 .chokko-grid-week td{padding:4px 6px;}
+.chk-empty-postes{background:var(--warn-bg); border-color:var(--warn-border); margin-bottom:14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
 /* Paramètres */
 .param-page .param-intro{color:var(--text-faint); margin:0 0 10px;}
 .param-subtabs{flex-wrap:wrap;}
@@ -6126,10 +6127,10 @@ async function handleImportPrisonSheet(){
 var biblioFormOpen = false;
 // ============ ANALYSES PARETO (pilotage en réunion) ============
 var PARETO_SOURCES = [
-  {id:'chokko',          group:'Production', label:'CHOKKO · défauts par poste',                 unit:'défauts', tab:'chokko',   mcu:true, period:true,  lines:'mcu'},
+  {id:'chokko',          group:'Production', label:'CHOKKO · défauts par poste',                 unit:'défauts', tab:'chokko',   period:true,  lines:'secteur'},
   {id:'propre_critere',  group:'Production', label:'Propreté · écarts (NG) par critère',          unit:'écarts',  tab:'proprete', mcu:true, period:true,  lines:'mcu'},
   {id:'propre_poste',    group:'Production', label:'Propreté · écarts (NG) par poste',            unit:'écarts',  tab:'proprete', mcu:true, period:true,  lines:'mcu'},
-  {id:'rebuts_cout',     group:'Production', label:'Coût rebut · par code défaut',              unit:'€',       tab:'chokko',   mcu:true, period:true,  lines:'mcu'},
+  {id:'rebuts_cout',     group:'Production', label:'Coût rebut · par code défaut',              unit:'€',       tab:'chokko',   period:true,  lines:'secteur'},
   {id:'contam',          group:'Production', label:'Contamination · résultats non conformes',     unit:'NC',      tab:'proprete', mcu:true, period:true,  lines:'contam'},
   {id:'prison_defaut',   group:'Qualité',    label:'Prison qualité · pièces bloquées par défaut', unit:'pièces',  tab:'prison',   period:false, lines:'secteur'},
   {id:'prison_ref',      group:'Qualité',    label:'Prison qualité · pièces bloquées par réf.',   unit:'pièces',  tab:'prison',   period:false, lines:'secteur'},
@@ -6635,15 +6636,19 @@ function printMonthlyReport(key){
 }
 
 RENDERERS.bibliotheque = function(){
-  var links = DATA.bibliotheque.slice().sort(function(a,b){ return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'}); });
+  // Bibliothèque propre à chaque secteur (les liens « tous secteurs » apparaissent partout ; les anciens liens sans secteur appartiennent à MCU)
+  var links = DATA.bibliotheque.filter(function(l){ return l.secteur==='*' || (l.secteur||'MCU')===currentSecteur; }).sort(function(a,b){ return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'}); });
+  var secNom = (getSecteur(currentSecteur)||{}).nom || currentSecteur;
+  var canAll = currentUser && (currentUser.roleId===ADMIN_ROLE_ID || userSecteurs().length>1);
   var html = '<div class="section">';
-  html += '<div class="toolbar"><div class="left"><p class="tiny" style="max-width:520px;">Liens vers d\'autres outils utiles (site externe, application, document partagé...).</p></div>'+
+  html += '<div class="toolbar"><div class="left"><p class="tiny" style="max-width:560px;">Liens vers d\'autres outils utiles (site externe, application, document partagé...) pour le secteur <b>'+esc(secNom)+'</b>. Chaque secteur a sa propre bibliothèque.</p></div>'+
     '<button class="btn primary" data-action="toggle-biblio-form">'+(biblioFormOpen?'Annuler':'+ Ajouter un lien')+'</button></div>';
   if(biblioFormOpen){
     html += '<div class="entryform cols2" style="margin-bottom:16px;">'+
       '<label class="field">Nom<input type="text" id="bib-nom" placeholder="Ex. Portail RH"></label>'+
       '<label class="field">Lien (URL)<input type="text" id="bib-url" placeholder="https://…"></label>'+
       '<label class="field full">Description <span class="tiny">(optionnel)</span><input type="text" id="bib-desc"></label>'+
+      (canAll? '<label class="field full" style="flex-direction:row; align-items:center; gap:8px; font-weight:400;"><input type="checkbox" id="bib-all"> Afficher ce lien dans tous les secteurs</label>' : '')+
       '<div class="actions-row" style="grid-column:1/-1;"><button class="btn primary" data-action="save-biblio">Enregistrer</button></div>'+
     '</div>';
   }
@@ -6654,6 +6659,7 @@ RENDERERS.bibliotheque = function(){
       return '<div class="card" style="position:relative;">'+
         '<a href="'+esc(l.url)+'" target="_blank" rel="noopener" style="font-weight:700; text-decoration:none; color:var(--accent); display:block; margin-bottom:4px;">🔗 '+esc(l.nom)+'</a>'+
         (l.description? '<div class="tiny" style="color:var(--text-faint); margin-bottom:8px;">'+esc(l.description)+'</div>' : '')+
+        (l.secteur==='*'? '<span class="tiny" style="color:var(--accent);">Tous les secteurs</span>' : '')+
         '<button class="btn small danger-outline" data-action="delete-biblio" data-id="'+l.id+'" style="position:absolute; top:10px; right:10px;">Suppr.</button>'+
       '</div>';
     }).join('')+'</div>';
@@ -6667,7 +6673,8 @@ async function handleSaveBiblio(){
   var desc = document.getElementById('bib-desc').value.trim();
   if(!nom || !url){ toast('Merci de renseigner un nom et un lien.', 'error'); return; }
   if(!/^https?:\/\//i.test(url)) url = 'https://'+url;
-  DATA.bibliotheque.push({id:uid('biblio'), nom:nom, url:url, description:desc||null});
+  var allEl = document.getElementById('bib-all');
+  DATA.bibliotheque.push({id:uid('biblio'), nom:nom, url:url, description:desc||null, secteur: (allEl && allEl.checked) ? '*' : currentSecteur});
   await save('bibliotheque');
   toast('Lien ajouté.');
   biblioFormOpen = false;
@@ -6894,7 +6901,7 @@ function chokkoEntry(ligne, dateStr){
 }
 function chokkoGetOrCreate(ligne, dateStr){
   var e = chokkoEntry(ligne, dateStr);
-  if(!e){ e = {id:uid('chk'), ligne:ligne, secteur:'MCU', date:dateStr, defects:{}, prod:{}}; DATA.chokko.push(e); }
+  if(!e){ e = {id:uid('chk'), ligne:ligne, secteur:currentSecteur, date:dateStr, defects:{}, prod:{}}; DATA.chokko.push(e); }
   return e;
 }
 function chokkoDayTotals(ligne, dateStr){
@@ -7059,7 +7066,7 @@ var REBUT_CODES_BY_LINE = {
     ['4991','Brasage NG défaut boule'],['4993','Brasage NG défaut pad'],['4994','Brasage NG défaut appro étain'],['5907','Temps de cycle dépassé'],
     ['1108','Récupération après 5S'],['2114','Pièce tombée'],['4984','Pièces tombées / robot appro'],['4983','Contrôle propreté LABO (essai destructif)']]
 };
-function rebutCodesOrigine(ligne){ return REBUT_CODES_BY_LINE[ligne] || REBUT_CODES_DEFAULT; }
+function rebutCodesOrigine(ligne){ return REBUT_CODES_BY_LINE[ligne] || (mcuLines().indexOf(ligne)>=0 ? REBUT_CODES_DEFAULT : []); }
 var rebutYear = null;                 // année affichée
 var rebutParetoPeriod = 'mois';       // 'mois' | 'annee'
 var rebutParetoMonth = null;          // index du mois (0-11) pour le Pareto
@@ -7107,6 +7114,9 @@ function rebutsView(){
     '<div class="rebut-kpi"><span class="tiny">Mois précédent ('+esc(MONTHS_FR[prevM])+')</span><b class="rebut-red">'+(prevTot? fmtEur(prevTot) : '-')+'</b></div>'+
     '<div class="rebut-kpi"><span class="tiny">Cumul '+y+'</span><b class="rebut-red">'+(yearTot? fmtEur(yearTot) : '-')+'</b></div>'+
   '</div>';
+  if(!codes.length && !rebutEditCodes){
+    h += '<div class="card chk-empty-postes" style="margin-bottom:12px;"><b>Aucun code défaut pour '+esc(l)+'.</b> Cliquez sur <b>⚙ Personnaliser les codes défauts</b> pour ajouter les codes de rebut de la ligne (code + libellé).</div>';
+  }
   if(rebutEditCodes){
     h += '<div class="rebut-codes-edit"><p class="tiny" style="margin:0 0 8px; color:var(--text-faint);">Codes défauts de '+esc(l)+' : ajoutez, retirez, renommez ou réordonnez. Le code d\'un défaut qui a déjà des montants ne peut plus être modifié ; s\'il est retiré, ses montants restent affichés en bas du tableau.</p>'+
       '<div class="table-wrap"><table class="param-table"><thead><tr><th>#</th><th>Code</th><th>Défaut</th><th></th></tr></thead><tbody>'+
@@ -7376,8 +7386,9 @@ async function printChokkoSynthese(){
   setTimeout(function(){ printWithPageSize('A3 landscape'); }, 60);
 }
 RENDERERS.chokko = function(){
+  if(chokkoLines().indexOf(chokkoLigne)<0) chokkoLigne = chokkoLines()[0];   // changement de secteur
   var html = futureDataBannerHtml()+'<div class="section"><div class="subtabs">'+
-    LINES.map(function(l){ return '<button data-action="chokko-ligne" data-ligne="'+l+'" class="'+(chokkoLigne===l?'active':'')+'">'+l+'</button>'; }).join('')+
+    chokkoLines().map(function(l){ return '<button data-action="chokko-ligne" data-ligne="'+esc(l)+'" class="'+(chokkoLigne===l?'active':'')+'">'+esc(l)+'</button>'; }).join('')+
   '</div>';
   html += '<div class="toolbar"><div class="left">'+
     '<button class="btn small'+(chokkoView==='saisie'?' primary':'')+'" data-action="chokko-view" data-view="saisie">Saisie</button>'+
@@ -7439,7 +7450,7 @@ function chokkoImportModal(){
     '<h3>Importer un historique CHOKKO depuis Excel</h3>'+
     '<p class="tiny" style="margin-bottom:14px;">Sélectionnez le fichier Excel correspondant à une ligne (toutes les feuilles/mois qu\'il contient seront importés d\'un coup). La structure attendue est celle de vos fichiers CHOKKO habituels (ligne "DEFAUTS / JOURS", postes, équipes A/B/C ou D).</p>'+
     '<label class="field" style="margin-bottom:12px;">Ligne concernée par ce fichier<select id="ci-ligne">'+
-      LINES.map(function(l){ return '<option value="'+l+'"'+(l===chokkoLigne?' selected':'')+'>'+l+'</option>'; }).join('')+
+      chokkoLines().map(function(l){ return '<option value="'+esc(l)+'"'+(l===chokkoLigne?' selected':'')+'>'+esc(l)+'</option>'; }).join('')+
     '</select></label>'+
     '<label class="field" style="margin-bottom:12px;">Année des données<input type="number" id="ci-annee" value="'+chokkoYear+'" style="width:100px;"></label>'+
     '<label class="field" style="margin-bottom:12px;">Fichier Excel (.xlsx)<input type="file" id="ci-file" accept=".xlsx,.xls"></label>'+
@@ -7668,7 +7679,7 @@ function chokkoWizardPickerModal(){
     '<div class="modal-box" style="max-width:380px;">'+
     '<h3>Saisir les résultats du jour</h3>'+
     '<label class="field" style="margin-bottom:12px;">Ligne<select id="wiz-ligne">'+
-      LINES.map(function(l){ return '<option value="'+l+'"'+(l===chokkoLigne?' selected':'')+'>'+l+'</option>'; }).join('')+
+      chokkoLines().map(function(l){ return '<option value="'+esc(l)+'"'+(l===chokkoLigne?' selected':'')+'>'+esc(l)+'</option>'; }).join('')+
     '</select></label>'+
     '<label class="field">Date<input type="date" id="wiz-date" value="'+todayStr()+'"></label>'+
     '<div class="actions-row" style="margin-top:16px;">'+
@@ -7755,10 +7766,15 @@ function chokkoSaisieView(){
   var weeks = chokkoWeekGroups(days);
   var monthAvg = chokkoMonthAverage(ligne, chokkoYear, chokkoMonth);
 
-  var staleLines = LINES.map(function(l){ return {ligne:l, delay:chokkoSaisieDelay(l)}; })
+  var staleLines = chokkoLines().map(function(l){ return {ligne:l, delay:chokkoSaisieDelay(l)}; })
     .filter(function(s){ return s.delay===null || s.delay>=2; });
   var moisNom = MONTHS_FR[chokkoMonth].charAt(0).toUpperCase()+MONTHS_FR[chokkoMonth].slice(1);
-  var html = '<div class="print-only" style="font-size:17px; font-weight:700; margin-bottom:6px;">Suivi CHOKKO - '+esc(ligne)+' - '+moisNom+' '+chokkoYear+
+  var html = '';
+  if(!postes.length){
+    html += '<div class="card chokko-noprint chk-empty-postes"><b>Aucun poste paramétré pour '+esc(ligne)+'.</b> Ajoutez les postes et leurs défauts avec le bouton ⚙️ <b>Gérer les postes</b> (en haut à droite), puis saisissez chaque jour les défauts et la production des équipes.'+
+      ' <button class="btn small primary" data-action="chokko-manage-postes-open">⚙️ Gérer les postes de '+esc(ligne)+'</button></div>';
+  }
+  html += '<div class="print-only" style="font-size:17px; font-weight:700; margin-bottom:6px;">Suivi CHOKKO - '+esc(ligne)+' - '+moisNom+' '+chokkoYear+
     (monthAvg!==null? ' <span style="font-weight:400; font-size:13px;">· Chokko du mois : '+pct1(monthAvg)+'% (objectif ≥ '+chokkoObjectif(ligne)+'%)</span>' : '')+'</div>';
   if(staleLines.length){
     html += '<div class="card chokko-noprint" style="background:var(--warn-bg,#FBEEDC); border-color:var(--warn-border,#E8C088); margin-bottom:14px; display:flex; align-items:center; gap:10px;">'+
@@ -8762,6 +8778,8 @@ function cfgIsCustom(k){ return !!(DATA.appConfig && DATA.appConfig[k]!==undefin
 // Lignes du secteur MCU : celles déclarées dans Comptes > Secteurs
 function mcuLines(){ var s = getSecteur('MCU'); return (s && s.lignes && s.lignes.length) ? s.lignes.slice() : ['MCU1','MCU2','MCU3']; }
 function ciclLines(){ return Object.keys(CICL_LIGNE_REFS); }
+// Suivi CHOKKO : lignes du secteur sélectionné (MCU1-3 pour MCU, PV01… pour PV, etc.)
+function chokkoLines(){ var l = secteurLines(); return (l && l.length) ? l : LINES; }
 var _appCfgSig = null;
 function applyAppConfig(force){
   ensureConfigDefaults();
@@ -8792,7 +8810,7 @@ function applyAppConfig(force){
   BAIN_COLORS = {}; bains.forEach(function(b){ BAIN_COLORS[b.nom] = b.couleur; });
   var ss = c('scoreSeuils'); SCORE_ATTENTION = Number(ss.attention); SCORE_DANGER = Number(ss.danger);
   VIDANGE_INTERVALLE = Number(c('vidange').intervalle) || 90;
-  if(LINES.indexOf(chokkoLigne)<0) chokkoLigne = LINES[0];
+  if(chokkoLines().indexOf(chokkoLigne)<0) chokkoLigne = chokkoLines()[0];
   if(ciclSubTab!=='recap' && ciclSubTab!=='personnel' && !CICL_LIGNE_REFS[ciclSubTab]) ciclSubTab = 'recap';
 }
 // ====================================================================
@@ -8872,8 +8890,11 @@ function pCard(title, help, body, custom){
 }
 // ---- Sections ----
 function paramObjectifsHtml(){
-  var lines = LINES;
-  var h = pCard('Objectifs CHOKKO et coût par pièce', 'Objectif de chaque ligne MCU. Le CHOKKO est vert au-dessus de l\'objectif, orange dans la marge d\'alerte, rouge en dessous.',
+  var lines = [];
+  ((DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT).forEach(function(sec){
+    if(sec.id==='MCU' || (sec.tabs||[]).indexOf('chokko')>=0) (sec.lignes||[]).forEach(function(l){ if(lines.indexOf(l)<0) lines.push(l); });
+  });
+  var h = pCard('Objectifs CHOKKO et coût par pièce', 'Objectif de chaque ligne des secteurs qui ont le suivi CHOKKO (vide = 99 % et 0,035 €). Le CHOKKO est vert au-dessus de l\'objectif, orange dans la marge d\'alerte, rouge en dessous.',
     '<div class="table-wrap"><table class="param-table"><thead><tr><th>Ligne</th><th>Objectif CHOKKO (%)</th><th>Objectif coût par pièce (€)</th></tr></thead><tbody>'+
     lines.map(function(l){ return '<tr><td><b>'+esc(l)+'</b></td><td>'+pNum('chokkoObj.'+l, {step:'0.1', ph:'99'})+'</td><td>'+pNum('chokkoCostObj.'+l, {step:'0.001', ph:'0.035'})+'</td></tr>'; }).join('')+
     '</tbody></table></div>'+
@@ -9315,7 +9336,10 @@ var perfProgressYear = null, perfProgressMonth = null;
 function renderPerfAuditProgress(){
   if(perfProgressYear===null){ perfProgressYear = Number(todayStr().split('-')[0]); perfProgressMonth = Number(todayStr().split('-')[1])-1; }
   var y = perfProgressYear, m = perfProgressMonth;
-  var secteursList = ((DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT).filter(function(s){ return (s.tabs||[]).indexOf('perf')>=0 || s.id==='MCU'; });
+  // Uniquement les secteurs du compte connecté (un technicien ne voit que les siens)
+  var mesSecteurs = userSecteurs();
+  var secteursList = ((DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT).filter(function(s){ return ((s.tabs||[]).indexOf('perf')>=0 || s.id==='MCU') && mesSecteurs.indexOf(s.id)>=0; });
+  if(!secteursList.length) return '';
   var totalLignes = 0, doneLignes = 0;
   var html = '<div class="section card" style="margin-bottom:18px;">';
   html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">'+
@@ -9346,7 +9370,7 @@ function renderPerfAuditProgress(){
     '</div>';
   });
   html += '</div>';
-  html += '<p class="tiny" style="margin-top:10px; color:var(--text-faint);">'+doneLignes+' / '+totalLignes+' ligne(s) auditée(s) ce mois, tous secteurs confondus.</p>';
+  html += '<p class="tiny" style="margin-top:10px; color:var(--text-faint);">'+doneLignes+' / '+totalLignes+' ligne(s) auditée(s) ce mois sur '+(secteursList.length>1? 'vos '+secteursList.length+' secteurs' : 'votre secteur')+'.</p>';
   html += '</div>';
   return html;
 }
@@ -9447,8 +9471,8 @@ function computePriorities(){
     });
   }
   // --- CHOKKO : saisie manquante
-  if(isMCU && has('chokko')){
-    LINES.forEach(function(l){
+  if(has('chokko')){
+    chokkoLines().forEach(function(l){
       var s = chokkoStatusForLine(l);
       if(s.level!=='danger' && s.level!=='warn') return;
       var last = chokkoLastEntry(l);
