@@ -1198,17 +1198,18 @@ var currentUser = null;
 // ============ SECTEURS ============
 var SECTEURS_DEFAULT = [
   {id:'MCU', nom:'MCU', lignes:['MCU1','MCU2','MCU3'], tabs:['dashboard','proprete','perf','metro','chokko','actions','planning','prison','esd','cicl','formations','archives']},
-  {id:'PV',  nom:'PV',  lignes:['PV01','PV02','PV03','PV04'], tabs:['dashboard','perf','metro','actions','planning','archives']},
-  {id:'CR',  nom:'CR',  lignes:['CR03','CR05','CR06','CR08','CR09','CR10'], tabs:['dashboard','perf','metro','actions','planning','archives']},
-  {id:'KA',  nom:'KA',  lignes:['KA03','KA04/05','KA06/07/09','KA14/15/16'], tabs:['dashboard','perf','metro','actions','planning','archives']},
-  {id:'TV',  nom:'TV',  lignes:['TV02'], tabs:['dashboard','perf','metro','actions','planning','archives']},
-  {id:'DA',  nom:'DA',  lignes:['DA03','DA06','DA08','DA10'], tabs:['dashboard','perf','metro','actions','planning','archives']},
-  {id:'VA',  nom:'VA',  lignes:['VA01','VA02','VA03','VA04'], tabs:['dashboard','perf','metro','actions','planning','archives']},
-  {id:'RA',  nom:'RA',  lignes:['RA01','RA02','RA03'], tabs:['dashboard','perf','metro','actions','planning','archives']},
-  {id:'RG',  nom:'RG',  lignes:['RG01','RG02','RG03'], tabs:['dashboard','perf','metro','actions','planning','archives']},
-  {id:'BC',  nom:'BC',  lignes:['BC01','BC02','BC05','BC06'], tabs:['dashboard','perf','metro','actions','planning','archives']}
+  {id:'PV',  nom:'PV',  lignes:['PV01','PV02','PV03','PV04'], tabs:['dashboard','perf','metro','chokko','actions','planning','archives']},
+  {id:'CR',  nom:'CR',  lignes:['CR03','CR05','CR06','CR08','CR09','CR10'], tabs:['dashboard','perf','metro','chokko','actions','planning','archives']},
+  {id:'KA',  nom:'KA',  lignes:['KA03','KA04/05','KA06/07/09','KA14/15/16'], tabs:['dashboard','perf','metro','chokko','actions','planning','archives']},
+  {id:'TV',  nom:'TV',  lignes:['TV02'], tabs:['dashboard','perf','metro','chokko','actions','planning','archives']},
+  {id:'DA',  nom:'DA',  lignes:['DA03','DA06','DA08','DA10'], tabs:['dashboard','perf','metro','chokko','actions','planning','archives']},
+  {id:'VA',  nom:'VA',  lignes:['VA01','VA02','VA03','VA04'], tabs:['dashboard','perf','metro','chokko','actions','planning','archives']},
+  {id:'RA',  nom:'RA',  lignes:['RA01','RA02','RA03'], tabs:['dashboard','perf','metro','chokko','actions','planning','archives']},
+  {id:'RG',  nom:'RG',  lignes:['RG01','RG02','RG03'], tabs:['dashboard','perf','metro','chokko','actions','planning','archives']},
+  {id:'BC',  nom:'BC',  lignes:['BC01','BC02','BC05','BC06'], tabs:['dashboard','perf','metro','chokko','actions','planning','archives']}
 ];
 var currentSecteur = 'MCU';
+var MCU_ONLY_TABS = ['proprete','esd','cicl'];
 function getSecteur(id){ return (DATA.secteurs||[]).find(function(s){return s.id===id;}) || SECTEURS_DEFAULT.find(function(s){return s.id===id;}); }
 function secteurLines(){ var s = getSecteur(currentSecteur); return s? s.lignes : ['MCU1','MCU2','MCU3']; }
 function secteurTabs(){
@@ -1222,6 +1223,9 @@ function secteurTabs(){
   if(tabs.indexOf('bibliotheque')<0) tabs.push('bibliotheque');
   if(tabs.indexOf('pareto')<0) tabs.push('pareto');
   tabs = tabs.filter(function(t){ return t!=='ateq'; });   // onglet ATEQ retiré : le suivi des défauts se fait dans CHOKKO
+  // Modules dont les données ne sont pas rangées par secteur (contamination, ESD, CI/CL des références MCU) :
+  // réservés à MCU, sinon un technicien d'un autre secteur verrait les données MCU.
+  if(currentSecteur!=='MCU') tabs = tabs.filter(function(t){ return MCU_ONLY_TABS.indexOf(t)<0; });
   return tabs;
 }
 // Filtre par secteur : les enregistrements sans champ secteur appartiennent à MCU (données historiques)
@@ -8681,10 +8685,10 @@ RENDERERS.archives = function(){
   html += '<div class="grid grid-2">';
   html += archiveCard('Planning échéances', 'Échéances du mois sélectionné, toutes lignes et types.', 'planning');
   html += archiveCard('Métrologie', 'État actuel complet de la base instruments (photo à la date d\'export, indépendant du mois choisi).', 'metro');
-  html += archiveCard('Propreté - résultats audits', 'Résultats (%) du mois sélectionné.', 'resultats');
+  if(currentSecteur==='MCU') html += archiveCard('Propreté - résultats audits', 'Résultats (%) du mois sélectionné.', 'resultats');
   html += archiveCard('Plan d\'actions', 'Actions créées ou échéant ce mois.', 'actions');
   html += '</div>';
-  html += '<div class="card" style="margin-top:18px;"><div class="eyebrow">Sauvegarde complète</div><p class="tiny" style="margin:8px 0 12px;">Export brut de la totalité des données (tous modules, tout historique) au format JSON - utile en cas de migration ou de demande d\'audit complète. À ouvrir avec un éditeur de texte ou à réimporter techniquement si besoin.</p><button class="btn primary" data-action="export-full-json">Télécharger la sauvegarde complète (JSON)</button></div>';
+  if(currentUser && currentUser.roleId===ADMIN_ROLE_ID) html += '<div class="card" style="margin-top:18px;"><div class="eyebrow">Sauvegarde complète</div><p class="tiny" style="margin:8px 0 12px;">Export brut de la totalité des données (tous modules, tout historique) au format JSON - utile en cas de migration ou de demande d\'audit complète. À ouvrir avec un éditeur de texte ou à réimporter techniquement si besoin.</p><button class="btn primary" data-action="export-full-json">Télécharger la sauvegarde complète (JSON)</button></div>';
   html += '<div class="card" style="margin-top:18px;"><div class="eyebrow">Rapport mensuel - revue de direction</div><p class="tiny" style="margin:8px 0 12px;">Synthèse du mois choisi sur 3 à 4 pages A4 : score, CHOKKO et Pareto, propreté, contamination, audits de perf, actions, métrologie, prison et formations, avec un cadre pour noter les décisions de la revue.</p><button class="btn primary" data-action="monthly-report">📄 Générer le rapport mensuel</button></div>';
   html += backupCardHtml();
   if(currentUser && currentUser.roleId===ADMIN_ROLE_ID && !backupIndexCache){ backupReadIndex().then(function(){ if(currentTab==='archives') render(); }).catch(function(){}); }
@@ -8694,10 +8698,12 @@ RENDERERS.archives = function(){
 };
 function renderChangelogSection(){
   var html = '<div class="card" style="margin-top:18px;"><div class="eyebrow" style="margin-bottom:8px;">Historique des modifications</div>';
-  html += '<p class="tiny" style="margin-bottom:10px;">Traçabilité des créations, modifications et suppressions effectuées dans l\'application (200 dernières entrées).</p>';
-  if(!DATA.changelog.length){ html += emptyState('Aucune modification enregistrée pour le moment.')+'</div>'; return html; }
+  var seeAll = currentUser && (currentUser.roleId===ADMIN_ROLE_ID || currentUser.allSecteurs);
+  var logs = seeAll ? DATA.changelog : DATA.changelog.filter(function(l){ return l.user===currentUser.displayName; });
+  html += '<p class="tiny" style="margin-bottom:10px;">Traçabilité des créations, modifications et suppressions effectuées dans l\'application (200 dernières entrées'+(seeAll?'':', vos propres modifications')+').</p>';
+  if(!logs.length){ html += emptyState('Aucune modification enregistrée pour le moment.')+'</div>'; return html; }
   html += '<div class="table-wrap"><table><thead><tr><th>Date</th><th>Utilisateur</th><th>Module</th><th>Action</th><th>Détail</th></tr></thead><tbody>';
-  html += DATA.changelog.slice(0,200).map(function(l){
+  html += logs.slice(0,200).map(function(l){
     return '<tr><td class="num tiny">'+fmtDateTime(l.date)+'</td><td>'+esc(l.user)+'</td><td>'+esc(l.module)+'</td><td>'+esc(l.action)+'</td><td class="tiny">'+esc(l.summary)+(l.detail?'<br><span style="color:var(--text-faint);">'+esc(l.detail)+'</span>':'')+'</td></tr>';
   }).join('');
   html += '</tbody></table></div></div>';
@@ -8716,11 +8722,11 @@ function handleExportCsv(mod){
     columns = [['date','Date'],['ligne','Ligne'],['nbDefauts','Nb défauts'],['nb2nd','Nb 2nd passage']];
     filename = 'ATEQ_'+month+'.csv';
   } else if(mod==='planning'){
-    rows = DATA.planning.filter(function(p){ return p.echeance && p.echeance.slice(0,7)===month; });
+    rows = bySecteur(DATA.planning).filter(function(p){ return p.echeance && p.echeance.slice(0,7)===month; });
     columns = [['ligne','Ligne'],['type','Type'],['mois','Mois'],['echeance','Échéance'],['realisation','Réalisation'],['responsable','Responsable'],['email','Email']];
     filename = 'Planning_'+month+'.csv';
   } else if(mod==='metro'){
-    rows = DATA.metro;
+    rows = bySecteur(DATA.metro);
     columns = [['ligne','Ligne'],['numMoyen','N° moyen'],['designation','Désignation'],['lieu','Lieu'],['echeance','Échéance']];
     filename = 'Metrologie_etat_au_'+todayStr()+'.csv';
   } else if(mod==='resultats'){
@@ -8729,7 +8735,7 @@ function handleExportCsv(mod){
     columns = [['ligne','Ligne'],['mois','Mois'],['resultatPct','Résultat (%)']];
     filename = 'Proprete_resultats_'+month+'.csv';
   } else if(mod==='actions'){
-    rows = DATA.actions.filter(function(a){ return (a.dateCreation && a.dateCreation.slice(0,7)===month) || (a.echeance && a.echeance.slice(0,7)===month); });
+    rows = bySecteur(DATA.actions).filter(function(a){ return (a.dateCreation && a.dateCreation.slice(0,7)===month) || (a.echeance && a.echeance.slice(0,7)===month); });
     columns = [['origine','Origine'],['description','Description'],['ligne','Ligne'],['responsable','Responsable'],['echeance','Échéance'],['statut','Statut'],['dateCreation','Créée le']];
     filename = 'Actions_'+month+'.csv';
   }
@@ -8737,6 +8743,7 @@ function handleExportCsv(mod){
   downloadText(filename, toCSV(rows, columns));
 }
 function handleExportFullJson(){
+  if(!currentUser || currentUser.roleId!==ADMIN_ROLE_ID) return;
   var snapshot = {exportedAt: todayStr(), data: DATA};
   downloadText('Sauvegarde_complete_MCU_'+todayStr()+'.json', JSON.stringify(snapshot, null, 2), 'application/json;charset=utf-8');
 }
@@ -9308,6 +9315,22 @@ function renderSecteurDashboard(){
   html += '<div class="statcard '+(late?'s-danger':'')+'"><div class="eyebrow">Actions en retard</div><div class="val">'+late+'</div></div>';
   html += '<div class="statcard"><div class="eyebrow">Actions ouvertes</div><div class="val">'+openA+'</div></div>';
   html += '</div></div>';
+
+  // Suivi CHOKKO des lignes du secteur (saisi par les techniciens)
+  if(secteurTabs().indexOf('chokko')>=0 && tabAllowed('chokko')){
+    var cards = lines.map(function(l){
+      var avg = chokkoMonthAverage(l, curY, curM);
+      var lvl = chokkoLevelVsObjectif(avg, l);
+      return '<div class="statcard s-'+lvl+'" style="cursor:pointer;" data-action="dash-goto-chokko" data-ligne="'+esc(l)+'"><div class="eyebrow">'+esc(l)+'</div><div class="val">'+(avg!==null?pct1(avg)+'%':'-')+'</div><div class="lbl">ce mois · objectif ≥ '+chokkoObjectif(l)+'%</div></div>';
+    }).join('');
+    var stale = lines.filter(function(l){ return chokkoPostes(l).length; }).map(function(l){ return {ligne:l, delay:chokkoSaisieDelay(l)}; }).filter(function(x){ return x.delay===null || x.delay>=2; });
+    var noPostes = lines.filter(function(l){ return !chokkoPostes(l).length; });
+    html += '<div class="section card" style="margin-bottom:18px;"><div class="eyebrow" style="margin-bottom:10px;">'+esc(t('title_chokko','Suivi CHOKKO'))+' - '+MONTHS_FR[curM]+' '+curY+'</div>'+
+      '<div class="grid grid-4">'+cards+'</div>'+
+      (stale.length? '<div class="tiny" style="margin-top:8px; color:var(--warn); font-weight:600;">⚠ '+stale.map(function(x){ return esc(x.ligne)+' : '+(x.delay===null?'aucune saisie':'dernière saisie il y a '+x.delay+' j'); }).join(' · ')+'</div>' : '')+
+      (noPostes.length? '<div class="tiny" style="margin-top:6px; color:var(--text-faint);">Postes à paramétrer dans le suivi CHOKKO : '+noPostes.map(esc).join(', ')+'</div>' : '')+
+    '</div>';
+  }
 
   // Suivi de toutes les actions du secteur
   html += '<div class="section card" style="margin-bottom:18px;">'+renderActionsPanel()+'</div>';
@@ -11019,6 +11042,13 @@ function bootstrapAdmin(){
     DATA.secteurs = JSON.parse(JSON.stringify(SECTEURS_DEFAULT));
     changed = true;
   }
+  // Migration (une seule fois par secteur) : chaque secteur dispose du suivi CHOKKO, rempli par ses techniciens
+  (DATA.secteurs||[]).forEach(function(sec){
+    if(sec.chokkoMig) return;
+    sec.tabs = sec.tabs || [];
+    if(sec.tabs.indexOf('chokko')<0) sec.tabs.push('chokko');
+    sec.chokkoMig = true; changed = true;
+  });
   // Migration : ajouter l'onglet CI/CL au secteur MCU s'il n'y est pas déjà
   if(DATA.secteurs){
     var mcuSec = DATA.secteurs.find(function(s){ return s.id==='MCU'; });
@@ -11142,9 +11172,31 @@ function applyStatusColorSettings(){
     }
   });
 }
+// Couleur du volet gauche : propre à chaque compte (uiSettings.sidebarColorByUser[idCompte])
+function sidebarColorFor(acc){
+  var m = DATA.uiSettings && DATA.uiSettings.sidebarColorByUser;
+  return (acc && m && m[acc.id]) || null;
+}
+function currentSidebarColor(){ return sidebarColorFor(currentUser); }
+function setCurrentSidebarColor(color){
+  if(!currentUser) return;
+  if(!DATA.uiSettings) DATA.uiSettings = {sidebarColor:null, iconStyle:'svg'};
+  if(!DATA.uiSettings.sidebarColorByUser) DATA.uiSettings.sidebarColorByUser = {};
+  if(color) DATA.uiSettings.sidebarColorByUser[currentUser.id] = color;
+  else delete DATA.uiSettings.sidebarColorByUser[currentUser.id];
+}
+// Ancienne couleur commune à tous : reprise une seule fois par les comptes administrateur, puis abandonnée
+function migrateSidebarColor(){
+  var u = DATA.uiSettings;
+  if(!u || !u.sidebarColor || u.sidebarColorByUser) return false;
+  u.sidebarColorByUser = {};
+  (DATA.accounts||[]).forEach(function(a){ if(a.roleId===ADMIN_ROLE_ID) u.sidebarColorByUser[a.id] = u.sidebarColor; });
+  u.sidebarColor = null;
+  return true;
+}
 function applySidebarTheme(sidebar){
   if(!sidebar) return;
-  var color = (DATA.uiSettings && DATA.uiSettings.sidebarColor) || null;
+  var color = currentSidebarColor();
   if(!color){
     sidebar.removeAttribute('style');
     return;
@@ -11164,7 +11216,7 @@ function applySidebarTheme(sidebar){
 }
 var sidebarSettingsOpen = false;
 function sidebarSettingsModal(){
-  var cur = (DATA.uiSettings && DATA.uiSettings.sidebarColor) || '#143E3E';
+  var cur = currentSidebarColor() || '#143E3E';
   var iconStyle = (DATA.uiSettings && DATA.uiSettings.iconStyle) || 'svg';
   var statusColors = (DATA.uiSettings && DATA.uiSettings.statusColors) || {};
   var STATUS_DEFAULTS = {ok:'#2E7D4F', warn:'#B8730A', danger:'#B23B2E', urgent:'#C25A00'};
@@ -11196,6 +11248,10 @@ function sidebarSettingsModal(){
     '</div></div>';
 }
 function renderNav(){
+  // Ramener d'abord le secteur courant dans ceux du compte (sinon, juste après la connexion d'un technicien,
+  // le menu était calculé sur le secteur par défaut MCU)
+  var us0 = userSecteurs();
+  if(us0.length && us0.indexOf(currentSecteur)<0){ currentSecteur = us0[0]; }
   var sTabs = secteurTabs();
   var allowedTabsIds = ALL_TABS.filter(function(tb){ return sTabs.indexOf(tb[0])>=0 && tabAllowed(tb[0]); }).map(function(tb){return tb[0];});
   var isAdmin = currentUser && currentUser.roleId===ADMIN_ROLE_ID;
@@ -11266,7 +11322,9 @@ function renderLoginOverlay(error){
   var logoSrc = '';
   var existingLogo = document.querySelector('.sidebar-logo-full');
   if(existingLogo) logoSrc = existingLogo.src;
-  var sidebarColor = (DATA.uiSettings && DATA.uiSettings.sidebarColor) || null;
+  var lastUsername0 = '';
+  try{ lastUsername0 = localStorage.getItem('mcu_last_username_v1') || ''; }catch(e){}
+  var sidebarColor = sidebarColorFor((DATA.accounts||[]).find(function(a){ return a.username===lastUsername0; }));
   var leftStyle = sidebarColor ? 'background:'+sidebarColor+'; color:'+contrastTextColor(sidebarColor)+';' : '';
 
   var lastUsername = '';
@@ -11622,7 +11680,7 @@ async function handleSaveSecteur(){
     if(sec){ sec.nom = nom; sec.lignes = lignes; }
   } else {
     if(existing){ toast('Ce code de secteur existe déjà.', 'error'); return; }
-    DATA.secteurs.push({id:id, nom:nom, lignes:lignes, tabs:['dashboard','perf','metro','actions','planning','archives']});
+    DATA.secteurs.push({id:id, nom:nom, lignes:lignes, tabs:['dashboard','perf','metro','chokko','actions','planning','archives']});
   }
   await save('secteurs');
   logChange('Secteurs', secteurFormState.id?'Modification':'Création', id);
@@ -12084,8 +12142,7 @@ app.addEventListener('click', async function(e){
   if(e.target.classList && e.target.classList.contains('score-settings-backdrop')){ scoreSettingsOpen = false; render(); return; }
   if(e.target.classList && e.target.classList.contains('sidebar-settings-backdrop')){ sidebarSettingsOpen = false; renderNav(); return; }
   if(e.target.closest('[data-action="reset-sidebar-color"]')){
-    if(!DATA.uiSettings) DATA.uiSettings = {sidebarColor:null, iconStyle:'svg'};
-    DATA.uiSettings.sidebarColor = null;
+    setCurrentSidebarColor(null);
     await save('uiSettings');
     renderNav();
     return;
@@ -12501,6 +12558,8 @@ app.addEventListener('click', async function(e){
   }
 
   if(e.target.closest('[data-action="logout"]')){ handleLogout(); return; }
+  var dashChk = e.target.closest('[data-action="dash-goto-chokko"]');
+  if(dashChk){ currentTab = 'chokko'; chokkoView = 'saisie'; chokkoLigne = dashChk.dataset.ligne; renderNav(); render(); return; }
   var toggleRoleSub = e.target.closest('[data-action="toggle-role-sub"]');
   if(toggleRoleSub){ await handleToggleRoleSub(toggleRoleSub.dataset.role, toggleRoleSub.dataset.sub, toggleRoleSub.checked); return; }
   var renameRoleBtn = e.target.closest('[data-action="rename-role"]');
@@ -12832,8 +12891,7 @@ app.addEventListener('click', async function(e){
       saveSoon('chokkoColors');
       renderChokkoPostesChart();
     } else if(swTarget==='sidebarcolor'){
-      if(!DATA.uiSettings) DATA.uiSettings = {sidebarColor:null, iconStyle:'svg'};
-      DATA.uiSettings.sidebarColor = swColor;
+      setCurrentSidebarColor(swColor);
       saveSoon('uiSettings');
       renderNav();
     } else if(swTarget.indexOf('statuscolor|')===0){
@@ -13089,8 +13147,7 @@ app.addEventListener('change', async function(e){
     return;
   }
   if(e.target.id==='sidebar-color-custom-input'){
-    if(!DATA.uiSettings) DATA.uiSettings = {sidebarColor:null, iconStyle:'svg'};
-    DATA.uiSettings.sidebarColor = e.target.value;
+    setCurrentSidebarColor(e.target.value);
     await save('uiSettings');
     await chokkoRememberColor(e.target.value);
     renderNav();
@@ -13451,6 +13508,7 @@ async function init(){
     applyStatusColorSettings();
     var bootstrapped = bootstrapAdmin();
     if(bootstrapped){ await save('roles'); await save('accounts'); await save('secteurs'); await save('labelOverrides'); await save('cicl'); }
+    if(migrateSidebarColor()) await save('uiSettings');
     var sess = getSession();
     if(sess){ currentUser = DATA.accounts.find(function(a){ return a.id===sess.accountId; }) || null; }
     if(currentUser) setTimeout(function(){ try{ actionsSnapshotTick(); }catch(e){} }, 0);
@@ -13649,4 +13707,3 @@ init();
 </script>
 </body>
 </html>
-  
