@@ -608,6 +608,21 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 .chokko-grid .chk-wk-dates{font-size:9.5px; font-weight:400; color:#555; margin-top:1px;}
 .chokko-grid td.chk-wk-team{font-weight:700; color:#000;}
 .chokko-grid-week td{padding:4px 6px;}
+/* Grille par jour : tient dans la largeur de l'écran (plus de défilement horizontal) */
+@media screen{
+  .chokko-grid.chk-fit{width:100%; table-layout:fixed; font-size:10.5px;}
+  .chokko-grid.chk-fit th, .chokko-grid.chk-fit td{padding:2px 1px;}
+  .chokko-grid.chk-fit th.chk-col-label{width:150px; padding-left:4px;}
+  .chokko-grid.chk-fit th.chk-col-total{width:44px;}
+  .chokko-grid.chk-fit th.chk-col-actions{width:120px;}
+  .chokko-grid.chk-fit td.chk-label, .chokko-grid.chk-fit td.chk-label-bold{white-space:normal; line-height:1.15; padding-left:4px; overflow-wrap:anywhere;}
+  .chokko-grid.chk-fit input.chk-cell{min-width:0; padding:2px 0; font-size:10.5px; letter-spacing:-0.2px;}
+  .chokko-grid.chk-fit tr.chk-cost-row input.chk-cell{font-size:9px; letter-spacing:-0.4px;}
+  .chokko-grid.chk-fit td.chk-note-cell{min-width:0; max-width:none; padding:2px 4px;}
+  @media (max-width:900px){ .chokko-grid.chk-fit{width:auto; table-layout:auto;} .chokko-grid.chk-fit th.chk-col-day{min-width:30px;} .chokko-grid.chk-fit th.chk-col-label{min-width:140px;} }
+  @media (max-width:1400px){ .chokko-grid.chk-fit th.chk-col-label{width:138px;} .chokko-grid.chk-fit th.chk-col-actions{width:100px;} .chokko-grid.chk-fit th.chk-col-total{width:40px;} }
+  .chokko-grid.chk-fit .chk-note-preview{font-size:10px; line-height:1.2; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:normal;}
+}
 .chk-empty-postes{background:var(--warn-bg); border-color:var(--warn-border); margin-bottom:14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
 .chk-obj-edit{border:none; background:none; cursor:pointer; color:var(--accent); font-size:13px; padding:0 2px;}
 .chk-obj-edit:hover{color:var(--text);}
@@ -7861,11 +7876,11 @@ function chokkoSaisieView(){
     '<button class="btn small'+(chokkoGridMode==='semaine'?' primary':'')+'" data-action="chokko-gridmode" data-m="semaine">Par semaine</button>'+
     (chokkoGridMode==='semaine'? '<span class="tiny" style="color:var(--text-faint);">Lecture seule : la saisie se fait dans la vue par jour.</span>' : '')+'</div>';
   if(chokkoGridMode==='semaine') html += chokkoWeeklyHtml(false);
-  html += '<div class="table-wrap'+(chokkoGridMode==='semaine'?' chk-day-hidden':'')+'" style="overflow-x:auto;"><table class="chokko-grid"><thead><tr>'+
-    '<th class="chk-sticky" style="min-width:230px; text-align:left; background:#F2F2F2;">DEFAUTS / JOURS</th>'+
-    days.map(function(d){ return '<th style="min-width:34px;">'+d.day+'</th>'; }).join('')+
-    '<th style="min-width:55px;">TOTAL</th>'+
-    '<th style="min-width:200px; text-align:left;">ACTIONS</th>'+
+  html += '<div class="table-wrap'+(chokkoGridMode==='semaine'?' chk-day-hidden':'')+'" style="overflow-x:auto;"><table class="chokko-grid chk-fit"><thead><tr>'+
+    '<th class="chk-sticky chk-col-label" style="text-align:left; background:#F2F2F2;">DEFAUTS / JOURS</th>'+
+    days.map(function(d){ return '<th class="chk-col-day">'+d.day+'</th>'; }).join('')+
+    '<th class="chk-col-total">TOTAL</th>'+
+    '<th class="chk-col-actions" style="text-align:left;">ACTIONS</th>'+
   '</tr></thead><tbody>';
 
   postes.forEach(function(poste){
