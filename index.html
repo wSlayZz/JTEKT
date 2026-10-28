@@ -465,11 +465,15 @@ tr.releve-recap-sel td:first-child{font-weight:700; box-shadow:inset 4px 0 0 #1F
   #def-print .dp-head{display:flex; align-items:center; justify-content:space-between; padding-bottom:8px; margin-bottom:12px; border-bottom:2px solid #1F3864;}
   #def-print .dp-head img{height:36px; width:auto;}
   #def-print .dp-head div{text-align:right; font-size:15px;} #def-print .dp-head div span{display:block; font-size:11px; color:#555;}
-  #def-print .dp-title{font-size:22px; font-weight:700; margin-bottom:10px;} #def-print .dp-title span{display:block; font-size:12px; font-weight:400; color:#555; margin-top:2px;}
+  #def-print .dp-title{font-size:16px; font-weight:700; margin-bottom:6px;}
+  #def-print .dp-slot{display:grid; grid-template-columns:330px minmax(0,1fr); gap:16px; padding:8px 0; border-bottom:1px solid #ccc; break-inside:avoid; align-items:start;}
+  #def-print .dp-slot:last-child{border-bottom:none;}
+  #def-print .defs-kpis{margin-bottom:6px; gap:6px;} #def-print .defs-kpi{padding:4px 8px; border-color:#ccc;} #def-print .defs-v{font-size:16px;}
+  #def-print .dp-line{font-size:10.5px; line-height:1.3; margin-bottom:2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
   #def-print .dp-kpis{margin-bottom:10px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
   #def-print .dp-chart img{width:100%; height:auto; border:1px solid #ddd; display:block;}
   #def-print .dp-bottom{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px;}
-  #def-print .dp-h3{font-size:13px; font-weight:700; margin-bottom:5px; text-transform:uppercase; letter-spacing:.03em;}
+  #def-print .dp-h3{font-size:10.5px; font-weight:700; margin:6px 0 2px; text-transform:uppercase; letter-spacing:.03em; color:#444;}
   #def-print .dp-table{width:100%; border-collapse:collapse; font-size:10.5px;}
   #def-print .dp-table th{background:#D9E1F2; text-align:left; padding:4px 6px; border:1px solid #B7B7B7; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
   #def-print .dp-table td{padding:4px 6px; border:1px solid #B7B7B7; vertical-align:top;}
@@ -544,6 +548,16 @@ tr.releve-recap-sel td:first-child{font-weight:700; box-shadow:inset 4px 0 0 #1F
 @media (max-width:900px){ .defs-kpis{grid-template-columns:repeat(2, minmax(0,1fr));} .defs-select select{min-width:0; width:100%;} }
 .defs-kpi{border:1px solid var(--border); border-radius:10px; padding:10px 12px;}
 .defs-v{font-family:var(--mono); font-weight:700; font-size:24px; margin:2px 0;}
+.defs-slot{display:grid; grid-template-columns:330px minmax(0,1fr); gap:18px; padding:14px 0; border-top:1px solid var(--border); align-items:start;}
+.defs-slot-info select{width:100%; min-width:0 !important;}
+.defs-kpis-mini{grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; margin-bottom:10px;}
+.defs-kpis-mini .defs-kpi{padding:7px 10px;}
+.defs-kpis-mini .defs-v{font-size:19px;}
+.defs-kpis-mini .defs-v.defs-trend-hausse, .defs-kpis-mini .defs-v.defs-trend-baisse, .defs-kpis-mini .defs-v.defs-trend-stable{font-size:15px;}
+.defs-slot-foot{display:flex; flex-direction:column; gap:6px; align-items:flex-start;}
+.defs-slot-foot .ad-linked-row{width:100%;}
+.defs-note{color:var(--text-faint); line-height:1.35;}
+@media (max-width:900px){ .defs-slot{grid-template-columns:1fr;} }
 .defs-bottom{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:16px; padding-top:12px; border-top:1px solid var(--border);}
 @media (max-width:900px){ .defs-bottom{grid-template-columns:1fr;} }
 /* CHOKKO : TOTAL NC en rouge, production par équipe (A, B, C ou D) en noir gras */
@@ -8140,90 +8154,100 @@ function chokkoDefTrendLine(series){
   var change = mean>0 ? (endV-startV)/mean : 0;
   return {a:a, b:b, first:first, last:last, dir: change>0.15 ? 'hausse' : change<-0.15 ? 'baisse' : 'stable'};
 }
-function chokkoDefSelectedPoste(ligne, postes){
-  var p = chokkoDefPosteByLigne[ligne];
-  if(!p || !postes.some(function(x){ return x.id===p; })){
-    p = postes.slice().sort(function(a,b){ return b.n90-a.n90; })[0].id;
-    chokkoDefPosteByLigne[ligne] = p;
+// Trois défauts suivis côte à côte (par défaut : les 3 plus fréquents sur 90 jours). Choix mémorisé par ligne.
+var CHOKKO_DEF_SLOTS = 3;
+var chokkoDefSlotsByLigne = {};   // ligne -> [poste, poste, poste]
+var chartsChokkoDef = [];
+function chokkoDefSlots(ligne, postes){
+  var ids = postes.map(function(p){ return p.id; });
+  var top = postes.slice().sort(function(a,b){ return b.n90-a.n90 || a.id.localeCompare(b.id); }).map(function(p){ return p.id; });
+  var cur = (chokkoDefSlotsByLigne[ligne] || []).slice(0, CHOKKO_DEF_SLOTS);
+  if(chokkoDefPosteByLigne[ligne] && ids.indexOf(chokkoDefPosteByLigne[ligne])>=0) cur[0] = chokkoDefPosteByLigne[ligne];   // lien direct (ex. ATEQ)
+  var out = [];
+  for(var i=0; i<Math.min(CHOKKO_DEF_SLOTS, ids.length); i++){
+    var p = cur[i];
+    if(!p || ids.indexOf(p)<0 || out.indexOf(p)>=0) p = top.filter(function(x){ return out.indexOf(x)<0 && cur.slice(i+1).indexOf(x)<0; })[0] || top.filter(function(x){ return out.indexOf(x)<0; })[0];
+    out.push(p);
   }
-  chokkoDefPoste = p;
-  return p;
+  chokkoDefSlotsByLigne[ligne] = out;
+  chokkoDefPosteByLigne[ligne] = out[0];
+  chokkoDefPoste = out[0];
+  return out;
+}
+// Indicateurs d'un défaut sur la période choisie
+function chokkoDefStats(ligne, posteId, range){
+  var cur = chokkoDefFill(ligne, posteId, chokkoDefBucketsFor(range));
+  var prev = chokkoDefFill(ligne, posteId, chokkoDefBucketsFor(chokkoDefPrevRange(range)));
+  var S = chokkoDefTotals(cur), P = chokkoDefTotals(prev);
+  var full = cur.filter(function(b){ return b.days && !b.inProgress; });
+  var avg = full.length ? full.reduce(function(a,b){ return a+b.n; },0)/full.length : (S.buckets ? S.n/S.buckets : null);
+  var comparable = P.days>0 && P.days >= S.days*0.5;
+  var evo = '', evoTxt = '';
+  if(comparable){
+    if(P.n===0 && S.n===0){ evo = '<span style="color:var(--text-faint);">=</span>'; evoTxt = '='; }
+    else if(P.n===0){ evo = '<span style="color:var(--danger);">nouveau</span>'; evoTxt = 'nouveau'; }
+    else { var pc = Math.round((S.n-P.n)/P.n*100); evoTxt = (pc>0?'+':'')+pc+' %'; evo = '<span style="color:var(--'+(pc>10?'danger':pc<-10?'ok':'text-faint')+');">'+evoTxt+'</span>'; }
+  }
+  var trend = chokkoDefTrendLine(cur);
+  var worst = cur.filter(function(b){ return b.n>0; }).sort(function(a,b){ return b.n-a.n; })[0];
+  return {series:cur, S:S, avg:avg, comparable:comparable, evo:evo, trend:trend, worst:worst};
+}
+function chokkoDefKpisHtml(st, range){
+  var unit = {jour:'jour', semaine:'semaine', mois:'mois'}[range.gran];
+  return '<div class="defs-kpis defs-kpis-mini">'+
+    '<div class="defs-kpi"><div class="tiny">Défauts</div><div class="defs-v">'+st.S.n.toLocaleString('fr-FR')+'</div></div>'+
+    '<div class="defs-kpi"><div class="tiny">Moyenne / '+unit+'</div><div class="defs-v">'+(st.avg===null?'-':(Math.floor(st.avg*10)/10).toLocaleString('fr-FR'))+'</div></div>'+
+    '<div class="defs-kpi"><div class="tiny">Vs période préc.</div><div class="defs-v">'+(st.comparable? st.evo : '<span class="tiny" style="color:var(--text-faint); font-family:inherit; font-weight:400;">pas assez d\'historique</span>')+'</div></div>'+
+    '<div class="defs-kpi"><div class="tiny">Tendance</div><div class="defs-v defs-trend-'+(st.trend? st.trend.dir : 'none')+'">'+(st.trend? (st.trend.dir==='hausse'?'↗ Hausse':st.trend.dir==='baisse'?'↘ Baisse':'→ Stable') : '-')+'</div>'+(st.worst? '<span class="tiny">Pic : '+st.worst.n+' ('+esc(st.worst.label)+')</span>' : '')+'</div>'+
+  '</div>';
 }
 function chokkoDefautsView(){
   var ligne = chokkoLigne;
   var postes = chokkoDefPostesWithCounts(ligne);
   if(!postes.length) return '<div class="card">'+emptyState('Aucun poste configuré pour '+esc(ligne)+'.')+'</div>';
-  var posteId = chokkoDefSelectedPoste(ligne, postes);
-  var poste = postes.filter(function(p){ return p.id===posteId; })[0];
+  var slots = chokkoDefSlots(ligne, postes);
   var range = chokkoDefRange();
-  var cur = chokkoDefFill(ligne, posteId, chokkoDefBucketsFor(range));
-  var prevRange = chokkoDefPrevRange(range);
-  var prev = chokkoDefFill(ligne, posteId, chokkoDefBucketsFor(prevRange));
-  var S = chokkoDefTotals(cur), P = chokkoDefTotals(prev);
-  var unit = {jour:'jour', semaine:'semaine', mois:'mois'}[range.gran];
-  // moyenne calculée sur les périodes complètes (la semaine / le mois en cours fausserait la moyenne)
-  var full = cur.filter(function(b){ return b.days && !b.inProgress; });
-  var avg = full.length ? full.reduce(function(a,b){ return a+b.n; },0)/full.length : (S.buckets ? S.n/S.buckets : null);
-  var comparable = P.days>0 && P.days >= S.days*0.5;
-  var evo = '';
-  if(comparable){
-    if(P.n===0 && S.n===0) evo = '<span style="color:var(--text-faint);">=</span>';
-    else if(P.n===0) evo = '<span style="color:var(--danger);">nouveau</span>';
-    else { var pc = Math.round((S.n-P.n)/P.n*100); evo = '<span style="color:var(--'+(pc>10?'danger':pc<-10?'ok':'text-faint')+');">'+(pc>0?'+':'')+pc+' %</span>'; }
-  }
-  var trend = chokkoDefTrendLine(cur);
-  var worst = cur.filter(function(b){ return b.n>0; }).sort(function(a,b){ return b.n-a.n; })[0];
-  var linked = actionsLinkedTo('chokko', ligne+'|'+posteId);
-  var openLinked = linked.filter(function(a){ var c = actionPanelCategory(a); return c==='late'||c==='encours'||c==='realisee'; });
   var sorted = postes.slice().sort(function(a,b){ return b.n90-a.n90 || a.id.localeCompare(b.id); });
-
   var h = '<div class="card defs-card">';
   h += '<div class="defs-head"><div class="defs-select">'+
-    '<label class="field" style="margin:0;">Défaut suivi<select id="chokko-def-poste">'+
-      sorted.map(function(p){ return '<option value="'+esc(p.id)+'"'+(p.id===posteId?' selected':'')+'>'+esc(p.id+' - '+p.label)+'</option>'; }).join('')+
-    '</select></label>'+
     '<div class="defs-periods">'+CHOKKO_DEF_PERIODS.map(function(pp){ return '<button class="btn small'+(pp[0]===chokkoDefPeriod?' primary':'')+'" data-action="chokko-def-period" data-p="'+pp[0]+'">'+pp[1]+'</button>'; }).join('')+'</div>'+
     (chokkoDefPeriod==='perso'? '<div class="defs-dates"><label class="field" style="margin:0;">Du<input type="date" id="chokko-def-from" value="'+esc(range.from)+'"></label><label class="field" style="margin:0;">Au<input type="date" id="chokko-def-to" value="'+esc(range.to)+'"></label></div>' : '')+
-  '</div>'+
-  '<div style="display:flex; gap:6px; align-items:flex-start;"><button class="btn small" data-action="chokko-def-print" title="Imprimer le suivi de ce défaut (1 page A3)">🖨️ Imprimer</button>'+
-  '<button class="btn small" data-action="chokko-def-action" title="Créer une action sur ce défaut">+ Action'+(openLinked.length? ' <span class="tiny">('+openLinked.length+' en cours)</span>' : '')+'</button></div></div>';
-
-  h += '<div class="defs-kpis">'+
-    '<div class="defs-kpi"><div class="tiny">Défauts du '+(range.from.slice(0,4)===range.to.slice(0,4) ? fmtDate(range.from).slice(0,5) : fmtDate(range.from))+' au '+fmtDate(range.to)+'</div><div class="defs-v">'+S.n.toLocaleString('fr-FR')+'</div></div>'+
-    '<div class="defs-kpi"><div class="tiny">Moyenne par '+unit+'</div><div class="defs-v">'+(avg===null?'-':(Math.round(avg*10)/10).toLocaleString('fr-FR'))+'</div></div>'+
-    '<div class="defs-kpi"><div class="tiny">Évolution vs période précédente</div><div class="defs-v">'+(comparable? evo : '<span class="tiny" style="color:var(--text-faint); font-family:inherit; font-weight:400;">pas assez d\'historique</span>')+'</div>'+(comparable? '<span class="tiny" style="color:var(--text-faint);">'+P.n.toLocaleString('fr-FR')+' défauts avant</span>' : '')+'</div>'+
-    '<div class="defs-kpi"><div class="tiny">Tendance</div><div class="defs-v defs-trend-'+(trend? trend.dir : 'none')+'">'+(trend? (trend.dir==='hausse'?'↗ En hausse':trend.dir==='baisse'?'↘ En baisse':'→ Stable') : '-')+'</div>'+(worst? '<span class="tiny" style="color:var(--text-faint);">Pic : '+worst.n+' ('+esc(worst.label)+')</span>' : '')+'</div>'+
-  '</div>';
-
-  h += S.days ? '<div class="chart-box" style="height:320px;"><canvas id="chart-chokko-def"></canvas></div>' : emptyState('Aucune saisie CHOKKO sur cette période pour '+esc(ligne)+'.');
-
-  var notes = DATA.chokkoNotes.filter(function(n){ return n.ligne===ligne && n.poste===posteId && (n.texte||'').trim(); })
-    .sort(function(a,b){ return (b.annee*12+b.mois)-(a.annee*12+a.mois); }).slice(0,4);
-  if(notes.length || linked.length){
-    h += '<div class="defs-bottom">';
-    if(linked.length){
-      h += '<div><div class="eyebrow" style="margin-bottom:6px;">Actions sur ce défaut</div>'+linked.slice(0,6).map(function(a){
-        var meta = actionPanelCategory(a)==='late' ? {level:'danger', label:'En retard'} : actionMeta(a);
-        return '<div class="ad-linked-row" data-action="action-open" data-id="'+a.id+'">'+badge(meta.level, meta.label)+'<span>'+esc((a.description||'').slice(0,90))+'</span><span class="tiny">'+esc(a.responsable||'')+'</span></div>';
-      }).join('')+'</div>';
-    }
-    if(notes.length){
-      h += '<div><div class="eyebrow" style="margin-bottom:6px;">Notes d\'actions CHOKKO</div>'+notes.map(function(n){
-        return '<div class="tiny" style="padding:4px 0; border-bottom:1px solid var(--border);"><b>'+esc(MONTHS_FR[n.mois])+' '+n.annee+'</b> : '+esc(n.texte.slice(0,160))+'</div>';
-      }).join('')+'</div>';
-    }
-    h += '</div>';
-  }
+    '<span class="tiny" style="color:var(--text-faint);">Du '+fmtDate(range.from)+' au '+fmtDate(range.to)+'</span>'+
+  '</div><button class="btn small" data-action="chokko-def-print" title="Imprimer les 3 défauts suivis (1 page A3)">🖨️ Imprimer</button></div>';
+  slots.forEach(function(posteId, i){
+    var st = chokkoDefStats(ligne, posteId, range);
+    var linked = actionsLinkedTo('chokko', ligne+'|'+posteId);
+    var openLinked = linked.filter(function(a){ var c = actionPanelCategory(a); return c==='late'||c==='encours'||c==='realisee'; });
+    var note = DATA.chokkoNotes.filter(function(n){ return n.ligne===ligne && n.poste===posteId && (n.texte||'').trim(); })
+      .sort(function(a,b){ return (b.annee*12+b.mois)-(a.annee*12+a.mois); })[0];
+    h += '<div class="defs-slot">'+
+      '<div class="defs-slot-info">'+
+        '<label class="field" style="margin:0 0 8px;">Défaut '+(i+1)+'<select class="chokko-def-slot" data-slot="'+i+'">'+
+          sorted.map(function(p){ return '<option value="'+esc(p.id)+'"'+(p.id===posteId?' selected':'')+'>'+esc(p.id+' - '+p.label)+'</option>'; }).join('')+
+        '</select></label>'+
+        chokkoDefKpisHtml(st, range)+
+        '<div class="defs-slot-foot">'+
+          '<button class="btn small" data-action="chokko-def-action" data-poste="'+esc(posteId)+'" title="Créer une action sur ce défaut">+ Action'+(openLinked.length? ' <span class="tiny">('+openLinked.length+' en cours)</span>' : '')+'</button>'+
+          (openLinked.length? openLinked.slice(0,2).map(function(a){ return '<div class="ad-linked-row" data-action="action-open" data-id="'+a.id+'"><span>'+esc((a.description||'').slice(0,70))+'</span></div>'; }).join('') : '')+
+          (note? '<div class="tiny defs-note"><b>'+esc(MONTHS_FR[note.mois])+' '+note.annee+'</b> : '+esc(note.texte.slice(0,110))+'</div>' : '')+
+        '</div>'+
+      '</div>'+
+      '<div class="defs-slot-chart">'+(st.S.days ? '<div class="chart-box" style="height:250px;"><canvas id="chart-chokko-def-'+i+'"></canvas></div>' : emptyState('Aucune saisie CHOKKO sur cette période.'))+'</div>'+
+    '</div>';
+  });
   return h+'</div>';
 }
 function renderChokkoDefChart(){
   if(typeof Chart==='undefined') return;
-  var ctx = document.getElementById('chart-chokko-def'); if(!ctx) return;
-  if(chartChokkoDef){ chartChokkoDef.destroy(); chartChokkoDef = null; }
-  try{ chartChokkoDef = new Chart(ctx, buildChokkoDefChartConfig()); }catch(err){ console.error('suivi défaut', err); }
+  chartsChokkoDef.forEach(function(c){ try{ c.destroy(); }catch(e){} });
+  chartsChokkoDef = [];
+  (chokkoDefSlotsByLigne[chokkoLigne]||[]).forEach(function(posteId, i){
+    var ctx = document.getElementById('chart-chokko-def-'+i); if(!ctx) return;
+    try{ chartsChokkoDef.push(new Chart(ctx, buildChokkoDefChartConfig(false, posteId))); }catch(err){ console.error('suivi défaut', err); }
+  });
 }
-function buildChokkoDefChartConfig(forPrint){
-  var series = chokkoDefFill(chokkoLigne, chokkoDefPoste, chokkoDefBucketsFor(chokkoDefRange()));
+function buildChokkoDefChartConfig(forPrint, posteId){
+  var series = chokkoDefFill(chokkoLigne, posteId || chokkoDefPoste, chokkoDefBucketsFor(chokkoDefRange()));
   var trend = chokkoDefTrendLine(series);
   var ds = [{type:'bar', label:'Défauts', data:series.map(function(b){ return b.days? b.n : null; }), backgroundColor:series.map(function(b){ return b.inProgress ? '#B2764A55' : '#B2764ACC'; }), borderColor:'#B2764A', borderWidth:1, borderRadius:3, order:2}];
   if(trend){
@@ -8231,45 +8255,39 @@ function buildChokkoDefChartConfig(forPrint){
       borderColor:'#1F3864', borderDash:[7,5], borderWidth:2, pointRadius:0, spanGaps:true, order:1});
   }
   var fs = forPrint ? 22 : undefined;
-  if(forPrint) ds[0].datalabels = {display:false};
   return {data:{labels:series.map(function(b){ return b.label; }), datasets:ds},
       options:{responsive:true, maintainAspectRatio:false, animation:false,
-        plugins:{legend:{position:'bottom', labels:fs?{font:{size:fs}}:{}}, tooltip:{filter:function(it){ return it.datasetIndex===0; }, callbacks:{
+        plugins:{legend:{display:!forPrint, position:'bottom'}, tooltip:{filter:function(it){ return it.datasetIndex===0; }, callbacks:{
           label:function(c){ return c.raw===null ? ' Pas de saisie' : ' '+c.raw+' défaut'+(c.raw>1?'s':''); }
         }}},
-        scales:{y:{beginAtZero:true, title:{display:true, text:'Nombre de défauts', font:fs?{size:fs}:{}}, ticks:{precision:0, font:fs?{size:fs}:{}}}, x:{ticks:{maxRotation:50, autoSkip:true, font:fs?{size:fs-2}:{}}}}}};
+        scales:{y:{beginAtZero:true, title:{display:!forPrint, text:'Nombre de défauts'}, ticks:{precision:0, font:fs?{size:fs}:{}}}, x:{ticks:{maxRotation:50, autoSkip:true, font:fs?{size:fs-2}:{}}}}}};
 }
-// Impression du suivi du défaut affiché : une page A3 paysage
+// Impression des 3 défauts suivis : une page A3 paysage
 async function printChokkoDefReport(){
-  var ligne = chokkoLigne, posteId = chokkoDefPoste;
+  var ligne = chokkoLigne;
   var postes = chokkoDefPostesWithCounts(ligne);
-  var poste = postes.filter(function(p){ return p.id===posteId; })[0];
-  if(!poste){ toast('Aucun défaut sélectionné.', 'error'); return; }
+  if(!postes.length){ toast('Aucun poste configuré.', 'error'); return; }
+  var slots = chokkoDefSlots(ligne, postes);
   var range = chokkoDefRange();
   var per = (CHOKKO_DEF_PERIODS.filter(function(pp){ return pp[0]===chokkoDefPeriod; })[0]||['',''])[1];
-  var kpisEl = document.querySelector('.defs-kpis');
-  var linked = actionsLinkedTo('chokko', ligne+'|'+posteId);
-  var notes = DATA.chokkoNotes.filter(function(n){ return n.ligne===ligne && n.poste===posteId && (n.texte||'').trim(); })
-    .sort(function(a,b){ return (b.annee*12+b.mois)-(a.annee*12+a.mois); }).slice(0,8);
   var logoEl = document.querySelector('.sidebar-logo-full');
-  var chart = '';
-  try{ chart = rptChartImage(buildChokkoDefChartConfig(true), 2200, 820); }catch(e){ console.error('impression suivi défaut', e); }
   var h = '<div class="dp-head">'+(logoEl && logoEl.src ? '<img src="'+logoEl.src+'" alt="Acurion">' : '<span></span>')+
-      '<div><b>Suivi des défauts · '+esc(ligne)+'</b><span>Édité le '+fmtDate(todayStr())+(currentUser? ' par '+esc(currentUser.displayName) : '')+'</span></div></div>'+
-    '<div class="dp-title">'+esc(poste.id+' - '+poste.label)+'<span>Période : '+esc(per)+' · du '+fmtDate(range.from)+' au '+fmtDate(range.to)+'</span></div>'+
-    (kpisEl ? '<div class="defs-kpis dp-kpis">'+kpisEl.innerHTML+'</div>' : '')+
-    '<div class="dp-chart">'+(chart || '<p class="tiny">Aucune saisie CHOKKO sur cette période.</p>')+'</div>';
-  if(linked.length || notes.length){
-    h += '<div class="dp-bottom">';
-    h += '<div><div class="dp-h3">Actions sur ce défaut</div>'+(linked.length? '<table class="dp-table"><thead><tr><th>Statut</th><th>Action</th><th>Responsable</th><th>Échéance</th></tr></thead><tbody>'+linked.slice(0,8).map(function(a){
-        var meta = actionPanelCategory(a)==='late' ? {label:'En retard'} : actionMeta(a);
-        return '<tr><td>'+esc(meta.label)+'</td><td>'+esc(a.description||'')+'</td><td>'+esc(a.responsable||'')+'</td><td>'+(a.echeance? fmtDate(a.echeance) : '')+'</td></tr>';
-      }).join('')+'</tbody></table>' : '<p class="tiny">Aucune action liée.</p>')+'</div>';
-    h += '<div><div class="dp-h3">Notes d\'actions CHOKKO</div>'+(notes.length? '<table class="dp-table"><thead><tr><th>Mois</th><th>Actions menées</th></tr></thead><tbody>'+notes.map(function(n){
-        return '<tr><td style="white-space:nowrap;">'+esc(MONTHS_FR[n.mois])+' '+n.annee+'</td><td style="white-space:pre-wrap;">'+esc(n.texte)+'</td></tr>';
-      }).join('')+'</tbody></table>' : '<p class="tiny">Aucune note.</p>')+'</div>';
-    h += '</div>';
-  }
+      '<div><b>Suivi des défauts · '+esc(ligne)+'</b><span>Période : '+esc(per)+' · du '+fmtDate(range.from)+' au '+fmtDate(range.to)+' · édité le '+fmtDate(todayStr())+(currentUser? ' par '+esc(currentUser.displayName) : '')+'</span></div></div>';
+  slots.forEach(function(posteId){
+    var poste = postes.filter(function(p){ return p.id===posteId; })[0];
+    var st = chokkoDefStats(ligne, posteId, range);
+    var linked = actionsLinkedTo('chokko', ligne+'|'+posteId).filter(function(a){ var c = actionPanelCategory(a); return c==='late'||c==='encours'||c==='realisee'; });
+    var note = DATA.chokkoNotes.filter(function(n){ return n.ligne===ligne && n.poste===posteId && (n.texte||'').trim(); })
+      .sort(function(a,b){ return (b.annee*12+b.mois)-(a.annee*12+a.mois); })[0];
+    var chart = '';
+    if(st.S.days){ try{ chart = rptChartImage(buildChokkoDefChartConfig(true, posteId), 2000, 470); }catch(e){ console.error('impression suivi défaut', e); } }
+    h += '<div class="dp-slot"><div class="dp-info">'+
+        '<div class="dp-title">'+esc(poste.id+' - '+poste.label)+'</div>'+
+        chokkoDefKpisHtml(st, range)+
+        (linked.length? '<div class="dp-h3">Actions en cours</div>'+linked.slice(0,3).map(function(a){ return '<div class="dp-line">• '+esc(a.description||'')+(a.responsable? ' <i>('+esc(a.responsable)+(a.echeance? ', '+fmtDate(a.echeance) : '')+')</i>' : '')+'</div>'; }).join('') : '')+
+        (note? '<div class="dp-h3">Note CHOKKO · '+esc(MONTHS_FR[note.mois])+' '+note.annee+'</div><div class="dp-line">'+esc(note.texte)+'</div>' : '')+
+      '</div><div class="dp-chart">'+(chart || '<p class="tiny">Aucune saisie CHOKKO sur cette période.</p>')+'</div></div>';
+  });
   var old = document.getElementById('def-print'); if(old) old.remove();
   var sheet = document.createElement('div'); sheet.id = 'def-print'; sheet.innerHTML = h;
   document.body.appendChild(sheet);
@@ -8279,7 +8297,7 @@ async function printChokkoDefReport(){
   var cleanup = function(){ if(done) return; done = true; window.removeEventListener('afterprint', cleanup); document.body.classList.remove('print-def-report'); var sh = document.getElementById('def-print'); if(sh) sh.remove(); };
   window.addEventListener('afterprint', cleanup);
   setTimeout(cleanup, 5000);
-  logChange('CHOKKO', 'Impression suivi défaut', ligne+' - '+posteId);
+  logChange('CHOKKO', 'Impression suivi défauts', ligne+' - '+slots.join(', '));
   setTimeout(function(){ printWithPageSize('A3 landscape'); }, 60);
 }
 
@@ -12828,6 +12846,8 @@ app.addEventListener('click', async function(e){
   var defPer = e.target.closest('[data-action="chokko-def-period"]');
   if(defPer){ chokkoDefPeriod = defPer.dataset.p; render(); return; }
   if(e.target.closest('[data-action="chokko-def-action"]')){
+    var defBtn = e.target.closest('[data-action="chokko-def-action"]');
+    if(defBtn.dataset.poste) chokkoDefPoste = defBtn.dataset.poste;
     var pdef = chokkoPostes(chokkoLigne).filter(function(p){ return p[0]===chokkoDefPoste; })[0];
     var rg = chokkoDefRange(), tot = chokkoDefTotals(chokkoDefFill(chokkoLigne, chokkoDefPoste, chokkoDefBucketsFor(rg)));
     var td = new Date();
@@ -13209,7 +13229,13 @@ app.addEventListener('change', async function(e){
     if(tm){ tm.destination = e.target.value; saveSoon('prisonMoves', 500); render(); }
     return;
   }
-  if(e.target && e.target.id==='chokko-def-poste'){ chokkoDefPoste = e.target.value; chokkoDefPosteByLigne[chokkoLigne] = e.target.value; render(); return; }
+  if(e.target && e.target.classList && e.target.classList.contains('chokko-def-slot')){
+    var dsl = (chokkoDefSlotsByLigne[chokkoLigne]||[]).slice(), si = Number(e.target.dataset.slot), other = dsl.indexOf(e.target.value);
+    if(other>=0 && other!==si) dsl[other] = dsl[si];   // défaut déjà affiché ailleurs : on échange les deux
+    dsl[si] = e.target.value;
+    chokkoDefSlotsByLigne[chokkoLigne] = dsl; chokkoDefPosteByLigne[chokkoLigne] = dsl[0];
+    render(); return;
+  }
   if(e.target && (e.target.id==='chokko-def-from' || e.target.id==='chokko-def-to')){
     if(!e.target.value) return;
     if(e.target.id==='chokko-def-from') chokkoDefFrom = e.target.value; else chokkoDefTo = e.target.value;
