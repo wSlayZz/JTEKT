@@ -461,6 +461,32 @@ tr.releve-recap-sel td:first-child{font-weight:700; box-shadow:inset 4px 0 0 #1F
 @media print{
   body.print-monthly-report > *:not(#monthly-report){display:none !important;}
   body.print-def-report > *:not(#def-print){display:none !important;}
+  body.print-perf-progress > *:not(#perf-print){display:none !important;}
+  body.print-perf-progress #perf-print{display:block !important; font-family:Arial, Helvetica, sans-serif; color:#111; font-size:10px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  #perf-print .pf-head{display:flex; align-items:center; justify-content:space-between; padding-bottom:6px; margin-bottom:10px; border-bottom:2px solid #1F3864;}
+  #perf-print .pf-head img{height:30px; width:auto;}
+  #perf-print .pf-head div{text-align:right; font-size:14px;} #perf-print .pf-head div span{display:block; font-size:10px; color:#555;}
+  #perf-print .pf-kpis{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:10px;}
+  #perf-print .pf-kpis div{border:1px solid #bbb; border-radius:6px; padding:5px 10px; display:flex; flex-direction:column;}
+  #perf-print .pf-kpis span{font-size:22px; font-weight:700;} #perf-print .pf-kpis i{font-style:normal; font-size:9.5px; color:#555;}
+  #perf-print .pf-missing{border:1.5px solid #B23B2E; background:#FDF3F1; border-radius:6px; padding:7px 9px; margin-bottom:12px;}
+  #perf-print .pf-mh{font-size:12px; font-weight:700; color:#B23B2E; margin-bottom:5px;}
+  #perf-print .pf-chip{display:inline-block; border-radius:4px; padding:2px 7px; margin:0 4px 4px 0; font-size:10px;}
+  #perf-print .pf-chip i{font-style:normal; color:#555;}
+  #perf-print .pf-chip-late{background:#F8D6D2; color:#7A1F17;} #perf-print .pf-chip-todo{background:#FCEBCF; color:#6B4A00;}
+  #perf-print .pf-alldone{border:1.5px solid #2E7D4F; background:#E8F5EC; color:#2E7D4F; font-weight:700; border-radius:6px; padding:8px 10px; margin-bottom:12px; font-size:12px;}
+  #perf-print .pf-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; align-items:start;}
+  #perf-print .pf-block{border:1px solid #bbb; border-radius:6px; overflow:hidden; break-inside:avoid;}
+  #perf-print .pf-bh{display:flex; justify-content:space-between; align-items:baseline; background:#EEF1F6; padding:4px 8px; font-size:11.5px;}
+  #perf-print .pf-bh span{font-size:10px; font-weight:700;}
+  #perf-print .pf-row{display:flex; flex-wrap:wrap; align-items:baseline; gap:5px; padding:3px 8px; border-top:1px solid #e3e3e3; font-size:10px;}
+  #perf-print .pf-row .pf-res{margin-left:auto; font-weight:700;}
+  #perf-print .pf-row .pf-info{width:100%; padding-left:15px; font-size:8.5px; color:#555;}
+  #perf-print .pf-ic{width:10px; font-weight:700;}
+  #perf-print .pf-row-ok .pf-ic{color:#2E7D4F;} #perf-print .pf-row-late{background:#FBE3E0;} #perf-print .pf-row-late .pf-ic, #perf-print .pf-row-late .pf-res{color:#B23B2E;}
+  #perf-print .pf-row-todo .pf-ic, #perf-print .pf-row-todo .pf-res{color:#8A6100;}
+  #perf-print .pf-ok{color:#2E7D4F;} #perf-print .pf-warn{color:#B8730A;} #perf-print .pf-danger{color:#B23B2E;}
+  #perf-print .pf-legend{margin-top:8px; font-size:8.5px; color:#555;}
   body.print-def-report #def-print{display:block !important; font-family:Arial, Helvetica, sans-serif; color:#111;}
   #def-print .dp-head{display:flex; align-items:center; justify-content:space-between; padding-bottom:8px; margin-bottom:12px; border-bottom:2px solid #1F3864;}
   #def-print .dp-head img{height:36px; width:auto;}
@@ -637,6 +663,7 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 .chokko-grid-week td{padding:4px 6px;}
 #chokko-print-head{display:none;}
 #def-print{display:none;}
+#perf-print{display:none;}
 @media print{
   body.print-chokko-synth header.top{display:none !important;}
   body.print-chokko-synth .chokko-grid th:last-child, body.print-chokko-synth .chokko-grid td:last-child{display:none !important;}
@@ -9566,21 +9593,22 @@ function renderPerfAuditProgress(){
   var html = '<div class="section card" style="margin-bottom:18px;">';
   html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">'+
     '<div class="eyebrow">Avancement des audits de perf</div>'+
+    '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;"><button class="btn small" data-action="perf-progress-print" title="Imprimer le détail de l\'avancement (A4 portrait)">🖨️ Imprimer</button>'+
     '<label class="tiny" style="display:flex; align-items:center; gap:6px;">Mois'+
       '<select id="perf-progress-mois">'+MONTHS_FR.map(function(mm,i){return '<option value="'+i+'"'+(i===m?' selected':'')+'>'+mm.charAt(0).toUpperCase()+mm.slice(1)+'</option>';}).join('')+'</select>'+
       '<input type="number" id="perf-progress-annee" value="'+y+'" style="width:75px;">'+
-    '</label>'+
+    '</label></div>'+
   '</div>';
   html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:12px;">';
   secteursList.forEach(function(s){
     var lignes = (s.lignes||[]).map(function(l){
-      var entry = DATA.perf.find(function(p){ return (p.secteur||'')===s.id && p.ligne===l && p.annee===y && p.mois===m; });
+      var entry = DATA.perf.find(function(p){ return (p.secteur||'MCU')===s.id && p.ligne===l && p.annee===y && p.mois===m && p.resultatPct!==null && p.resultatPct!==undefined; });
       totalLignes++;
       if(entry) doneLignes++;
       return {ligne:l, done: !!entry, pct: entry? entry.resultatPct : null};
     });
     var doneCount = lignes.filter(function(l){return l.done;}).length;
-    var pct = lignes.length? Math.round(doneCount/lignes.length*100) : 0;
+    var pct = lignes.length? Math.floor(doneCount/lignes.length*100) : 0;
     var lvl = pct===100? 'ok' : pct===0? 'danger' : 'warn';
     html += '<div style="border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; cursor:pointer;" data-action="perf-progress-goto" data-id="'+s.id+'">'+
       '<div style="font-weight:700; margin-bottom:6px;">'+esc(s.nom)+'</div>'+
@@ -9595,6 +9623,63 @@ function renderPerfAuditProgress(){
   html += '<p class="tiny" style="margin-top:10px; color:var(--text-faint);">'+doneLignes+' / '+totalLignes+' ligne(s) auditée(s) ce mois sur '+(secteursList.length>1? 'vos '+secteursList.length+' secteurs' : 'votre secteur')+'.</p>';
   html += '</div>';
   return html;
+}
+// Impression A4 portrait du détail de l'avancement des audits de perf (responsable qualité)
+function perfEntryFor(sid, ligne, y, m){
+  return DATA.perf.find(function(p){ return (p.secteur||'MCU')===sid && p.ligne===ligne && p.annee===y && p.mois===m && p.resultatPct!==null && p.resultatPct!==undefined; }) || null;
+}
+async function printPerfProgress(){
+  var y = perfProgressYear, m = perfProgressMonth;
+  var mesSecteurs = userSecteurs();
+  var secteursList = ((DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT).filter(function(s){ return ((s.tabs||[]).indexOf('perf')>=0 || s.id==='MCU') && mesSecteurs.indexOf(s.id)>=0; });
+  if(!secteursList.length){ toast('Aucun secteur à imprimer.', 'error'); return; }
+  var today = todayStr(), moisNom = MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1);
+  var mk = y+'-'+String(m+1).padStart(2,'0');
+  var isPast = mk < today.slice(0,7);
+  var tot = 0, done = 0, late = 0, todo = 0, missing = [];
+  var blocks = secteursList.map(function(s){
+    var lignes = s.lignes||[], sDone = 0;
+    var rows = lignes.map(function(l){
+      tot++;
+      var e = perfEntryFor(s.id, l, y, m);
+      var plan = DATA.planning.filter(function(p){ return (p.secteur||'MCU')===s.id && p.ligne===l && p.type==='perf' && p.echeance && p.echeance.slice(0,7)===mk; })[0] || null;
+      var info = plan ? 'échéance '+fmtDate(plan.echeance).slice(0,5)+(plan.responsable? ' · '+esc(plan.responsable) : '') : '';
+      if(e){ done++; sDone++; return '<div class="pf-row pf-row-ok"><span class="pf-ic">✓</span><b>'+esc(l)+'</b><span class="pf-res pf-'+scoreLevel(e.resultatPct)+'">'+pct1(e.resultatPct)+' %</span></div>'; }
+      var isLate = isPast || (plan && plan.echeance<today);
+      if(isLate) late++; else todo++;
+      missing.push({s:s.nom, l:l, late:isLate, info:info});
+      return '<div class="pf-row '+(isLate?'pf-row-late':'pf-row-todo')+'"><span class="pf-ic">'+(isLate?'✗':'○')+'</span><b>'+esc(l)+'</b><span class="pf-res">'+(isLate?'En retard':'À faire')+'</span>'+(info? '<span class="pf-info">'+info+'</span>' : '')+'</div>';
+    }).join('');
+    var sp = lignes.length? Math.floor(sDone/lignes.length*100) : 0;
+    return '<div class="pf-block"><div class="pf-bh"><b>'+esc(s.nom)+'</b><span class="pf-'+(sp===100?'ok':sp===0?'danger':'warn')+'">'+sDone+'/'+lignes.length+' · '+sp+' %</span></div>'+rows+'</div>';
+  }).join('');
+  var gp = tot? Math.floor(done/tot*100) : 0;
+  var logoEl = document.querySelector('.sidebar-logo-full');
+  var h = '<div class="pf-head">'+(logoEl && logoEl.src ? '<img src="'+logoEl.src+'" alt="Acurion">' : '<span></span>')+
+      '<div><b>Avancement des audits de perf</b><span>'+esc(moisNom)+' '+y+' · édité le '+fmtDate(today)+(currentUser? ' par '+esc(currentUser.displayName) : '')+'</span></div></div>'+
+    '<div class="pf-kpis">'+
+      '<div><span class="pf-'+(gp===100?'ok':gp===0?'danger':'warn')+'">'+gp+' %</span><i>avancement</i></div>'+
+      '<div><span class="pf-ok">'+done+'</span><i>ligne(s) auditée(s)</i></div>'+
+      '<div><span class="pf-danger">'+late+'</span><i>en retard</i></div>'+
+      '<div><span class="pf-warn">'+todo+'</span><i>à faire</i></div>'+
+      '<div><span>'+tot+'</span><i>lignes au total</i></div>'+
+    '</div>'+
+    (missing.length ? '<div class="pf-missing"><div class="pf-mh">Reste à auditer ('+missing.length+')</div>'+
+        missing.map(function(x){ return '<span class="pf-chip '+(x.late?'pf-chip-late':'pf-chip-todo')+'"><b>'+esc(x.s)+' · '+esc(x.l)+'</b>'+(x.info? ' <i>'+x.info+'</i>' : '')+'</span>'; }).join('')+'</div>'
+      : '<div class="pf-alldone">✓ Toutes les lignes sont auditées pour '+esc(moisNom)+' '+y+'.</div>')+
+    '<div class="pf-grid">'+blocks+'</div>'+
+    '<p class="pf-legend">✓ fait (résultat du mois) · ✗ en retard (mois écoulé ou échéance du planning dépassée) · ○ à faire (pas encore dû).</p>';
+  var old = document.getElementById('perf-print'); if(old) old.remove();
+  var sheet = document.createElement('div'); sheet.id = 'perf-print'; sheet.innerHTML = h;
+  document.body.appendChild(sheet);
+  document.body.classList.add('print-perf-progress');
+  await waitImages(sheet);
+  var fin = false;
+  var cleanup = function(){ if(fin) return; fin = true; window.removeEventListener('afterprint', cleanup); document.body.classList.remove('print-perf-progress'); var sh = document.getElementById('perf-print'); if(sh) sh.remove(); };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(cleanup, 5000);
+  logChange('Audits de perf', 'Impression avancement', moisNom+' '+y);
+  setTimeout(function(){ printWithPageSize('A4 portrait'); }, 60);
 }
 function renderMultiSecteurBanner(){
   var us = userSecteurs();
@@ -12712,6 +12797,7 @@ app.addEventListener('click', async function(e){
 
   if(e.target.closest('[data-action="logout"]')){ handleLogout(); return; }
   if(e.target.closest('[data-action="chokko-def-print"]')){ printChokkoDefReport(); return; }
+  if(e.target.closest('[data-action="perf-progress-print"]')){ printPerfProgress(); return; }
   var dashChk = e.target.closest('[data-action="dash-goto-chokko"]');
   if(dashChk){ currentTab = 'chokko'; chokkoView = 'saisie'; chokkoLigne = dashChk.dataset.ligne; renderNav(); render(); return; }
   var toggleRoleSub = e.target.closest('[data-action="toggle-role-sub"]');
