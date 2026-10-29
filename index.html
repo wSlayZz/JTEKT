@@ -663,10 +663,14 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 .chokko-grid-week td{padding:4px 6px;}
 #chokko-print-head{display:none;}
 #def-print{display:none;}
+.chokko-grid .chk-act-btn{width:16px; height:16px; line-height:14px; padding:0; margin-right:4px; border:1px solid var(--border); border-radius:4px; background:#fff; color:var(--accent); font-size:11px; font-weight:700; cursor:pointer; vertical-align:middle;}
+.chokko-grid .chk-act-btn:hover{background:var(--accent); color:#fff; border-color:var(--accent);}
+.chokko-grid .chk-act-btn.has{background:var(--accent-bg, #E6EFEE); border-color:var(--accent);}
+.chk-actions-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+.chk-actions-table th, .chk-actions-table td{border-bottom:1px solid var(--border); padding:6px 8px; vertical-align:top; text-align:left;}
 #perf-print{display:none;}
 @media print{
   body.print-chokko-synth header.top{display:none !important;}
-  body.print-chokko-synth .chokko-grid th:last-child, body.print-chokko-synth .chokko-grid td:last-child{display:none !important;}
   body.print-chokko-synth #chokko-print-head{display:flex !important; align-items:center; justify-content:space-between; gap:20px; padding-bottom:8px; margin-bottom:10px; border-bottom:2px solid #1F3864;}
   #chokko-print-head img{height:34px; width:auto;}
   #chokko-print-head div{text-align:right; font-size:14px; color:#1C1B18;}
@@ -6001,6 +6005,136 @@ function handlePrisonTraceCsv(){
   downloadText('Prison_tracabilite_sorties_'+currentSecteur+'_'+todayStr()+'.csv', toCSV(data, [['debut','Début'],['fin','Fin'],['defaut','Défaut'],['ref','Référence'],['ligne','Ligne'],['etat','État'],['qty','Quantité'],['sens','Mouvement'],['origine','Origine'],['dest','Destination'],['user','Par'],['nb','Nb modifications']]));
 }
 
+// ====================================================================
+// PRISON QUALITÉ - NOMENCLATURE (réf. MCU -> composants) POUR LES BLOCAGES SAP
+// Recopiée des tableaux papier (141P, 149X, 143X, 144P / 143EE, 162R spec A / B).
+// Chaque réf. saisie en prison est rattachée en silence à sa nomenclature ; l'export Excel
+// totalise ensuite les quantités à bloquer par référence de composant.
+// ====================================================================
+var SAP_COMP_TYPES = [['carter','Carter'],['moteur','Moteur'],['carterMoteur','Carter moteur ass.'],['bague','Bague'],['relais','Relais'],['pcb','Carte (PCB / PWB)'],['ecu','ECU'],['capot','Capot'],['heatsink','Heatsink'],['vis','Vis'],['etiquette','Étiquette'],['silicone','Silicone'],['pt','PT']];
+// Composants absents selon l'état de la pièce en prison (une pièce « sans capot » n'a plus son capot ni ses vis de capot…)
+var SAP_ETAT_EXCLUS = {complet:[], sansCapot:['capot','vis'], sansPcb:['pcb','ecu','capot','vis']};
+var SAP_BOM = (function(){
+  var B = [];
+  function add(ref, desig, comps){ B.push({ref:ref, desig:desig, comps:comps}); }
+  // --- 141P ---
+  var p141 = {bague:'6800006798', relais:'6800006793', capot:'6800006795'};
+  function c141(carter, moteur, pwb){ return [['carter',carter],['moteur',moteur],['bague',p141.bague],['relais',p141.relais],['pcb',pwb],['capot',p141.capot]]; }
+  add('6900004161','141P LP', c141('6800006783','68JALY6796','6800007863 (D020)'));
+  add('6900004162','141P LP', c141('6800006785','68JALY6796','6800007863 (D020)'));
+  add('6900004164','141P LP', c141('6800007668','68JALY6796','6800007863 (D020)'));
+  add('6900004163','141P HP', c141('6800006787','6800006797','6800007863 (D020)'));
+  add('6900004778','141P LP', c141('6800006785','68JALY6796','6800009500 (D041)'));
+  add('6900004779','141P LP', c141('6800007668','68JALY6796','6800009500 (D041)'));
+  add('6900004810','141P HP', c141('6800006787','6800006797','6800009500 (D041)'));
+  // --- 149X ---
+  add('E800018199','149X - VC3.2', [['carter','6800015977'],['moteur','6800016171'],['bague','6800009005'],['pcb','6800018201 (VC 3.2)'],['capot','6800009046'],['vis','6800009003 (M3 x 13,5)'],['vis','6800009833 (M3 x 11,5)'],['vis','6800009066 (M4 x 17)']]);
+  // --- 143X / 144P / 143EE : 3 variantes (MP, VHP L, VHP R) par carte ---
+  var V = {MP:['F800016001','6800008864','6800009005'], L:['6800016310','6800017790','6800009004'], R:['6800016311','6800017790','6800009004']};
+  var V2 = {MP:['F800004007','6800018747','6800009005'], L:['6800016579','6800018746','6800009004'], R:['6800016591','6800018746','6800009004']};
+  function cX(v, pcb){ return [['carter',v[0]],['moteur',v[1]],['bague',v[2]],['pcb',pcb],['capot','68JALY8861'],['vis','6800009003 (M3 x 13,5)'],['vis','6800009833 (M3 x 11,5)']]; }
+  [['143X',V,'6800017459 (VC 2.4)',['E800017578','E800017579','E800017580']],
+   ['143X',V,'6800018340 (VC 2.5)',['E800018344','E800018342','E800018343']],
+   ['143X',V,'6800018332 (VC 3.2)',['E800018331','E800018334','E800018338']],
+   ['143X',V,'6800019089 (VC 3.3)',['E800019083','E800019085','E800019087']],
+   ['144P',V2,'6800020375',['E800020374','E800020372','E800020373']],
+   ['144P',V2,'6800018892',['E800019174','E800019172','E800019173']],
+   ['143EE',V2,'6800019460',['E800019406','E800019407','E800019408']],
+   ['144P',V2,'6800019824',['E800019835','E800019833','E800019834']],
+   ['143EE',V2,'6800019927',['E800019934','E800019932','E800019933']],
+   ['144P',V2,'6800020124',['E800020125','E800020127','E800020126']]
+  ].forEach(function(g){
+    add(g[3][0], g[0]+' MP', cX(g[1].MP, g[2]));
+    add(g[3][1], g[0]+' VHP L', cX(g[1].L, g[2]));
+    add(g[3][2], g[0]+' VHP R', cX(g[1].R, g[2]));
+  });
+  // --- 162R (spec A / spec B) ---
+  function c162(cma){ return [['carterMoteur',cma],['ecu','6800017952'],['capot','6800015384'],['heatsink','6800015388'],['vis','6800015389'],['etiquette','6844000328'],['silicone','6841000009'],['pt','6800015583']]; }
+  ['E800017671','E800018666','E800018590','E800017673','E800019745','E800020381'].forEach(function(r){ add(r,'162R SPEC A', c162('6800015584')); });
+  ['E800017445','E800018493','E800018667','E800018525','E800018245','E800019852','E800019722','E800020294','E800019732'].forEach(function(r){ add(r,'162R SPEC B', c162('6800015738')); });
+  add('SPEC A','162R SPEC A', c162('6800015584'));
+  add('SPEC B','162R SPEC B', c162('6800015738'));
+  return B;
+})();
+// Réf. saisie en prison (« 18889 », « 19722 (SPEC B) », « SPEC A »…) -> entrée de nomenclature
+function sapBomFor(refSaisie){
+  var s = String(refSaisie||'').toUpperCase().trim();
+  if(!s) return null;
+  var m = s.match(/\d{4,}/);
+  if(m){
+    var num = m[0].replace(/^0+/, '');
+    var hits = SAP_BOM.filter(function(b){ var d = b.ref.replace(/\D/g,'').replace(/^0+/,''); return d===num || (num.length>=4 && d.slice(-num.length)===num); });
+    if(hits.length===1) return hits[0];
+    if(hits.length>1){ var exact = hits.filter(function(b){ return b.ref.replace(/\D/g,'').slice(-num.length)===num && b.ref.replace(/\D/g,'').replace(/^0+/,'').length===num.length; })[0]; if(exact) return exact; }
+  }
+  if(/SPEC\s*A\b/.test(s)) return SAP_BOM.filter(function(b){ return b.ref==='SPEC A'; })[0];
+  if(/SPEC\s*B\b/.test(s)) return SAP_BOM.filter(function(b){ return b.ref==='SPEC B'; })[0];
+  return null;
+}
+function sapTypeLabel(t){ var f = SAP_COMP_TYPES.filter(function(x){ return x[0]===t; })[0]; return f ? f[1] : t; }
+async function exportPrisonSapExcel(lots){
+  if(typeof ExcelJS==='undefined'){ uiAlert('La librairie Excel n\'a pas pu être chargée (connexion internet requise). Réessayez.'); return; }
+  var etats = PRISON_QTY_COLS;
+  var detail = [], agg = {}, unknown = [];
+  lots.forEach(function(lot){
+    (lot.lignes||[]).forEach(function(l){
+      var bom = sapBomFor(l.ref);
+      etats.forEach(function(et){
+        var q = Number(l[et[0]])||0; if(!q) return;
+        if(!bom){ unknown.push({defaut:lot.defaut, ligne:l.ligne||'', ref:l.ref||'', etat:et[1], qty:q}); return; }
+        var excl = SAP_ETAT_EXCLUS[et[0]] || [];
+        var comps = bom.comps.filter(function(c){ return excl.indexOf(c[0])<0; });
+        detail.push({defaut:lot.defaut, ligne:l.ligne||'', ref:l.ref||'', refJaly:bom.ref, desig:bom.desig, etat:et[1], qty:q, comps:comps});
+        comps.forEach(function(c){
+          var k = c[0]+'|'+c[1];
+          if(!agg[k]) agg[k] = {type:c[0], ref:c[1], qty:0, from:{}};
+          agg[k].qty += q;
+          agg[k].from[bom.desig] = (agg[k].from[bom.desig]||0) + q;
+        });
+      });
+    });
+  });
+  var wb = new ExcelJS.Workbook();
+  var head = {font:{bold:true, color:{argb:'FFFFFFFF'}}, fill:{type:'pattern', pattern:'solid', fgColor:{argb:'FF1F3864'}}};
+  var border = {top:{style:'thin', color:{argb:'FFB7B7B7'}}, left:{style:'thin', color:{argb:'FFB7B7B7'}}, bottom:{style:'thin', color:{argb:'FFB7B7B7'}}, right:{style:'thin', color:{argb:'FFB7B7B7'}}};
+  function sheet(name, cols, rows, title){
+    var ws = wb.addWorksheet(name, {views:[{state:'frozen', ySplit:3}]});
+    ws.getCell('A1').value = title; ws.getCell('A1').font = {bold:true, size:13};
+    ws.getCell('A2').value = 'Prison qualité '+currentSecteur+(prisonZoneFilter? ' · zone '+prisonZoneFilter : '')+' · extrait le '+fmtDate(todayStr())+(currentUser? ' par '+currentUser.displayName : '');
+    ws.getCell('A2').font = {italic:true, size:9, color:{argb:'FF555555'}};
+    var hr = ws.getRow(3);
+    cols.forEach(function(c, i){ var cell = hr.getCell(i+1); cell.value = c[0]; cell.font = head.font; cell.fill = head.fill; cell.border = border; cell.alignment = {vertical:'middle', wrapText:true}; ws.getColumn(i+1).width = c[1]; });
+    rows.forEach(function(r){ var row = ws.addRow(r); row.eachCell({includeEmpty:true}, function(cell){ cell.border = border; cell.alignment = {vertical:'top', wrapText:true}; }); });
+    return ws;
+  }
+  // 1. Synthèse à bloquer
+  var aggRows = Object.keys(agg).map(function(k){ return agg[k]; }).sort(function(a,b){
+    var ia = SAP_COMP_TYPES.map(function(x){return x[0];}).indexOf(a.type), ib = SAP_COMP_TYPES.map(function(x){return x[0];}).indexOf(b.type);
+    return ia-ib || a.ref.localeCompare(b.ref);
+  });
+  var ws1 = sheet('Blocage SAP', [['Composant',20],['Référence',26],['Quantité à bloquer',16],['Provenance (réf. MCU)',60]],
+    aggRows.map(function(a){ return [sapTypeLabel(a.type), a.ref, a.qty, Object.keys(a.from).map(function(d){ return d+' : '+a.from[d]; }).join(' · ')]; }),
+    'Composants à bloquer dans SAP');
+  ws1.getColumn(3).alignment = {horizontal:'center'};
+  var totPieces = detail.reduce(function(s,d){ return s+d.qty; },0), totUnknown = unknown.reduce(function(s,u){ return s+u.qty; },0);
+  ws1.addRow([]);
+  ws1.addRow(['Pièces MCU rattachées', '', totPieces]).font = {bold:true};
+  if(unknown.length){ var wr = ws1.addRow(['Pièces non rattachées', '', totUnknown, 'Réf. absentes de la nomenclature : voir l\'onglet « Réf. non trouvées »']); wr.font = {bold:true, color:{argb:'FFB23B2E'}}; }
+  // 2. Détail
+  var types = SAP_COMP_TYPES.filter(function(t){ return detail.some(function(d){ return d.comps.some(function(c){ return c[0]===t[0]; }); }); });
+  sheet('Détail par réf.', [['Défaut',28],['Ligne',8],['Réf. saisie',14],['REF JALY',14],['Désignation',16],['État',12],['Qté',7]].concat(types.map(function(t){ return [t[1],22]; })),
+    detail.map(function(d){ return [d.defaut, d.ligne, d.ref, d.refJaly, d.desig, d.etat, d.qty].concat(types.map(function(t){ return d.comps.filter(function(c){ return c[0]===t[0]; }).map(function(c){ return c[1]; }).join('\n'); })); }),
+    'Détail des pièces en prison et de leurs composants');
+  // 3. Non trouvées
+  if(unknown.length){
+    sheet('Réf. non trouvées', [['Défaut',30],['Ligne',8],['Réf. saisie',18],['État',12],['Qté',8]], unknown.map(function(u){ return [u.defaut, u.ligne, u.ref, u.etat, u.qty]; }),
+      'Références sans nomenclature (à bloquer manuellement ou à ajouter à la nomenclature)');
+  }
+  var buf = await wb.xlsx.writeBuffer();
+  downloadBlob(new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), 'Blocage_SAP_prison_'+currentSecteur+(prisonZoneFilter?'_'+prisonZoneFilter.replace(/[^\w]+/g,'-'):'')+'_'+todayStr()+'.xlsx');
+  logChange('Prison qualité', 'Export Excel blocage SAP', aggRows.length+' composant(s), '+totPieces+' pièce(s)'+(unknown.length? ', '+totUnknown+' non rattachée(s)' : ''));
+  toast('Export Excel prêt'+(unknown.length? ' - '+totUnknown+' pièce(s) sans nomenclature (onglet « Réf. non trouvées »)' : '')+'.');
+}
 RENDERERS.prison = function(){
   var lots = prisonLotsSect();
   var shown = prisonZoneFilter ? lots.filter(function(l){ return l.stockage===prisonZoneFilter; }) : lots;
@@ -6029,6 +6163,7 @@ RENDERERS.prison = function(){
   html += '<div class="toolbar row-actions-noprint"><div class="left"></div><div style="display:flex; gap:8px;">'+
     (!lots.length && currentSecteur==='MCU'? '<button class="btn" data-action="prison-import-sheet" title="Reprendre les données de la feuille papier du 23/03/2026">📥 Reprendre la synthèse du 23/03/2026</button>' : '')+
     '<button class="btn" data-action="prison-print" title="Exporter en PDF">🖨️ Exporter en PDF</button>'+
+    (lots.length? '<button class="btn" data-action="prison-sap-xlsx" title="Liste des composants (carter, moteur, carte…) à bloquer dans SAP">📊 Export Excel blocage SAP</button>' : '')+
     '<button class="btn primary" data-action="prison-new-lot">+ Nouveau défaut</button>'+
   '</div></div>';
   if(prisonLotFormOpen) html += prisonLotForm();
@@ -6701,7 +6836,7 @@ function rptHighlights(key, isMCU, lateA, verifLate){
   if(isMCU){
     LINES.forEach(function(l){
       var a = chokkoMonthAverage(l, y, m);
-      if(a!==null && a<chokkoObjectif(l)) out.push('CHOKKO '+l+' sous l\'objectif : <b>'+pct1(a)+' %</b> (objectif '+chokkoObjectif(l)+' %).');
+      if(a!==null && a<chokkoObjectif(l)) out.push('CHOKKO '+l+' sous l\'objectif : <b>'+pct2(a)+' %</b> (objectif '+chokkoObjectif(l)+' %).');
     });
     var pres = paretoCompute(paretoSourceById('chokko'), paretoRange('mois', key), '');
     if(pres.total) out.push('Première cause de non-CHOKKO : <b>'+esc(pres.rows[0].label)+'</b> ('+pres.rows[0].value+' défauts, '+paretoFmtPct(pres.rows[0].pct)+').');
@@ -7037,6 +7172,8 @@ function chokkoLevel(pct){
 function chokkoObjectif(ligne){ var o = cfg('chokkoObj')||{}; return (o[ligne]!==undefined && o[ligne]!==null && o[ligne]!=='') ? Number(o[ligne]) : 99; }
 // Pourcentage affiché à 1 décimale SANS arrondi supérieur (98,973 → 98,9) : la valeur affichée ne doit jamais dépasser la vraie donnée
 function pct1(v){ return (Math.floor(Number(v)*10 + 1e-9)/10).toFixed(1); }
+// CHOKKO : 2 décimales, tronquées (jamais arrondi au-dessus : 98,789 → 98,78)
+function pct2(v){ return (Math.floor(Number(v)*100 + 1e-9)/100).toFixed(2); }
 function chokkoLevelVsObjectif(pct, ligne){
   if(pct===null || pct===undefined) return 'neutral';
   var obj = chokkoObjectif(ligne);
@@ -7361,25 +7498,23 @@ function chokkoWeeklyHtml(forPrint){
     '<div class="table-wrap" style="overflow-x:auto;"><table class="chokko-grid chokko-grid-week"><thead><tr>'+
     '<th class="chk-sticky" style="min-width:230px; text-align:left; background:#F2F2F2;">DEFAUTS / SEMAINES</th>'+
     cols.map(function(c){ return '<th style="min-width:90px;">'+esc(c.label)+'<div class="chk-wk-dates">'+esc(c.sub)+'</div></th>'; }).join('')+
-    '<th style="min-width:70px;">TOTAL MOIS</th><th style="min-width:200px; text-align:left;">ACTIONS</th></tr></thead><tbody>';
+    '<th style="min-width:70px;">TOTAL MOIS</th></tr></thead><tbody>';
   postes.forEach(function(p){
-    var note = chokkoNote(l, p[0], y, m), noteTxt = note ? (note.texte||'') : '';
     h += '<tr><td class="chk-label chk-sticky"'+chokkoHlStyle(hlL['label_'+p[0]])+'>'+esc(p[0])+' - '+esc(p[1])+'</td>'+
       cols.map(function(c){ return '<td'+chokkoHlStyle(chokkoWeekHighlight(l, c.days, function(d){ return d+'_'+p[0]; }))+'>'+num(c.st.nc[p[0]])+'</td>'; }).join('')+
-      '<td'+chokkoHlStyle(hlL['rowtotal_'+p[0]], true)+'>'+(mst.nc[p[0]]||0)+'</td>'+
-      '<td class="chk-note-cell"'+(forPrint?'':' data-action="chokko-note-open" data-ligne="'+l+'" data-poste="'+p[0]+'" data-annee="'+y+'" data-mois="'+m+'"')+'><div class="chk-note-preview">'+(noteTxt? esc(noteTxt) : (forPrint?'':'<span class="chk-note-empty">+ Actions menées…</span>'))+'</div></td></tr>';
+      '<td'+chokkoHlStyle(hlL['rowtotal_'+p[0]], true)+'>'+(mst.nc[p[0]]||0)+'</td></tr>';
   });
   CHOKKO_TEAMS.forEach(function(tm){
     h += '<tr class="chk-team-row"><td class="chk-label-bold chk-sticky chk-team-label">'+esc(tm[2]||tm[0])+'</td>'+
       cols.map(function(c){ return '<td class="chk-wk-team">'+num(c.st.team[tm[0]])+'</td>'; }).join('')+
-      '<td class="chk-wk-team">'+num(mst.team[tm[0]])+'</td><td></td></tr>';
+      '<td class="chk-wk-team">'+num(mst.team[tm[0]])+'</td></tr>';
   });
-  h += '<tr class="chk-total-row chk-prod-row"><td class="chk-label-bold chk-sticky">TOTAL PROD</td>'+cols.map(function(c){ return '<td>'+num(c.st.prod)+'</td>'; }).join('')+'<td>'+num(mst.prod)+'</td><td></td></tr>';
-  h += '<tr class="chk-total-row chk-nc-row"><td class="chk-label-bold chk-sticky">TOTAL NC</td>'+cols.map(function(c){ return '<td class="chk-tnc"'+chokkoHlStyle(chokkoWeekHighlight(l, c.days, function(d){ return 'totalnc_'+d; }))+'>'+(c.st.prod||c.st.totalNC? c.st.totalNC : '-')+'</td>'; }).join('')+'<td class="chk-tnc">'+mst.totalNC+'</td><td></td></tr>';
-  h += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky">CHOKKO DE LA SEMAINE</td>'+cols.map(function(c){ var v = c.st.pct; return '<td class="'+(v!==null?lvlCls(v).trim():'')+'">'+(v!==null? pct1(v) : '-')+'</td>'; }).join('')+
-    '<td class="'+(mst.pct!==null?lvlCls(mst.pct).trim():'')+'">'+(mst.pct!==null? pct1(mst.pct) : '-')+'</td><td class="tiny" style="color:var(--text-faint); font-weight:400;">objectif ≥ '+chokkoObjectif(l)+' %</td></tr>';
+  h += '<tr class="chk-total-row chk-prod-row"><td class="chk-label-bold chk-sticky">TOTAL PROD</td>'+cols.map(function(c){ return '<td>'+num(c.st.prod)+'</td>'; }).join('')+'<td>'+num(mst.prod)+'</td></tr>';
+  h += '<tr class="chk-total-row chk-nc-row"><td class="chk-label-bold chk-sticky">TOTAL NC</td>'+cols.map(function(c){ return '<td class="chk-tnc"'+chokkoHlStyle(chokkoWeekHighlight(l, c.days, function(d){ return 'totalnc_'+d; }))+'>'+(c.st.prod||c.st.totalNC? c.st.totalNC : '-')+'</td>'; }).join('')+'<td class="chk-tnc">'+mst.totalNC+'</td></tr>';
+  h += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky">CHOKKO DE LA SEMAINE</td>'+cols.map(function(c){ var v = c.st.pct; return '<td class="'+(v!==null?lvlCls(v).trim():'')+'">'+(v!==null? pct2(v) : '-')+'</td>'; }).join('')+
+    '<td class="'+(mst.pct!==null?lvlCls(mst.pct).trim():'')+'">'+(mst.pct!==null? pct2(mst.pct) : '-')+'</td></tr>';
   h += '<tr class="chk-cost-row"><td class="chk-label-bold chk-sticky chk-cost-label">COÛT / PIÈCE (€)</td>'+cols.map(function(c){ var v = c.st.cost; return '<td class="lvl-danger" style="font-weight:700;">'+(v!==null? fmtCost(v) : '')+'</td>'; }).join('')+
-    '<td class="lvl-danger" style="font-weight:700;">'+(mst.cost!==null? fmtCost(mst.cost) : '')+'</td><td></td></tr>';
+    '<td class="lvl-danger" style="font-weight:700;">'+(mst.cost!==null? fmtCost(mst.cost) : '')+'</td></tr>';
   h += '</tbody></table></div><p class="tiny" style="margin-top:6px; color:var(--text-faint);">Semaines complètes du lundi au dimanche (la première et la dernière peuvent inclure des jours du mois précédent ou suivant). TOTAL MOIS ne compte que les jours de '+esc(MONTHS_FR[m])+'. CHOKKO et coût par pièce : moyenne des jours saisis.</p>';
   if(forPrint) h += '<div class="chokko-chart-print">'+rptChartImage(buildChokkoWeekChartConfig(l, y, m), 1800, 430)+'</div>';
   return h+'</div>';
@@ -7919,7 +8054,7 @@ function chokkoWizardStepModal(){
       '</div>'+
     '</div>'+
     '<div class="tiny" style="margin-top:14px; padding-top:10px; border-top:1px solid var(--border); color:var(--text-faint);">'+
-      'Chokko du jour actuel : <b style="color:var(--'+chokkoLevelVsObjectif(totals.pct, ligne)+');">'+(totals.pct!==null?pct1(totals.pct)+'%':'-')+'</b>'+
+      'Chokko du jour actuel : <b style="color:var(--'+chokkoLevelVsObjectif(totals.pct, ligne)+');">'+(totals.pct!==null?pct2(totals.pct)+'%':'-')+'</b>'+
     '</div>'+
     '</div></div>';
 }
@@ -7950,7 +8085,7 @@ function chokkoSaisieView(){
       ' <button class="btn small primary" data-action="chokko-manage-postes-open">⚙️ Gérer les postes de '+esc(ligne)+'</button></div>';
   }
   html += '<div class="print-only" style="font-size:17px; font-weight:700; margin-bottom:6px;">Suivi CHOKKO - '+esc(ligne)+' - '+moisNom+' '+chokkoYear+
-    (monthAvg!==null? ' <span style="font-weight:400; font-size:13px;">· Chokko du mois : '+pct1(monthAvg)+'% (objectif ≥ '+chokkoObjectif(ligne)+'%)</span>' : '')+'</div>';
+    (monthAvg!==null? ' <span style="font-weight:400; font-size:13px;">· Chokko du mois : '+pct2(monthAvg)+'% (objectif ≥ '+chokkoObjectif(ligne)+'%)</span>' : '')+'</div>';
   if(staleLines.length){
     html += '<div class="card chokko-noprint" style="background:var(--warn-bg,#FBEEDC); border-color:var(--warn-border,#E8C088); margin-bottom:14px; display:flex; align-items:center; gap:10px;">'+
       '<span style="font-size:18px;">⚠</span><div class="tiny">'+
@@ -7968,7 +8103,7 @@ function chokkoSaisieView(){
     '</div>'+
     '<div style="display:flex; gap:12px; margin-left:auto;">'+
       '<div class="statcard" style="padding:12px 20px; min-width:150px;"><div class="tiny">Chokko du mois</div>'+
-        '<div id="chokko-month-avg" style="font-family:var(--mono); font-weight:700; font-size:28px; color:var(--'+chokkoLevelVsObjectif(monthAvg, ligne)+');">'+(monthAvg!==null?pct1(monthAvg)+'%':'-')+'</div>'+
+        '<div id="chokko-month-avg" style="font-family:var(--mono); font-weight:700; font-size:28px; color:var(--'+chokkoLevelVsObjectif(monthAvg, ligne)+');">'+(monthAvg!==null?pct2(monthAvg)+'%':'-')+'</div>'+
         '<div class="tiny" id="chokko-month-objectif" style="margin-top:2px; color:var(--text-faint);">Objectif : ≥ '+String(chokkoObjectif(ligne)).replace('.',',')+'% <button class="chk-obj-edit chokko-noprint" data-action="chokko-obj-open" title="Modifier les objectifs de '+esc(ligne)+'">✎</button></div>'+
       '</div>'+
       '<div class="statcard" style="padding:12px 20px; min-width:150px;"><div class="tiny">Coût par pièce du mois</div>'+
@@ -7987,7 +8122,6 @@ function chokkoSaisieView(){
     '<th class="chk-sticky chk-col-label" style="text-align:left; background:#F2F2F2;">DEFAUTS / JOURS</th>'+
     days.map(function(d){ return '<th class="chk-col-day">'+d.day+'</th>'; }).join('')+
     '<th class="chk-col-total">TOTAL</th>'+
-    '<th class="chk-col-actions" style="text-align:left;">ACTIONS</th>'+
   '</tr></thead><tbody>';
 
   postes.forEach(function(poste){
@@ -8000,7 +8134,7 @@ function chokkoSaisieView(){
     var labelHl = DATA.chokkoHighlights[ligne] && DATA.chokkoHighlights[ligne]['label_'+posteId];
     var labelStyle = labelHl? 'background:'+labelHl+'; color:'+contrastTextColor(labelHl)+';' : '';
     var labelPaintClass = chokkoPaintMode? ' chokko-paintable' : '';
-    html += '<td class="chk-label chk-sticky'+labelPaintClass+'" style="'+labelStyle+'" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-labelcell="1">'+esc(posteId)+' - '+esc(posteLabel)+
+    html += '<td class="chk-label chk-sticky'+labelPaintClass+'" style="'+labelStyle+'" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-labelcell="1"><button class="chk-act-btn chokko-noprint'+(note && (note.texte||'').trim() ? ' has' : '')+'" data-action="chokko-note-open" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-annee="'+chokkoYear+'" data-mois="'+chokkoMonth+'" title="'+(note && (note.texte||'').trim() ? 'Voir / modifier les actions de ce poste' : 'Ajouter une action sur ce poste')+'">'+(note && (note.texte||'').trim() ? '✎' : '+')+'</button>'+esc(posteId)+' - '+esc(posteLabel)+
       (ateqLinked? ' <span class="tiny" title="Alimente automatiquement l\'onglet ATEQ" style="color:var(--accent);">⇄ ATEQ</span>' : '')+
       (isOutOfConfig? ' <button class="postit-del" data-action="chokko-delete-poste-row" data-ligne="'+ligne+'" data-poste="'+posteId+'" title="Supprimer cette ligne hors config" style="color:var(--danger);">✕</button>' : '')+
       '</td>';
@@ -8018,9 +8152,6 @@ function chokkoSaisieView(){
     var rowTotalStyle = rowTotalHl? 'background:'+rowTotalHl+'; color:'+contrastTextColor(rowTotalHl)+'; font-weight:700;' : 'font-weight:700;';
     var rowTotalClass = chokkoPaintMode? ' chokko-paintable' : '';
     html += '<td id="chokko-poste-total-'+posteId+'" class="'+rowTotalClass.trim()+'" style="'+rowTotalStyle+'" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-rowtotal="1">'+totalPoste+'</td>';
-    var noteTxt = note ? (note.texte||'') : '';
-    html += '<td class="chk-note-cell" data-action="chokko-note-open" data-ligne="'+ligne+'" data-poste="'+posteId+'" data-annee="'+chokkoYear+'" data-mois="'+chokkoMonth+'" data-tip="'+esc(noteTxt)+'" data-tip-title="'+esc(posteId+' · '+ligne+' · '+MONTHS_FR[chokkoMonth].charAt(0).toUpperCase()+MONTHS_FR[chokkoMonth].slice(1))+'" data-tip-hint="'+(noteTxt?'Cliquer pour lire ou modifier':'Cliquer pour saisir les actions menées')+'">'+
-      '<div class="chk-note-preview">'+(noteTxt? esc(noteTxt) : '<span class="chk-note-empty">+ Actions menées…</span>')+'</div></td>';
     html += '</tr>';
   });
 
@@ -8033,14 +8164,14 @@ function chokkoSaisieView(){
       var v = e && e.prod[team[0]]!==undefined ? e.prod[team[0]] : '';
       return '<td><input type="number" min="0" class="chk-cell chokko-prod-cell" data-ligne="'+ligne+'" data-date="'+d.date+'" data-team="'+team[0]+'" value="'+v+'"></td>';
     }).join('');
-    html += '<td id="chokko-team-total-'+team[0]+'" class="chk-team-total">'+chokkoTeamMonthTotal(ligne, days, team[0])+'</td><td></td></tr>';
+    html += '<td id="chokko-team-total-'+team[0]+'" class="chk-team-total">'+chokkoTeamMonthTotal(ligne, days, team[0])+'</td></tr>';
   });
 
   // TOTAL PROD : modifiable manuellement (ecrase la somme des equipes si renseigne)
   html += '<tr class="chk-total-row chk-prod-row"><td class="chk-label-bold chk-sticky">TOTAL PROD</td>'+
     days.map(function(d){
       return '<td><input type="number" min="0" class="chk-cell chokko-prodtotal-cell" id="chokko-total-prod-'+d.date+'" data-ligne="'+ligne+'" data-date="'+d.date+'" value="'+(d.totals.totalProd||'')+'" style="font-weight:700; color:#548235; '+(chokkoTotalsLocked?'background:var(--neutral-bg); cursor:not-allowed;':'')+'" '+(chokkoTotalsLocked?'readonly title="Verrouillé - cliquez sur 🔓 dans la barre d\'outils pour modifier"':'')+'></td>';
-    }).join('')+'<td></td><td></td></tr>';
+    }).join('')+'<td></td></tr>';
   // TOTAL NC : calcule automatiquement (lecture seule)
   html += '<tr class="chk-total-row chk-nc-row"><td class="chk-label-bold chk-sticky">TOTAL NC</td>'+
     days.map(function(d){
@@ -8048,30 +8179,30 @@ function chokkoSaisieView(){
       var tncStyle = tncHl? 'background:'+tncHl+'; color:'+contrastTextColor(tncHl)+';' : '';
       var tncClass = chokkoPaintMode? ' chokko-paintable' : '';
       return '<td id="chokko-total-nc-'+d.date+'" class="chk-tnc'+tncClass+'" style="'+tncStyle+'" data-ligne="'+ligne+'" data-date="'+d.date+'" data-totalnc="1">'+(d.totals.totalNC||'-')+'</td>';
-    }).join('')+'<td></td><td></td></tr>';
+    }).join('')+'<td></td></tr>';
   // CHOKKO DU JOUR : calcule automatiquement
   html += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky">CHOKKO DU JOUR</td>'+
     days.map(function(d){
-      return '<td id="chokko-total-pct-'+d.date+'">'+(d.totals.pct!==null?pct1(d.totals.pct):'-')+'</td>';
-    }).join('')+'<td></td><td></td></tr>';
+      return '<td id="chokko-total-pct-'+d.date+'">'+(d.totals.pct!==null?pct2(d.totals.pct):'-')+'</td>';
+    }).join('')+'<td></td></tr>';
   // CHOKKO DE LA SEMAINE : une valeur fusionnee par semaine (comme dans le fichier Excel)
   html += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky">CHOKKO DE LA SEMAINE</td>'+
     weeks.map(function(w, wi){
-      return '<td colspan="'+w.span+'" id="chokko-week-'+wi+'">'+(w.avg!==null?pct1(w.avg):'-')+'</td>';
-    }).join('')+'<td></td><td></td></tr>';
+      return '<td colspan="'+w.span+'" id="chokko-week-'+wi+'">'+(w.avg!==null?pct2(w.avg):'-')+'</td>';
+    }).join('')+'<td></td></tr>';
   // CHOKKO DU MOIS : une seule valeur fusionnee sur tout le mois
   html += '<tr class="chk-chokko-row"><td class="chk-label-bold chk-sticky">CHOKKO DU MOIS</td>'+
-    '<td colspan="'+days.length+'" id="chokko-month-row">'+(monthAvg!==null?pct1(monthAvg):'-')+'</td>'+
-    '<td></td><td></td></tr>';
+    '<td colspan="'+days.length+'" id="chokko-month-row">'+(monthAvg!==null?pct2(monthAvg):'-')+'</td>'+
+    '<td></td></tr>';
   // COÛT PAR PIÈCE : saisie par jour + moyenne du mois (comme le CHOKKO, sans la semaine)
   html += '<tr class="chk-cost-row"><td class="chk-label-bold chk-sticky chk-cost-label">COÛT / PIÈCE DU JOUR (€)</td>'+
     days.map(function(d){
       var c = chokkoDayCost(ligne, d.date);
       return '<td><input type="number" min="0" step="0.001" class="chk-cell chokko-cost-cell lvl-'+chokkoCostLevel(c, ligne)+'" data-ligne="'+ligne+'" data-date="'+d.date+'" value="'+(c!==null? c : '')+'" title="Coût par pièce du '+fmtDate(d.date)+'"></td>';
-    }).join('')+'<td></td><td></td></tr>';
+    }).join('')+'<td></td></tr>';
   html += '<tr class="chk-cost-row"><td class="chk-label-bold chk-sticky chk-cost-label">COÛT / PIÈCE DU MOIS (€)</td>'+
     '<td colspan="'+days.length+'" id="chokko-month-cost-row" class="lvl-'+chokkoCostLevel(monthCost, ligne)+'">'+(monthCost!==null? fmtCost(monthCost) : '-')+'</td>'+
-    '<td></td><td></td></tr>';
+    '<td></td></tr>';
 
   html += '</tbody></table></div>';
   html += '<p class="tiny" style="margin-top:8px;">Objectif '+esc(ligne)+' : ≥ '+chokkoObjectif(ligne)+'% (vert) · entre '+(chokkoObjectif(ligne)-2)+' et '+chokkoObjectif(ligne)+'% : attention (orange) · &lt; '+(chokkoObjectif(ligne)-2)+'% : alerte (rouge).</p>';
@@ -8085,8 +8216,37 @@ function chokkoSaisieView(){
     '<div class="chart-box" style="height:420px;"><canvas id="chart-chokko-postes"></canvas></div>'+
     (chokkoColorsPanelOpen? chokkoColorsPanel(ligne) : '')+
   '</div>';
+  html += chokkoActionsTableHtml(ligne, postes, days);
 
   return html;
+}
+// Tableau des actions CHOKKO du mois (remplace l'ancienne colonne ACTIONS de la grille)
+function chokkoActionsTableHtml(ligne, postes, days){
+  var y = chokkoYear, m = chokkoMonth;
+  var moisNom = MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1);
+  var rows = postes.map(function(p){
+    var n = chokkoNote(ligne, p[0], y, m), txt = n ? (n.texte||'').trim() : '';
+    var linked = actionsLinkedTo('chokko', ligne+'|'+p[0]).filter(function(a){ var c = actionPanelCategory(a); return c==='late'||c==='encours'||c==='realisee'; });
+    var nb = days.reduce(function(s,d){ var e = chokkoEntry(ligne, d.date); return s+(e? Number(e.defects[p[0]]||0) : 0); },0);
+    return {p:p, txt:txt, linked:linked, nb:nb};
+  }).filter(function(r){ return r.txt || r.linked.length; });
+  var h = '<div class="card chokko-noprint chk-actions-card" style="margin-top:18px;">'+
+    '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">'+
+      '<div class="eyebrow">Actions CHOKKO - '+esc(ligne)+' - '+esc(moisNom)+' '+y+'</div>'+
+      '<div style="display:flex; gap:6px; align-items:center;"><select id="chk-act-poste" style="font-size:12.5px; max-width:260px;">'+
+        postes.map(function(p){ return '<option value="'+esc(p[0])+'">'+esc(p[0]+' - '+p[1])+'</option>'; }).join('')+
+      '</select><button class="btn small primary" data-action="chokko-act-add">+ Ajouter une action</button></div>'+
+    '</div>';
+  if(!rows.length) return h+'<p class="tiny" style="color:var(--text-faint); margin:0;">Aucune action ce mois-ci. Cliquez sur le bouton <b>+</b> devant un poste dans le tableau, ou choisissez un poste ci-dessus.</p></div>';
+  h += '<div class="table-wrap"><table class="chk-actions-table"><thead><tr><th style="width:230px;">Poste</th><th style="width:80px; text-align:center;">Défauts du mois</th><th>Actions menées</th><th style="width:260px;">Plan d\'actions</th><th style="width:90px;"></th></tr></thead><tbody>'+
+    rows.map(function(r){
+      return '<tr><td><b>'+esc(r.p[0])+'</b> - '+esc(r.p[1])+'</td><td style="text-align:center; font-family:var(--mono);">'+r.nb+'</td>'+
+        '<td style="white-space:pre-wrap;">'+(r.txt? esc(r.txt) : '<span class="tiny" style="color:var(--text-faint);">-</span>')+'</td>'+
+        '<td>'+(r.linked.length? r.linked.slice(0,3).map(function(a){ var cat = actionPanelCategory(a), meta = actionMeta(a);
+            return '<div class="ad-linked-row" data-action="action-open" data-id="'+a.id+'">'+(cat==='late'?badge('danger','En retard'):badge(meta.level, meta.label))+'<span>'+esc((a.description||'').slice(0,60))+'</span></div>'; }).join('') : '<span class="tiny" style="color:var(--text-faint);">-</span>')+'</td>'+
+        '<td><button class="btn small" data-action="chokko-note-open" data-ligne="'+esc(ligne)+'" data-poste="'+esc(r.p[0])+'" data-annee="'+y+'" data-mois="'+m+'">Modifier</button></td></tr>';
+    }).join('')+'</tbody></table></div></div>';
+  return h;
 }
 
 // ====================================================================
@@ -8338,7 +8498,7 @@ function chokkoRecapView(){
     var prodTotal = days.reduce(function(s,d){return s+d.totals.totalProd;},0);
     var ncTotal = days.reduce(function(s,d){return s+d.totals.totalNC;},0);
     html += '<tr><td>'+MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1)+'</td>'+
-      '<td>'+(avg!==null?badge(chokkoLevelVsObjectif(avg, ligne), pct1(avg)+'%'):'<span class="tiny">-</span>')+'</td>'+
+      '<td>'+(avg!==null?badge(chokkoLevelVsObjectif(avg, ligne), pct2(avg)+'%'):'<span class="tiny">-</span>')+'</td>'+
       '<td class="num">'+(prodTotal||'-')+'</td><td class="num">'+(ncTotal||'-')+'</td>'+
       (function(){ var mc = chokkoMonthCost(ligne, chokkoYear, m); return '<td>'+(mc!==null? badge(chokkoCostLevel(mc, ligne), fmtCost(mc)+' €') : '<span class="tiny">-</span>')+'</td>'; })()+'</tr>';
   }
@@ -8365,7 +8525,7 @@ function renderChokkoChart(){
         {label:'% Chokko', data:data, backgroundColor:barColors.map(function(c){ return c+'CC'; }), borderColor:barColors, borderWidth:1.5, borderRadius:3},
         {label:'Objectif '+chokkoLigne, type:'line', data:Array(12).fill(chokkoObjectif(chokkoLigne)), borderColor:'#1F3864', backgroundColor:'#1F3864', borderWidth:2, borderDash:[6,4], pointRadius:0}
       ]},
-      options:{responsive:true, maintainAspectRatio:false, plugins:{tooltip:{callbacks:{label:function(c){ return ' '+c.dataset.label+' : '+(c.raw===null?'-':pct1(c.raw).replace('.',','))+' %'; }}}}, scales:{y:{min:(function(){ var v = data.filter(function(x){ return x!==null; }); var lo = v.length? Math.min.apply(null, v) : 100; return lo<95 ? Math.floor(lo*2)/2 : 95; })(), max:100, ticks:{stepSize:0.5, callback:function(v){ return v.toLocaleString('fr-FR',{minimumFractionDigits:1, maximumFractionDigits:1})+' %'; }}}}}
+      options:{responsive:true, maintainAspectRatio:false, plugins:{tooltip:{callbacks:{label:function(c){ return ' '+c.dataset.label+' : '+(c.raw===null?'-':pct2(c.raw).replace('.',','))+' %'; }}}}, scales:{y:{min:(function(){ var v = data.filter(function(x){ return x!==null; }); var lo = v.length? Math.min.apply(null, v) : 100; return lo<95 ? Math.floor(lo*2)/2 : 95; })(), max:100, ticks:{stepSize:0.5, callback:function(v){ return v.toLocaleString('fr-FR',{minimumFractionDigits:1, maximumFractionDigits:1})+' %'; }}}}}
     });
   }catch(err){ console.error('chokko year chart error', err); }
 }
@@ -8552,7 +8712,7 @@ function refreshChokkoTotals(ligne, excludeElId){
     var pctEl = document.getElementById('chokko-total-pct-'+d.date);
     if(prodEl && prodElId!==excludeElId) prodEl.value = d.totals.totalProd||'';
     if(ncEl) ncEl.textContent = d.totals.totalNC||'-';
-    if(pctEl) pctEl.textContent = d.totals.pct!==null ? pct1(d.totals.pct) : '-';
+    if(pctEl) pctEl.textContent = d.totals.pct!==null ? pct2(d.totals.pct) : '-';
   });
   chokkoPostes(ligne).forEach(function(poste){
     var totalPoste = days.reduce(function(s,d){ var e=chokkoEntry(ligne,d.date); return s+(e?Number(e.defects[poste[0]]||0):0); },0);
@@ -8562,14 +8722,14 @@ function refreshChokkoTotals(ligne, excludeElId){
   var weeks = chokkoWeekGroups(days);
   weeks.forEach(function(w, wi){
     var el = document.getElementById('chokko-week-'+wi);
-    if(el) el.textContent = w.avg!==null? pct1(w.avg) : '-';
+    if(el) el.textContent = w.avg!==null? pct2(w.avg) : '-';
   });
   var monthAvg = chokkoMonthAverage(ligne, chokkoYear, chokkoMonth);
   var monthRowEl = document.getElementById('chokko-month-row');
-  if(monthRowEl) monthRowEl.textContent = monthAvg!==null? pct1(monthAvg) : '-';
+  if(monthRowEl) monthRowEl.textContent = monthAvg!==null? pct2(monthAvg) : '-';
   var avgEl = document.getElementById('chokko-month-avg');
   if(avgEl){
-    avgEl.textContent = monthAvg!==null? pct1(monthAvg)+'%' : '-';
+    avgEl.textContent = monthAvg!==null? pct2(monthAvg)+'%' : '-';
     avgEl.style.color = 'var(--'+chokkoLevelVsObjectif(monthAvg, ligne)+')';
   }
   if(chokkoView==='saisie') renderChokkoPostesChart();
@@ -9421,7 +9581,7 @@ function renderTodayBanner(){
   return '<div class="card" style="margin-bottom:16px; display:flex; align-items:center; gap:28px; flex-wrap:wrap; padding:14px 20px;">'+
     '<div class="tiny" style="font-weight:700; text-transform:uppercase; letter-spacing:0.03em; color:var(--text-faint);">Aujourd\'hui</div>'+
     '<div><span class="tiny">Production hier</span> <b style="font-family:var(--mono); font-size:16px;">'+prodYesterday.toLocaleString('fr-FR')+'</b> <span class="tiny">pièces</span></div>'+
-    '<div><span class="tiny">Chokko aujourd\'hui</span> <b style="font-family:var(--mono); font-size:16px; color:var(--'+chokkoLvl+');">'+(chokkoToday!==null?pct1(chokkoToday)+'%':'—')+'</b></div>'+
+    '<div><span class="tiny">Chokko aujourd\'hui</span> <b style="font-family:var(--mono); font-size:16px; color:var(--'+chokkoLvl+');">'+(chokkoToday!==null?pct2(chokkoToday)+'%':'—')+'</b></div>'+
     '<div><span class="tiny">Alertes actives</span> <b style="font-family:var(--mono); font-size:16px; color:'+(nbAlerts?'var(--danger)':'var(--ok)')+';">'+nbAlerts+'</b></div>'+
   '</div>';
 }
@@ -9505,7 +9665,7 @@ function renderSecteurDashboard(){
     var cards = lines.map(function(l){
       var avg = chokkoMonthAverage(l, curY, curM);
       var lvl = chokkoLevelVsObjectif(avg, l);
-      return '<div class="statcard s-'+lvl+'" style="cursor:pointer;" data-action="dash-goto-chokko" data-ligne="'+esc(l)+'"><div class="eyebrow">'+esc(l)+'</div><div class="val">'+(avg!==null?pct1(avg)+'%':'-')+'</div><div class="lbl">ce mois · objectif ≥ '+chokkoObjectif(l)+'%</div></div>';
+      return '<div class="statcard s-'+lvl+'" style="cursor:pointer;" data-action="dash-goto-chokko" data-ligne="'+esc(l)+'"><div class="eyebrow">'+esc(l)+'</div><div class="val">'+(avg!==null?pct2(avg)+'%':'-')+'</div><div class="lbl">ce mois · objectif ≥ '+chokkoObjectif(l)+'%</div></div>';
     }).join('');
     var stale = lines.filter(function(l){ return chokkoPostes(l).length; }).map(function(l){ return {ligne:l, delay:chokkoSaisieDelay(l)}; }).filter(function(x){ return x.delay===null || x.delay>=2; });
     var noPostes = lines.filter(function(l){ return !chokkoPostes(l).length; });
@@ -9941,7 +10101,7 @@ RENDERERS.dashboard = function(){
       var pieLvl = chokkoLevelVsObjectif(cs.pct, 'MCU3');
       pieHtml = '<div style="display:flex; align-items:center; gap:18px; padding-left:28px; margin-left:28px; border-left:1px solid var(--border);">'+
         '<div style="position:relative; width:130px; height:130px; flex-shrink:0;"><canvas id="chart-conformite-pie-mini"></canvas>'+
-          '<div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:700; font-size:24px; color:var(--'+pieLvl+');">'+pct1(cs.pct)+'%</div>'+
+          '<div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:700; font-size:24px; color:var(--'+pieLvl+');">'+pct2(cs.pct)+'%</div>'+
         '</div>'+
         '<div>'+
           '<div style="font-weight:700; margin-bottom:6px; font-size:14px;">Conformité pièces</div>'+
@@ -10044,7 +10204,7 @@ RENDERERS.dashboard = function(){
     var cards = lignes.map(function(l){
       var avg = chokkoMonthAverage(l, y, m);
       var lvl = chokkoLevelVsObjectif(avg, l);
-      return '<div class="statcard s-'+lvl+'"><div class="eyebrow">'+l+'</div><div class="val">'+(avg!==null?pct1(avg)+'%':'-')+'</div><div class="lbl">ce mois · objectif ≥ '+chokkoObjectif(l)+'%</div></div>';
+      return '<div class="statcard s-'+lvl+'"><div class="eyebrow">'+l+'</div><div class="val">'+(avg!==null?pct2(avg)+'%':'-')+'</div><div class="lbl">ce mois · objectif ≥ '+chokkoObjectif(l)+'%</div></div>';
     }).join('');
     var stale = lignes.map(function(l){ return {ligne:l, delay:chokkoSaisieDelay(l)}; }).filter(function(s){ return s.delay===null || s.delay>=2; });
     var staleHtml = stale.length? '<div class="tiny" style="margin-top:8px; color:var(--warn); font-weight:600;">⚠ '+stale.map(function(s){ return s.ligne+' : '+(s.delay===null?'aucune saisie':'retard '+s.delay+'j'); }).join(' · ')+'</div>' : '';
@@ -12724,6 +12884,10 @@ app.addEventListener('click', async function(e){
   var futBtn = e.target.closest('[data-action="future-fix"]');
   if(futBtn){ await handleFutureFix(futBtn.dataset.mode); return; }
   if(e.target.closest('[data-action="prison-import-sheet"]')){ await handleImportPrisonSheet(); return; }
+  if(e.target.closest('[data-action="prison-sap-xlsx"]')){
+    var sapLots = prisonLotsSect(); if(prisonZoneFilter) sapLots = sapLots.filter(function(l){ return l.stockage===prisonZoneFilter; });
+    await exportPrisonSapExcel(sapLots); return;
+  }
   if(e.target.closest('[data-action="prison-print"]')){
     document.body.classList.add('print-prison');
     var rmPrisonPrint = function(){ document.body.classList.remove('print-prison'); window.removeEventListener('afterprint', rmPrisonPrint); };
@@ -13027,6 +13191,11 @@ app.addEventListener('click', async function(e){
     return;
   }
   if(e.target.closest('[data-action="action-detail-save"]')){ await handleSaveActionDetail(); return; }
+  if(e.target.closest('[data-action="chokko-act-add"]')){
+    var selP = document.getElementById('chk-act-poste');
+    if(selP && selP.value){ chokkoNoteModal = {ligne:chokkoLigne, poste:selP.value, annee:chokkoYear, mois:chokkoMonth}; render(); var ta0 = document.getElementById('chokko-note-text'); if(ta0) ta0.focus({preventScroll:true}); }
+    return;
+  }
   var noteOpen = e.target.closest('[data-action="chokko-note-open"]');
   if(noteOpen && !chokkoPaintMode){
     chokkoNoteModal = {ligne:noteOpen.dataset.ligne, poste:noteOpen.dataset.poste, annee:Number(noteOpen.dataset.annee), mois:Number(noteOpen.dataset.mois)};
