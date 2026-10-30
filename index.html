@@ -7391,9 +7391,12 @@ function rebutsView(){
     }).join('')+
     '<tr class="rebut-total"><td colspan="2"><b>TOTAL COÛT REBUT</b></td>'+MONTHS_FR.map(function(mn, i){ var t = rebutMonthTotal(l, y, i); return '<td class="'+(y===curY && i===curM?'rebut-curm':'')+'" data-mtot="'+i+'">'+(t? fmtEur(t) : '')+'</td>'; }).join('')+
     '<td data-ytot="1">'+(yearTot? fmtEur(yearTot) : '')+'</td></tr></tbody></table></div>';
-  // Graphique : évolution mensuelle du coût rebut (empilé par code défaut) + année précédente
-  h += '<div class="rebut-pareto"><div class="rebut-pareto-head"><div class="eyebrow">Évolution du coût rebut par mois - '+esc(l)+' '+y+'</div></div>'+
-    (yearTot || rebutYearTotal(l, y-1) ? '<div class="chart-box" style="height:320px;"><canvas id="chart-rebut-month"></canvas></div>' : emptyState('Aucun coût rebut saisi en '+y+'.'))+'</div>';
+  // Graphique : coût par pièce de chaque jour du mois choisi (saisi dans la grille CHOKKO) + objectif + moyenne du mois
+  if(rebutCppMonth===null) rebutCppMonth = (y===curY) ? curM : 0;
+  var cppDays = chokkoMonthDays(l, y, rebutCppMonth).filter(function(d){ return chokkoDayCost(l, d.date)!==null; }).length;
+  h += '<div class="rebut-pareto"><div class="rebut-pareto-head"><div class="eyebrow">Coût par pièce par jour - '+esc(l)+'</div>'+
+    '<div class="rebut-chips"><select id="rebut-cpp-month">'+MONTHS_FR.map(function(mn, i){ return '<option value="'+i+'"'+(i===rebutCppMonth?' selected':'')+'>'+esc(mn.charAt(0).toUpperCase()+mn.slice(1))+' '+y+'</option>'; }).join('')+'</select></div></div>'+
+    (cppDays ? '<div class="chart-box" style="height:300px;"><canvas id="chart-rebut-cpp"></canvas></div>' : emptyState('Aucun coût par pièce saisi en '+MONTHS_FR[rebutCppMonth]+' '+y+' (saisie dans la grille CHOKKO, ligne « COÛT / PIÈCE DU JOUR »).'))+'</div>';
   // Pareto
   h += '<div class="rebut-pareto"><div class="rebut-pareto-head"><div class="eyebrow">Pareto du coût rebut par code défaut</div>'+
     '<div class="rebut-chips"><button class="btn small'+(rebutParetoPeriod==='mois'?' primary':'')+'" data-action="rebut-pareto-period" data-p="mois">Mois</button>'+
@@ -7428,34 +7431,28 @@ function rebutParetoBoxHtml(){
     '<div class="chart-box" style="height:300px;"><canvas id="chart-rebut-pareto"></canvas></div>';
 }
 function rebutYearTotal(l, y){ var t = 0; for(var i=0;i<12;i++) t += rebutMonthTotal(l, y, i); return t; }
-var chartRebutMonth = null;
-var REBUT_STACK_COLORS = ['#B2764A','#E8877F','#6FB8C9','#8FCB9B','#E6CF5C','#A98BD6','#7FA7E0'];
-function buildRebutMonthlyChartConfig(l, y, forPrint){
-  var names = {}; rebutCodes(l).forEach(function(c){ names[c[0]] = c[1]; });
-  var byCode = {};
-  for(var m=0;m<12;m++){ var d = rebutMonthData(l, y, m); Object.keys(d).forEach(function(c){ var v = Number(d[c])||0; if(!v) return; if(!byCode[c]) byCode[c] = [0,0,0,0,0,0,0,0,0,0,0,0]; byCode[c][m] += v; }); }
-  var codes = Object.keys(byCode).sort(function(a,b){ return byCode[b].reduce(function(s,v){return s+v;},0) - byCode[a].reduce(function(s,v){return s+v;},0); });
-  var top = codes.slice(0, 6), rest = codes.slice(6);
-  var ds = top.map(function(c, i){ return {type:'bar', stack:'cout', label:c+(names[c]?' - '+names[c]:''), data:byCode[c].map(function(v){ return v? Math.round(v*100)/100 : null; }), backgroundColor:REBUT_STACK_COLORS[i], borderWidth:0, order:2}; });
-  if(rest.length){
-    ds.push({type:'bar', stack:'cout', label:'Autres codes ('+rest.length+')', data:[0,1,2,3,4,5,6,7,8,9,10,11].map(function(m){ var t = rest.reduce(function(s,c){ return s+byCode[c][m]; },0); return t? Math.round(t*100)/100 : null; }), backgroundColor:'#CFCAC2', borderWidth:0, order:2});
-  }
-  var prev = [0,1,2,3,4,5,6,7,8,9,10,11].map(function(m){ var t = rebutMonthTotal(l, y-1, m); return t || null; });
-  if(prev.some(function(v){ return v; })) ds.push({type:'line', label:'Total '+(y-1), data:prev, borderColor:'#1F3864', backgroundColor:'#1F3864', borderDash:[6,4], borderWidth:2, pointRadius:3, spanGaps:false, order:1});
+var chartRebutCpp = null, rebutCppMonth = null;
+function buildCostPerPieceChartConfig(l, y, m, forPrint){
+  var days = chokkoMonthDays(l, y, m);
+  var vals = days.map(function(d){ return chokkoDayCost(l, d.date); });
+  var obj = chokkoCostObjectif(l), avg = chokkoMonthCost(l, y, m);
   var fs = forPrint ? 20 : undefined;
-  return {data:{labels:['Janv','Févr','Mars','Avr','Mai','Juin','Juil','Août','Sept','Oct','Nov','Déc'], datasets:ds},
+  var ds = [{type:'bar', label:'Coût / pièce du jour', data:vals, backgroundColor:'#E8877F', borderColor:'#B23B2E', borderWidth:1, borderRadius:3, order:3},
+    {type:'line', label:'Objectif (< '+fmtCost(obj)+' €)', data:days.map(function(){ return obj; }), borderColor:'#2E7D4F', borderDash:[6,4], borderWidth:2, pointRadius:0, order:1}];
+  if(avg!==null) ds.push({type:'line', label:'Moyenne du mois ('+fmtCost(avg)+' €)', data:days.map(function(){ return avg; }), borderColor:'#1F3864', borderWidth:2, pointRadius:0, order:2});
+  var max = Math.max.apply(null, vals.filter(function(v){ return v!==null; }).concat([obj]));
+  return {data:{labels:days.map(function(d){ return String(d.day); }), datasets:ds},
     options:{responsive:true, maintainAspectRatio:false, animation:false,
       plugins:{legend:{position:'bottom', labels:fs?{font:{size:fs-2}}:{boxWidth:12}},
-        tooltip:{mode:'index', intersect:false, callbacks:{
-          label:function(c){ return c.raw===null ? null : ' '+c.dataset.label+' : '+fmtEur(c.raw); },
-          footer:function(items){ var t = items.filter(function(it){ return it.dataset.type==='bar'; }).reduce(function(s,it){ return s+(Number(it.raw)||0); },0); return t ? 'Total '+y+' : '+fmtEur(t) : ''; }}}},
-      scales:{x:{stacked:true, ticks:fs?{font:{size:fs}}:{}}, y:{stacked:true, beginAtZero:true, title:{display:true, text:'Coût rebut (€)', font:fs?{size:fs}:{}}, ticks:{font:fs?{size:fs}:{}, callback:function(v){ return v.toLocaleString('fr-FR')+' €'; }}}}}};
+        tooltip:{callbacks:{title:function(it){ return it.length? it[0].label+' '+MONTHS_FR[m]+' '+y : ''; }, label:function(c){ return c.raw===null ? ' Pas de saisie' : ' '+c.dataset.label.replace(/ \(.*\)$/,'')+' : '+fmtCost(c.raw)+' €'; }}}},
+      scales:{x:{title:{display:true, text:MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1)+' '+y, font:fs?{size:fs}:{}}, ticks:{font:fs?{size:fs-2}:{}}},
+        y:{beginAtZero:true, suggestedMax:max*1.15, title:{display:true, text:'€ / pièce', font:fs?{size:fs}:{}}, ticks:{font:fs?{size:fs}:{}, callback:function(v){ return v.toLocaleString('fr-FR', {minimumFractionDigits:3}); }}}}}};
 }
-function renderRebutMonthlyChart(){
+function renderRebutCppChart(){
   if(typeof Chart==='undefined') return;
-  var ctx = document.getElementById('chart-rebut-month'); if(!ctx) return;
-  if(chartRebutMonth){ chartRebutMonth.destroy(); chartRebutMonth = null; }
-  try{ chartRebutMonth = new Chart(ctx, buildRebutMonthlyChartConfig(chokkoLigne, rebutYear)); }catch(err){ console.error('graphique coût rebut', err); }
+  var ctx = document.getElementById('chart-rebut-cpp'); if(!ctx) return;
+  if(chartRebutCpp){ chartRebutCpp.destroy(); chartRebutCpp = null; }
+  try{ chartRebutCpp = new Chart(ctx, buildCostPerPieceChartConfig(chokkoLigne, rebutYear, rebutCppMonth)); }catch(err){ console.error('graphique coût / pièce', err); }
 }
 function renderRebutParetoChart(){
   if(typeof Chart==='undefined') return;
@@ -7477,7 +7474,7 @@ function rebutAmountInput(el){
   var yt = document.querySelector('[data-ytot]'); if(yt){ var t3 = 0; for(var i=0;i<12;i++) t3 += rebutMonthTotal(l, y, i); yt.textContent = t3? fmtEur(t3) : ''; }
   saveSoon('rebutCouts', 800);
   clearTimeout(window.__rebutParetoT);
-  window.__rebutParetoT = setTimeout(function(){ var box = document.getElementById('rebut-pareto-box'); if(box){ box.innerHTML = rebutParetoBoxHtml(); renderRebutParetoChart(); } if(document.getElementById('chart-rebut-month')) renderRebutMonthlyChart(); else render(); }, 600);
+  window.__rebutParetoT = setTimeout(function(){ var box = document.getElementById('rebut-pareto-box'); if(box){ box.innerHTML = rebutParetoBoxHtml(); renderRebutParetoChart(); } }, 600);
 }
 
 // ---- Export : tableau CHOKKO regroupé par semaine (semaines complètes lundi → dimanche, y compris les jours du mois précédent / suivant) ----
@@ -7625,7 +7622,8 @@ function chokkoSynthRebutHtml(){
       '<div><span>Mois précédent ('+esc(MONTHS_FR[prevM])+')</span><b>'+(prevTot? fmtEur(prevTot) : '-')+'</b></div>'+
       '<div><span>Cumul '+y+' (janvier → '+esc(MONTHS_FR[m])+')</span><b>'+(cumul? fmtEur(cumul) : '-')+'</b></div>'+
     '</div>';
-  var evo = (cumul || rebutYearTotal(l, y-1)) ? '<div class="chokko-synth-evo"><div class="chokko-synth-subtitle">Évolution du coût rebut par mois - '+y+'</div>'+rptChartImage(buildRebutMonthlyChartConfig(l, y, true), 2000, 440)+'</div>' : '';
+  var hasCpp = chokkoMonthDays(l, y, m).some(function(d){ return chokkoDayCost(l, d.date)!==null; });
+  var evo = hasCpp ? '<div class="chokko-synth-evo"><div class="chokko-synth-subtitle">Coût par pièce par jour - '+esc(moisNom)+' '+y+'</div>'+rptChartImage(buildCostPerPieceChartConfig(l, y, m, true), 2000, 440)+'</div>' : '';
   if(!res.total) return h+'<p>Aucun coût rebut saisi pour ce mois.</p>'+evo+'</div>';
   h += '<p class="chokko-synth-reading">'+res.nA+' code(s) défaut sur '+res.rows.length+' représentent '+paretoFmtPct(res.rows.filter(function(r){ return r.cls==='A'; }).reduce(function(s,r){ return s+r.pct; },0))+' du coût rebut du mois. Priorité n°1 : <b>'+esc(res.rows[0].label)+'</b> ('+fmtEur(res.rows[0].value)+').</p>';
   h += '<div class="chokko-synth-body"><div class="chokko-synth-chart">'+rptChartImage(paretoChartConfig(res, {unit:'€'}, false), 1300, 520)+'</div>'+
@@ -9585,7 +9583,7 @@ function render(){
   if(currentTab==='chokko' && chokkoView==='recap'){ renderChokkoChart(); }
   if(currentTab==='chokko' && chokkoView==='saisie'){ renderChokkoPostesChart(); }
   if(currentTab==='chokko' && chokkoView==='defauts'){ renderChokkoDefChart(); }
-  if(currentTab==='chokko' && chokkoView==='rebuts'){ renderRebutParetoChart(); renderRebutMonthlyChart(); }
+  if(currentTab==='chokko' && chokkoView==='rebuts'){ renderRebutParetoChart(); renderRebutCppChart(); }
   if(currentTab==='proprete'){
     if(propreteSub==='resultats') renderResultatsCharts();
     else if(propreteSub==='contamination') renderContaminationCharts();
@@ -13632,6 +13630,7 @@ app.addEventListener('change', async function(e){
     await handleChokkoProdTotalChange(chokkoProdTotalInput.dataset.ligne, chokkoProdTotalInput.dataset.date, chokkoProdTotalInput.value);
     return;
   }
+  if(e.target.id==='rebut-cpp-month'){ rebutCppMonth = Number(e.target.value); render(); return; }
   if(e.target.id==='chokko-mois'){ chokkoMonth = Number(e.target.value); render(); return; }
   if(e.target.id==='chokko-annee'){ chokkoYear = Number(e.target.value)||chokkoYear; render(); return; }
   if(e.target.classList && e.target.classList.contains('prison-cell')){ await handlePrisonCellChange(e.target); return; }
