@@ -4233,6 +4233,25 @@ async function handleDeleteReleveDirect(id){
   render();
 }
 
+var vidangeEditId = null;
+async function handleSaveVidangeEdit(id){
+  var v = DATA.vidange.find(function(x){ return x.id===id; });
+  if(!v) return;
+  var nom = document.getElementById('vidange-edit-nom').value.trim();
+  var date = document.getElementById('vidange-edit-date').value;
+  var inter = Number(document.getElementById('vidange-edit-int').value);
+  if(!nom){ toast('Merci de saisir l\'intervention.', 'error'); return; }
+  if(!date){ toast('Merci de saisir la date de la dernière vidange.', 'error'); return; }
+  if(date > todayStr()){ toast('La date de vidange ne peut pas être dans le futur.', 'error'); return; }
+  if(!(inter>0)){ toast('Intervalle invalide.', 'error'); return; }
+  var oldDate = v.derniereVidange;
+  v.equipement = nom; v.derniereVidange = date; v.intervalle = inter;
+  await save('vidange');
+  logChange('Propreté', 'Vidange mise à jour', nom+(date!==oldDate? ' : '+fmtDate(oldDate)+' → '+fmtDate(date) : ''));
+  vidangeEditId = null;
+  toast('Vidange enregistrée.');
+  render();
+}
 function proprVidange(){
   var html = '<p class="tiny" style="margin-bottom:12px;">Suivi des vidanges MCU0 - intervalle standard : '+VIDANGE_INTERVALLE+' jours.</p>';
   html += '<div class="toolbar"><div></div><button class="btn primary" data-toggle-form="vidange">+ Ajouter un équipement</button></div>';
@@ -4246,8 +4265,17 @@ function proprVidange(){
   html += '<div class="table-wrap"><table><thead><tr><th>Statut</th><th>Intervention</th><th>Dernière vidange</th><th>Intervalle</th><th>Prochaine échéance</th><th></th></tr></thead><tbody>';
   html += rows.map(function(v){
     var s = vidangeStatus(v);
-    return '<tr><td>'+badge(s.level,s.label)+'</td><td>'+esc(v.equipement)+'</td><td class="num"><input type="date" class="vidange-date-input" data-id="'+v.id+'" value="'+esc(v.derniereVidange||'')+'" max="'+todayStr()+'" title="Modifier la date de la dernière vidange" style="font-size:12.5px; padding:3px 6px; min-width:0;"></td><td class="num">'+(v.intervalle||VIDANGE_INTERVALLE)+' j</td><td class="num">'+fmtDate(s.next)+'</td>'+
-      '<td><button class="btn small" data-action="mark-vidange" data-id="'+v.id+'">Vidange faite aujourd\'hui</button> <button class="btn small danger-outline" data-action="delete" data-module="vidange" data-id="'+v.id+'">Suppr.</button></td></tr>';
+    if(vidangeEditId===v.id){
+      // Ligne en modification (même principe que les formations) : rien n'est enregistré avant « Valider »
+      return '<tr style="background:var(--accent-bg);"><td>'+badge(s.level,s.label)+'</td>'+
+        '<td><input type="text" id="vidange-edit-nom" value="'+esc(v.equipement||'')+'" style="width:220px;"></td>'+
+        '<td class="num"><input type="date" id="vidange-edit-date" value="'+esc(v.derniereVidange||'')+'" max="'+todayStr()+'" style="width:150px;"></td>'+
+        '<td class="num"><input type="number" id="vidange-edit-int" min="1" value="'+(v.intervalle||VIDANGE_INTERVALLE)+'" style="width:80px;"> j</td>'+
+        '<td class="tiny">calculée auto</td>'+
+        '<td style="display:flex; gap:5px;"><button class="btn small primary" data-action="vidange-save-edit" data-id="'+v.id+'">Valider</button><button class="btn small" data-action="vidange-cancel-edit">Annuler</button></td></tr>';
+    }
+    return '<tr><td>'+badge(s.level,s.label)+'</td><td>'+esc(v.equipement)+'</td><td class="num">'+fmtDate(v.derniereVidange)+'</td><td class="num">'+(v.intervalle||VIDANGE_INTERVALLE)+' j</td><td class="num">'+fmtDate(s.next)+'</td>'+
+      '<td style="white-space:nowrap;"><button class="btn small primary" data-action="vidange-edit" data-id="'+v.id+'">Modifier</button> <button class="btn small danger-outline" data-action="delete" data-module="vidange" data-id="'+v.id+'">Suppr.</button></td></tr>';
   }).join('') || '<tr><td colspan="6">'+emptyState('Aucun équipement suivi')+'</td></tr>';
   html += '</tbody></table></div>';
   return html;
@@ -12802,12 +12830,11 @@ app.addEventListener('click', async function(e){
   if(viewContamBtn){ openContamDetailId = viewContamBtn.dataset.id; render(); return; }
   if(e.target.closest('[data-action="close-contam-detail"]')){ openContamDetailId = null; render(); return; }
 
-  var markVidangeBtn = e.target.closest('[data-action="mark-vidange"]');
-  if(markVidangeBtn){
-    var vItem = DATA.vidange.find(function(x){ return x.id===markVidangeBtn.dataset.id; });
-    if(vItem){ vItem.derniereVidange = todayStr(); await save('vidange'); render(); }
-    return;
-  }
+  var vidEditBtn = e.target.closest('[data-action="vidange-edit"]');
+  if(vidEditBtn){ vidangeEditId = vidEditBtn.dataset.id; render(); var de = document.getElementById('vidange-edit-date'); if(de) de.focus({preventScroll:true}); return; }
+  if(e.target.closest('[data-action="vidange-cancel-edit"]')){ vidangeEditId = null; render(); return; }
+  var vidSaveBtn = e.target.closest('[data-action="vidange-save-edit"]');
+  if(vidSaveBtn){ await handleSaveVidangeEdit(vidSaveBtn.dataset.id); return; }
 
   // Filtres graphiques propreté
   var toggleProprLigne = e.target.closest('[data-action="toggle-propr-ligne"]');
@@ -13651,18 +13678,6 @@ app.addEventListener('change', async function(e){
     if(chokkoTotalsLocked){ render(); return; } // filet de sécurité si l'attribut readonly a été contourné
     await handleChokkoProdTotalChange(chokkoProdTotalInput.dataset.ligne, chokkoProdTotalInput.dataset.date, chokkoProdTotalInput.value);
     return;
-  }
-  if(e.target.classList && e.target.classList.contains('vidange-date-input')){
-    var vdItem = DATA.vidange.find(function(x){ return x.id===e.target.dataset.id; });
-    var vd = e.target.value;
-    if(!vdItem) return;
-    if(!vd || vd > todayStr()){ toast(vd ? 'La date de vidange ne peut pas être dans le futur.' : 'Date invalide.', 'error'); e.target.value = vdItem.derniereVidange || ''; return; }
-    var vdOld = vdItem.derniereVidange;
-    vdItem.derniereVidange = vd;
-    await save('vidange');
-    logChange('Propreté', 'Date de vidange modifiée', (vdItem.equipement||'Vidange')+' : '+fmtDate(vdOld)+' → '+fmtDate(vd));
-    toast('Date de vidange enregistrée : '+fmtDate(vd)+'.');
-    render(); return;
   }
   if(e.target.id==='rebut-cpp-month'){ rebutCppMonth = Number(e.target.value); render(); return; }
   if(e.target.id==='chokko-mois'){ chokkoMonth = Number(e.target.value); render(); return; }
