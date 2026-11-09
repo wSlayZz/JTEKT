@@ -4246,7 +4246,7 @@ function proprVidange(){
   html += '<div class="table-wrap"><table><thead><tr><th>Statut</th><th>Intervention</th><th>Dernière vidange</th><th>Intervalle</th><th>Prochaine échéance</th><th></th></tr></thead><tbody>';
   html += rows.map(function(v){
     var s = vidangeStatus(v);
-    return '<tr><td>'+badge(s.level,s.label)+'</td><td>'+esc(v.equipement)+'</td><td class="num">'+fmtDate(v.derniereVidange)+'</td><td class="num">'+(v.intervalle||VIDANGE_INTERVALLE)+' j</td><td class="num">'+fmtDate(s.next)+'</td>'+
+    return '<tr><td>'+badge(s.level,s.label)+'</td><td>'+esc(v.equipement)+'</td><td class="num"><input type="date" class="vidange-date-input" data-id="'+v.id+'" value="'+esc(v.derniereVidange||'')+'" max="'+todayStr()+'" title="Modifier la date de la dernière vidange" style="font-size:12.5px; padding:3px 6px; min-width:0;"></td><td class="num">'+(v.intervalle||VIDANGE_INTERVALLE)+' j</td><td class="num">'+fmtDate(s.next)+'</td>'+
       '<td><button class="btn small" data-action="mark-vidange" data-id="'+v.id+'">Vidange faite aujourd\'hui</button> <button class="btn small danger-outline" data-action="delete" data-module="vidange" data-id="'+v.id+'">Suppr.</button></td></tr>';
   }).join('') || '<tr><td colspan="6">'+emptyState('Aucun équipement suivi')+'</td></tr>';
   html += '</tbody></table></div>';
@@ -13652,6 +13652,18 @@ app.addEventListener('change', async function(e){
     await handleChokkoProdTotalChange(chokkoProdTotalInput.dataset.ligne, chokkoProdTotalInput.dataset.date, chokkoProdTotalInput.value);
     return;
   }
+  if(e.target.classList && e.target.classList.contains('vidange-date-input')){
+    var vdItem = DATA.vidange.find(function(x){ return x.id===e.target.dataset.id; });
+    var vd = e.target.value;
+    if(!vdItem) return;
+    if(!vd || vd > todayStr()){ toast(vd ? 'La date de vidange ne peut pas être dans le futur.' : 'Date invalide.', 'error'); e.target.value = vdItem.derniereVidange || ''; return; }
+    var vdOld = vdItem.derniereVidange;
+    vdItem.derniereVidange = vd;
+    await save('vidange');
+    logChange('Propreté', 'Date de vidange modifiée', (vdItem.equipement||'Vidange')+' : '+fmtDate(vdOld)+' → '+fmtDate(vd));
+    toast('Date de vidange enregistrée : '+fmtDate(vd)+'.');
+    render(); return;
+  }
   if(e.target.id==='rebut-cpp-month'){ rebutCppMonth = Number(e.target.value); render(); return; }
   if(e.target.id==='chokko-mois'){ chokkoMonth = Number(e.target.value); render(); return; }
   if(e.target.id==='chokko-annee'){ chokkoYear = Number(e.target.value)||chokkoYear; render(); return; }
@@ -14047,6 +14059,137 @@ window.addEventListener('blur', uiTipHide);
 init();
 
 })();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 </script>
