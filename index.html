@@ -663,6 +663,19 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 .chokko-grid-week td{padding:4px 6px;}
 #chokko-print-head{display:none;}
 #def-print{display:none;}
+.cz-banner{display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:#FFF6E8; border:1.5px dashed #D9A35B; border-radius:12px; padding:10px 14px; margin:0 0 16px;}
+.cz-banner-txt{font-size:13px; color:#6B4A1E;}
+.cz-banner-items{display:flex; gap:6px; flex-wrap:wrap; flex:1;}
+.btn.cz-pen{border-color:#D9A35B; background:#fff;}
+.btn.cz-pen:hover{background:#FCEBD2;}
+body.customize-on [data-action="chokko-manage-postes-open"], body.customize-on .chk-obj-edit, body.customize-on [data-action="propr-grid-open"], body.customize-on [data-action="rebut-edit-codes"], body.customize-on .chokko-icon-btn[data-action="chokko-manage-postes-open"]{box-shadow:0 0 0 2px #E8B25F; border-radius:6px;}
+.cz-modal{max-height:88vh; overflow:auto;}
+.param-links{display:flex; flex-direction:column;}
+.param-link{display:flex; justify-content:space-between; align-items:center; gap:14px; padding:9px 0; border-top:1px solid var(--border);}
+.param-link:first-child{border-top:none;}
+.btn.param-warn{border-color:#E0A458; color:#8A5A12; background:#FFF6E8;}
+@media print{ .cz-banner, #cz-toggle{display:none !important;} }
+@media (max-width:700px){ #cz-toggle{font-size:0; padding:4px 8px; min-width:0;} #cz-toggle::before{content:'✏️'; font-size:14px;} }
 .chokko-grid .chk-act-btn{width:16px; height:16px; line-height:14px; padding:0; margin-right:4px; border:1px solid var(--border); border-radius:4px; background:#fff; color:var(--accent); font-size:11px; font-weight:700; cursor:pointer; vertical-align:middle;}
 .chokko-grid .chk-act-btn:hover{background:var(--accent); color:#fff; border-color:var(--accent);}
 .chokko-grid .chk-act-btn.has{background:var(--accent-bg, #E6EFEE); border-color:var(--accent);}
@@ -982,6 +995,7 @@ tr.releve-cur-week td:first-child{font-weight:700;}
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:14px;">
+        <button id="cz-toggle" class="btn small" type="button" title="Afficher sur chaque onglet ce qui peut être modifié">✏️ Personnaliser</button>
         <span id="sync-indicator"><span class="dot"></span>Enregistrement...</span>
         <div class="userbox" id="userbox"></div>
       </div>
@@ -1203,7 +1217,7 @@ var WIDGET_TITLES = {
   w_chokko:'Suivi CHOKKO', w_production:'Production du secteur', w_cicl:'Formations CI/CL',
   w_esd:'Formations ESD', w_srem:'Formations SREM',
   w_particules:'Relevés particules', w_contamination:'Contamination',
-  w_ciclcoverage:'Couverture CI/CL', w_vidange:'Vidanges',
+  w_ciclcoverage:'Couverture CI/CL', w_vidange:'Entretien des équipements',
   w_my_actions:'Mes actions',
   w_actions:'Suivi des actions', w_trend:'Tendance globale', w_scorehist:'Évolution du score', w_alerts:'Alertes'
 };
@@ -1323,7 +1337,7 @@ var SECTEURS_DEFAULT = [
   {id:'BC',  nom:'BC',  lignes:['BC01','BC02','BC05','BC06'], tabs:['dashboard','perf','metro','chokko','actions','planning','archives']}
 ];
 var currentSecteur = 'MCU';
-var MCU_ONLY_TABS = ['proprete','esd','cicl'];
+var MCU_ONLY_TABS = ['esd','cicl'];
 function getSecteur(id){ return (DATA.secteurs||[]).find(function(s){return s.id===id;}) || SECTEURS_DEFAULT.find(function(s){return s.id===id;}); }
 function secteurLines(){ var s = getSecteur(currentSecteur); return s? s.lignes : ['MCU1','MCU2','MCU3']; }
 function secteurTabs(){
@@ -1830,7 +1844,7 @@ function uiConfirm(message, opts){
 var BACKUP_INDEX_KEY = 'app_backups_index_v1';
 var BACKUP_LABELS = {metro:'Métrologie', planning:'Planning échéances', ateq:'Défauts ATEQ', actions:"Plan d'actions",
   resultats:'Résultats propreté', releves:'Relevés bains MCU0', checklist:'Grilles d\'audit propreté', propAudits:'Audits propreté',
-  contamination:'Contamination', vidange:'Vidange', accounts:'Comptes', roles:'Profils', changelog:'Historique des modifications',
+  contamination:'Contamination', vidange:'Entretien des équipements', accounts:'Comptes', roles:'Profils', changelog:'Historique des modifications',
   scoreHistory:'Historique du score', particules:'Relevés particules', esd:'Formations ESD', perf:'Audits de perf', secteurs:'Secteurs',
   formations:'Formations SREM', postits:'Post-it', labelOverrides:'Libellés personnalisés', cicl:'Formations CI/CL', chokko:'Suivi CHOKKO',
   chokkoNotes:'Notes CHOKKO', ciclPersons:'Personnes CI/CL', chokkoColors:'Couleurs CHOKKO', chokkoHighlights:'Surlignages CHOKKO',
@@ -2397,7 +2411,14 @@ function scoreCellClass(score){
   var lvl = scoreLevel(score);
   return lvl==='ok'?'sc-ok':lvl==='warn'?'sc-warn':lvl==='danger'?'sc-danger':'';
 }
-function checklistKeyForLigne(ligne){ return ligne==='MCU3' ? 'MCU3' : 'MCU1_MCU2'; }
+function checklistKeyForLigne(ligne){
+  if(ligne==='MCU3') return 'MCU3';
+  if(ligne==='MCU1' || ligne==='MCU2' || !ligne) return 'MCU1_MCU2';
+  return ligne;   // autres secteurs : une grille par ligne, paramétrée par les techniciens
+}
+// Lignes concernées par la propreté : celles du secteur affiché
+function proprLines(){ return currentSecteur==='MCU' ? LINES : secteurLines(); }
+var PROPR_MCU_SUBS = ['contamination','particules','releves'];
 function computeAuditScore(itemsResult){
   var ok=0, ng=0;
   Object.keys(itemsResult).forEach(function(id){
@@ -2405,7 +2426,7 @@ function computeAuditScore(itemsResult){
     if(r==='OK') ok++; else if(r==='NG') ng++;
   });
   var total = ok+ng;
-  return {ok:ok, ng:ng, total:total, score: total? Math.round((ok/total)*100) : null};
+  return {ok:ok, ng:ng, total:total, score: total? Math.floor((ok/total)*100) : null};
 }
 function contaminationThreshold(produit){ return /^162R/.test(produit||'') ? 2 : 3; }
 function chokkoLastEntry(ligne){
@@ -2534,7 +2555,12 @@ var openAuditDetailId = null;
 RENDERERS.proprete = function(){
   var role = DATA.roles.find(function(r){ return r.id===(currentUser?currentUser.roleId:''); });
   var isAdmin = currentUser && currentUser.roleId===ADMIN_ROLE_ID;
-  function hasSub(key){ return isAdmin || !role || role[key]; }
+  var isMcuSect = currentSecteur==='MCU';
+  function hasSub(key){
+    if(!isMcuSect && ['canContamination','canParticules','canReleves'].indexOf(key)>=0) return false;   // sous-onglets propres à MCU
+    return isAdmin || !role || role[key];
+  }
+  if(!isMcuSect && PROPR_MCU_SUBS.indexOf(propreteSub)>=0) propreteSub = 'grille';
   var allowedAudit = hasSub('canAudit');
   if(!allowedAudit && propreteSub==='grille') propreteSub = 'resultats';
   var html = '<div class="section"><div class="subtabs">'+
@@ -2542,7 +2568,7 @@ RENDERERS.proprete = function(){
     (hasSub('canViewResultats')? '<button data-sub="resultats" class="'+(propreteSub==='resultats'?'active':'')+'">'+esc(t('sub_resultats','Résultats audits (%)'))+'</button>' : '')+
     (hasSub('canContamination')? '<button data-sub="contamination" class="'+(propreteSub==='contamination'?'active':'')+'">'+esc(t('sub_contamination','Contamination'))+'</button>' : '')+
     (hasSub('canParticules')? '<button data-sub="particules" class="'+(propreteSub==='particules'?'active':'')+'">'+esc(t('sub_particules','Relevés particules'))+'</button>' : '')+
-    (hasSub('canVidange')? '<button data-sub="vidange" class="'+(propreteSub==='vidange'?'active':'')+'">'+esc(t('sub_vidange','MCU0 · Vidange'))+'</button>' : '')+
+    (hasSub('canVidange')? '<button data-sub="vidange" class="'+(propreteSub==='vidange'?'active':'')+'">'+esc(t('sub_vidange','Entretien des équipements'))+'</button>' : '')+
     (hasSub('canReleves')? '<button data-sub="releves" class="'+(propreteSub==='releves'?'active':'')+'">'+esc(t('sub_releves','MCU0 · Relevés bains'))+'</button>' : '')+
   '</div>';
   if(propreteSub==='grille' && allowedAudit) html += renderProprGrilleTab();
@@ -2699,18 +2725,74 @@ async function handleConfirmAuditImport(){
   await handleSaveAudit(true);
   auditImportPreview = null;
 }
+// ---- Éditeur des grilles d'audit propreté (une grille par ligne hors MCU) ----
+var proprGridModal = null;   // {ligne}
+function proprGridModalHtml(){
+  var l = proprGridModal.ligne, key = checklistKeyForLigne(l), items = DATA.checklist[key]||[];
+  var pl = proprLines();
+  var others = Object.keys(DATA.checklist).filter(function(k){ return k!==key && (DATA.checklist[k]||[]).length; });
+  var shared = (key==='MCU1_MCU2') ? ' (grille commune MCU1 et MCU2)' : '';
+  return '<div class="modal-overlay propr-grid-backdrop"><div class="modal-box" style="max-width:900px;">'+
+    '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;"><h2 style="font-size:16px; margin:0;">Grille d\'audit propreté</h2><button class="btn small" data-action="propr-grid-close">Fermer</button></div>'+
+    '<div style="display:flex; gap:10px; align-items:end; flex-wrap:wrap; margin-bottom:12px;">'+
+      '<label class="field" style="margin:0;">Ligne<select id="pg-ligne">'+pl.map(function(x){ return '<option value="'+esc(x)+'"'+(x===l?' selected':'')+'>'+esc(x)+'</option>'; }).join('')+'</select></label>'+
+      '<span class="tiny" style="color:var(--text-faint);">'+items.length+' critère(s)'+shared+'</span>'+
+      (others.length? '<span style="margin-left:auto; display:flex; gap:6px; align-items:end;"><label class="field" style="margin:0;">Copier la grille de<select id="pg-copy-from">'+others.map(function(k){ return '<option value="'+esc(k)+'">'+esc(k==='MCU1_MCU2'?'MCU1 / MCU2':k)+' ('+DATA.checklist[k].length+')</option>'; }).join('')+'</select></label><button class="btn small" data-action="propr-grid-copy">Copier</button></span>' : '')+
+    '</div>'+
+    '<div class="table-wrap" style="max-height:50vh; overflow:auto;"><table><thead><tr><th style="width:24%;">Zone / poste</th><th>Critère</th><th style="width:12%;">Moyen</th><th style="width:60px;"></th></tr></thead><tbody>'+
+      (items.length? items.map(function(it){ return '<tr><td>'+esc(it.poste||'')+'</td><td>'+esc(it.critere||'')+'</td><td>'+esc(it.moyen||'')+'</td><td><button class="btn small danger-outline" data-action="propr-grid-del" data-id="'+esc(it.id)+'" title="Retirer ce critère">✕</button></td></tr>'; }).join('')
+        : '<tr><td colspan="4">'+emptyState('Aucun critère. Ajoutez-les ci-dessous, ou copiez la grille d\'une autre ligne.')+'</td></tr>')+
+    '</tbody></table></div>'+
+    '<div style="display:grid; grid-template-columns:1fr 2fr 110px auto; gap:8px; align-items:end; margin-top:12px;">'+
+      '<label class="field" style="margin:0;">Zone / poste<input type="text" id="pg-poste" placeholder="Général, Poste 10…"></label>'+
+      '<label class="field" style="margin:0;">Critère<input type="text" id="pg-critere" placeholder="Propreté du sol"></label>'+
+      '<label class="field" style="margin:0;">Moyen<input type="text" id="pg-moyen" placeholder="VC" value="VC"></label>'+
+      '<button class="btn primary" data-action="propr-grid-add">+ Ajouter</button>'+
+    '</div>'+
+    '<p class="tiny" style="margin-top:10px; color:var(--text-faint);">Retirer un critère ne modifie pas les audits déjà enregistrés.</p>'+
+  '</div></div>';
+}
+async function proprGridAction(action, el){
+  var l = proprGridModal.ligne, key = checklistKeyForLigne(l);
+  if(!DATA.checklist[key]) DATA.checklist[key] = [];
+  if(action==='add'){
+    var critere = document.getElementById('pg-critere').value.trim();
+    if(!critere){ toast('Merci de saisir le critère.', 'error'); return; }
+    DATA.checklist[key].push({id:uid('chk-'+key.replace(/[^\w]+/g,'')), poste:document.getElementById('pg-poste').value.trim()||'Général', critere:critere, moyen:document.getElementById('pg-moyen').value.trim()});
+    logChange('Propreté', 'Grille d\'audit : critère ajouté', l+' · '+critere);
+  } else if(action==='del'){
+    var it = DATA.checklist[key].filter(function(x){ return x.id===el.dataset.id; })[0]; if(!it) return;
+    if(!await uiConfirm('Retirer le critère « '+it.critere+' » de la grille de '+l+' ?')) return;
+    DATA.checklist[key] = DATA.checklist[key].filter(function(x){ return x!==it; });
+    logChange('Propreté', 'Grille d\'audit : critère retiré', l+' · '+it.critere);
+  } else if(action==='copy'){
+    var from = document.getElementById('pg-copy-from').value, src = DATA.checklist[from]||[];
+    if(!src.length) return;
+    if(DATA.checklist[key].length && !await uiConfirm('Remplacer les '+DATA.checklist[key].length+' critère(s) de '+l+' par la grille de '+(from==='MCU1_MCU2'?'MCU1 / MCU2':from)+' ?')) return;
+    DATA.checklist[key] = src.map(function(x){ return {id:uid('chk-'+key.replace(/[^\w]+/g,'')), poste:x.poste, critere:x.critere, moyen:x.moyen}; });
+    logChange('Propreté', 'Grille d\'audit copiée', (from==='MCU1_MCU2'?'MCU1 / MCU2':from)+' → '+l);
+  }
+  await save('checklist');
+  render();
+  var f = document.getElementById(action==='add' ? 'pg-critere' : 'pg-ligne'); if(f){ if(action==='add'){ f.value=''; } f.focus({preventScroll:true}); }
+}
 function renderProprGrilleTab(){
   if(!auditWizard) return proprGrilleIntro();
-  return proprGrilleWizard();
+  return proprGrilleWizard() + (proprGridModal ? proprGridModalHtml() : '');
 }
 function proprGrilleIntro(){
-  var recent = DATA.propAudits.slice().sort(function(a,b){ return b.date.localeCompare(a.date); }).slice(0,10);
+  var pl = proprLines();
+  var recent = DATA.propAudits.filter(function(a){ return pl.indexOf(a.ligne)>=0; }).sort(function(a,b){ return b.date.localeCompare(a.date); }).slice(0,10);
+  var sansGrille = pl.filter(function(l){ return !(DATA.checklist[checklistKeyForLigne(l)]||[]).length; });
   var html = '<div class="toolbar"><div></div><div style="display:flex; gap:8px;">'+
-    '<button class="btn" data-action="import-audit-excel">📥 Importer un audit (fichier Excel)</button>'+
+    '<button class="btn" data-action="propr-grid-open" title="Créer ou modifier les critères de la grille d\'audit de chaque ligne">⚙️ Grilles d\'audit</button>'+
+    (currentSecteur==='MCU' ? '<button class="btn" data-action="import-audit-excel">📥 Importer un audit (fichier Excel)</button>' : '')+
     '<button class="btn primary" data-action="start-audit">+ Réaliser un audit propreté</button>'+
     '</div></div>';
   html += '<input type="file" id="audit-excel-input" accept=".xlsx,.xls" style="display:none;">';
   if(auditImportPreview) html += renderAuditImportPreview();
+  if(sansGrille.length) html += '<div class="card" style="margin-bottom:14px; border-color:var(--warn-border, #E8C58A); background:var(--warn-bg, #FFF8EC);"><b>Grille d\'audit à paramétrer</b> pour '+sansGrille.map(esc).join(', ')+'. <button class="btn small primary" data-action="propr-grid-open" style="margin-left:8px;">Paramétrer</button></div>';
+  if(proprGridModal) html += proprGridModalHtml();
   html += '<h2 style="font-size:14px; margin-bottom:10px;">Derniers audits réalisés</h2>';
   if(!recent.length) return html+emptyState('Aucun audit enregistré pour le moment. Cliquez sur "Réaliser un audit propreté" pour commencer.');
   html += '<div class="table-wrap"><table><thead><tr><th>Date</th><th>Ligne</th><th>Auditeur</th><th>Score</th><th>NC</th><th></th></tr></thead><tbody>';
@@ -2740,7 +2822,7 @@ function wizardStep0(){
   return '<div class="card" style="max-width:520px;">'+
     '<h2 style="font-size:14px; margin-bottom:14px;">Informations générales</h2>'+
     '<div style="display:flex; flex-direction:column; gap:12px;">'+
-    '<label class="field">Ligne<select id="aw-ligne">'+LINES.map(function(l){return '<option value="'+l+'"'+(l===w.ligne?' selected':'')+'>'+l+'</option>';}).join('')+'</select></label>'+
+    '<label class="field">Ligne<select id="aw-ligne">'+proprLines().map(function(l){return '<option value="'+l+'"'+(l===w.ligne?' selected':'')+'>'+l+'</option>';}).join('')+'</select></label>'+
     '<label class="field">Date<input type="date" id="aw-date" value="'+esc(w.date)+'"></label>'+
     '<label class="field">Auditeur<input type="text" id="aw-auditeur" value="'+esc(w.auditeur)+'" placeholder="Nom de l\'auditeur"></label>'+
     '<label class="field">Service<input type="text" id="aw-service" value="'+esc(w.service)+'" placeholder="Qualité, Production..."></label>'+
@@ -2752,6 +2834,7 @@ function wizardStep1(){
   var w = auditWizard;
   var key = checklistKeyForLigne(w.ligne);
   var items = DATA.checklist[key]||[];
+  if(!items.length) return '<div class="card">'+emptyState('Aucune grille d\'audit pour '+esc(w.ligne)+'.')+'<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="cancel-audit">Annuler</button><button class="btn primary" data-action="propr-grid-open" data-ligne="'+esc(w.ligne)+'">⚙️ Paramétrer la grille de '+esc(w.ligne)+'</button></div></div>';
   var html = '<p class="tiny" style="margin-bottom:12px;">'+w.ligne+' · '+fmtDate(w.date)+' · Cochez OK / NG pour chaque critère, ajoutez une photo en cas de non-conformité.</p>';
   html += '<div class="table-wrap" style="padding:6px 14px;">';
   items.forEach(function(item){
@@ -2820,7 +2903,7 @@ async function handleWizardNext(){
 }
 function handleWizardPrev(){ auditWizard.step--; render(); }
 async function handleCancelAudit(){ if(await uiConfirm('Abandonner cet audit ? Les réponses saisies seront perdues.')){ auditWizard=null; render(); } }
-function handleStartAudit(){ auditWizard = {step:0, ligne:'MCU1', date:todayStr(), auditeur:'', service:'', items:{}}; render(); }
+function handleStartAudit(){ auditWizard = {step:0, ligne:proprLines()[0]||'MCU1', date:todayStr(), auditeur:(currentUser&&currentUser.displayName)||'', service:'', items:{}}; render(); }
 
 async function handleSaveAudit(fromImport){
   var w = auditWizard;
@@ -2830,7 +2913,7 @@ async function handleSaveAudit(fromImport){
     var st = w.items[it.id] || {result:'', remarque:'', action:'', photo:null};
     return {poste:it.poste, critere:it.critere, result:st.result, remarque:st.remarque, action:st.action, photo:st.photo||null};
   });
-  var record = {id:uid('paud'), ligne:w.ligne, date:w.date, auditeur:w.auditeur, service:w.service, score:sc.score, ok:sc.ok, ng:sc.ng, items:itemsArr};
+  var record = {id:uid('paud'), secteur:currentSecteur, ligne:w.ligne, date:w.date, auditeur:w.auditeur, service:w.service, score:sc.score, ok:sc.ok, ng:sc.ng, items:itemsArr};
   if(fromImport) record.source = 'import';
   DATA.propAudits.push(record);
   await save('propAudits');
@@ -2846,7 +2929,7 @@ async function handleSaveAudit(fromImport){
     if(st.result==='NG'){
       var crit = (DATA.checklist[key]||[]).find(function(c){return c.id===critId;});
       DATA.actions.push({
-        id: uid('act'), origine:'Propreté', description:(crit?crit.critere:'Non-conformité')+(crit&&crit.poste!=='Général'?' ('+crit.poste+')':'')+(st.remarque?' - '+st.remarque:''),
+        id: uid('act'), origine:'Propreté', secteur:currentSecteur, description:(crit?crit.critere:'Non-conformité')+(crit&&crit.poste!=='Général'?' ('+crit.poste+')':'')+(st.remarque?' - '+st.remarque:''),
         ligne:w.ligne, responsable:st.responsable||'', echeance:st.echeance||null, statut:'planifiee', dateCreation:todayStr(), photo:st.photo||null
       });
       created++;
@@ -2951,7 +3034,7 @@ function proprResultats(){
   var curMonthForForm = Number(todayStr().split('-')[1])-1;
   var weeksForForm = weeksOfMonth(resultsYear, curMonthForForm);
   html += '<form class="entryform cols2" id="form-resultats" style="display:none">'+
-    field('select','ligne','Ligne', LINES.map(function(l){return [l,l];})) +
+    field('select','ligne','Ligne', proprLines().map(function(l){return [l,l];})) +
     '<label class="field">Mois<select name="mois" id="resultats-form-mois">'+MONTHS_FR.map(function(m,i){var lab=m.charAt(0).toUpperCase()+m.slice(1);return '<option value="'+lab+'"'+(i===curMonthForForm?' selected':'')+'>'+lab+'</option>';}).join('')+'</select></label>'+
     '<label class="field">Semaine<select name="semaine" id="resultats-form-semaine">'+weeksForForm.map(function(w){return '<option value="'+w.week+'">S'+w.week+' ('+fmtDateShort(isoWeekMondayDate(w.year,w.week))+')</option>';}).join('')+'</select></label>'+
     field('number','resultatPct','Résultat (%)') +
@@ -2990,18 +3073,18 @@ function proprResultats(){
 
   html += '<div class="grid grid-2" style="margin-bottom:18px;">'+
     '<div class="card"><div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; flex-wrap:wrap; gap:6px;"><div class="eyebrow">Évolution du score par ligne - '+resultsYear+'</div><div style="display:flex; gap:5px;">'+
-      LINES.map(function(l){return '<button class="btn small'+(chartProprLigneFilter.indexOf(l)>=0?' primary':'')+'" data-action="toggle-propr-ligne" data-val="'+l+'">'+l+'</button>';}).join('')+
+      proprLines().map(function(l){return '<button class="btn small'+(chartProprLigneFilter.indexOf(l)>=0?' primary':'')+'" data-action="toggle-propr-ligne" data-val="'+l+'">'+l+'</button>';}).join('')+
     '</div></div><div class="chart-box"><canvas id="chart-proprete-evol"></canvas></div></div>'+
     '<div class="card"><div class="eyebrow" style="margin-bottom:8px;">Comparatif du mois en cours</div><div class="chart-box"><canvas id="chart-proprete-comp"></canvas></div></div>'+
   '</div>';
 
   // Récapitulatif annuel (mois × ligne), combine audits + historique
   html += '<div class="eyebrow" style="margin-bottom:8px;">Récapitulatif annuel - '+resultsYear+'</div>';
-  html += '<div class="table-wrap" style="margin-bottom:22px;"><table class="annual-table"><thead><tr><th>Mois</th>'+LINES.map(function(l){return '<th>'+l+'</th>';}).join('')+'</tr></thead><tbody>';
+  html += '<div class="table-wrap" style="margin-bottom:22px;"><table class="annual-table"><thead><tr><th>Mois</th>'+proprLines().map(function(l){return '<th>'+l+'</th>';}).join('')+'</tr></thead><tbody>';
   MONTHS_FR.forEach(function(mRaw, mIdx){
     var mLabel = mRaw.charAt(0).toUpperCase()+mRaw.slice(1);
     html += '<tr><td>'+(mIdx===resultsMonthView?'<b>'+mLabel+'</b>':mLabel)+'</td>';
-    LINES.forEach(function(l){
+    proprLines().forEach(function(l){
       var r = monthRecapValue(l, mIdx, resultsYear);
       if(!r){ html += '<td class="c-empty">-</td>'; return; }
       var titre = r.source==='audits' ? (r.n>1? r.n+' audit(s)' : '1 audit') : 'donnée historique';
@@ -3017,12 +3100,12 @@ function proprResultats(){
     '<b class="tiny" style="font-size:13px;">'+curMonthLabel+' '+resultsYear+'</b>'+
     '<button class="btn small" data-action="month-next">Mois suiv. →</button></div></div>';
   html += '<p class="tiny" style="margin-bottom:10px;">Détail semaine par semaine pour '+curMonthLabel+'. Cliquez sur une cellule pour voir l\'audit.</p>';
-  html += '<div class="table-wrap"><table class="annual-table"><thead><tr><th>Semaine</th>'+LINES.map(function(l){return '<th>'+l+'</th>';}).join('')+'</tr></thead><tbody>';
+  html += '<div class="table-wrap"><table class="annual-table"><thead><tr><th>Semaine</th>'+proprLines().map(function(l){return '<th>'+l+'</th>';}).join('')+'</tr></thead><tbody>';
   var weeks = weeksOfMonth(resultsYear, resultsMonthView);
   weeks.forEach(function(info){
     var wk = isoWeekMondayDate(info.year, info.week);
     html += '<tr><td class="tiny">S'+info.week+' <span style="color:var(--text-faint);">('+fmtDateShort(wk)+')</span></td>';
-    LINES.forEach(function(l){
+    proprLines().forEach(function(l){
       var auditsThisWeek = DATA.propAudits.filter(function(a){
         if(a.ligne!==l || a.score===null || a.score===undefined) return false;
         var ai = isoWeekInfo(a.date);
@@ -3085,7 +3168,7 @@ function renderResultatsCharts(){
   if(chartProprComp){ chartProprComp.destroy(); chartProprComp=null; }
   var lineColors = {MCU1:'#1F5C5C', MCU2:'#2E7D4F', MCU3:'#B8730A'};
   var rs = DATA.resultats.filter(function(r){ return r.annee===resultsYear || (r.annee===undefined && resultsYear===Number(todayStr().slice(0,4))); });
-  var lignes = LINES.filter(function(l){ return chartProprLigneFilter.indexOf(l)>=0; });
+  var lignes = proprLines().filter(function(l){ return chartProprLigneFilter.indexOf(l)>=0; });
   try{
     var datasets = lignes.map(function(l){
       return {
@@ -4241,28 +4324,28 @@ async function handleSaveVidangeEdit(id){
   var date = document.getElementById('vidange-edit-date').value;
   var inter = Number(document.getElementById('vidange-edit-int').value);
   if(!nom){ toast('Merci de saisir l\'intervention.', 'error'); return; }
-  if(!date){ toast('Merci de saisir la date de la dernière vidange.', 'error'); return; }
-  if(date > todayStr()){ toast('La date de vidange ne peut pas être dans le futur.', 'error'); return; }
+  if(!date){ toast('Merci de saisir la date de la dernière intervention.', 'error'); return; }
+  if(date > todayStr()){ toast('La date d\'intervention ne peut pas être dans le futur.', 'error'); return; }
   if(!(inter>0)){ toast('Intervalle invalide.', 'error'); return; }
   var oldDate = v.derniereVidange;
   v.equipement = nom; v.derniereVidange = date; v.intervalle = inter;
   await save('vidange');
-  logChange('Propreté', 'Vidange mise à jour', nom+(date!==oldDate? ' : '+fmtDate(oldDate)+' → '+fmtDate(date) : ''));
+  logChange('Propreté', 'Entretien mis à jour', nom+(date!==oldDate? ' : '+fmtDate(oldDate)+' → '+fmtDate(date) : ''));
   vidangeEditId = null;
-  toast('Vidange enregistrée.');
+  toast('Intervention enregistrée.');
   render();
 }
 function proprVidange(){
-  var html = '<p class="tiny" style="margin-bottom:12px;">Suivi des vidanges MCU0 - intervalle standard : '+VIDANGE_INTERVALLE+' jours.</p>';
+  var html = '<p class="tiny" style="margin-bottom:12px;">Interventions périodiques sur les équipements du secteur (vidange, nettoyage, changement de filtre…) - intervalle par défaut : '+VIDANGE_INTERVALLE+' jours.</p>';
   html += '<div class="toolbar"><div></div><button class="btn primary" data-toggle-form="vidange">+ Ajouter un équipement</button></div>';
   html += '<form class="entryform cols2" id="form-vidange" style="display:none">'+
-    field('text','equipement','Intervention / repère') +
-    field('date','derniereVidange','Date de dernière vidange') +
+    field('text','equipement','Équipement et intervention') +
+    field('date','derniereVidange','Date de dernière intervention') +
     field('number','intervalle','Intervalle (jours)') +
     '<div class="actions-row"><button type="button" class="btn" data-cancel-form="vidange">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'+
   '</form>';
-  var rows = DATA.vidange.slice().sort(function(a,b){ return a.derniereVidange.localeCompare(b.derniereVidange); });
-  html += '<div class="table-wrap"><table><thead><tr><th>Statut</th><th>Intervention</th><th>Dernière vidange</th><th>Intervalle</th><th>Prochaine échéance</th><th></th></tr></thead><tbody>';
+  var rows = bySecteur(DATA.vidange).sort(function(a,b){ return a.derniereVidange.localeCompare(b.derniereVidange); });
+  html += '<div class="table-wrap"><table><thead><tr><th>Statut</th><th>Équipement / intervention</th><th>Dernière intervention</th><th>Intervalle</th><th>Prochaine échéance</th><th></th></tr></thead><tbody>';
   html += rows.map(function(v){
     var s = vidangeStatus(v);
     if(vidangeEditId===v.id){
@@ -9284,13 +9367,15 @@ function applyAppConfig(force){
 // Seules les valeurs différentes de celles d'origine sont stockées (DATA.appConfig).
 // ====================================================================
 var PARAM_SECTIONS = [
+  {id:'apercu',    label:'Vue d\'ensemble',         keys:[], all:true},
   {id:'objectifs', label:'Objectifs et seuils',      keys:['chokkoObj','chokkoCostObj','chokkoMarge','scoreSeuils','prioDelais','vidange']},
   {id:'lignes',    label:'Lignes et références',     keys:['lineRefs','ciclLigneRefs','ciclRefLabels','ciclRefPostes']},
   {id:'contam',    label:'Critères contamination',   keys:['refCriteria']},
   {id:'prison',    label:'Prison et chantiers',      keys:['prisonEtats','prisonDest','chantierLieux','chantierRisques','chantierKakotora','chantierHse']},
-  {id:'divers',    label:'Équipes et bains',         keys:['chokkoTeams','bains']}
+  {id:'divers',    label:'Équipes et bains',         keys:['chokkoTeams','bains']},
+  {id:'libelles',  label:'Libellés',                 keys:[]}
 ];
-var paramSub = 'objectifs', paramDraft = null, paramDraftSub = null;
+var paramSub = 'apercu', paramDraft = null, paramDraftSub = null;
 function paramSection(){ return PARAM_SECTIONS.filter(function(s){ return s.id===paramSub; })[0] || PARAM_SECTIONS[0]; }
 function paramStartDraft(){
   var sec = paramSection();
@@ -9354,59 +9439,70 @@ function pCard(title, help, body, custom){
     (help? '<p class="tiny param-intro">'+help+'</p>' : '')+body+'</div>';
 }
 // ---- Sections ----
-function paramObjectifsHtml(){
+// ---- Cartes de réglages (réutilisées dans Paramètres et dans le mode « Personnaliser ») ----
+function pcChokkoObj(){
   var lines = [];
   ((DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT).forEach(function(sec){
     if(sec.id==='MCU' || (sec.tabs||[]).indexOf('chokko')>=0) (sec.lignes||[]).forEach(function(l){ if(lines.indexOf(l)<0) lines.push(l); });
   });
-  var h = pCard('Objectifs CHOKKO et coût par pièce', 'Objectif de chaque ligne des secteurs qui ont le suivi CHOKKO (vide = 99 % et 0,035 €). Le CHOKKO est vert au-dessus de l\'objectif, orange dans la marge d\'alerte, rouge en dessous.',
+  return pCard('Objectifs CHOKKO et coût par pièce', 'Objectif de chaque ligne des secteurs qui ont le suivi CHOKKO (vide = 99 % et 0,035 €). Le CHOKKO est vert au-dessus de l\'objectif, orange dans la marge d\'alerte, rouge en dessous.',
     '<div class="table-wrap"><table class="param-table"><thead><tr><th>Ligne</th><th>Objectif CHOKKO (%)</th><th>Objectif coût par pièce (€)</th></tr></thead><tbody>'+
     lines.map(function(l){ return '<tr><td><b>'+esc(l)+'</b></td><td>'+pNum('chokkoObj.'+l, {step:'0.1', ph:'99'})+'</td><td>'+pNum('chokkoCostObj.'+l, {step:'0.001', ph:'0.035'})+'</td></tr>'; }).join('')+
     '</tbody></table></div>'+
     '<div class="param-row">'+pField('Marge d\'alerte CHOKKO (points)', pNum('chokkoMarge', {step:'0.1'}), 'Ex. 2 : objectif 99 % → orange entre 97 et 99 %.')+'</div>',
     cfgIsCustom('chokkoObj')||cfgIsCustom('chokkoCostObj')||cfgIsCustom('chokkoMarge'));
-  h += pCard('Seuils du score de conformité', 'S\'appliquent au score global et aux résultats de propreté et d\'audits de perf.',
+}
+function pcSeuils(){
+  return pCard('Seuils du score de conformité', 'S\'appliquent au score global et aux résultats de propreté et d\'audits de perf.',
     '<div class="param-row">'+pField('Conforme à partir de (%)', pNum('scoreSeuils.attention', {step:'1'}))+pField('En danger en dessous de (%)', pNum('scoreSeuils.danger', {step:'1'}))+'</div>',
     cfgIsCustom('scoreSeuils'));
-  h += pCard('Tableau de bord « Priorités »', 'Délais utilisés pour décider ce qui remonte dans les priorités.',
+}
+function pcPrio(){
+  return pCard('Délais d\'alerte', 'Délais utilisés pour décider ce qui remonte dans les alertes et le rapport mensuel.',
     '<div class="param-row">'+pField('Action « bientôt » si échéance dans (jours)', pNum('prioDelais.actionsJours', {step:'1'}))+
     pField('Analyse contamination en retard après (jours)', pNum('prioDelais.contamJours', {step:'1'}), 'Délai entre la collecte et la saisie des résultats.')+'</div>',
     cfgIsCustom('prioDelais'));
-  h += pCard('Vidanges', '',
+}
+function pcEntretien(){
+  return pCard('Entretien des équipements', '',
     '<div class="param-row">'+pField('Intervalle par défaut (jours)', pNum('vidange.intervalle', {step:'1'}), 'Utilisé quand l\'équipement n\'a pas d\'intervalle propre.')+
     pField('Alerte « à prévoir » (jours avant)', pNum('vidange.alerteJours', {step:'1'}))+'</div>',
     cfgIsCustom('vidange'));
-  return h;
 }
-function paramLignesHtml(){
-  var h = pCard('Lignes du secteur MCU', 'Les lignes de chaque secteur se gèrent dans Comptes › Secteurs. Les modules MCU (CHOKKO, propreté, planning, perf…) suivent automatiquement cette liste. Pour une nouvelle ligne, pensez ensuite à paramétrer ses postes dans Suivi CHOKKO et son objectif dans « Objectifs et seuils ».',
+function pcLignesMcu(){
+  return pCard('Lignes de chaque secteur', 'Les lignes de chaque secteur se gèrent dans Comptes › Secteurs. Pour une nouvelle ligne, pensez ensuite à paramétrer ses postes CHOKKO, son objectif et sa grille d\'audit (onglet « Vue d\'ensemble »).',
     '<div class="param-chips">'+LINES.map(function(l){ return '<span class="param-chip ro">'+esc(l)+'</span>'; }).join('')+'</div>'+
     '<button class="btn small" data-action="goto-widget-tab" data-tab="comptes" style="margin-top:8px;">Modifier les lignes dans Comptes →</button>');
+}
+function pcLineRefs(){
   var lr = pGet('lineRefs') || {};
-  h += pCard('Contamination : références suivies par ligne', 'Une référence retirée n\'apparaît plus dans la saisie ; l\'historique déjà saisi est conservé. Les critères de chaque référence se règlent dans « Critères contamination ».',
+  return pCard('Contamination : références suivies par ligne', 'Une référence retirée n\'apparaît plus dans la saisie ; l\'historique déjà saisi est conservé. Les critères de chaque référence se règlent dans « Critères contamination ».',
     Object.keys(lr).map(function(l){
       return '<div class="param-maprow"><div class="param-maprow-key"><b>'+esc(l)+'</b><button class="btn small danger-outline" data-action="param-delkey" data-path="lineRefs" data-key="'+esc(l)+'" title="Retirer la ligne de la contamination">✕</button></div>'+pChips('lineRefs.'+l, {ph:'Réf. (ex. 141P)'})+'</div>';
     }).join('')+
     '<div class="param-addkey"><input type="text" id="pk-lineRefs" placeholder="Nouvelle ligne (ex. MCU4)"><button class="btn small" data-action="param-addkey" data-path="lineRefs" data-input="pk-lineRefs" data-tpl="[]">+ Ligne</button></div>',
     cfgIsCustom('lineRefs'));
+}
+function pcCiclRefs(){
   var cl = pGet('ciclLigneRefs') || {};
-  var refs = [];
-  Object.keys(cl).forEach(function(l){ (cl[l]||[]).forEach(function(r){ if(refs.indexOf(r)<0) refs.push(r); }); });
-  h += pCard('CI/CL : références par ligne', 'Chaque ligne a ses onglets dans Formations CI/CL. Une référence peut être commune à plusieurs lignes (ex. 143X-144P).',
+  return pCard('CI/CL : références par ligne', 'Chaque ligne a ses onglets dans Formations CI/CL. Une référence peut être commune à plusieurs lignes (ex. 143X-144P).',
     Object.keys(cl).map(function(l){
       return '<div class="param-maprow"><div class="param-maprow-key"><b>'+esc(l)+'</b><button class="btn small danger-outline" data-action="param-delkey" data-path="ciclLigneRefs" data-key="'+esc(l)+'" title="Retirer la ligne">✕</button></div>'+pChips('ciclLigneRefs.'+l, {ph:'Réf. (ex. 162R)'})+'</div>';
     }).join('')+
     '<div class="param-addkey"><input type="text" id="pk-cicl" placeholder="Nouvelle ligne (ex. MCU4)"><button class="btn small" data-action="param-addkey" data-path="ciclLigneRefs" data-input="pk-cicl" data-tpl="[]">+ Ligne</button></div>',
     cfgIsCustom('ciclLigneRefs'));
-  var postes = pGet('ciclRefPostes') || {};
-  h += pCard('CI/CL : postes à habiliter par référence', 'Ce sont les postes pour lesquels on vérifie qu\'au moins une personne est formée (couverture CI/CL).',
+}
+function pcCiclPostes(){
+  var cl = pGet('ciclLigneRefs') || cfg('ciclLigneRefs') || {};
+  var refs = [];
+  Object.keys(cl).forEach(function(l){ (cl[l]||[]).forEach(function(r){ if(refs.indexOf(r)<0) refs.push(r); }); });
+  return pCard('CI/CL : postes à habiliter par référence', 'Ce sont les postes pour lesquels on vérifie qu\'au moins une personne est formée (couverture CI/CL).',
     refs.map(function(r){
       return '<div class="param-maprow"><div class="param-maprow-key"><b>'+esc(r)+'</b><input type="text" class="param-ref-label" data-pf="ciclRefLabels.'+esc(r)+'" value="'+esc((pGet('ciclRefLabels')||{})[r]||'')+'" placeholder="Libellé affiché (optionnel)"></div>'+pChips('ciclRefPostes.'+r, {ph:'Poste (ex. OP1030)'})+'</div>';
-    }).join('') || '<p class="tiny">Ajoutez d\'abord des références aux lignes ci-dessus.</p>',
+    }).join('') || '<p class="tiny">Ajoutez d\'abord des références aux lignes.</p>',
     cfgIsCustom('ciclRefPostes')||cfgIsCustom('ciclRefLabels'));
-  return h;
 }
-function paramContamHtml(){
+function pcRefCriteria(){
   var lr = cfg('lineRefs') || {}, rc = pGet('refCriteria') || {};
   var refs = [];
   Object.keys(lr).forEach(function(l){ (lr[l]||[]).forEach(function(r){ if(refs.indexOf(r)<0) refs.push(r); }); });
@@ -9415,20 +9511,24 @@ function paramContamHtml(){
   return '<p class="tiny param-intro" style="margin-bottom:12px;">Un relevé est non conforme dès qu\'une valeur dépasse le seuil. Gravité « automatique » : masse polluante et seuil 0 → élevée, seuil ≥ 100 → faible, sinon modérée. Modifier un seuil ne recalcule pas les relevés déjà enregistrés comme conformes ou non conformes.</p>'+
     refs.map(function(r){
       var used = Object.keys(lr).filter(function(l){ return (lr[l]||[]).indexOf(r)>=0; });
-      return pCard('Référence '+r, used.length? 'Ligne(s) : '+used.join(', ') : 'Référence non rattachée à une ligne (historique).',
+      return pCard('Critères contamination - référence '+r, used.length? 'Ligne(s) : '+used.join(', ') : 'Référence non rattachée à une ligne (historique).',
         pRows('refCriteria.'+r, [
           {k:'label', label:'Critère', w:'240px'}, {k:'unit', label:'Unité', w:'60px'}, {k:'seuil', label:'Seuil max', type:'num', w:'90px'},
           {k:'grav', label:'Gravité', type:'sel', options:GRAV}
         ], {tpl:{id:'__ID__', label:'', unit:'', seuil:0}, addLabel:'Critère'}), false);
     }).join('');
 }
-function paramPrisonHtml(){
+function pcPrisonEtats(){
   var stockFor = function(key){ var n = 0; DATA.prisonLots.forEach(function(lot){ (lot.lignes||[]).forEach(function(l){ n += Number(l[key])||0; }); }); return n; };
-  var h = pCard('Prison qualité : états des pièces', 'Colonnes de quantité de chaque référence (ex. Complet, Sans capot). Un état qui contient encore des pièces ne peut pas être supprimé.',
+  return pCard('Prison qualité : états des pièces', 'Colonnes de quantité de chaque référence (ex. Complet, Sans capot). Un état qui contient encore des pièces ne peut pas être supprimé.',
     pRows('prisonEtats', [{k:1, label:'Libellé', w:'220px'}], {tpl:['e___ID__',''], addLabel:'État', lockDelete:function(it){ var n = stockFor(it[0]); return n ? n+' pièce(s) en prison dans cet état' : null; }}), cfgIsCustom('prisonEtats'));
-  h += pCard('Prison qualité : destinations des sorties', 'Choix proposés dans la traçabilité des sorties.',
+}
+function pcPrisonDest(){
+  return pCard('Prison qualité : destinations des sorties', 'Choix proposés dans la traçabilité des sorties.',
     pRows('prisonDest', [{k:null, label:'Destination', w:'260px'}], {tpl:'', addLabel:'Destination'}), cfgIsCustom('prisonDest'));
-  h += pCard('Fiche de chantier : emplacements des pièces suspectes', '',
+}
+function pcChantier(){
+  var h = pCard('Fiche de chantier : emplacements des pièces suspectes', '',
     pRows('chantierLieux', [{k:1, label:'Emplacement', w:'340px'}], {tpl:['l___ID__',''], addLabel:'Emplacement'}), cfgIsCustom('chantierLieux'));
   h += pCard('Fiche de chantier : analyse de risques produit / process', '',
     pRows('chantierRisques', [{k:1, label:'Risque', w:'340px'}, {k:2, label:'Catégorie', w:'180px'}], {tpl:['r___ID__','','Autres risques'], addLabel:'Risque'}), cfgIsCustom('chantierRisques'));
@@ -9447,22 +9547,206 @@ function paramPrisonHtml(){
     cfgIsCustom('chantierHse'));
   return h;
 }
-function paramDiversHtml(){
+function pcTeams(){
   var teamUsed = function(id){ return DATA.chokko.some(function(e){ return e.prod && Number(e.prod[id])>0; }) ? 'Des productions sont saisies pour cette équipe' : null; };
+  return pCard('Suivi CHOKKO : équipes', 'Lignes de production par équipe dans la grille CHOKKO. Une équipe qui a déjà des productions saisies ne peut pas être supprimée (les totaux passés changeraient), mais elle peut être renommée.',
+    pRows('chokkoTeams', [{k:1, label:'Nom complet', w:'200px'}, {k:2, label:'Libellé court (grille)', w:'140px'}], {tpl:['t___ID__','',''], addLabel:'Équipe', lockDelete:function(it){ return teamUsed(it[0]); }}), cfgIsCustom('chokkoTeams'));
+}
+function pcBains(){
   var bainUsed = function(b){ return DATA.releves.some(function(r){ return r.bain===b.nom; }) ? 'Des relevés existent pour ce bain' : null; };
   var savedBains = (cfg('bains')||[]).map(function(b){ return b.nom; });
-  var h = pCard('Suivi CHOKKO : équipes', 'Lignes de production par équipe dans la grille CHOKKO. Une équipe qui a déjà des productions saisies ne peut pas être supprimée (les totaux passés changeraient), mais elle peut être renommée.',
-    pRows('chokkoTeams', [{k:1, label:'Nom complet', w:'200px'}, {k:2, label:'Libellé court (grille)', w:'140px'}], {tpl:['t___ID__','',''], addLabel:'Équipe', lockDelete:function(it){ return teamUsed(it[0]); }}), cfgIsCustom('chokkoTeams'));
-  h += pCard('Relevés MCU0 : bains', 'Le nom sert de référence aux relevés : il n\'est plus modifiable une fois enregistré.',
+  return pCard('Relevés MCU0 : bains', 'Le nom sert de référence aux relevés : il n\'est plus modifiable une fois enregistré.',
     pRows('bains', [{k:'nom', label:'Nom', w:'180px', readonly:function(it){ return savedBains.indexOf(it.nom)>=0 ? 'Nom utilisé par les relevés' : false; }}, {k:'couleur', label:'Couleur', type:'color', w:'60px'}],
       {tpl:{nom:'', couleur:'#5A6B7B'}, addLabel:'Bain', lockDelete:bainUsed}), cfgIsCustom('bains'));
+}
+// Registre : id → titre, clés de configuration, rendu
+var PCARDS = {
+  chokkoObj:  {label:'Objectifs CHOKKO', keys:['chokkoObj','chokkoCostObj','chokkoMarge'], html:pcChokkoObj},
+  seuils:     {label:'Seuils du score', keys:['scoreSeuils'], html:pcSeuils},
+  prio:       {label:'Délais d\'alerte', keys:['prioDelais'], html:pcPrio},
+  entretien:  {label:'Entretien des équipements', keys:['vidange'], html:pcEntretien},
+  lignes:     {label:'Lignes', keys:[], html:pcLignesMcu},
+  lineRefs:   {label:'Références contamination', keys:['lineRefs'], html:pcLineRefs},
+  refCriteria:{label:'Critères contamination', keys:['refCriteria'], html:pcRefCriteria},
+  ciclRefs:   {label:'CI/CL : références', keys:['ciclLigneRefs'], html:pcCiclRefs},
+  ciclPostes: {label:'CI/CL : postes', keys:['ciclRefPostes','ciclRefLabels'], html:pcCiclPostes},
+  prisonEtats:{label:'États des pièces en prison', keys:['prisonEtats'], html:pcPrisonEtats},
+  prisonDest: {label:'Destinations des sorties', keys:['prisonDest'], html:pcPrisonDest},
+  chantier:   {label:'Fiche de chantier', keys:['chantierLieux','chantierRisques','chantierKakotora','chantierHse'], html:pcChantier},
+  teams:      {label:'Équipes CHOKKO', keys:['chokkoTeams'], html:pcTeams},
+  bains:      {label:'Bains MCU0', keys:['bains'], html:pcBains}
+};
+function pcJoin(ids){ return ids.map(function(id){ return PCARDS[id].html(); }).join(''); }
+function paramObjectifsHtml(){ return pcJoin(['chokkoObj','seuils','prio','entretien']); }
+function paramLignesHtml(){ return pcJoin(['lignes','lineRefs','ciclRefs','ciclPostes']); }
+function paramContamHtml(){ return pcJoin(['refCriteria']); }
+function paramPrisonHtml(){ return pcJoin(['prisonEtats','prisonDest','chantier']); }
+function paramDiversHtml(){ return pcJoin(['teams','bains']); }
+
+// ==================== LIBELLÉS PERSONNALISABLES ====================
+function labelDefs(){
+  var d = ALL_TABS.map(function(tb){ return ['tab_'+tb[0], tb[1], tb[0], 'Nom de l\'onglet']; });
+  d.push(['tab_parametres','Paramètres','parametres','Nom de l\'onglet']);
+  [['sub_grille',"Grille d'audit",'proprete'],['sub_resultats','Résultats audits (%)','proprete'],['sub_contamination','Contamination','proprete'],
+   ['sub_particules','Relevés particules','proprete'],['sub_vidange','Entretien des équipements','proprete'],['sub_releves','MCU0 · Relevés bains','proprete'],
+   ['title_alerts','Alertes','dashboard'],['title_trend','Tendance globale - 12 derniers mois','dashboard'],['title_scorehist','Évolution du score de conformité global','dashboard'],
+   ['title_chokko','Suivi CHOKKO','dashboard'],['title_propr','Propreté - résultats et prochain audit','dashboard'],['title_perf','Audits de perf - résultats et prochain audit','dashboard'],
+   ['title_metro','Métrologie','dashboard'],['title_contam_dash','Contamination','dashboard'],['title_particules','Relevés particules','dashboard'],
+   ['title_vidange','Entretien des équipements','dashboard'],['title_esd','Formations ESD','dashboard'],['title_cicl','Formations CI/CL','dashboard'],['title_srem','Formations SREM','dashboard'],
+   ['archives_titre','Archivage des données','archives']
+  ].forEach(function(x){ d.push([x[0], x[1], x[2], x[2]==='proprete' ? 'Sous-onglet' : 'Titre']); });
+  return d;
+}
+function labelsEditorHtml(tab){
+  var defs = labelDefs().filter(function(d){ return !tab || d[2]===tab; });
+  var tabName = function(id){ var f = ALL_TABS.filter(function(x){ return x[0]===id; })[0]; return f ? t('tab_'+id, f[1]) : (id==='parametres'?'Paramètres':id); };
+  var rows = defs.map(function(d){
+    var cur = (DATA.labelOverrides||{})[d[0]] || '';
+    return '<tr><td class="tiny" style="color:var(--text-faint);">'+(tab? esc(d[3]) : esc(tabName(d[2]))+' · '+esc(d[3]))+'</td><td>'+esc(d[1])+'</td><td><input type="text" class="cz-label" data-key="'+esc(d[0])+'" value="'+esc(cur)+'" placeholder="'+esc(d[1])+'" style="width:100%;"></td></tr>';
+  }).join('');
+  return '<div class="card param-card"><div class="param-card-head"><div class="eyebrow">Libellés'+(tab? ' de cet onglet' : '')+'</div></div>'+
+    '<p class="tiny param-intro">Laisser vide pour garder le libellé d\'origine.</p>'+
+    (rows ? '<div class="table-wrap"><table class="param-table"><thead><tr><th>Élément</th><th>Libellé d\'origine</th><th>Libellé affiché</th></tr></thead><tbody>'+rows+'</tbody></table></div>' : emptyState('Aucun libellé modifiable sur cet onglet.'))+
+  '</div>';
+}
+async function saveLabelsFrom(root){
+  DATA.labelOverrides = DATA.labelOverrides || {};
+  var n = 0;
+  Array.prototype.forEach.call(root.querySelectorAll('input.cz-label'), function(inp){
+    var k = inp.dataset.key, v = inp.value.trim(), old = DATA.labelOverrides[k] || '';
+    if(v===old) return;
+    n++;
+    if(v) DATA.labelOverrides[k] = v; else delete DATA.labelOverrides[k];
+  });
+  if(!n){ toast('Aucun libellé modifié.'); return false; }
+  await save('labelOverrides');
+  logChange('Paramètres', 'Libellés modifiés', n+' libellé(s)');
+  toast(n+' libellé(s) enregistré(s).');
+  return true;
+}
+
+// ==================== MODE « PERSONNALISER » ====================
+var customizeMode = false;
+try{ customizeMode = localStorage.getItem('cz_mode_v1')==='1'; }catch(e){}
+var czModal = null;   // {cards:[ids], title} | {labels:tab}
+function isAdminUser(){ return !!(currentUser && currentUser.roleId===ADMIN_ROLE_ID); }
+function setCustomizeMode(on){
+  customizeMode = !!on;
+  try{ localStorage.setItem('cz_mode_v1', customizeMode?'1':'0'); }catch(e){}
+  document.body.classList.toggle('customize-on', customizeMode);
+  var b = document.getElementById('cz-toggle'); if(b){ b.classList.toggle('primary', customizeMode); b.textContent = customizeMode ? '✓ Terminer la personnalisation' : '✏️ Personnaliser'; }
+}
+function czOpen(cards){
+  var keys = [];
+  cards.forEach(function(id){ (PCARDS[id].keys||[]).forEach(function(k){ if(keys.indexOf(k)<0) keys.push(k); }); });
+  paramDraft = {}; paramDraftSub = 'cz';
+  keys.forEach(function(k){ paramDraft[k] = cfgClone(cfg(k)); });
+  pChipSeq = 0;
+  czModal = {cards:cards, keys:keys, title:cards.map(function(id){ return PCARDS[id].label; }).join(' · ')};
+}
+function czClose(){ czModal = null; paramDraft = null; paramDraftSub = null; }
+function czModalHtml(){
+  if(czModal.labels!==undefined){
+    return '<div class="modal-overlay cz-backdrop"><div class="modal-box cz-modal" style="max-width:820px;">'+
+      '<h2 style="font-size:16px; margin:0 0 12px;">✏️ Libellés</h2>'+labelsEditorHtml(czModal.labels)+
+      '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="cz-cancel">Annuler</button><button class="btn primary" data-action="cz-save-labels">Enregistrer</button></div></div></div>';
+  }
+  pChipSeq = 0;
+  return '<div class="modal-overlay cz-backdrop"><div class="modal-box param-page cz-modal" style="max-width:980px;">'+
+    '<h2 style="font-size:16px; margin:0 0 4px;">✏️ '+esc(czModal.title)+'</h2>'+
+    '<p class="tiny" style="margin:0 0 12px; color:var(--text-faint);">Ces réglages s\'appliquent à tous les utilisateurs dès l\'enregistrement.</p>'+
+    pcJoin(czModal.cards)+
+    '<div class="actions-row" style="margin-top:12px; position:sticky; bottom:-1px; background:var(--card, #fff); padding:10px 0 0;"><button class="btn" data-action="cz-cancel">Annuler</button><button class="btn primary" data-action="cz-save">Enregistrer</button></div>'+
+  '</div></div>';
+}
+async function czSave(){
+  var err = paramValidate();
+  if(err){ toast(err, 'error'); return; }
+  var ok = await paramSaveKeys(czModal.keys, czModal.title);
+  if(ok){ czClose(); render(); renderNav(); }
+}
+// Réglages proposés en mode « Personnaliser », selon l'onglet affiché.
+// global = réservé à l'administrateur ; ligne = chacun pour ses lignes.
+function czContextItems(){
+  var it = [], admin = isAdminUser(), tab = currentTab;
+  function g(cards, label){ if(admin) it.push('<button class="btn small cz-pen" data-action="cz-open" data-cards="'+cards+'">✏️ '+esc(label)+'</button>'); }
+  function ln(action, label, extra){ it.push('<button class="btn small cz-pen" data-action="'+action+'"'+(extra||'')+'>✏️ '+esc(label)+'</button>'); }
+  if(tab==='dashboard'){ ln('toggle-customize', 'Disposition et indicateurs du tableau de bord'); g('seuils','Seuils du score'); g('prio','Délais d\'alerte'); }
+  if(tab==='chokko'){
+    if(chokkoLigne){ ln('chokko-manage-postes-open', 'Postes et défauts de '+chokkoLigne); ln('chokko-obj-open', 'Objectifs de '+chokkoLigne); ln('cz-rebut-codes', 'Codes coût rebut de '+chokkoLigne); }
+    g('teams','Équipes'); g('chokkoObj','Objectifs de toutes les lignes');
+  }
+  if(tab==='proprete'){
+    ln('propr-grid-open', 'Grilles d\'audit'); g('entretien','Entretien : intervalle et alerte');
+    if(currentSecteur==='MCU'){ g('lineRefs,refCriteria','Contamination : références et critères'); g('bains','Bains MCU0'); }
+  }
+  if(tab==='perf'){ g('seuils','Seuils du score'); }
+  if(tab==='prison'){ g('prisonEtats','États des pièces'); g('prisonDest','Destinations des sorties'); g('chantier','Fiche de chantier'); }
+  if(tab==='cicl'){ g('ciclRefs,ciclPostes','Références et postes CI/CL'); }
+  if(admin && tab!=='parametres') ln('cz-labels', 'Libellés de cet onglet');
+  if(admin){ ln('goto-widget-tab', 'Tous les réglages', ' data-tab="parametres"'); }
+  return it;
+}
+function czBannerHtml(){
+  if(!customizeMode || currentTab==='parametres' || currentTab==='comptes') return '';
+  var items = czContextItems();
+  return '<div class="cz-banner chokko-noprint"><div class="cz-banner-txt"><b>Mode personnalisation</b> - ce que vous pouvez modifier sur cet onglet'+(isAdminUser()?'':' (vos lignes)')+' :</div>'+
+    '<div class="cz-banner-items">'+(items.join('') || '<span class="tiny">Rien à personnaliser ici.</span>')+'</div>'+
+    '<button class="btn small" data-action="cz-toggle-off">Terminer</button></div>';
+}
+
+// ==================== PARAMÈTRES : VUE D'ENSEMBLE ====================
+function paramApercuHtml(){
+  var admin = isAdminUser();
+  var secs = ((DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT).filter(function(s){ return userSecteurs().indexOf(s.id)>=0; });
+  var h = '<div class="card param-card"><div class="param-card-head"><div class="eyebrow">Personnaliser l\'outil</div></div>'+
+    '<p class="tiny param-intro">Deux façons de tout régler : ici, ou directement sur chaque écran avec le bouton <b>✏️ Personnaliser</b> en haut de la page, qui affiche sur chaque onglet ce qui peut y être modifié.</p>'+
+    '<button class="btn primary" data-action="cz-toggle-on">✏️ Activer le mode personnalisation</button></div>';
+  h += '<div class="card param-card"><div class="param-card-head"><div class="eyebrow">Réglages de chaque ligne</div></div>'+
+    '<p class="tiny param-intro">Chacun règle les lignes de son secteur. Cliquez sur une case pour ouvrir le bon écran, prêt à modifier.</p>'+
+    secs.map(function(s){
+      var tabs = s.tabs || [];
+      var hasChk = s.id==='MCU' || tabs.indexOf('chokko')>=0, hasPr = s.id==='MCU' || tabs.indexOf('proprete')>=0;
+      var cell = function(ok, txt, what, l, warn){ return ok ? '<td><button class="btn small'+(warn?' param-warn':'')+'" data-action="cz-goto" data-what="'+what+'" data-ligne="'+esc(l)+'" data-secteur="'+esc(s.id)+'">'+txt+' · Modifier</button></td>' : '<td class="tiny" style="color:var(--text-faint);">onglet non activé</td>'; };
+      return '<h3 style="font-size:13px; margin:14px 0 6px;">'+esc(s.nom||s.id)+'</h3><div class="table-wrap"><table class="param-table"><thead><tr><th>Ligne</th><th>Postes et défauts CHOKKO</th><th>Objectifs CHOKKO</th><th>Codes coût rebut</th><th>Grille d\'audit propreté</th></tr></thead><tbody>'+
+        (s.lignes||[]).map(function(l){
+          var np = hasChk ? chokkoPostes(l).length : 0, nr = hasChk ? rebutCodes(l).length : 0, ng = hasPr ? (DATA.checklist[checklistKeyForLigne(l)]||[]).length : 0;
+          return '<tr><td><b>'+esc(l)+'</b></td>'+
+            cell(hasChk, np+' poste(s)', 'postes', l, !np)+
+            cell(hasChk, '≥ '+String(chokkoObjectif(l)).replace('.',',')+' % · &lt; '+chokkoCostObjectif(l).toFixed(3).replace('.',',')+' €', 'obj', l)+
+            cell(hasChk, nr+' code(s)', 'rebut', l, !nr)+
+            cell(hasPr, ng+' critère(s)', 'grille', l, !ng)+'</tr>';
+        }).join('')+'</tbody></table></div>';
+    }).join('')+'</div>';
+  if(admin){
+    var link = function(sub, label, desc){ return '<div class="param-link"><div><b>'+esc(label)+'</b><div class="tiny">'+desc+'</div></div><button class="btn small" data-action="param-sub" data-sub-id="'+sub+'">Ouvrir →</button></div>'; };
+    var go = function(attrs, label, desc){ return '<div class="param-link"><div><b>'+esc(label)+'</b><div class="tiny">'+desc+'</div></div><button class="btn small" '+attrs+'>Ouvrir →</button></div>'; };
+    h += '<div class="card param-card"><div class="param-card-head"><div class="eyebrow">Réglages communs (administrateur)</div></div><div class="param-links">'+
+      link('objectifs', 'Objectifs et seuils', 'Objectifs CHOKKO de toutes les lignes, seuils du score, délais d\'alerte, entretien des équipements.')+
+      link('lignes', 'Lignes et références', 'Références contamination et CI/CL par ligne, postes CI/CL.')+
+      link('contam', 'Critères contamination', 'Critères, unités, seuils et gravité par référence.')+
+      link('prison', 'Prison et fiche de chantier', 'États des pièces, destinations, emplacements, risques, kakotora, aide HSE.')+
+      link('divers', 'Équipes et bains', 'Équipes de la grille CHOKKO, bains MCU0.')+
+      link('libelles', 'Libellés', 'Noms des onglets, sous-onglets et titres du tableau de bord.')+
+      go('data-action="goto-widget-tab" data-tab="comptes"', 'Comptes, profils et secteurs', 'Utilisateurs, droits, lignes et onglets de chaque secteur.')+
+      go('id="cz-open-appearance" data-action="cz-appearance"', 'Apparence', 'Style des icônes et couleurs des statuts.')+
+      go('data-action="goto-widget-tab" data-tab="archives"', 'Sauvegardes et exports', 'Sauvegarde complète, exports CSV.')+
+    '</div></div>';
+  }
   return h;
 }
 RENDERERS.parametres = function(){
-  if(!currentUser || currentUser.roleId!==ADMIN_ROLE_ID) return '<div class="section">'+emptyState('Réservé à l\'administrateur.')+'</div>';
+  if(!currentUser) return '';
+  if(!isAdminUser()) paramSub = 'apercu';
   if(!paramDraft || paramDraftSub!==paramSub) paramStartDraft();
   pChipSeq = 0;
   var sec = paramSection();
+  if(sec.id==='apercu' || sec.id==='libelles'){
+    return '<div class="section param-page">'+
+      (isAdminUser()? '<div class="subtabs param-subtabs">'+PARAM_SECTIONS.map(function(s2){ return '<button data-action="param-sub" data-sub-id="'+s2.id+'" class="'+(s2.id===paramSub?'active':'')+'">'+esc(s2.label)+'</button>'; }).join('')+'</div>' : '')+
+      (sec.id==='apercu' ? paramApercuHtml() : labelsEditorHtml(null)+'<div class="actions-row" style="margin-top:12px;"><button class="btn primary" data-action="labels-save">Enregistrer les libellés</button></div>')+
+    '</div>';
+  }
   var body = sec.id==='objectifs' ? paramObjectifsHtml() : sec.id==='lignes' ? paramLignesHtml() : sec.id==='contam' ? paramContamHtml() : sec.id==='prison' ? paramPrisonHtml() : paramDiversHtml();
   var dirty = paramDirty();
   return '<div class="section param-page">'+
@@ -9499,21 +9783,23 @@ async function paramSave(){
   var err = paramValidate();
   if(err){ toast(err, 'error'); return; }
   var sec = paramSection();
+  if(await paramSaveKeys(sec.keys, sec.label)){ paramStartDraft(); render(); renderNav(); }
+}
+async function paramSaveKeys(keys, label){
   DATA.appConfig = DATA.appConfig || {};
   var changed = [];
-  sec.keys.forEach(function(k){
+  keys.forEach(function(k){
     var v = paramDraft[k];
     if(JSON.stringify(v)!==JSON.stringify(cfg(k))) changed.push(k);
     if(JSON.stringify(v)===JSON.stringify(APP_CONFIG_DEFAULTS[k])) delete DATA.appConfig[k];
     else DATA.appConfig[k] = cfgClone(v);
   });
-  if(!changed.length){ toast('Aucune modification à enregistrer.'); return; }
+  if(!changed.length){ toast('Aucune modification à enregistrer.'); return false; }
   await save('appConfig');
-  logChange('Paramètres', 'Modification', sec.label+' ('+changed.length+' réglage(s))');
+  logChange('Paramètres', 'Modification', label+' ('+changed.length+' réglage(s))');
   applyAppConfig(true);
-  paramStartDraft();
-  toast('Paramètres enregistrés : '+sec.label+'.');
-  render(); renderNav();
+  toast('Réglages enregistrés : '+label+'.');
+  return true;
 }
 async function paramReset(){
   var sec = paramSection();
@@ -9589,7 +9875,7 @@ function render(){
   // Préserver la position de défilement des tableaux larges et des fenêtres (sinon retour à gauche à chaque mise à jour)
   var scrollSnap = captureScrollPositions();
   var fn = RENDERERS[currentTab] || RENDERERS.dashboard;
-  view.innerHTML = fn() + (actionDetailId ? actionDetailModalHtml() : '');
+  view.innerHTML = czBannerHtml() + fn() + (actionDetailId ? actionDetailModalHtml() : '') + (czModal ? czModalHtml() : '');
   try{ hydrateBlobThumbs(); }catch(e){}
   restoreScrollPositions(scrollSnap);
   if(focusInfo){
@@ -9646,7 +9932,7 @@ function renderTodayBanner(){
   nbAlerts += DATA.esd.filter(function(p){ return esdStatus(p).level==='danger'; }).length;
   nbAlerts += bySecteur(DATA.formations).filter(function(p){ return formationEcheance(p) && formationEcheance(p)<todayStr(); }).length;
   DATA.cicl.forEach(function(rec){ if(ciclStatus(rec).level==='danger') nbAlerts++; });
-  nbAlerts += DATA.vidange.filter(function(v){ return vidangeStatus(v).level==='danger'; }).length;
+  nbAlerts += bySecteur(DATA.vidange).filter(function(v){ return vidangeStatus(v).level==='danger'; }).length;
   nbAlerts += DATA.contamination.filter(function(c){ return c.statut==='collected'; }).length;
   lignes.forEach(function(l){ var d = chokkoSaisieDelay(l); if(d===null || d>=2) nbAlerts++; });
 
@@ -9962,7 +10248,7 @@ var PRIO_MODULES = [
   {id:'chokko',    label:'Saisie CHOKKO',              tab:'chokko'},
   {id:'perf',      label:'Audits de perf du mois',     tab:'perf'},
   {id:'contam',    label:'Contamination',              tab:'proprete', sub:'contamination'},
-  {id:'vidange',   label:'Vidanges',                   tab:'proprete', sub:'vidange'},
+  {id:'vidange',   label:'Entretien des équipements',                   tab:'proprete', sub:'vidange'},
   {id:'esd',       label:'Formations ESD',             tab:'esd'},
   {id:'srem',      label:'Formations SREM',            tab:'formations'},
   {id:'cicl',      label:'Formations CI/CL',           tab:'cicl'},
@@ -10031,9 +10317,11 @@ function computePriorities(){
       var d = daysBetween(c.collecteDate, today), lim = Number(cfg('prioDelais').contamJours)||14;
       if(d>lim) add('contam', 'danger', 'Analyse en attente · '+c.ligne+' '+(c.ref||''), 'Collecté le '+fmtDate(c.collecteDate)+(c.serie? ' · n° '+c.serie : ''), addDays(c.collecteDate, lim));
     });
-    DATA.vidange.forEach(function(v){
+  }
+  if(has('proprete')){
+    bySecteur(DATA.vidange).forEach(function(v){
       var s = vidangeStatus(v);
-      if(s.level==='danger' || s.level==='warn') add('vidange', s.level, v.equipement || 'Vidange', 'Dernière vidange le '+fmtDate(v.derniereVidange), s.next);
+      if(s.level==='danger' || s.level==='warn') add('vidange', s.level, v.equipement || 'Entretien', 'Dernière intervention le '+fmtDate(v.derniereVidange), s.next);
     });
   }
   // --- Formations
@@ -10455,9 +10743,9 @@ RENDERERS.dashboard = function(){
   })();
 
   W.w_vidange = (function(){
-    var late = DATA.vidange.filter(function(v){ return vidangeStatus(v).level==='danger'; }).length;
-    var soon = DATA.vidange.filter(function(v){ return vidangeStatus(v).level==='warn'; }).length;
-    return '<div class="eyebrow" style="margin-bottom:8px;">'+esc(t('title_vidange','Vidanges'))+'</div><div class="grid grid-2">'+
+    var late = bySecteur(DATA.vidange).filter(function(v){ return vidangeStatus(v).level==='danger'; }).length;
+    var soon = bySecteur(DATA.vidange).filter(function(v){ return vidangeStatus(v).level==='warn'; }).length;
+    return '<div class="eyebrow" style="margin-bottom:8px;">'+esc(t('title_vidange','Entretien des équipements'))+'</div><div class="grid grid-2">'+
       '<div class="statcard'+(late?' s-danger':'')+'"><div class="eyebrow">En retard</div><div class="val">'+late+'</div></div>'+
       '<div class="statcard'+(soon?' s-warn':'')+'"><div class="eyebrow">À prévoir (14j)</div><div class="val">'+soon+'</div></div>'+
     '</div>';
@@ -11413,7 +11701,7 @@ function applyAlertFilters(){
 // ---------- AUTHENTIFICATION & COMPTES ----------
 // ---------- HISTORIQUE DES MODIFICATIONS ----------
 var MODULE_LABELS = {metro:'Métrologie', planning:'Planning', ateq:'Défauts ATEQ', actions:"Plan d'actions",
-  resultats:'Résultats propreté', releves:'Relevés bains MCU0', contamination:'Contamination', vidange:'Vidange', particules:'Relevés particules',
+  resultats:'Résultats propreté', releves:'Relevés bains MCU0', contamination:'Contamination', vidange:'Entretien des équipements', particules:'Relevés particules',
   accounts:'Comptes', roles:'Profils'};
 function logChange(module, action, summary, detail){
   DATA.changelog.unshift({id:uid('log'), date:new Date().toISOString(), user: currentUser? currentUser.displayName : '?', module:module, action:action, summary:summary, detail:detail||''});
@@ -11431,7 +11719,7 @@ var PROPRETE_SUBS = [
   ['canViewResultats', 'Voir résultats (%)'],
   ['canContamination', 'Contamination'],
   ['canParticules',    'Relevés particules'],
-  ['canVidange',       'MCU0 Vidange'],
+  ['canVidange',       'Entretien des équipements'],
   ['canReleves',       'MCU0 Relevés bains']
 ];
 // ---------- MOTS DE PASSE : hachage à sens unique (jamais stockés en clair) ----------
@@ -11609,7 +11897,7 @@ var TAB_GROUPS_DEF = [
   {id:'production', label:'Production', tabs:['proprete','metro','chokko','perf']},
   {id:'qualite',    label:'Qualité',    tabs:['actions','pareto','planning','prison','bibliotheque','archives']},
   {id:'formations', label:'Formations', tabs:['esd','cicl','formations']},
-  {id:'admin',      label:'Admin',      tabs:['comptes','parametres']}
+  {id:'admin',      label:'Réglages',   tabs:['comptes','parametres']}
 ];
 Object.defineProperty(window, 'TAB_GROUPS', {get:function(){
   var icons = currentIconSet();
@@ -11725,7 +12013,8 @@ function renderNav(){
   var sTabs = secteurTabs();
   var allowedTabsIds = ALL_TABS.filter(function(tb){ return sTabs.indexOf(tb[0])>=0 && tabAllowed(tb[0]); }).map(function(tb){return tb[0];});
   var isAdmin = currentUser && currentUser.roleId===ADMIN_ROLE_ID;
-  if(isAdmin){ allowedTabsIds.push('comptes'); allowedTabsIds.push('parametres'); }
+  if(isAdmin){ allowedTabsIds.push('comptes'); }
+  allowedTabsIds.push('parametres');   // la vue d'ensemble des réglages est ouverte à tous (contenu selon les droits)
 
   function tabLabel(id){
     var found = ALL_TABS.find(function(tb){return tb[0]===id;});
@@ -11738,6 +12027,7 @@ function renderNav(){
   if(!navEl) return;
 
   applySidebarTheme(sidebar);
+  setCustomizeMode(customizeMode);
   // Sélecteur de secteur
   var us = userSecteurs();
   if(us.indexOf(currentSecteur)<0 && us.length){ currentSecteur = us[0]; }
@@ -11822,6 +12112,13 @@ function renderLoginOverlay(error){
   if(pwdInput) pwdInput.focus();
 }
 document.addEventListener('click', function(e){
+  if(e.target && e.target.closest && e.target.closest('#cz-toggle')){
+    setCustomizeMode(!customizeMode);
+    if(!customizeMode && czModal) czClose();
+    render();
+    if(customizeMode) toast('Mode personnalisation : chaque onglet affiche en haut ce qui peut y être modifié.');
+    return;
+  }
   if(e.target && e.target.id==='login-pwd-toggle'){
     var input = document.getElementById('login-password');
     if(input) input.type = input.type==='password' ? 'text' : 'password';
@@ -12484,7 +12781,7 @@ async function handleFormSubmit(form){
   Array.prototype.forEach.call(form.elements, function(el){
     if(el.name && el.type!=='file') entry[el.name] = fd.get(el.name);
   });
-  if(['metro','planning','actions'].indexOf(mod)>=0){ entry.secteur = currentSecteur; }
+  if(['metro','planning','actions','vidange'].indexOf(mod)>=0){ entry.secteur = currentSecteur; }
   var fileInput = form.querySelector('input[type=file]');
   if(fileInput && fileInput.files[0]){
     try{
@@ -12581,7 +12878,7 @@ app.addEventListener('click', async function(e){
     return;
   }
   var tabBtn = e.target.closest('#sidebar-nav button[data-tab]');
-  if(tabBtn){ currentTab = tabBtn.dataset.tab; sidebarMobileOpen = false; render(); renderNav(); return; }
+  if(tabBtn){ if(czModal) czClose(); currentTab = tabBtn.dataset.tab; sidebarMobileOpen = false; render(); renderNav(); return; }
 
   var groupToggleBtn = e.target.closest('[data-action="toggle-sidebar-group"]');
   if(groupToggleBtn){
@@ -12830,6 +13127,36 @@ app.addEventListener('click', async function(e){
   if(viewContamBtn){ openContamDetailId = viewContamBtn.dataset.id; render(); return; }
   if(e.target.closest('[data-action="close-contam-detail"]')){ openContamDetailId = null; render(); return; }
 
+  var czB = e.target.closest('[data-action^="cz-"],[data-action="labels-save"]');
+  if(czB){
+    var ca = czB.dataset.action;
+    if(ca==='cz-open'){ czOpen(czB.dataset.cards.split(',')); render(); return; }
+    if(ca==='cz-cancel'){ czClose(); render(); return; }
+    if(ca==='cz-save'){ await czSave(); return; }
+    if(ca==='cz-labels'){ czModal = {labels:currentTab}; render(); return; }
+    if(ca==='cz-save-labels'){ var bx = document.querySelector('.cz-modal'); if(await saveLabelsFrom(bx)){ czClose(); render(); renderNav(); } return; }
+    if(ca==='labels-save'){ if(await saveLabelsFrom(document.querySelector('.param-page'))){ render(); renderNav(); } return; }
+    if(ca==='cz-toggle-on'){ setCustomizeMode(true); currentTab = 'dashboard'; renderNav(); render(); toast('Mode personnalisation activé : chaque onglet affiche ce qui peut y être modifié.'); return; }
+    if(ca==='cz-toggle-off'){ setCustomizeMode(false); render(); return; }
+    if(ca==='cz-appearance'){ sidebarSettingsOpen = true; renderNav(); return; }
+    if(ca==='cz-rebut-codes'){ chokkoView = 'rebuts'; rebutEditCodes = true; render(); return; }
+    if(ca==='cz-goto'){
+      var gs = czB.dataset.secteur, gl = czB.dataset.ligne, gw = czB.dataset.what;
+      if(gs && gs!==currentSecteur && userSecteurs().indexOf(gs)>=0){ currentSecteur = gs; }
+      if(gw==='grille'){ currentTab = 'proprete'; propreteSub = 'grille'; auditWizard = null; proprGridModal = {ligne:gl}; }
+      else {
+        currentTab = 'chokko'; chokkoLigne = gl;
+        if(gw==='rebut'){ chokkoView = 'rebuts'; rebutEditCodes = true; }
+        else { chokkoView = 'saisie'; if(gw==='postes') chokkoManagePostesOpen = true; if(gw==='obj') chokkoObjEditOpen = true; }
+      }
+      renderNav(); render(); window.scrollTo(0,0); return;
+    }
+  }
+  var pgOpen = e.target.closest('[data-action="propr-grid-open"]');
+  if(pgOpen){ var pls = proprLines(); proprGridModal = {ligne: pgOpen.dataset.ligne || (pls.filter(function(l){ return !(DATA.checklist[checklistKeyForLigne(l)]||[]).length; })[0]) || pls[0]}; render(); return; }
+  if(e.target.closest('[data-action="propr-grid-close"]')){ proprGridModal = null; render(); return; }
+  var pgAct = e.target.closest('[data-action="propr-grid-add"],[data-action="propr-grid-del"],[data-action="propr-grid-copy"]');
+  if(pgAct && proprGridModal){ await proprGridAction(pgAct.dataset.action.replace('propr-grid-',''), pgAct); return; }
   var vidEditBtn = e.target.closest('[data-action="vidange-edit"]');
   if(vidEditBtn){ vidangeEditId = vidEditBtn.dataset.id; render(); var de = document.getElementById('vidange-edit-date'); if(de) de.focus({preventScroll:true}); return; }
   if(e.target.closest('[data-action="vidange-cancel-edit"]')){ vidangeEditId = null; render(); return; }
@@ -13679,6 +14006,7 @@ app.addEventListener('change', async function(e){
     await handleChokkoProdTotalChange(chokkoProdTotalInput.dataset.ligne, chokkoProdTotalInput.dataset.date, chokkoProdTotalInput.value);
     return;
   }
+  if(e.target.id==='pg-ligne' && proprGridModal){ proprGridModal.ligne = e.target.value; render(); return; }
   if(e.target.id==='rebut-cpp-month'){ rebutCppMonth = Number(e.target.value); render(); return; }
   if(e.target.id==='chokko-mois'){ chokkoMonth = Number(e.target.value); render(); return; }
   if(e.target.id==='chokko-annee'){ chokkoYear = Number(e.target.value)||chokkoYear; render(); return; }
