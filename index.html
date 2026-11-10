@@ -663,18 +663,30 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 .chokko-grid-week td{padding:4px 6px;}
 #chokko-print-head{display:none;}
 #def-print{display:none;}
-.cz-banner{display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:#FFF6E8; border:1.5px dashed #D9A35B; border-radius:12px; padding:10px 14px; margin:0 0 16px;}
-.cz-banner-txt{font-size:13px; color:#6B4A1E;}
-.cz-banner-items{display:flex; gap:6px; flex-wrap:wrap; flex:1;}
-.btn.cz-pen{border-color:#D9A35B; background:#fff;}
-.btn.cz-pen:hover{background:#FCEBD2;}
 body.customize-on [data-action="chokko-manage-postes-open"], body.customize-on .chk-obj-edit, body.customize-on [data-action="propr-grid-open"], body.customize-on [data-action="rebut-edit-codes"], body.customize-on .chokko-icon-btn[data-action="chokko-manage-postes-open"]{box-shadow:0 0 0 2px #E8B25F; border-radius:6px;}
 .cz-modal{max-height:88vh; overflow:auto;}
+.cz-pin, .cz-pin-row{display:none;}
+body.cz-admin .cz-pin{display:inline-flex; align-items:center; gap:4px; font:600 11px/1.2 inherit; font-family:inherit; padding:3px 8px; margin:0 0 0 8px; border:1.5px dashed #D9A35B; background:#FFF6E8; color:#6B4A1E; border-radius:999px; cursor:pointer; vertical-align:middle; text-transform:none; letter-spacing:0;}
+body.cz-admin .cz-pin:hover{background:#FCEBD2;}
+body.cz-admin .cz-pin.cz-pin-ico{padding:1px 5px; margin-left:4px;}
+body.cz-admin .cz-pin-row{display:flex; gap:6px; flex-wrap:wrap; margin:0 0 12px;}
+body.cz-admin .cz-pin-row .cz-pin{margin:0;}
+body.cz-admin .cz-txt{outline:1px dashed #D9A35B; outline-offset:2px; border-radius:3px; cursor:text;}
+body.cz-admin .cz-txt:hover{background:#FFF1DC;}
+body.cz-admin button .cz-txt, body.cz-admin .sidebar-label-text.cz-txt{cursor:pointer;}
+.cz-mini{display:none;}
+body.cz-admin .cz-mini{display:inline-block; margin-left:5px; font-size:11px; color:#B9792A; cursor:pointer; padding:0 3px; border-radius:4px; background:#FFF1DC;}
+.cz-hint{position:fixed; left:50%; bottom:14px; transform:translateX(-50%); z-index:900; display:flex; align-items:center; gap:12px; max-width:calc(100vw - 32px); background:#FFF6E8; border:1.5px solid #D9A35B; color:#6B4A1E; border-radius:12px; padding:8px 12px; font-size:12.5px; box-shadow:0 6px 20px rgba(0,0,0,.12);}
+.cz-txt-pop{position:fixed; z-index:1200; background:#fff; border:1px solid #D9A35B; border-radius:10px; padding:10px; box-shadow:0 10px 30px rgba(0,0,0,.18);}
+.cz-txt-pop input{width:100%; box-sizing:border-box; padding:6px 8px; font-size:14px;}
+.cz-txt-pop-btns{display:flex; justify-content:flex-end; gap:6px; margin-top:8px; flex-wrap:wrap;}
+@media print{ .cz-hint, .cz-pin, .cz-pin-row, .cz-mini, .cz-txt-pop{display:none !important;} }
+
 .param-links{display:flex; flex-direction:column;}
 .param-link{display:flex; justify-content:space-between; align-items:center; gap:14px; padding:9px 0; border-top:1px solid var(--border);}
 .param-link:first-child{border-top:none;}
 .btn.param-warn{border-color:#E0A458; color:#8A5A12; background:#FFF6E8;}
-@media print{ .cz-banner, #cz-toggle{display:none !important;} }
+@media print{ #cz-toggle{display:none !important;} }
 @media (max-width:700px){ #cz-toggle{font-size:0; padding:4px 8px; min-width:0;} #cz-toggle::before{content:'✏️'; font-size:14px;} }
 .chokko-grid .chk-act-btn{width:16px; height:16px; line-height:14px; padding:0; margin-right:4px; border:1px solid var(--border); border-radius:4px; background:#fff; color:var(--accent); font-size:11px; font-weight:700; cursor:pointer; vertical-align:middle;}
 .chokko-grid .chk-act-btn:hover{background:var(--accent); color:#fff; border-color:var(--accent);}
@@ -995,7 +1007,7 @@ tr.releve-cur-week td:first-child{font-weight:700;}
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:14px;">
-        <button id="cz-toggle" class="btn small" type="button" title="Afficher sur chaque onglet ce qui peut être modifié">✏️ Personnaliser</button>
+        <button id="cz-toggle" class="btn small" type="button" title="Modifier les textes, listes, seuils et objectifs directement à l'écran">✏️ Modifier</button>
         <span id="sync-indicator"><span class="dot"></span>Enregistrement...</span>
         <div class="userbox" id="userbox"></div>
       </div>
@@ -2571,6 +2583,10 @@ RENDERERS.proprete = function(){
     (hasSub('canVidange')? '<button data-sub="vidange" class="'+(propreteSub==='vidange'?'active':'')+'">'+esc(t('sub_vidange','Entretien des équipements'))+'</button>' : '')+
     (hasSub('canReleves')? '<button data-sub="releves" class="'+(propreteSub==='releves'?'active':'')+'">'+esc(t('sub_releves','MCU0 · Relevés bains'))+'</button>' : '')+
   '</div>';
+  if(propreteSub==='vidange') html += czPinRow([czPin('entretien','Intervalle et alerte d\'entretien')]);
+  if(propreteSub==='contamination') html += czPinRow([czPin('lineRefs','Références par ligne'), czPin('refCriteria','Critères et seuils')]);
+  if(propreteSub==='releves') html += czPinRow([czPin('bains','Bains')]);
+  if(propreteSub==='resultats') html += czPinRow([czPin('seuils','Seuils conforme / en danger')]);
   if(propreteSub==='grille' && allowedAudit) html += renderProprGrilleTab();
   else if(propreteSub==='contamination' && hasSub('canContamination')) html += proprContamination();
   else if(propreteSub==='particules' && hasSub('canParticules')) html += proprParticules();
@@ -5091,6 +5107,7 @@ RENDERERS.cicl = function(){
     '<button data-cicl-sub="personnel" class="'+(ciclSubTab==='personnel'?'active':'')+'">Personnel</button>'+
     '</div><button class="btn small dash-actions-noprint" data-action="cicl-print" title="Exporter en PDF">🖨️ Exporter en PDF</button>'+
   '</div>';
+  html += czPinRow([czPin('ciclRefs','Références par ligne'), czPin('ciclPostes','Postes à habiliter')]);
   html += '<div class="screen-only">';
   if(ciclSubTab==='recap') html += ciclRecapView();
   else if(ciclSubTab==='personnel') html += ciclPersonnelView();
@@ -5789,7 +5806,7 @@ function chantierModalHtml(){
   var t = chantierTotals(c);
   var hseCount = Object.keys(c.hse.items||{}).filter(function(k){ return c.hse.items[k] && c.hse.items[k].c==='oui'; }).length;
   var h = '<div class="modal-overlay chantier-backdrop"><div class="modal-box chantier-modal">'+
-    '<div class="chantier-head"><div><div class="eyebrow">Fiche de chantier · '+esc(lot? lot.defaut : 'défaut supprimé')+(lot && lot.type? ' ('+esc(lot.type)+')' : '')+'</div>'+
+    '<div class="chantier-head"><div><div class="eyebrow">Fiche de chantier · '+esc(lot? lot.defaut : 'défaut supprimé')+(lot && lot.type? ' ('+esc(lot.type)+')' : '')+'</div>'+czPin('chantier','Listes de la fiche')+
       '<h3 style="margin:2px 0 0;">'+(isNew? 'Nouveau chantier' : (c.numero? esc(c.numero)+' · ' : '')+esc(c.titre||'Chantier'))+'</h3></div>'+
       (isNew? '' : badge(chantierStatutMeta(c.statut).level, chantierStatutMeta(c.statut).label))+'</div>'+
     (locked && c.applique ? '<div class="chantier-applied">✓ Clôturé le '+fmtDate(c.applique.date)+' : '+c.applique.ok+' pièce(s) remise(s) en état et '+c.applique.rebut+' rebutée(s) sorties de la prison.</div>' : '')+
@@ -5958,7 +5975,7 @@ function chantiersSectionHtml(){
     return (o[a.statut]-o[b.statut]) || (b.dateCreation||'').localeCompare(a.dateCreation||'');
   });
   if(!list.length) return '';
-  return '<div class="card" style="margin-bottom:20px;"><div class="eyebrow" style="margin-bottom:8px;">Chantiers de remise en état ('+list.length+')</div>'+
+  return '<div class="card" style="margin-bottom:20px;"><div class="eyebrow" style="margin-bottom:8px;">Chantiers de remise en état ('+list.length+')</div>'+czPin('chantier','Listes de la fiche de chantier')+
     '<div class="table-wrap"><table><thead><tr><th>N°</th><th>Chantier</th><th>Défaut</th><th>Statut</th><th>Pilote</th><th>Début</th><th>Fin prévue</th><th style="min-width:160px;">Avancement</th><th class="num">Conformes</th><th class="num">NC</th></tr></thead><tbody>'+
     list.map(function(c){
       var lot = DATA.prisonLots.find(function(l){ return l.id===c.lotId; });
@@ -6095,7 +6112,7 @@ function prisonTraceHtml(){
   var tot = rows.reduce(function(s,m){ return s+m.qty; },0);
   var byDest = {};
   rows.forEach(function(m){ if(m.qty>0){ var k = m.destination || (m.motif==='chantier_rebut'? 'Rebut' : m.motif==='chantier_ok'? 'Remise en état' : 'Non précisée'); byDest[k] = (byDest[k]||0)+m.qty; } });
-  var h = '<div class="card" style="margin-bottom:14px;"><div class="eyebrow">Traçabilité des sorties de prison</div>'+
+  var h = '<div class="card" style="margin-bottom:14px;"><div class="eyebrow">Traçabilité des sorties de prison</div>'+czPin('prisonDest','Destinations')+
     '<p class="tiny" style="margin:6px 0 10px; color:var(--text-faint);">Chaque pièce qui quitte la prison est tracée. Les clics « − » ou saisies sur une même référence par la même personne à moins d\'une heure d\'écart sont regroupés sur une seule ligne.</p>'+
     '<div class="trace-filters">'+
       '<label class="field">Période<select data-ptf="periode">'+[['7','7 derniers jours'],['30','30 derniers jours'],['90','3 mois'],['365','12 mois'],['tout','Tout']].map(function(o){ return '<option value="'+o[0]+'"'+(f.periode===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select></label>'+
@@ -6268,7 +6285,7 @@ RENDERERS.prison = function(){
 
   // ---- En-tête : total, évolution hebdo, répartition par zone ----
   html += '<div class="card" style="margin-bottom:16px; display:flex; align-items:center; gap:28px; flex-wrap:wrap;">'+
-    '<div><div class="eyebrow">Synthèse du stock en prison qualité</div>'+
+    '<div><div class="eyebrow">Synthèse du stock en prison qualité</div>'+czPin('prisonEtats','États des pièces')+
       '<div class="tiny" style="margin-top:4px;">'+(lastUpd?'Mis à jour le '+fmtDate(lastUpd):'Aucune mise à jour enregistrée')+'</div></div>'+
     '<div style="text-align:center;"><div class="tiny">Total pièces</div><div id="prison-grand-total" style="font-family:var(--mono); font-size:30px; font-weight:700;">'+total+'</div></div>'+
     '<div style="text-align:center;"><div class="tiny">vs semaine précédente'+(prev?' ('+fmtDate(prev.date)+')':'')+'</div><div style="font-size:20px;">'+prisonDeltaHtml(prev? total-prev.total : null)+'</div></div>'+
@@ -8258,7 +8275,7 @@ function chokkoSaisieView(){
     '<div style="display:flex; gap:12px; margin-left:auto;">'+
       '<div class="statcard" style="padding:12px 20px; min-width:150px;"><div class="tiny">Chokko du mois</div>'+
         '<div id="chokko-month-avg" style="font-family:var(--mono); font-weight:700; font-size:28px; color:var(--'+chokkoLevelVsObjectif(monthAvg, ligne)+');">'+(monthAvg!==null?pct2(monthAvg)+'%':'-')+'</div>'+
-        '<div class="tiny" id="chokko-month-objectif" style="margin-top:2px; color:var(--text-faint);">Objectif : ≥ '+String(chokkoObjectif(ligne)).replace('.',',')+'% <button class="chk-obj-edit chokko-noprint" data-action="chokko-obj-open" title="Modifier les objectifs de '+esc(ligne)+'">✎</button></div>'+
+        '<div class="tiny" id="chokko-month-objectif" style="margin-top:2px; color:var(--text-faint);">Objectif : ≥ '+String(chokkoObjectif(ligne)).replace('.',',')+'% <button class="chk-obj-edit chokko-noprint" data-action="chokko-obj-open" title="Modifier les objectifs de '+esc(ligne)+'">✎</button>'+czPin('chokkoObj','Toutes les lignes et marge')+'</div>'+
       '</div>'+
       '<div class="statcard" style="padding:12px 20px; min-width:150px;"><div class="tiny">Coût par pièce du mois</div>'+
         '<div id="chokko-month-cost" style="font-family:var(--mono); font-weight:700; font-size:28px; color:#C0272D;">'+(monthCost!==null? fmtCost(monthCost)+' €' : '-')+'</div>'+
@@ -8310,9 +8327,9 @@ function chokkoSaisieView(){
   });
 
   // Lignes production par équipe
-  CHOKKO_TEAMS.forEach(function(team){
+  CHOKKO_TEAMS.forEach(function(team, ti){
     html += '<tr class="chk-team-row">';
-    html += '<td class="chk-label-bold chk-sticky chk-team-label">'+esc(team[2]||team[0])+'</td>';
+    html += '<td class="chk-label-bold chk-sticky chk-team-label">'+esc(team[2]||team[0])+(ti===0 && isAdminUser()? '<button type="button" class="cz-pin cz-pin-ico chokko-noprint" data-action="cz-open" data-cards="teams" title="Modifier les équipes">✏️</button>' : '')+'</td>';
     html += days.map(function(d){
       var e = chokkoEntry(ligne, d.date);
       var v = e && e.prod[team[0]]!==undefined ? e.prod[team[0]] : '';
@@ -9187,15 +9204,13 @@ RENDERERS.archives = function(){
   if(currentSecteur==='MCU') html += archiveCard('Propreté - résultats audits', 'Résultats (%) du mois sélectionné.', 'resultats');
   html += archiveCard('Plan d\'actions', 'Actions créées ou échéant ce mois.', 'actions');
   html += '</div>';
-  if(currentUser && currentUser.roleId===ADMIN_ROLE_ID) html += '<div class="card" style="margin-top:18px;"><div class="eyebrow">Sauvegarde complète</div><p class="tiny" style="margin:8px 0 12px;">Export brut de la totalité des données (tous modules, tout historique) au format JSON - utile en cas de migration ou de demande d\'audit complète. À ouvrir avec un éditeur de texte ou à réimporter techniquement si besoin.</p><button class="btn primary" data-action="export-full-json">Télécharger la sauvegarde complète (JSON)</button></div>';
   html += '<div class="card" style="margin-top:18px;"><div class="eyebrow">Rapport mensuel - revue de direction</div><p class="tiny" style="margin:8px 0 12px;">Synthèse du mois choisi sur 3 à 4 pages A4 : score, CHOKKO et Pareto, propreté, contamination, audits de perf, actions, métrologie, prison et formations, avec un cadre pour noter les décisions de la revue.</p><button class="btn primary" data-action="monthly-report">📄 Générer le rapport mensuel</button></div>';
-  html += backupCardHtml();
-  if(currentUser && currentUser.roleId===ADMIN_ROLE_ID && !backupIndexCache){ backupReadIndex().then(function(){ if(currentTab==='archives') render(); }).catch(function(){}); }
   html += renderChangelogSection();
   html += '</div>';
   return html;
 };
 function renderChangelogSection(){
+  if(!currentUser) return '';
   var html = '<div class="card" style="margin-top:18px;"><div class="eyebrow" style="margin-bottom:8px;">Historique des modifications</div>';
   var seeAll = currentUser && (currentUser.roleId===ADMIN_ROLE_ID || currentUser.allSecteurs);
   var logs = seeAll ? DATA.changelog : DATA.changelog.filter(function(l){ return l.user===currentUser.displayName; });
@@ -9583,58 +9598,39 @@ function paramContamHtml(){ return pcJoin(['refCriteria']); }
 function paramPrisonHtml(){ return pcJoin(['prisonEtats','prisonDest','chantier']); }
 function paramDiversHtml(){ return pcJoin(['teams','bains']); }
 
-// ==================== LIBELLÉS PERSONNALISABLES ====================
-function labelDefs(){
-  var d = ALL_TABS.map(function(tb){ return ['tab_'+tb[0], tb[1], tb[0], 'Nom de l\'onglet']; });
-  d.push(['tab_parametres','Paramètres','parametres','Nom de l\'onglet']);
-  [['sub_grille',"Grille d'audit",'proprete'],['sub_resultats','Résultats audits (%)','proprete'],['sub_contamination','Contamination','proprete'],
-   ['sub_particules','Relevés particules','proprete'],['sub_vidange','Entretien des équipements','proprete'],['sub_releves','MCU0 · Relevés bains','proprete'],
-   ['title_alerts','Alertes','dashboard'],['title_trend','Tendance globale - 12 derniers mois','dashboard'],['title_scorehist','Évolution du score de conformité global','dashboard'],
-   ['title_chokko','Suivi CHOKKO','dashboard'],['title_propr','Propreté - résultats et prochain audit','dashboard'],['title_perf','Audits de perf - résultats et prochain audit','dashboard'],
-   ['title_metro','Métrologie','dashboard'],['title_contam_dash','Contamination','dashboard'],['title_particules','Relevés particules','dashboard'],
-   ['title_vidange','Entretien des équipements','dashboard'],['title_esd','Formations ESD','dashboard'],['title_cicl','Formations CI/CL','dashboard'],['title_srem','Formations SREM','dashboard'],
-   ['archives_titre','Archivage des données','archives']
-  ].forEach(function(x){ d.push([x[0], x[1], x[2], x[2]==='proprete' ? 'Sous-onglet' : 'Titre']); });
-  return d;
-}
-function labelsEditorHtml(tab){
-  var defs = labelDefs().filter(function(d){ return !tab || d[2]===tab; });
-  var tabName = function(id){ var f = ALL_TABS.filter(function(x){ return x[0]===id; })[0]; return f ? t('tab_'+id, f[1]) : (id==='parametres'?'Paramètres':id); };
-  var rows = defs.map(function(d){
-    var cur = (DATA.labelOverrides||{})[d[0]] || '';
-    return '<tr><td class="tiny" style="color:var(--text-faint);">'+(tab? esc(d[3]) : esc(tabName(d[2]))+' · '+esc(d[3]))+'</td><td>'+esc(d[1])+'</td><td><input type="text" class="cz-label" data-key="'+esc(d[0])+'" value="'+esc(cur)+'" placeholder="'+esc(d[1])+'" style="width:100%;"></td></tr>';
-  }).join('');
-  return '<div class="card param-card"><div class="param-card-head"><div class="eyebrow">Libellés'+(tab? ' de cet onglet' : '')+'</div></div>'+
-    '<p class="tiny param-intro">Laisser vide pour garder le libellé d\'origine.</p>'+
-    (rows ? '<div class="table-wrap"><table class="param-table"><thead><tr><th>Élément</th><th>Libellé d\'origine</th><th>Libellé affiché</th></tr></thead><tbody>'+rows+'</tbody></table></div>' : emptyState('Aucun libellé modifiable sur cet onglet.'))+
-  '</div>';
-}
-async function saveLabelsFrom(root){
-  DATA.labelOverrides = DATA.labelOverrides || {};
-  var n = 0;
-  Array.prototype.forEach.call(root.querySelectorAll('input.cz-label'), function(inp){
-    var k = inp.dataset.key, v = inp.value.trim(), old = DATA.labelOverrides[k] || '';
-    if(v===old) return;
-    n++;
-    if(v) DATA.labelOverrides[k] = v; else delete DATA.labelOverrides[k];
-  });
-  if(!n){ toast('Aucun libellé modifié.'); return false; }
-  await save('labelOverrides');
-  logChange('Paramètres', 'Libellés modifiés', n+' libellé(s)');
-  toast(n+' libellé(s) enregistré(s).');
-  return true;
-}
-
-// ==================== MODE « PERSONNALISER » ====================
+// ==================== MODE « MODIFIER » : TOUT SE RÈGLE SUR PLACE ====================
+// En mode modification (bouton ✏️ Modifier en haut) :
+//  - administrateur : chaque titre, sous-titre, en-tête de colonne, onglet ou sous-onglet se renomme en cliquant dessus ;
+//    les listes, seuils et objectifs communs ont un bouton ✏️ à l'endroit où ils s'affichent ;
+//  - technicien : les réglages de ses lignes (postes et défauts CHOKKO, objectifs, codes rebut, grilles d'audit) sont encadrés.
+// Paramètres ne garde que les comptes, secteurs, sauvegardes et l'apparence.
 var customizeMode = false;
 try{ customizeMode = localStorage.getItem('cz_mode_v1')==='1'; }catch(e){}
-var czModal = null;   // {cards:[ids], title} | {labels:tab}
+var czModal = null;   // {cards:[ids], keys, title}
 function isAdminUser(){ return !!(currentUser && currentUser.roleId===ADMIN_ROLE_ID); }
 function setCustomizeMode(on){
   customizeMode = !!on;
   try{ localStorage.setItem('cz_mode_v1', customizeMode?'1':'0'); }catch(e){}
   document.body.classList.toggle('customize-on', customizeMode);
-  var b = document.getElementById('cz-toggle'); if(b){ b.classList.toggle('primary', customizeMode); b.textContent = customizeMode ? '✓ Terminer la personnalisation' : '✏️ Personnaliser'; }
+  document.body.classList.toggle('cz-admin', customizeMode && isAdminUser());
+  var b = document.getElementById('cz-toggle'); if(b){ b.classList.toggle('primary', customizeMode); b.textContent = customizeMode ? '✓ Terminer' : '✏️ Modifier'; }
+  var hint = document.getElementById('cz-hint');
+  if(customizeMode && currentUser){
+    if(!hint){ hint = document.createElement('div'); hint.id = 'cz-hint'; hint.className = 'cz-hint'; document.body.appendChild(hint); }
+    hint.innerHTML = '<span><b>Mode modification</b> · '+(isAdminUser()
+      ? 'cliquez sur un texte encadré en pointillés pour le renommer, ou sur un bouton ✏️ pour modifier une liste, un seuil ou un objectif.'
+      : 'les réglages de vos lignes sont encadrés en orange : cliquez dessus pour les modifier.')+'</span>'+
+      '<button class="btn small" data-action="cz-toggle-off">Terminer</button>';
+  } else if(hint){ hint.remove(); }
+}
+// Bouton ✏️ placé à côté de ce qu'il modifie (visible seulement en mode modification, pour l'administrateur)
+function czPin(cards, label){
+  if(!isAdminUser()) return '';
+  return '<button type="button" class="cz-pin chokko-noprint" data-action="cz-open" data-cards="'+esc(cards)+'" title="Modifier : '+esc(label)+'">✏️ '+esc(label)+'</button>';
+}
+function czPinRow(pins){
+  var h = pins.join('');
+  return h ? '<div class="cz-pin-row chokko-noprint">'+h+'</div>' : '';
 }
 function czOpen(cards){
   var keys = [];
@@ -9646,17 +9642,15 @@ function czOpen(cards){
 }
 function czClose(){ czModal = null; paramDraft = null; paramDraftSub = null; }
 function czModalHtml(){
-  if(czModal.labels!==undefined){
-    return '<div class="modal-overlay cz-backdrop"><div class="modal-box cz-modal" style="max-width:820px;">'+
-      '<h2 style="font-size:16px; margin:0 0 12px;">✏️ Libellés</h2>'+labelsEditorHtml(czModal.labels)+
-      '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="cz-cancel">Annuler</button><button class="btn primary" data-action="cz-save-labels">Enregistrer</button></div></div></div>';
-  }
   pChipSeq = 0;
+  var custom = czModal.keys.some(cfgIsCustom);
   return '<div class="modal-overlay cz-backdrop"><div class="modal-box param-page cz-modal" style="max-width:980px;">'+
     '<h2 style="font-size:16px; margin:0 0 4px;">✏️ '+esc(czModal.title)+'</h2>'+
     '<p class="tiny" style="margin:0 0 12px; color:var(--text-faint);">Ces réglages s\'appliquent à tous les utilisateurs dès l\'enregistrement.</p>'+
     pcJoin(czModal.cards)+
-    '<div class="actions-row" style="margin-top:12px; position:sticky; bottom:-1px; background:var(--card, #fff); padding:10px 0 0;"><button class="btn" data-action="cz-cancel">Annuler</button><button class="btn primary" data-action="cz-save">Enregistrer</button></div>'+
+    '<div class="actions-row" style="margin-top:12px; position:sticky; bottom:-1px; background:var(--card, #fff); padding:10px 0 0;">'+
+      (custom ? '<button class="btn" data-action="cz-reset" style="margin-right:auto;" title="Remettre ces réglages tels qu\'à la livraison de l\'outil">Valeurs d\'origine</button>' : '')+
+      '<button class="btn" data-action="cz-cancel">Annuler</button><button class="btn primary" data-action="cz-save">Enregistrer</button></div>'+
   '</div></div>';
 }
 async function czSave(){
@@ -9665,103 +9659,173 @@ async function czSave(){
   var ok = await paramSaveKeys(czModal.keys, czModal.title);
   if(ok){ czClose(); render(); renderNav(); }
 }
-// Réglages proposés en mode « Personnaliser », selon l'onglet affiché.
-// global = réservé à l'administrateur ; ligne = chacun pour ses lignes.
-function czContextItems(){
-  var it = [], admin = isAdminUser(), tab = currentTab;
-  function g(cards, label){ if(admin) it.push('<button class="btn small cz-pen" data-action="cz-open" data-cards="'+cards+'">✏️ '+esc(label)+'</button>'); }
-  function ln(action, label, extra){ it.push('<button class="btn small cz-pen" data-action="'+action+'"'+(extra||'')+'>✏️ '+esc(label)+'</button>'); }
-  if(tab==='dashboard'){ ln('toggle-customize', 'Disposition et indicateurs du tableau de bord'); g('seuils','Seuils du score'); g('prio','Délais d\'alerte'); }
-  if(tab==='chokko'){
-    if(chokkoLigne){ ln('chokko-manage-postes-open', 'Postes et défauts de '+chokkoLigne); ln('chokko-obj-open', 'Objectifs de '+chokkoLigne); ln('cz-rebut-codes', 'Codes coût rebut de '+chokkoLigne); }
-    g('teams','Équipes'); g('chokkoObj','Objectifs de toutes les lignes');
-  }
-  if(tab==='proprete'){
-    ln('propr-grid-open', 'Grilles d\'audit'); g('entretien','Entretien : intervalle et alerte');
-    if(currentSecteur==='MCU'){ g('lineRefs,refCriteria','Contamination : références et critères'); g('bains','Bains MCU0'); }
-  }
-  if(tab==='perf'){ g('seuils','Seuils du score'); }
-  if(tab==='prison'){ g('prisonEtats','États des pièces'); g('prisonDest','Destinations des sorties'); g('chantier','Fiche de chantier'); }
-  if(tab==='cicl'){ g('ciclRefs,ciclPostes','Références et postes CI/CL'); }
-  if(admin && tab!=='parametres') ln('cz-labels', 'Libellés de cet onglet');
-  if(admin){ ln('goto-widget-tab', 'Tous les réglages', ' data-tab="parametres"'); }
-  return it;
-}
-function czBannerHtml(){
-  if(!customizeMode || currentTab==='parametres' || currentTab==='comptes') return '';
-  var items = czContextItems();
-  return '<div class="cz-banner chokko-noprint"><div class="cz-banner-txt"><b>Mode personnalisation</b> - ce que vous pouvez modifier sur cet onglet'+(isAdminUser()?'':' (vos lignes)')+' :</div>'+
-    '<div class="cz-banner-items">'+(items.join('') || '<span class="tiny">Rien à personnaliser ici.</span>')+'</div>'+
-    '<button class="btn small" data-action="cz-toggle-off">Terminer</button></div>';
+async function czReset(keys, label){
+  if(!keys.some(cfgIsCustom)){ toast('Déjà aux valeurs d\'origine.'); return false; }
+  if(!await uiConfirm('Remettre « '+label+' » aux valeurs d\'origine ?\n\nLes données saisies ne sont pas touchées.', {okLabel:'Remettre les valeurs d\'origine', danger:true})) return false;
+  keys.forEach(function(k){ delete DATA.appConfig[k]; });
+  await save('appConfig');
+  logChange('Paramètres', 'Valeurs d\'origine', label);
+  applyAppConfig(true);
+  toast('Valeurs d\'origine remises : '+label+'.');
+  return true;
 }
 
-// ==================== PARAMÈTRES : VUE D'ENSEMBLE ====================
-function paramApercuHtml(){
-  var admin = isAdminUser();
-  var secs = ((DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT).filter(function(s){ return userSecteurs().indexOf(s.id)>=0; });
-  var h = '<div class="card param-card"><div class="param-card-head"><div class="eyebrow">Personnaliser l\'outil</div></div>'+
-    '<p class="tiny param-intro">Deux façons de tout régler : ici, ou directement sur chaque écran avec le bouton <b>✏️ Personnaliser</b> en haut de la page, qui affiche sur chaque onglet ce qui peut y être modifié.</p>'+
-    '<button class="btn primary" data-action="cz-toggle-on">✏️ Activer le mode personnalisation</button></div>';
-  h += '<div class="card param-card"><div class="param-card-head"><div class="eyebrow">Réglages de chaque ligne</div></div>'+
-    '<p class="tiny param-intro">Chacun règle les lignes de son secteur. Cliquez sur une case pour ouvrir le bon écran, prêt à modifier.</p>'+
-    secs.map(function(s){
-      var tabs = s.tabs || [];
-      var hasChk = s.id==='MCU' || tabs.indexOf('chokko')>=0, hasPr = s.id==='MCU' || tabs.indexOf('proprete')>=0;
-      var cell = function(ok, txt, what, l, warn){ return ok ? '<td><button class="btn small'+(warn?' param-warn':'')+'" data-action="cz-goto" data-what="'+what+'" data-ligne="'+esc(l)+'" data-secteur="'+esc(s.id)+'">'+txt+' · Modifier</button></td>' : '<td class="tiny" style="color:var(--text-faint);">onglet non activé</td>'; };
-      return '<h3 style="font-size:13px; margin:14px 0 6px;">'+esc(s.nom||s.id)+'</h3><div class="table-wrap"><table class="param-table"><thead><tr><th>Ligne</th><th>Postes et défauts CHOKKO</th><th>Objectifs CHOKKO</th><th>Codes coût rebut</th><th>Grille d\'audit propreté</th></tr></thead><tbody>'+
-        (s.lignes||[]).map(function(l){
-          var np = hasChk ? chokkoPostes(l).length : 0, nr = hasChk ? rebutCodes(l).length : 0, ng = hasPr ? (DATA.checklist[checklistKeyForLigne(l)]||[]).length : 0;
-          return '<tr><td><b>'+esc(l)+'</b></td>'+
-            cell(hasChk, np+' poste(s)', 'postes', l, !np)+
-            cell(hasChk, '≥ '+String(chokkoObjectif(l)).replace('.',',')+' % · &lt; '+chokkoCostObjectif(l).toFixed(3).replace('.',',')+' €', 'obj', l)+
-            cell(hasChk, nr+' code(s)', 'rebut', l, !nr)+
-            cell(hasPr, ng+' critère(s)', 'grille', l, !ng)+'</tr>';
-        }).join('')+'</tbody></table></div>';
-    }).join('')+'</div>';
-  if(admin){
-    var link = function(sub, label, desc){ return '<div class="param-link"><div><b>'+esc(label)+'</b><div class="tiny">'+desc+'</div></div><button class="btn small" data-action="param-sub" data-sub-id="'+sub+'">Ouvrir →</button></div>'; };
-    var go = function(attrs, label, desc){ return '<div class="param-link"><div><b>'+esc(label)+'</b><div class="tiny">'+desc+'</div></div><button class="btn small" '+attrs+'>Ouvrir →</button></div>'; };
-    h += '<div class="card param-card"><div class="param-card-head"><div class="eyebrow">Réglages communs (administrateur)</div></div><div class="param-links">'+
-      link('objectifs', 'Objectifs et seuils', 'Objectifs CHOKKO de toutes les lignes, seuils du score, délais d\'alerte, entretien des équipements.')+
-      link('lignes', 'Lignes et références', 'Références contamination et CI/CL par ligne, postes CI/CL.')+
-      link('contam', 'Critères contamination', 'Critères, unités, seuils et gravité par référence.')+
-      link('prison', 'Prison et fiche de chantier', 'États des pièces, destinations, emplacements, risques, kakotora, aide HSE.')+
-      link('divers', 'Équipes et bains', 'Équipes de la grille CHOKKO, bains MCU0.')+
-      link('libelles', 'Libellés', 'Noms des onglets, sous-onglets et titres du tableau de bord.')+
-      go('data-action="goto-widget-tab" data-tab="comptes"', 'Comptes, profils et secteurs', 'Utilisateurs, droits, lignes et onglets de chaque secteur.')+
-      go('id="cz-open-appearance" data-action="cz-appearance"', 'Apparence', 'Style des icônes et couleurs des statuts.')+
-      go('data-action="goto-widget-tab" data-tab="archives"', 'Sauvegardes et exports', 'Sauvegarde complète, exports CSV.')+
-    '</div></div>';
+// ---------- Textes renommables sur place ----------
+// Le texte d'origine sert de clé (« txt:<texte> ») : renommer un titre le renomme partout où il apparaît à l'identique.
+var CZ_TXT_SEL = 'h1,h2,h3,.eyebrow,th,.subtabs button,.sidebar-label-text,.sidebar-group-title-text,label.field,.kpi-label,.stat-label';
+function czIsDataText(s){
+  if(s.length<2 || s.length>90) return true;
+  if(/^[\d\s.,:%€+\-\/()·×]+$/.test(s)) return true;          // nombres, dates
+  if(/\b(19|20)\d\d\b/.test(s)) return true;                   // contient une année : texte calculé
+  if(LINES.indexOf(s)>=0) return true;                         // noms de lignes : ce sont des données
+  var secs = (DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT;
+  return secs.some(function(sc){ return sc.id===s || sc.nom===s || (sc.lignes||[]).indexOf(s)>=0; });
+}
+function czHasData(s){
+  if(/\d/.test(s)) return true;
+  var low = s.toLowerCase();
+  if(MONTHS_FR.some(function(m){ return low.indexOf(m.toLowerCase())>=0; })) return true;
+  var secs = (DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT;
+  return LINES.some(function(l){ return s.indexOf(l)>=0; }) || secs.some(function(sc){ return s.indexOf(sc.id)>=0 || (sc.nom && s.indexOf(sc.nom)>=0) || (sc.lignes||[]).some(function(l){ return s.indexOf(l)>=0; }); });
+}
+// Partie fixe d'un titre : on retire les compteurs « (3) » et les suffixes calculés « - MCU2 », « (Novembre) », « · secteur MCU »
+function czStaticPart(s){
+  var prev;
+  do{
+    prev = s;
+    s = s.replace(/\s*\(([^()]*)\)$/, function(all, inner){ return czHasData(inner) ? '' : all; });
+    var m = s.match(/^(.+?)(\s[-·:]\s.*)$/);
+    if(m && czHasData(m[2])) s = m[1];
+  } while(s!==prev);
+  return s.trim();
+}
+function czFirstText(el){
+  for(var n = el.firstChild; n; n = n.nextSibling){
+    if(n.nodeType===3 && n.nodeValue.trim()) return n;
   }
-  return h;
+  return null;
+}
+function czApplyTexts(root){
+  if(!root) return;
+  var ov = DATA.labelOverrides || {}, editable = customizeMode && isAdminUser();
+  Array.prototype.forEach.call(root.querySelectorAll(CZ_TXT_SEL), function(el){
+    if(el.closest('.cz-noedit, .cz-modal, .ui-dialog, #cz-txt-pop, #login-overlay, #chokko-print-head')) return;
+    var tn = czFirstText(el);
+    if(!tn) return;
+    var raw = tn.nodeValue, orig = czStaticPart(raw.trim());   // « Titre - MCU2 (Novembre) » : seule la partie fixe est renommable
+    if(czIsDataText(orig)) return;
+    var v = ov['txt:'+orig];
+    if(v) tn.nodeValue = raw.replace(orig, v);
+    el.setAttribute('data-cz-orig', orig);
+    if(editable){
+      el.classList.add('cz-txt');
+      if(el.closest('button') && !el.querySelector('.cz-mini')){
+        var m = document.createElement('span'); m.className = 'cz-mini'; m.textContent = '✎'; m.title = 'Renommer';
+        el.appendChild(m);
+      }
+    }
+  });
+}
+var czTxtTarget = null;
+function czTxtPopClose(){ var p = document.getElementById('cz-txt-pop'); if(p) p.remove(); czTxtTarget = null; }
+function czTxtPopOpen(el){
+  czTxtPopClose();
+  var orig = el.getAttribute('data-cz-orig'); if(!orig) return;
+  czTxtTarget = orig;
+  var cur = (DATA.labelOverrides||{})['txt:'+orig] || '';
+  var p = document.createElement('div'); p.id = 'cz-txt-pop'; p.className = 'cz-txt-pop';
+  p.innerHTML = '<div class="tiny" style="margin-bottom:4px; color:var(--text-faint);">Texte d\'origine : <b>'+esc(orig)+'</b></div>'+
+    '<input type="text" id="cz-txt-input" value="'+esc(cur || orig)+'">'+
+    '<div class="cz-txt-pop-btns">'+(cur? '<button class="btn small" data-cz-txt="reset">Texte d\'origine</button>' : '')+
+    '<button class="btn small" data-cz-txt="cancel">Annuler</button><button class="btn small primary" data-cz-txt="save">Enregistrer</button></div>';
+  document.body.appendChild(p);
+  var r = el.getBoundingClientRect(), w = Math.min(340, window.innerWidth-24);
+  p.style.width = w+'px';
+  p.style.left = Math.max(12, Math.min(r.left, window.innerWidth-w-12))+'px';
+  p.style.top = Math.min(r.bottom+6, window.innerHeight-130)+'px';
+  var inp = document.getElementById('cz-txt-input'); inp.focus(); inp.select();
+}
+async function czTxtSave(val){
+  var orig = czTxtTarget; if(!orig) return;
+  DATA.labelOverrides = DATA.labelOverrides || {};
+  var k = 'txt:'+orig, old = DATA.labelOverrides[k] || '';
+  val = (val===null ? '' : String(val).trim());
+  if(val===orig) val = '';
+  czTxtPopClose();
+  if(val===old) return;
+  if(val) DATA.labelOverrides[k] = val; else delete DATA.labelOverrides[k];
+  await save('labelOverrides');
+  logChange('Paramètres', 'Texte renommé', '« '+orig+' » → « '+(val||orig)+' »');
+  render(); renderNav();
+  toast(val ? 'Texte renommé.' : 'Texte d\'origine remis.');
+}
+// Clic en mode modification : capturé avant les autres actions de la page
+document.addEventListener('click', function(e){
+  var pop = document.getElementById('cz-txt-pop');
+  if(pop && pop.contains(e.target)){
+    var b = e.target.closest('[data-cz-txt]'); if(!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var a = b.getAttribute('data-cz-txt');
+    if(a==='cancel') czTxtPopClose();
+    else if(a==='reset') czTxtSave('');
+    else czTxtSave(document.getElementById('cz-txt-input').value);
+    return;
+  }
+  if(pop){ czTxtPopClose(); }
+  if(!customizeMode || !isAdminUser()) return;
+  var mini = e.target.closest && e.target.closest('.cz-mini');
+  var el = mini ? mini.closest('.cz-txt') : (e.target.closest && e.target.closest('.cz-txt'));
+  if(!el) return;
+  if(!mini){
+    if(el.closest('button')) return;                                   // onglet / sous-onglet : le ✎ renomme, le reste navigue
+    var inner = e.target.closest('button, a, input, select, textarea, [data-action]');
+    if(inner && el.contains(inner) && inner!==el) return;              // bouton à l'intérieur d'un titre : il garde son rôle
+  }
+  e.preventDefault(); e.stopPropagation();
+  czTxtPopOpen(el);
+}, true);
+document.addEventListener('keydown', function(e){
+  if(!document.getElementById('cz-txt-pop')) return;
+  if(e.target && e.target.id==='cz-txt-input' && e.key==='Enter'){ e.preventDefault(); czTxtSave(e.target.value); }
+  if(e.key==='Escape') czTxtPopClose();
+});
+
+// ==================== PARAMÈTRES : COMPTES, SECTEURS, SAUVEGARDES, APPARENCE ====================
+var psetSub = 'comptes';
+var PSET_SECTIONS = [['comptes','Comptes et secteurs'], ['sauvegardes','Sauvegardes'], ['apparence','Apparence et réglages modifiés']];
+function psetModifiesHtml(){
+  var rows = [];
+  Object.keys(PCARDS).forEach(function(id){
+    var c = PCARDS[id], keys = c.keys||[];
+    if(keys.some(cfgIsCustom)) rows.push('<tr><td><b>'+esc(c.label)+'</b></td><td style="white-space:nowrap; text-align:right;">'+
+      '<button class="btn small" data-action="cz-open" data-cards="'+id+'">Voir / modifier</button> '+
+      '<button class="btn small danger-outline" data-action="pset-reset" data-cards="'+id+'">Valeurs d\'origine</button></td></tr>');
+  });
+  var ov = DATA.labelOverrides || {}, txts = Object.keys(ov).filter(function(k){ return ov[k]; });
+  txts.forEach(function(k){
+    var orig = k.indexOf('txt:')===0 ? k.slice(4) : k;
+    rows.push('<tr><td><span class="tiny" style="color:var(--text-faint);">Texte</span> '+esc(orig)+' → <b>'+esc(ov[k])+'</b></td><td style="text-align:right;"><button class="btn small danger-outline" data-action="pset-txt-reset" data-key="'+esc(k)+'">Texte d\'origine</button></td></tr>');
+  });
+  return '<div class="card" style="margin-top:18px;"><div class="eyebrow">Ce qui a été modifié</div>'+
+    '<p class="tiny" style="margin:6px 0 10px;">Tout ce qui diffère de l\'outil livré. Pour modifier autre chose : bouton <b>✏️ Modifier</b> en haut, puis cliquez directement sur l\'élément à l\'écran.</p>'+
+    (rows.length ? '<div class="table-wrap"><table><tbody>'+rows.join('')+'</tbody></table></div>' : emptyState('Rien n\'a été modifié : l\'outil est tel qu\'à sa livraison.'))+
+    '<button class="btn primary" data-action="cz-toggle-on" style="margin-top:12px;">✏️ Passer en mode modification</button></div>';
 }
 RENDERERS.parametres = function(){
-  if(!currentUser) return '';
-  if(!isAdminUser()) paramSub = 'apercu';
-  if(!paramDraft || paramDraftSub!==paramSub) paramStartDraft();
-  pChipSeq = 0;
-  var sec = paramSection();
-  if(sec.id==='apercu' || sec.id==='libelles'){
-    return '<div class="section param-page">'+
-      (isAdminUser()? '<div class="subtabs param-subtabs">'+PARAM_SECTIONS.map(function(s2){ return '<button data-action="param-sub" data-sub-id="'+s2.id+'" class="'+(s2.id===paramSub?'active':'')+'">'+esc(s2.label)+'</button>'; }).join('')+'</div>' : '')+
-      (sec.id==='apercu' ? paramApercuHtml() : labelsEditorHtml(null)+'<div class="actions-row" style="margin-top:12px;"><button class="btn primary" data-action="labels-save">Enregistrer les libellés</button></div>')+
-    '</div>';
+  if(!isAdminUser()) return emptyState('Accès réservé aux administrateurs.');
+  var h = '<div class="section"><div class="subtabs">'+PSET_SECTIONS.map(function(s){ return '<button data-action="pset-sub" data-sub-id="'+s[0]+'" class="'+(psetSub===s[0]?'active':'')+'">'+esc(s[1])+'</button>'; }).join('')+'</div>';
+  if(psetSub==='comptes') h += RENDERERS.comptes();
+  else if(psetSub==='sauvegardes'){
+    h += '<div class="card"><div class="eyebrow">Sauvegarde complète</div><p class="tiny" style="margin:8px 0 12px;">Export brut de la totalité des données (tous modules, tout historique) au format JSON, utile en cas de migration ou de demande d\'audit complète.</p><button class="btn primary" data-action="export-full-json">Télécharger la sauvegarde complète (JSON)</button></div>';
+    h += backupCardHtml();
+    if(!backupIndexCache){ backupReadIndex().then(function(){ if(currentTab==='parametres') render(); }).catch(function(){}); }
+  } else {
+    h += '<div class="card"><div class="eyebrow">Apparence</div><p class="tiny" style="margin:6px 0 10px;">Style des icônes du menu et couleurs des statuts.</p><button class="btn" data-action="cz-appearance">Ouvrir les réglages d\'apparence</button></div>';
+    h += psetModifiesHtml();
   }
-  var body = sec.id==='objectifs' ? paramObjectifsHtml() : sec.id==='lignes' ? paramLignesHtml() : sec.id==='contam' ? paramContamHtml() : sec.id==='prison' ? paramPrisonHtml() : paramDiversHtml();
-  var dirty = paramDirty();
-  return '<div class="section param-page">'+
-    '<p class="tiny param-intro" style="max-width:820px;">Les listes, références, objectifs et seuils de l\'application. Les modifications s\'appliquent à tous les utilisateurs dès l\'enregistrement. « Valeurs d\'origine » remet la section telle qu\'elle était à la livraison de l\'outil.</p>'+
-    '<div class="subtabs param-subtabs">'+PARAM_SECTIONS.map(function(s){
-      var custom = s.keys.some(cfgIsCustom);
-      return '<button data-action="param-sub" data-sub-id="'+s.id+'" class="'+(s.id===paramSub?'active':'')+'">'+esc(s.label)+(custom?' <span class="param-dot" title="Contient des valeurs modifiées">●</span>':'')+'</button>';
-    }).join('')+'</div>'+
-    body+
-    '<div class="param-savebar'+(dirty?' dirty':'')+'"><span class="tiny param-dirty-txt">Modifications non enregistrées</span>'+
-      '<button class="btn" data-action="param-reset" title="Remettre cette section à ses valeurs d\'origine">Valeurs d\'origine</button>'+
-      '<button class="btn" data-action="param-cancel">Annuler</button>'+
-      '<button class="btn primary" data-action="param-save">Enregistrer</button></div>'+
-  '</div>';
+  return h+'</div>';
 };
+
 function paramValidate(){
   var d = paramDraft, err = null;
   var nonEmptyRows = function(key, idx, what){ (d[key]||[]).forEach(function(r){ var v = idx===null ? r : r[idx]; if(!err && !String(v===undefined||v===null?'':v).trim()) err = 'Une ligne « '+what+' » est vide.'; }); };
@@ -9862,6 +9926,7 @@ async function handleParamClick(e){
 function render(){
   applyAppConfig();
   if(currentTab==='ateq'){ currentTab = 'chokko'; chokkoView = 'defauts'; }
+  if(currentTab==='comptes'){ currentTab = 'parametres'; psetSub = 'comptes'; }
   updateHeaderSubtitle();
   Array.prototype.forEach.call(document.querySelectorAll('#sidebar-nav button[data-tab]'), function(b){
     b.classList.toggle('active', b.dataset.tab===currentTab);
@@ -9875,8 +9940,9 @@ function render(){
   // Préserver la position de défilement des tableaux larges et des fenêtres (sinon retour à gauche à chaque mise à jour)
   var scrollSnap = captureScrollPositions();
   var fn = RENDERERS[currentTab] || RENDERERS.dashboard;
-  view.innerHTML = czBannerHtml() + fn() + (actionDetailId ? actionDetailModalHtml() : '') + (czModal ? czModalHtml() : '');
+  view.innerHTML = fn() + (actionDetailId ? actionDetailModalHtml() : '') + (czModal ? czModalHtml() : '');
   try{ hydrateBlobThumbs(); }catch(e){}
+  try{ czApplyTexts(view); }catch(e){ console.error('textes', e); }
   restoreScrollPositions(scrollSnap);
   if(focusInfo){
     var el = document.getElementById(focusInfo.id);
@@ -10766,6 +10832,7 @@ RENDERERS.dashboard = function(){
   html += '<div id="dashboard-canvas">';
   html += renderPostits();
   html += '<div class="section dash-actions-noprint" style="display:flex; gap:8px; justify-content:flex-end; margin-bottom:10px; flex-wrap:wrap;">';
+  html += czPin('seuils','Seuils du score') + czPin('prio','Délais d\'alerte');
   html += '<button class="btn" data-action="add-postit" data-page="dashboard">+ Post-it</button>';
   html += '<button class="btn'+(dashboardCustomizing?' primary':'')+'" data-action="toggle-customize">'+(dashboardCustomizing?'Terminer la personnalisation':'Personnaliser mon tableau de bord')+'</button>';
   html += '<button class="btn" data-action="weekly-digest">Générer le résumé hebdomadaire</button>';
@@ -11897,7 +11964,7 @@ var TAB_GROUPS_DEF = [
   {id:'production', label:'Production', tabs:['proprete','metro','chokko','perf']},
   {id:'qualite',    label:'Qualité',    tabs:['actions','pareto','planning','prison','bibliotheque','archives']},
   {id:'formations', label:'Formations', tabs:['esd','cicl','formations']},
-  {id:'admin',      label:'Réglages',   tabs:['comptes','parametres']}
+  {id:'admin',      label:'Réglages',   tabs:['parametres']}
 ];
 Object.defineProperty(window, 'TAB_GROUPS', {get:function(){
   var icons = currentIconSet();
@@ -12013,8 +12080,7 @@ function renderNav(){
   var sTabs = secteurTabs();
   var allowedTabsIds = ALL_TABS.filter(function(tb){ return sTabs.indexOf(tb[0])>=0 && tabAllowed(tb[0]); }).map(function(tb){return tb[0];});
   var isAdmin = currentUser && currentUser.roleId===ADMIN_ROLE_ID;
-  if(isAdmin){ allowedTabsIds.push('comptes'); }
-  allowedTabsIds.push('parametres');   // la vue d'ensemble des réglages est ouverte à tous (contenu selon les droits)
+  if(isAdmin){ allowedTabsIds.push('parametres'); }   // comptes, secteurs, sauvegardes : administrateur
 
   function tabLabel(id){
     var found = ALL_TABS.find(function(tb){return tb[0]===id;});
@@ -12061,6 +12127,7 @@ function renderNav(){
   });
 
   navEl.innerHTML = html;
+  try{ czApplyTexts(navEl); }catch(e){}
   if(sidebar) sidebar.classList.toggle('collapsed', sidebarCollapsed);
   if(sidebar) sidebar.classList.toggle('mobile-open', sidebarMobileOpen);
   var backdrop = document.getElementById('sidebar-backdrop');
@@ -12068,7 +12135,8 @@ function renderNav(){
   var modalSlot = document.getElementById('sidebar-modal-slot');
   if(modalSlot) modalSlot.innerHTML = sidebarSettingsOpen ? sidebarSettingsModal() : '';
 
-  if(currentTab!=='comptes' && allowedTabsIds.indexOf(currentTab)<0){ currentTab = allowedTabsIds.length? allowedTabsIds[0] : 'dashboard'; }
+  if(currentTab==='comptes' && isAdmin){ currentTab = 'parametres'; psetSub = 'comptes'; }
+  if(allowedTabsIds.indexOf(currentTab)<0){ currentTab = allowedTabsIds.length? allowedTabsIds[0] : 'dashboard'; }
 }
 function renderUserbox(){
   var box = document.getElementById('userbox');
@@ -12115,8 +12183,8 @@ document.addEventListener('click', function(e){
   if(e.target && e.target.closest && e.target.closest('#cz-toggle')){
     setCustomizeMode(!customizeMode);
     if(!customizeMode && czModal) czClose();
-    render();
-    if(customizeMode) toast('Mode personnalisation : chaque onglet affiche en haut ce qui peut y être modifié.');
+    if(!customizeMode) czTxtPopClose();
+    renderNav(); render();
     return;
   }
   if(e.target && e.target.id==='login-pwd-toggle'){
@@ -13127,30 +13195,19 @@ app.addEventListener('click', async function(e){
   if(viewContamBtn){ openContamDetailId = viewContamBtn.dataset.id; render(); return; }
   if(e.target.closest('[data-action="close-contam-detail"]')){ openContamDetailId = null; render(); return; }
 
-  var czB = e.target.closest('[data-action^="cz-"],[data-action="labels-save"]');
+  var czB = e.target.closest('[data-action^="cz-"],[data-action^="pset-"]');
   if(czB){
     var ca = czB.dataset.action;
     if(ca==='cz-open'){ czOpen(czB.dataset.cards.split(',')); render(); return; }
     if(ca==='cz-cancel'){ czClose(); render(); return; }
     if(ca==='cz-save'){ await czSave(); return; }
-    if(ca==='cz-labels'){ czModal = {labels:currentTab}; render(); return; }
-    if(ca==='cz-save-labels'){ var bx = document.querySelector('.cz-modal'); if(await saveLabelsFrom(bx)){ czClose(); render(); renderNav(); } return; }
-    if(ca==='labels-save'){ if(await saveLabelsFrom(document.querySelector('.param-page'))){ render(); renderNav(); } return; }
-    if(ca==='cz-toggle-on'){ setCustomizeMode(true); currentTab = 'dashboard'; renderNav(); render(); toast('Mode personnalisation activé : chaque onglet affiche ce qui peut y être modifié.'); return; }
-    if(ca==='cz-toggle-off'){ setCustomizeMode(false); render(); return; }
+    if(ca==='cz-reset'){ if(await czReset(czModal.keys, czModal.title)){ czClose(); render(); renderNav(); } return; }
+    if(ca==='cz-toggle-on'){ setCustomizeMode(true); currentTab = 'dashboard'; renderNav(); render(); return; }
+    if(ca==='cz-toggle-off'){ setCustomizeMode(false); czTxtPopClose(); renderNav(); render(); return; }
     if(ca==='cz-appearance'){ sidebarSettingsOpen = true; renderNav(); return; }
-    if(ca==='cz-rebut-codes'){ chokkoView = 'rebuts'; rebutEditCodes = true; render(); return; }
-    if(ca==='cz-goto'){
-      var gs = czB.dataset.secteur, gl = czB.dataset.ligne, gw = czB.dataset.what;
-      if(gs && gs!==currentSecteur && userSecteurs().indexOf(gs)>=0){ currentSecteur = gs; }
-      if(gw==='grille'){ currentTab = 'proprete'; propreteSub = 'grille'; auditWizard = null; proprGridModal = {ligne:gl}; }
-      else {
-        currentTab = 'chokko'; chokkoLigne = gl;
-        if(gw==='rebut'){ chokkoView = 'rebuts'; rebutEditCodes = true; }
-        else { chokkoView = 'saisie'; if(gw==='postes') chokkoManagePostesOpen = true; if(gw==='obj') chokkoObjEditOpen = true; }
-      }
-      renderNav(); render(); window.scrollTo(0,0); return;
-    }
+    if(ca==='pset-sub'){ psetSub = czB.dataset.subId; render(); return; }
+    if(ca==='pset-reset'){ var pc = PCARDS[czB.dataset.cards]; if(await czReset(pc.keys, pc.label)){ render(); renderNav(); } return; }
+    if(ca==='pset-txt-reset'){ delete DATA.labelOverrides[czB.dataset.key]; await save('labelOverrides'); logChange('Paramètres', 'Texte d\'origine', czB.dataset.key.replace(/^txt:/,'')); render(); renderNav(); toast('Texte d\'origine remis.'); return; }
   }
   var pgOpen = e.target.closest('[data-action="propr-grid-open"]');
   if(pgOpen){ var pls = proprLines(); proprGridModal = {ligne: pgOpen.dataset.ligne || (pls.filter(function(l){ return !(DATA.checklist[checklistKeyForLigne(l)]||[]).length; })[0]) || pls[0]}; render(); return; }
