@@ -319,7 +319,7 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
 #dashboard-canvas{position:relative;}
 
 /* ===== Toasts (remplacent les alert() bloquants pour les confirmations) ===== */
-#toast-layer{position:fixed; bottom:22px; right:22px; z-index:100002; display:flex; flex-direction:column; gap:8px; align-items:flex-end;}
+#toast-layer{position:fixed; bottom:78px; right:22px; z-index:100002; display:flex; flex-direction:column; gap:8px; align-items:flex-end;}
 .toast{background:#1C1B18; color:#fff; padding:11px 16px; border-radius:8px; font-size:13px; font-weight:500; box-shadow:0 6px 20px rgba(0,0,0,0.22); display:flex; align-items:center; gap:9px; max-width:340px; opacity:0; transform:translateY(8px); transition:opacity 0.18s ease, transform 0.18s ease;}
 .toast.show{opacity:1; transform:translateY(0);}
 .toast.hide{opacity:0; transform:translateY(8px);}
@@ -714,6 +714,46 @@ div.entryform.cols3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
 .wz-issues{margin:4px 0 0; padding-left:18px; font-size:12px; color:#7A5418;}
 .wz-banner{display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; padding:12px 16px; margin-bottom:16px; border:1px solid #E8C58A; background:#FFF9EF; border-radius:var(--radius);}
 @media (max-width:760px){ .wz-body{grid-template-columns:1fr;} .wz-steps{position:static; flex-direction:row; overflow-x:auto; padding-bottom:4px;} .wz-steps button{flex:0 0 auto;} .wz-step-l{white-space:nowrap;} .wz-main{padding:14px;} .wz-row{flex-wrap:nowrap;} .wz-row input, .wz-row select{min-width:0 !important; flex:1 1 auto; width:auto;} .wz-row select{flex:0 1 120px;} }
+/* ---- Aide « ? » ---- */
+.help-btn{position:fixed; right:20px; bottom:20px; z-index:1500; width:46px; height:46px; border-radius:50%; border:none; background:var(--accent); color:#fff; font:700 21px/1 var(--sans); cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.2);}
+.help-btn:hover, .help-btn.on{background:var(--accent-dark);}
+.help-panel{position:fixed; top:0; right:0; bottom:0; width:400px; max-width:100vw; z-index:1490; background:#fff; border-left:1px solid var(--border); box-shadow:-8px 0 30px rgba(0,0,0,.12); display:flex; flex-direction:column; padding:16px 16px 80px; box-sizing:border-box;}
+.help-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:16px;}
+#help-search{width:100%; box-sizing:border-box; margin-bottom:10px;}
+.help-body{overflow-y:auto; flex:1; padding-right:4px;}
+.help-cur{font-weight:700; font-size:14px; margin:4px 0;}
+.help-entry{border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:8px; background:#FCFBF8;}
+.help-entry summary{cursor:pointer; padding:10px 12px; font-weight:600; font-size:13.5px;}
+.help-entry[open] summary{border-bottom:1px solid var(--border);}
+.help-entry > p, .help-entry > ol, .help-entry > .help-h, .help-entry > .help-faq{margin-left:12px; margin-right:12px;}
+.help-entry p{font-size:13px; line-height:1.45; color:var(--text-muted);}
+.help-entry ol{padding-left:18px; font-size:13px; line-height:1.45;}
+.help-entry ol li{margin-bottom:4px;}
+.help-h{font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint); margin:10px 0 6px;}
+.help-faq{font-size:13px; margin-bottom:8px; line-height:1.4;}
+.help-faq b{display:block; margin-bottom:2px;}
+.help-faq:last-child{padding-bottom:10px;}
+@media print{ .help-btn, .help-panel{display:none !important;} }
+/* ---- Onglets personnalisés ---- */
+.ct-types{display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr)); gap:10px;}
+.ct-type-card{display:flex; flex-direction:column; gap:6px; align-items:flex-start; text-align:left; padding:14px; border:1px solid var(--border); border-radius:var(--radius); background:#fff; cursor:pointer; font:inherit;}
+.ct-type-card:hover{border-color:var(--accent);}
+.ct-type-card.on{border-color:var(--accent); background:var(--accent-bg, #EEF3F2); box-shadow:0 0 0 1px var(--accent) inset;}
+.ct-type-ic{width:26px; height:26px; color:var(--accent);}
+.ct-type-ic svg{width:26px; height:26px;}
+.ct-col{border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px; background:#fff;}
+.ct-sub{margin-top:6px; padding-left:4px;}
+.ct-form-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:10px;}
+.ct-table tr.ct-danger td{background:#FDF1EF;}
+.ct-table tr.ct-warn td{background:#FFF8EC;}
+.ct-rep{display:flex; gap:4px; flex-wrap:wrap;}
+.ct-rep-b{border:1px solid var(--border-strong); background:#fff; border-radius:999px; padding:4px 10px; font:inherit; font-size:12px; cursor:pointer;}
+.ct-rep-ok.on{background:#E3F2E8; border-color:#2E7D4F; color:#1F5C38; font-weight:700;}
+.ct-rep-nok.on{background:#FBE3E0; border-color:#B23B2E; color:#8A2B21; font-weight:700;}
+.ct-rep-na.on{background:#EEECE6; border-color:#6E6A60; font-weight:700;}
+.ct-ind-table input{width:100px; padding:4px 6px;}
+.ct-ind-table td.sc-ok input, .ct-ind-table td.sc-danger input{background:transparent; font-weight:700;}
+@media (max-width:760px){ .help-panel{width:100vw;} }
 .cz-pin, .cz-pin-row{display:none;}
 body.cz-admin .cz-pin{display:inline-flex; align-items:center; gap:4px; font:600 11px/1.2 inherit; font-family:inherit; padding:3px 8px; margin:0 0 0 8px; border:1.5px dashed #D9A35B; background:#FFF6E8; color:#6B4A1E; border-radius:999px; cursor:pointer; vertical-align:middle; text-transform:none; letter-spacing:0;}
 body.cz-admin .cz-pin:hover{background:#FCEBD2;}
@@ -1233,9 +1273,9 @@ var KEYS = {
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
   esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1',
-  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', chokkoPosteConfig:'mcu_chokko_poste_config_v1', bibliotheque:'app_bibliotheque_v1', prisonLots:'mcu_prison_lots_v1', prisonSnapshots:'mcu_prison_snapshots_v1', prisonChantiers:'mcu_prison_chantiers_v1', prisonMoves:'mcu_prison_moves_v1', rebutCouts:'mcu_rebut_couts_v1', rebutCodes:'mcu_rebut_codes_v1', sapBom:'app_sap_bom_v1', actionsSnapshots:'mcu_actions_snapshots_v1', uiSettings:'app_ui_settings_v1', appConfig:'app_config_v1'
+  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', chokkoPosteConfig:'mcu_chokko_poste_config_v1', bibliotheque:'app_bibliotheque_v1', prisonLots:'mcu_prison_lots_v1', prisonSnapshots:'mcu_prison_snapshots_v1', prisonChantiers:'mcu_prison_chantiers_v1', prisonMoves:'mcu_prison_moves_v1', rebutCouts:'mcu_rebut_couts_v1', rebutCodes:'mcu_rebut_codes_v1', sapBom:'app_sap_bom_v1', customTabs:'app_custom_tabs_v1', customData:'app_custom_data_v1', actionsSnapshots:'mcu_actions_snapshots_v1', uiSettings:'app_ui_settings_v1', appConfig:'app_config_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, bibliotheque:[], prisonLots:[], prisonSnapshots:[], prisonChantiers:[], prisonMoves:[], rebutCouts:{}, rebutCodes:{}, sapBom:{}, actionsSnapshots:[], appConfig:{}, uiSettings:{sidebarColor:null, iconStyle:'svg'}};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, bibliotheque:[], prisonLots:[], prisonSnapshots:[], prisonChantiers:[], prisonMoves:[], rebutCouts:{}, rebutCodes:{}, sapBom:{}, customTabs:[], customData:{}, actionsSnapshots:[], appConfig:{}, uiSettings:{sidebarColor:null, iconStyle:'svg'}};
 var RENDERERS = {};
 var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['pareto','Analyses Pareto'],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['prison','Prison qualité'],['bibliotheque','Bibliothèque'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
@@ -1909,7 +1949,7 @@ var BACKUP_LABELS = {metro:'Métrologie', planning:'Planning échéances', ateq:
   formations:'Formations SREM', postits:'Post-it', labelOverrides:'Libellés personnalisés', cicl:'Formations CI/CL', chokko:'Suivi CHOKKO',
   chokkoNotes:'Notes CHOKKO', ciclPersons:'Personnes CI/CL', chokkoColors:'Couleurs CHOKKO', chokkoHighlights:'Surlignages CHOKKO',
   chokkoRecentColors:'Couleurs récentes CHOKKO', chokkoPosteLabels:'Libellés postes CHOKKO', chokkoUnitCost:'Coût par pièce CHOKKO',
-  chokkoPosteConfig:'Postes CHOKKO', bibliotheque:'Bibliothèque', prisonLots:'Prison qualité', prisonSnapshots:'Prison qualité (historique)', prisonChantiers:'Prison qualité (chantiers)', prisonMoves:'Prison qualité (traçabilité des sorties)', rebutCouts:'Coût rebut (montants)', rebutCodes:'Coût rebut (codes défauts)', sapBom:'Prison qualité (nomenclatures SAP)',
+  chokkoPosteConfig:'Postes CHOKKO', bibliotheque:'Bibliothèque', prisonLots:'Prison qualité', prisonSnapshots:'Prison qualité (historique)', prisonChantiers:'Prison qualité (chantiers)', prisonMoves:'Prison qualité (traçabilité des sorties)', rebutCouts:'Coût rebut (montants)', rebutCodes:'Coût rebut (codes défauts)', sapBom:'Prison qualité (nomenclatures SAP)', customTabs:'Mes onglets (définitions)', customData:'Mes onglets (saisies)',
   actionsSnapshots:'Évolution des actions', uiSettings:'Réglages d\'affichage', appConfig:'Paramètres de l\'application'};
 var BACKUP_NO_DEFAULT_RESTORE = ['accounts','roles','uiSettings'];
 var backupIndexCache = null;
@@ -7400,7 +7440,7 @@ function chokkoLevelVsObjectif(pct, ligne){
   if(pct===null || pct===undefined) return 'neutral';
   var obj = chokkoObjectif(ligne);
   if(pct>=obj) return 'ok';
-  if(pct>=obj-(Number(cfg('chokkoMarge'))||0)) return 'warn';
+  if(pct>=obj-chokkoMarge()) return 'warn';
   return 'danger';
 }
 function chokkoCostObjectif(ligne){ var o = cfg('chokkoCostObj')||{}; return (o[ligne]!==undefined && o[ligne]!==null && o[ligne]!=='') ? Number(o[ligne]) : 0.035; }
@@ -7927,7 +7967,7 @@ function chokkoObjModalHtml(){
     '<h3>Objectifs de '+esc(l)+'</h3>'+
     '<label class="field" style="margin-top:10px;">Objectif CHOKKO (%)<input type="text" inputmode="decimal" id="cobj-pct" value="'+String(chokkoObjectif(l)).replace('.',',')+'"></label>'+
     '<label class="field" style="margin-top:10px;">Objectif coût par pièce (€)<input type="text" inputmode="decimal" id="cobj-cost" value="'+String(chokkoCostObjectif(l)).replace('.',',')+'"></label>'+
-    '<p class="tiny" style="margin-top:8px; color:var(--text-faint);">Le CHOKKO est vert au-dessus de l\'objectif, orange dans la marge de '+String(Number(cfg('chokkoMarge'))||0).replace('.',',')+' point(s) en dessous, rouge au-delà. Ces objectifs ne concernent que la ligne '+esc(l)+'.</p>'+
+    '<p class="tiny" style="margin-top:8px; color:var(--text-faint);">Le CHOKKO est vert au-dessus de l\'objectif, orange dans la marge de '+String(chokkoMarge()).replace('.',',')+' point(s) en dessous, rouge au-delà. Ces objectifs ne concernent que la ligne '+esc(l)+'.</p>'+
     '<div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="chokko-obj-close">Annuler</button><button class="btn primary" data-action="chokko-obj-save">Enregistrer</button></div>'+
   '</div></div>';
 }
@@ -9347,6 +9387,23 @@ function handleExportFullJson(){
 }
 var LINES = ['MCU1','MCU2','MCU3'];
 var PLAN_TYPES = [['perf','Audits de perf'],['metro','Suivi métrologie'],['proprete','Audit propreté'],['labo','Relevés laboratoire']];
+var PLAN_TYPES_COMMUNS = null;
+// Réglages propres au secteur affiché (assistant de configuration) : ils remplacent les réglages communs le temps de l'affichage
+var SAP_COMP_TYPES_BASE = null, SAP_ETAT_EXCLUS_BASE = null;
+function applySecteurConfig(){
+  if(!SAP_COMP_TYPES_BASE){ SAP_COMP_TYPES_BASE = cfgClone(SAP_COMP_TYPES); SAP_ETAT_EXCLUS_BASE = cfgClone(SAP_ETAT_EXCLUS); }
+  var s = getSecteur(currentSecteur) || {};
+  var g = cfg('scoreSeuils') || {};
+  var ss = (s.seuils && s.seuils.attention!==undefined && s.seuils.attention!==null) ? s.seuils : g;
+  SCORE_ATTENTION = Number(ss.attention); SCORE_DANGER = Number(ss.danger);
+  CHOKKO_TEAMS = cfgClone((Array.isArray(s.chokkoTeams) && s.chokkoTeams.length) ? s.chokkoTeams : cfg('chokkoTeams'));
+  VERIF_DELAI_JOURS = Number(s.verifJours) || 30;
+  SAP_COMP_TYPES = SAP_COMP_TYPES_BASE.concat((s.sapTypesExtra||[]).filter(function(t){ return t && t[0] && !SAP_COMP_TYPES_BASE.some(function(b){ return b[0]===t[0]; }); }));
+  SAP_ETAT_EXCLUS = cfgClone(s.sapExclus || SAP_ETAT_EXCLUS_BASE);
+  PLAN_TYPES = cfgClone(PLAN_TYPES_COMMUNS || PLAN_TYPES).concat((s.planTypesExtra||[]).filter(function(t){ return t && t[0] && t[1]; }));
+}
+function chokkoMarge(){ var s = getSecteur(currentSecteur) || {}; return (s.chokkoMarge!==undefined && s.chokkoMarge!==null && s.chokkoMarge!=='') ? Number(s.chokkoMarge) : (Number(cfg('chokkoMarge'))||0); }
+function alerteActionsJours(){ var s = getSecteur(currentSecteur) || {}; return Number(s.alerteActionsJours) || Number(cfg('prioDelais').actionsJours) || 7; }
 
 var lastGlobalScore = null;
 // Clé stable d'une zone défilante : son id, sinon sa classe + celle de son tableau + son rang parmi les zones identiques
@@ -9413,7 +9470,10 @@ function ensureConfigDefaults(){
     chantierKakotora: CHANTIER_KAKOTORA,
     chantierHse: CHANTIER_HSE,
     chokkoTeams: CHOKKO_TEAMS,
-    bains: RELEVES_BAINS.map(function(b){ return {nom:b, couleur:BAIN_COLORS[b]||'#5A6B7B'}; })
+    bains: RELEVES_BAINS.map(function(b){ return {nom:b, couleur:BAIN_COLORS[b]||'#5A6B7B'}; }),
+    actionStatuts: ACTION_STATUSES,
+    planTypes: PLAN_TYPES,
+    particulePostes: PARTICULE_CONFIG
   });
 }
 function cfg(k){
@@ -9457,6 +9517,10 @@ function applyAppConfig(force){
   BAIN_COLORS = {}; bains.forEach(function(b){ BAIN_COLORS[b.nom] = b.couleur; });
   var ss = c('scoreSeuils'); SCORE_ATTENTION = Number(ss.attention); SCORE_DANGER = Number(ss.danger);
   VIDANGE_INTERVALLE = Number(c('vidange').intervalle) || 90;
+  var stl = {}; (c('actionStatuts')||[]).forEach(function(x){ stl[x[0]] = x[1]; });
+  ACTION_STATUSES.forEach(function(x){ if(stl[x[0]]) x[1] = stl[x[0]]; });   // seuls les libellés changent : les statuts pilotent la logique
+  PLAN_TYPES_COMMUNS = c('planTypes');
+  PARTICULE_CONFIG = c('particulePostes') || {}; PARTICULE_LINES = Object.keys(PARTICULE_CONFIG);
   if(chokkoLines().indexOf(chokkoLigne)<0) chokkoLigne = chokkoLines()[0];
   if(ciclSubTab!=='recap' && ciclSubTab!=='personnel' && !CICL_LIGNE_REFS[ciclSubTab]) ciclSubTab = 'recap';
 }
@@ -9509,11 +9573,13 @@ function pRows(path, fields, opts){
       return '<td><input type="'+type+'"'+(f.type==='num'?' step="'+(f.step||'any')+'" data-pt="num"':'')+' data-pf="'+esc(p)+'" value="'+esc(v===null||v===undefined?'':v)+'"'+(ro?' disabled title="'+esc(typeof ro==='string'?ro:'Non modifiable')+'"':'')+(f.w?' style="width:'+f.w+';"':'')+(f.ph?' placeholder="'+esc(f.ph)+'"':'')+'></td>';
     }).join('');
     var lock = opts.lockDelete ? opts.lockDelete(item, i) : null;
+    if(opts.fixed){ h += '<td></td></tr>'; return; }
     h += '<td class="param-row-actions">'+
       '<button class="btn small" data-action="param-move" data-path="'+esc(path)+'" data-i="'+i+'" data-d="-1" title="Monter"'+(i===0?' disabled':'')+'>↑</button>'+
       '<button class="btn small" data-action="param-move" data-path="'+esc(path)+'" data-i="'+i+'" data-d="1" title="Descendre"'+(i===arr.length-1?' disabled':'')+'>↓</button>'+
       '<button class="btn small danger-outline" data-action="param-del" data-path="'+esc(path)+'" data-i="'+i+'"'+(lock?' disabled title="'+esc(lock)+'"':' title="Supprimer"')+'>✕</button></td></tr>';
   });
+  if(opts.fixed) return h+'</tbody></table></div>';
   h += '</tbody></table></div><button class="btn small param-add" data-action="param-add" data-path="'+esc(path)+'" data-tpl="'+esc(JSON.stringify(opts.tpl===undefined?'':opts.tpl))+'">+ '+esc(opts.addLabel||'Ajouter')+'</button>';
   return h;
 }
@@ -9658,6 +9724,23 @@ function pcBains(){
     pRows('bains', [{k:'nom', label:'Nom', w:'180px', readonly:function(it){ return savedBains.indexOf(it.nom)>=0 ? 'Nom utilisé par les relevés' : false; }}, {k:'couleur', label:'Couleur', type:'color', w:'60px'}],
       {tpl:{nom:'', couleur:'#5A6B7B'}, addLabel:'Bain', lockDelete:bainUsed}), cfgIsCustom('bains'));
 }
+function pcActionStatuts(){
+  return pCard('Plan d\'actions : libellés des statuts', 'Le nom affiché de chaque statut. Les statuts eux-mêmes (planifiée, réalisée, vérifiée…) pilotent les retards et la vérification d\'efficacité : ils ne s\'ajoutent ni ne se suppriment.',
+    pRows('actionStatuts', [{k:1, label:'Libellé affiché', w:'260px'}], {fixed:true}), cfgIsCustom('actionStatuts'));
+}
+function pcPlanTypes(){
+  return pCard('Planning : types d\'échéances communs', 'Le nom des types proposés à tous les secteurs. Chaque secteur peut ajouter ses propres types dans l\'assistant (étape « Actions et planning »).',
+    pRows('planTypes', [{k:1, label:'Libellé affiché', w:'260px'}], {fixed:true}), cfgIsCustom('planTypes'));
+}
+function pcParticules(){
+  var pp = pGet('particulePostes') || {};
+  return pCard('Relevés particules (MCU) : postes par ligne', 'Postes où une campagne de relevés est posée chaque semaine. L\'historique déjà saisi est conservé.',
+    Object.keys(pp).map(function(l){
+      return '<div class="param-maprow"><div class="param-maprow-key"><b>'+esc(l)+'</b><button class="btn small danger-outline" data-action="param-delkey" data-path="particulePostes" data-key="'+esc(l)+'" title="Retirer la ligne">✕</button></div>'+pChips('particulePostes.'+l, {ph:'Poste (ex. OP1060)'})+'</div>';
+    }).join('')+
+    '<div class="param-addkey"><input type="text" id="pk-particulePostes" placeholder="Nouvelle ligne (ex. MCU4)"><button class="btn small" data-action="param-addkey" data-path="particulePostes" data-input="pk-particulePostes" data-tpl="[]">+ Ligne</button></div>',
+    cfgIsCustom('particulePostes'));
+}
 // Registre : id → titre, clés de configuration, rendu
 var PCARDS = {
   chokkoObj:  {label:'Objectifs CHOKKO', keys:['chokkoObj','chokkoCostObj','chokkoMarge'], html:pcChokkoObj},
@@ -9673,7 +9756,10 @@ var PCARDS = {
   prisonDest: {label:'Destinations des sorties', keys:['prisonDest'], html:pcPrisonDest},
   chantier:   {label:'Fiche de chantier', keys:['chantierLieux','chantierRisques','chantierKakotora','chantierHse'], html:pcChantier},
   teams:      {label:'Équipes CHOKKO', keys:['chokkoTeams'], html:pcTeams},
-  bains:      {label:'Bains MCU0', keys:['bains'], html:pcBains}
+  bains:      {label:'Bains MCU0', keys:['bains'], html:pcBains},
+  actionStatuts:{label:'Statuts des actions', keys:['actionStatuts'], html:pcActionStatuts},
+  planTypes:  {label:'Types d\'échéances', keys:['planTypes'], html:pcPlanTypes},
+  particules: {label:'Postes des relevés particules', keys:['particulePostes'], html:pcParticules}
 };
 function pcJoin(ids){ return ids.map(function(id){ return PCARDS[id].html(); }).join(''); }
 function paramObjectifsHtml(){ return pcJoin(['chokkoObj','seuils','prio','entretien']); }
@@ -9887,15 +9973,18 @@ var wzBomSearch = '';
 var WZ_TABS = [['chokko','Suivi CHOKKO','Production, défauts par poste, coût rebut'],['proprete','Propreté','Audits propreté, entretien des équipements'],['perf','Audits de perf','Résultat mensuel par ligne'],['metro','Métrologie','Instruments et échéances'],['actions','Plan d\'actions','Actions issues des défauts et audits'],['planning','Planning échéances','Audits et relevés planifiés'],['prison','Prison qualité','Pièces bloquées, chantiers, export SAP'],['formations','Formations SREM','Échéances par personne'],['esd','Formations ESD','Réservé à MCU'],['cicl','Formations CI/CL','Réservé à MCU'],['archives','Archives','Exports et rapport mensuel']];
 var WZ_WIDGET_TAB = {w_chokko_trend:'chokko', w_causes_bar:'chokko', w_chokko:'chokko', w_production:'chokko', w_cicl:'cicl', w_ciclcoverage:'cicl', w_esd:'esd', w_srem:'formations', w_particules:'proprete', w_contamination:'proprete', w_vidange:'proprete', w_planning:'planning', w_actions:'actions', w_my_actions:'actions'};
 var WZ_COMMUNS = [
-  ['seuils', 'Seuils du score de conformité', 'À partir de quel score un secteur passe en « attention » ou en « danger ».'],
+  ['seuils', 'Seuils du score par défaut', 'Score « attention » et « danger » des secteurs qui n\'ont pas réglé les leurs.'],
   ['prio', 'Délais d\'alerte du tableau de bord', 'Combien de jours avant l\'échéance une action ou une contamination remonte en alerte.'],
-  ['chokkoObj,teams', 'CHOKKO : marge et équipes', 'Marge orange autour de l\'objectif, liste des équipes de la grille.'],
+  ['chokkoObj,teams', 'CHOKKO : marge et équipes par défaut', 'Valeurs utilisées par les secteurs qui n\'ont pas réglé les leurs dans l\'assistant.'],
   ['entretien', 'Entretien des équipements', 'Intervalle entre deux entretiens et délai d\'alerte.'],
   ['prisonEtats,prisonDest', 'Prison : états et destinations', 'Colonnes de quantités (complet, sans capot…) et destinations des sorties.'],
   ['chantier', 'Prison : fiche de chantier', 'Lieux, risques, Kakotora et consignes HSE proposés sur la fiche.'],
   ['lineRefs,refCriteria', 'Contamination (MCU)', 'Références par ligne, critères et seuils de contamination.'],
   ['bains', 'Relevés des bains (MCU)', 'Liste des bains et couleurs des courbes.'],
-  ['ciclRefs,ciclPostes', 'Formations CI/CL (MCU)', 'Références par ligne et postes à habiliter.']
+  ['ciclRefs,ciclPostes', 'Formations CI/CL (MCU)', 'Références par ligne et postes à habiliter.'],
+  ['actionStatuts', 'Plan d\'actions : statuts', 'Nom affiché de chaque statut d\'action.'],
+  ['planTypes', 'Planning : types d\'échéances', 'Nom des types d\'échéances communs à tous les secteurs.'],
+  ['particules', 'Relevés particules (MCU)', 'Postes suivis sur chaque ligne.']
 ];
 function wzSecteurObj(){ return getSecteur(currentSecteur) || {id:currentSecteur, nom:currentSecteur, lignes:[], tabs:[]}; }
 function wzHas(tab){ return secteurTabs().indexOf(tab)>=0; }
@@ -9906,6 +9995,7 @@ function wzSteps(){
   if(wzHas('prison')) st.push({id:'prison', label:'Prison qualité'});
   if(wzHas('esd') || wzHas('formations') || wzHas('cicl')) st.push({id:'formations', label:'Formations'});
   if(wzHas('perf')) st.push({id:'perf', label:'Audits de perf'});
+  if(wzHas('actions') || wzHas('planning')) st.push({id:'actplan', label:'Actions et planning'});
   st.push({id:'tableau', label:'Tableau de bord'});
   if(isAdminUser()) st.push({id:'communs', label:'Réglages communs'});
   st.push({id:'recap', label:'Récapitulatif'});
@@ -9935,6 +10025,7 @@ function wzInfo(id){
   if(id==='prison'){ var n = sapBomList(currentSecteur).length; return n+' référence'+(n>1?'s':'')+' décrite'+(n>1?'s':''); }
   if(id==='formations'){ var d = formDurees(); return 'Validité '+formDureeTxt(d.srem)+(currentSecteur==='MCU'? ' (SREM), '+formDureeTxt(d.esd)+' (ESD), '+formDureeTxt(d.cicl)+' (CI/CL)' : '')+' · alerte '+d.alerte+' j avant'; }
   if(id==='perf'){ var q = perfQuestions().length; return (PERF_FREQS.filter(function(f){ return f[0]===perfFreq(); })[0]||[0,''])[1]+' · '+(q? q+' question'+(q>1?'s':'') : 'résultat saisi directement en %'); }
+  if(id==='actplan') return 'Vérification à '+(Number(sec.verifJours)||30)+' j'+((sec.planTypesExtra||[]).length? ' · '+sec.planTypesExtra.length+' type(s) d\'échéance propres' : '');
   if(id==='tableau'){ var h = (sec.dashHidden||[]).length, a = (sec.alertHidden||[]).length; return (h? h+' carte(s) masquée(s)' : 'toutes les cartes')+' · '+(a? a+' type(s) d\'alerte coupé(s)' : 'toutes les alertes'); }
   return '';
 }
@@ -9944,13 +10035,14 @@ function wzBuildDraft(){
   wzDraftKey = currentSecteur+'|'+id; wzDirty = false;
   if(id==='secteur') wzDraft = {nom:sec.nom||sec.id, lignes:(sec.lignes||[]).slice(), tabs:(sec.tabs||[]).slice()};
   else if(id==='chokko'){
-    wzDraft = {obj:{}, cost:{}, codes:{}};
+    wzDraft = {obj:{}, cost:{}, codes:{}, teams:cfgClone(CHOKKO_TEAMS), teamsPropres:Array.isArray(sec.chokkoTeams) && sec.chokkoTeams.length>0, marge:(sec.chokkoMarge!==undefined && sec.chokkoMarge!==null && sec.chokkoMarge!=='') ? String(sec.chokkoMarge).replace('.',',') : ''};
     (sec.lignes||[]).forEach(function(l){ wzDraft.obj[l] = String(chokkoObjectif(l)).replace('.',','); wzDraft.cost[l] = String(chokkoCostObjectif(l)).replace('.',','); });
   }
-  else if(id==='prison') wzDraft = {bom:cfgClone(sapBomList(currentSecteur))};
+  else if(id==='prison') wzDraft = {bom:cfgClone(sapBomList(currentSecteur)), typesExtra:cfgClone(sec.sapTypesExtra||[]), exclus:cfgClone(SAP_ETAT_EXCLUS)};
+  else if(id==='actplan') wzDraft = {verif:String(Number(sec.verifJours)||30), alerte:sec.alerteActionsJours? String(sec.alerteActionsJours) : '', planExtra:cfgClone(sec.planTypesExtra||[])};
   else if(id==='formations'){ var d = formDurees(); wzDraft = {esd:String(d.esd), srem:String(d.srem), cicl:String(d.cicl), alerte:String(d.alerte)}; }
   else if(id==='perf') wzDraft = {freq:String(perfFreq()), questions:(Array.isArray(sec.perfQuestions)? sec.perfQuestions : []).map(function(q){ return {texte:q.texte||''}; })};
-  else if(id==='tableau') wzDraft = {dashHidden:(sec.dashHidden||[]).slice(), alertHidden:(sec.alertHidden||[]).slice()};
+  else if(id==='tableau') wzDraft = {dashHidden:(sec.dashHidden||[]).slice(), alertHidden:(sec.alertHidden||[]).slice(), seuilA:(sec.seuils&&sec.seuils.attention!=null)? String(sec.seuils.attention) : '', seuilD:(sec.seuils&&sec.seuils.danger!=null)? String(sec.seuils.danger) : ''};
   else wzDraft = {};
 }
 function wzEnsureDraft(){ if(!wzDraft || wzDraftKey!==currentSecteur+'|'+wzStep) wzBuildDraft(); }
@@ -9987,7 +10079,14 @@ async function wzCommit(){
       var seenC = {};
       d.codes[l].forEach(function(c){ var k = String(c[0]||'').trim(); if(!k) return; if(seenC[k]) codesBad = codesBad || l+' : le code '+k+' est en double.'; seenC[k] = 1; });
     });
+    var margeV = String(d.marge||'').trim()==='' ? null : wzNum(d.marge);
+    if(margeV!==null && !(margeV>=0 && margeV<=50)) bad = bad || 'Marge orange : entre 0 et 50 points.';
+    var teamsOk = d.teams.map(function(t){ return [t[0], String(t[1]||'').trim(), String(t[2]||'').trim()]; }).filter(function(t){ return t[1] || t[2]; });
+    if(d.teamsPropres && !teamsOk.length) bad = bad || 'Au moins une équipe est nécessaire.';
     if(bad || codesBad){ toast(bad || codesBad, 'error'); return false; }
+    sec.chokkoMarge = margeV;
+    sec.chokkoTeams = d.teamsPropres ? teamsOk.map(function(t){ return [t[0], t[1]||t[2], t[2]||t[1]]; }) : null;
+    await save('secteurs');
     DATA.appConfig = DATA.appConfig || {};
     DATA.appConfig.chokkoObj = o1; DATA.appConfig.chokkoCostObj = o2;
     await save('appConfig'); applyAppConfig(true);
@@ -10004,8 +10103,14 @@ async function wzCommit(){
       .filter(function(b){ return b.ref || b.desig || b.comps.length; });
     list.forEach(function(b){ var k = b.ref.toUpperCase(); if(!b.ref) err = err || 'Une référence sans numéro : renseignez-le ou supprimez la ligne.'; else if(refs[k]) err = err || 'La référence '+b.ref+' est en double.'; refs[k] = 1; });
     if(err){ toast(err, 'error'); return false; }
+    var tSeen = {}, tErr = null;
+    var extra = d.typesExtra.map(function(t){ return [t[0], String(t[1]||'').trim()]; }).filter(function(t){ return t[1]; });
+    extra.forEach(function(t){ var k = t[1].toLowerCase(); if(tSeen[k] || SAP_COMP_TYPES_BASE.some(function(b){ return b[1].toLowerCase()===k; })) tErr = tErr || 'Le type « '+t[1]+' » existe déjà.'; tSeen[k] = 1; });
+    if(tErr){ toast(tErr, 'error'); return false; }
     DATA.sapBom = DATA.sapBom || {}; DATA.sapBom[sid] = list;
     await save('sapBom');
+    sec.sapTypesExtra = extra; sec.sapExclus = d.exclus;
+    await save('secteurs');
     logChange('Assistant', 'Nomenclatures SAP '+sid, list.length+' référence(s)');
   }
   else if(wzStep==='formations'){
@@ -10022,7 +10127,23 @@ async function wzCommit(){
     await save('secteurs');
     logChange('Assistant', 'Audits de perf '+sid, (PERF_FREQS.filter(function(f){ return f[0]===sec.perfFreq; })[0]||[0,''])[1]+' · '+sec.perfQuestions.length+' question(s)');
   }
+  else if(wzStep==='actplan'){
+    var vj = wzNum(d.verif), aj = String(d.alerte||'').trim()==='' ? null : wzNum(d.alerte);
+    if(!(vj>=1 && vj<=365)){ toast('Vérification d\'efficacité : entre 1 et 365 jours.', 'error'); return false; }
+    if(aj!==null && !(aj>=1 && aj<=90)){ toast('Alerte avant échéance : entre 1 et 90 jours.', 'error'); return false; }
+    var pe = d.planExtra.map(function(t){ return [t[0], String(t[1]||'').trim()]; }).filter(function(t){ return t[1]; });
+    sec.verifJours = Math.floor(vj); sec.alerteActionsJours = aj===null ? null : Math.floor(aj); sec.planTypesExtra = pe;
+    await save('secteurs');
+    logChange('Assistant', 'Actions et planning '+sid, 'vérif. '+sec.verifJours+' j · '+pe.length+' type(s) d\'échéance propres');
+  }
   else if(wzStep==='tableau'){
+    var sa = String(d.seuilA||'').trim(), sd = String(d.seuilD||'').trim();
+    if(sa==='' && sd==='') sec.seuils = null;
+    else {
+      var na = wzNum(sa), nd = wzNum(sd);
+      if(!(na>0 && na<=100 && nd>=0 && nd<na)){ toast('Seuils : « danger » doit être inférieur à « attention », entre 0 et 100 %.', 'error'); return false; }
+      sec.seuils = {attention:na, danger:nd};
+    }
     sec.dashHidden = d.dashHidden.slice(); sec.alertHidden = d.alertHidden.slice();
     await save('secteurs');
     logChange('Assistant', 'Tableau de bord '+sid, sec.dashHidden.length+' carte(s) masquée(s), '+sec.alertHidden.length+' alerte(s) coupée(s)');
@@ -10068,7 +10189,17 @@ function wzChokkoHtml(){
         '<td><span class="'+(np?'':'wz-warn-txt')+'">'+np+' poste'+(np>1?'s':'')+'</span> <button class="btn small" data-action="wz-postes" data-ligne="'+esc(l)+'">Modifier</button></td>'+
         '<td><span class="'+(nc?'':'wz-warn-txt')+'">'+nc+' code'+(nc>1?'s':'')+'</span> <button class="btn small'+(wzLigne===l?' primary':'')+'" data-action="wz-codes" data-ligne="'+esc(l)+'">'+(wzLigne===l?'Ouvert ci-dessous':'Modifier')+'</button></td></tr>';
     }).join('')+'</tbody></table></div>';
-  h += '<p class="tiny" style="margin-top:6px;">Le CHOKKO est vert au-dessus de l\'objectif et orange dans la marge commune de '+String(Number(cfg('chokkoMarge'))||0).replace('.',',')+' point(s)'+(isAdminUser()? ' (réglable dans « Réglages communs »)' : '')+'. Les postes s\'enregistrent directement dans leur fenêtre.</p>';
+  h += '<p class="tiny" style="margin-top:6px;">Le CHOKKO est vert au-dessus de l\'objectif et orange dans la marge de '+String(chokkoMarge()).replace('.',',')+' point(s). Les postes s\'enregistrent directement dans leur fenêtre.</p>';
+  var tUsed = function(id){ return DATA.chokko.some(function(e){ return lignes.indexOf(e.ligne)>=0 && e.prod && Number(e.prod[id])>0; }); };
+  h += wzBlock('Équipes de la grille', d.teamsPropres
+    ? '<div class="wz-list">'+d.teams.map(function(t, i){
+        var used = tUsed(t[0]);
+        return '<div class="wz-row">'+wzInput('teams.'+i+'.1', ' style="flex:1; min-width:150px;" placeholder="Nom (ex. Équipe A)"')+wzInput('teams.'+i+'.2', ' style="width:110px;" placeholder="Court (ex. A)"')+
+          '<button class="btn small danger-outline" data-action="wz-del" data-path="teams" data-i="'+i+'"'+(used?' disabled title="Des productions sont saisies pour cette équipe"':'')+'>✕</button></div>';
+      }).join('')+'</div><button class="btn small" data-action="wz-add" data-path="teams" data-tpl="'+esc(JSON.stringify(['t'+Date.now().toString(36),'','']))+'">+ Ajouter une équipe</button>'
+    : '<p class="tiny" style="margin:0;">Équipes communes : '+esc(d.teams.map(function(t){ return t[1]; }).join(', '))+'.</p>',
+    '<label class="tiny" style="display:flex; gap:6px; align-items:center;"><input type="checkbox" data-wz-bool="teamsPropres"'+(d.teamsPropres?' checked':'')+'> Équipes propres à ce secteur</label>');
+  h += wzBlock('Marge orange', '<div class="wz-grid"><label class="field">Marge sous l\'objectif (points)'+wzInput('marge', ' class="wz-num" inputmode="decimal" placeholder="'+esc(String(Number(cfg('chokkoMarge'))||0).replace('.',','))+' (commune)"')+'</label></div><p class="tiny" style="margin-top:6px;">Laisser vide pour garder la marge commune.</p>');
   if(wzLigne && lignes.indexOf(wzLigne)>=0){
     if(!d.codes[wzLigne]) d.codes[wzLigne] = rebutCodes(wzLigne).map(function(c){ return [c[0], c[1]]; });
     var codes = d.codes[wzLigne], base = 'codes.'+wzLigne;
@@ -10102,9 +10233,10 @@ function wzPrisonHtml(){
   var h = wzStepHead('Prison qualité', 'Les références de pièces de votre secteur et leurs composants. À l\'export « Excel blocage SAP », chaque pièce en prison est décomposée en composants à bloquer (une pièce « sans capot » n\'a plus son capot ni ses vis).');
   var q = wzBomSearch.toLowerCase();
   var idx = bom.map(function(b, i){ return i; }).filter(function(i){ var b = bom[i]; return !q || (String(b.ref)+' '+String(b.desig)).toLowerCase().indexOf(q)>=0 || i===wzBomOpen; });
+  var typesDraft = SAP_COMP_TYPES_BASE.concat(d.typesExtra.filter(function(t){ return String(t[1]||'').trim(); }));
   var typeOpts = function(cur){
-    var known = SAP_COMP_TYPES.some(function(t){ return t[0]===cur; });
-    return SAP_COMP_TYPES.map(function(t){ return '<option value="'+t[0]+'"'+(t[0]===cur?' selected':'')+'>'+esc(t[1])+'</option>'; }).join('')+(!known && cur? '<option value="'+esc(cur)+'" selected>'+esc(cur)+'</option>' : '');
+    var known = typesDraft.some(function(t){ return t[0]===cur; });
+    return typesDraft.map(function(t){ return '<option value="'+t[0]+'"'+(t[0]===cur?' selected':'')+'>'+esc(t[1])+'</option>'; }).join('')+(!known && cur? '<option value="'+esc(cur)+'" selected>'+esc(cur)+'</option>' : '');
   };
   var body = '<div class="wz-row" style="margin-bottom:8px;"><input type="search" id="wz-bom-search" placeholder="Rechercher une référence ou une désignation" value="'+esc(wzBomSearch)+'" style="flex:1; min-width:200px;"><button class="btn small primary" data-action="wz-bom-add">+ Nouvelle référence</button></div>';
   body += bom.length ? '<div class="table-wrap"><table class="wz-table"><thead><tr><th>Référence (saisie en prison)</th><th>Désignation</th><th>Composants</th><th></th></tr></thead><tbody>'+
@@ -10123,6 +10255,17 @@ function wzPrisonHtml(){
     }).join('')+'</tbody></table></div>' : emptyState('Aucune référence pour ce secteur. Ajoutez les références que vous mettez en prison et leurs composants.');
   body += '<p class="tiny" style="margin-top:8px;">La référence saisie dans la prison est reconnue même abrégée (« 4161 » pour 6900004161). Une pièce sans référence décrite apparaît à part dans l\'export, à compléter.</p>';
   h += wzBlock('Références et composants ('+bom.length+')', body);
+  var allTypes = SAP_COMP_TYPES_BASE.concat(d.typesExtra.filter(function(t){ return String(t[1]||'').trim(); }).map(function(t){ return [t[0], t[1]]; }));
+  h += wzBlock('Types de composants propres au secteur', '<p class="tiny" style="margin:0 0 8px;">Types proposés en plus de la liste commune ('+esc(SAP_COMP_TYPES_BASE.map(function(t){ return t[1]; }).join(', '))+').</p>'+
+    '<div class="wz-list">'+d.typesExtra.map(function(t, i){ return '<div class="wz-row">'+wzInput('typesExtra.'+i+'.1', ' style="max-width:260px;" placeholder="Ex. Pignon"')+'<button class="btn small danger-outline" data-action="wz-del" data-path="typesExtra" data-i="'+i+'">✕</button></div>'; }).join('')+'</div>'+
+    '<button class="btn small" data-action="wz-add" data-path="typesExtra" data-tpl="'+esc(JSON.stringify(['x'+Date.now().toString(36),'']))+'">+ Ajouter un type</button>');
+  var etats = cfg('prisonEtats').filter(function(e){ return e[0]!=='complet'; });
+  h += wzBlock('Composants absents selon l\'état de la pièce', '<p class="tiny" style="margin:0 0 8px;">Ces composants ne sont pas comptés dans l\'export SAP pour une pièce dans cet état (ex. une pièce « sans capot » n\'a plus son capot ni ses vis).</p>'+
+    '<div class="table-wrap"><table class="wz-table wz-matrix"><thead><tr><th>Composant</th>'+etats.map(function(e){ return '<th>'+esc(e[1])+'</th>'; }).join('')+'</tr></thead><tbody>'+
+    allTypes.map(function(t){
+      return '<tr><td>'+esc(t[1])+'</td>'+etats.map(function(e){ var arr = d.exclus[e[0]] || (d.exclus[e[0]] = []), on = arr.indexOf(t[0])>=0;
+        return '<td style="text-align:center;"><input type="checkbox" data-wz-check="exclus.'+esc(e[0])+'" value="'+esc(t[0])+'"'+(on?' checked':'')+' title="Absent quand la pièce est « '+esc(e[1])+' »"></td>'; }).join('')+'</tr>';
+    }).join('')+'</tbody></table></div>');
   if(isAdminUser()) h += wzBlock('États et destinations', '<p class="tiny" style="margin:0;">États : '+esc(cfg('prisonEtats').map(function(e){ return e[1]; }).join(', '))+'. Communs à tous les secteurs.</p>', '<button class="btn small" data-action="cz-open" data-cards="prisonEtats,prisonDest">Modifier</button>');
   return h;
 }
@@ -10152,12 +10295,25 @@ function wzPerfHtml(){
     '<p class="tiny" style="margin-top:8px;">Avec des questions, chacune est notée Conforme, Non conforme ou Sans objet, et le résultat se calcule seul.</p>');
   return h;
 }
+function wzActplanHtml(){
+  var d = wzDraft;
+  var h = wzStepHead('Actions et planning', 'Les délais du plan d\'actions et les types d\'échéances propres à votre secteur.');
+  if(wzHas('actions')) h += wzBlock('Plan d\'actions', '<div class="wz-grid"><label class="field">Vérification d\'efficacité prévue après (jours)'+wzInput('verif', ' class="wz-num" inputmode="numeric"')+'</label>'+
+    '<label class="field">Alerte avant l\'échéance d\'une action (jours)'+wzInput('alerte', ' class="wz-num" inputmode="numeric" placeholder="'+esc(String(Number(cfg('prioDelais').actionsJours)||7))+' (commun)"')+'</label></div>'+
+    '<p class="tiny" style="margin-top:6px;">La date de vérification est proposée automatiquement quand une action passe en « réalisée ». Les noms des statuts sont communs'+(isAdminUser()? ' (« Réglages communs »)' : '')+'.</p>');
+  if(wzHas('planning')) h += wzBlock('Types d\'échéances du planning', '<p class="tiny" style="margin:0 0 8px;">Types communs : '+esc((PLAN_TYPES_COMMUNS||[]).map(function(t){ return t[1]; }).join(', '))+'. Ajoutez ceux de votre secteur (ex. « Audit produit », « Revue 5S »).</p>'+
+    '<div class="wz-list">'+d.planExtra.map(function(t, i){ return '<div class="wz-row">'+wzInput('planExtra.'+i+'.1', ' style="max-width:280px;" placeholder="Ex. Audit produit"')+'<button class="btn small danger-outline" data-action="wz-del" data-path="planExtra" data-i="'+i+'">✕</button></div>'; }).join('')+'</div>'+
+    '<button class="btn small" data-action="wz-add" data-path="planExtra" data-tpl="'+esc(JSON.stringify(['p'+Date.now().toString(36),'']))+'">+ Ajouter un type</button>');
+  return h;
+}
 function wzTableauHtml(){
   var d = wzDraft, tabs = secteurTabs();
   var h = wzStepHead('Tableau de bord', 'Les cartes et les alertes affichées sur le tableau de bord du secteur. Chacun peut ensuite réorganiser ses cartes avec « Personnaliser mon tableau de bord ».');
   var wids = currentSecteur==='MCU'
     ? DASHBOARD_WIDGETS_DEFAULT.map(function(w){ return w.id; }).filter(function(id){ var t = WZ_WIDGET_TAB[id]; return WIDGET_TITLES[id] && (!t || tabs.indexOf(t)>=0); }).map(function(id){ return [id, WIDGET_TITLES[id]]; })
     : SECTEUR_DASH_CARDS.filter(function(c){ return !c[2] || tabs.indexOf(c[2])>=0; });
+  var g = cfg('scoreSeuils') || {};
+  h += wzBlock('Seuils du score de ce secteur', '<div class="wz-grid"><label class="field">« Attention » sous (%)'+wzInput('seuilA', ' class="wz-num" inputmode="decimal" placeholder="'+esc(String(g.attention))+' (commun)"')+'</label><label class="field">« Danger » sous (%)'+wzInput('seuilD', ' class="wz-num" inputmode="decimal" placeholder="'+esc(String(g.danger))+' (commun)"')+'</label></div><p class="tiny" style="margin-top:6px;">Servent aux couleurs du score, des audits propreté et de perf. Laisser vide pour garder les seuils communs.</p>');
   h += wzBlock('Cartes affichées', '<div class="wz-checks">'+wids.map(function(c){
       var on = d.dashHidden.indexOf(c[0])<0;
       return '<label class="wz-check'+(on?' on':'')+'"><input type="checkbox" data-wz-check="dashHidden" data-inv="1" value="'+c[0]+'"'+(on?' checked':'')+'><span><b>'+esc(c[1])+'</b></span></label>';
@@ -10206,10 +10362,10 @@ RENDERERS.assistant = function(){
     var iss = (s.id==='recap'||s.id==='communs') ? [] : wzIssues(s.id);
     return '<button data-action="wz-goto" data-step="'+s.id+'" class="'+(s.id===wzStep?'active':'')+'"><span class="wz-num-pill '+(s.id===wzStep?'cur':iss.length?'warn':'')+'">'+(i+1)+'</span><span class="wz-step-l">'+esc(s.label)+'</span>'+(iss.length? '<span class="wz-dot" title="'+iss.length+' point(s) à compléter"></span>' : '')+'</button>';
   }).join('')+'</nav>';
-  var fn = {secteur:wzSecteurHtml, chokko:wzChokkoHtml, proprete:wzPropreteHtml, prison:wzPrisonHtml, formations:wzFormationsHtml, perf:wzPerfHtml, tableau:wzTableauHtml, communs:wzCommunsHtml, recap:wzRecapHtml}[wzStep];
+  var fn = {secteur:wzSecteurHtml, chokko:wzChokkoHtml, proprete:wzPropreteHtml, prison:wzPrisonHtml, formations:wzFormationsHtml, perf:wzPerfHtml, actplan:wzActplanHtml, tableau:wzTableauHtml, communs:wzCommunsHtml, recap:wzRecapHtml}[wzStep];
   h += '<div class="wz-main"><div class="tiny wz-pos">Étape '+(pos+1)+' sur '+steps.length+'</div>'+fn();
   if(wzStep!=='recap'){
-    var editable = ['secteur','chokko','prison','formations','perf','tableau'].indexOf(wzStep)>=0;
+    var editable = ['secteur','chokko','prison','formations','perf','actplan','tableau'].indexOf(wzStep)>=0;
     h += '<div class="wz-nav">'+(pos>0? '<button class="btn" data-action="wz-prev">← Précédent</button>' : '<span></span>')+
       '<span class="wz-nav-r">'+(editable? '<span class="wz-dirty tiny" id="wz-dirty"'+(wzDirty?'':' hidden')+'>Modifications non enregistrées</span><button class="btn" data-action="wz-cancel" id="wz-cancel-btn"'+(wzDirty?'':' disabled')+'>Annuler</button><button class="btn" data-action="wz-save">Enregistrer</button>' : '')+
       '<button class="btn primary" data-action="wz-next">'+(editable? 'Enregistrer et continuer →' : 'Suivant →')+'</button></span></div>';
@@ -10237,6 +10393,7 @@ document.addEventListener('change', async function(e){
   }
   if(t.matches && t.matches('select[data-wz]') && wzDraft){ wzSet(t.dataset.wz, t.value); wzMarkDirty(); return; }
   if(t.type==='radio' && t.dataset && t.dataset.wz && wzDraft){ wzSet(t.dataset.wz, t.value); render(); return; }
+  if(t.dataset && t.dataset.wzBool && wzDraft){ wzSet(t.dataset.wzBool, t.checked); render(); return; }
   if(t.dataset && t.dataset.wzCheck && wzDraft){
     var arr = wzGet(t.dataset.wzCheck), v = t.value, inv = t.dataset.inv==='1', want = inv ? !t.checked : t.checked, i = arr.indexOf(v);
     if(want && i<0) arr.push(v); if(!want && i>=0) arr.splice(i,1);
@@ -10289,6 +10446,553 @@ function wzDashboardBanner(){
   if(!sec || sec.setupDone || !currentUser) return '';
   return '<div class="wz-banner"><div><b>Le secteur '+esc(sec.nom||sec.id)+' n\'est pas encore configuré.</b><div class="tiny">L\'assistant passe en revue, étape par étape, tout ce qui se règle : lignes, onglets, postes CHOKKO, grilles, références de la prison, formations, audits…</div></div><button class="btn primary" data-action="wz-start">Configurer le secteur</button></div>';
 }
+
+// ==================== ONGLETS PERSONNALISÉS ====================
+// Chaque technicien peut créer, pour son secteur, ses propres onglets sans passer par le code :
+//  - « suivi »      : tableau de suivi avec ses colonnes (texte, nombre, date, liste, oui/non, personne), échéances et alertes ;
+//  - « checklist »  : checklist / audit, une liste de questions notées Conforme / Non conforme / Sans objet, score et historique ;
+//  - « indicateur » : une valeur saisie par jour, semaine ou mois (par ligne ou globale), objectif et graphique.
+// Définitions : DATA.customTabs ; saisies : DATA.customData[idOnglet] = [enregistrements].
+var CT_TYPES = [
+  ['suivi', 'Tableau de suivi', 'Vos colonnes (texte, nombre, date, liste, oui/non, personne), filtres, export Excel, alertes sur les échéances.'],
+  ['checklist', 'Checklist / audit', 'Une liste de questions notées Conforme / Non conforme / Sans objet, un score par audit et l\'historique.'],
+  ['indicateur', 'Indicateur chiffré', 'Une valeur par jour, semaine ou mois, avec un objectif, des couleurs et un graphique.']
+];
+var CT_COL_TYPES = [['texte','Texte'],['nombre','Nombre'],['date','Date'],['liste','Liste de choix'],['ouinon','Oui / non'],['personne','Personne']];
+var CT_ICONS = {
+  suivi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>',
+  checklist:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M3 6l1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg>',
+  indicateur:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>'
+};
+var CT_EMOJI = {suivi:'📋', checklist:'☑️', indicateur:'📈'};
+function customTabsSect(sid){ sid = sid || currentSecteur; return (DATA.customTabs||[]).filter(function(t){ return t.secteur===sid; }); }
+function customTabFor(id){ return (DATA.customTabs||[]).filter(function(t){ return t.id===id; })[0] || null; }
+function customTypeLabel(type){ var f = CT_TYPES.filter(function(x){ return x[0]===type; })[0]; return f ? f[1] : type; }
+function customTabIcon(id){ var t = customTabFor(id); if(!t) return ''; return (DATA.uiSettings && DATA.uiSettings.iconStyle==='emoji') ? (CT_EMOJI[t.type]||'') : (CT_ICONS[t.type]||''); }
+function customRows(id){ DATA.customData = DATA.customData || {}; if(!Array.isArray(DATA.customData[id])) DATA.customData[id] = []; return DATA.customData[id]; }
+function customCanDelete(t){ return isAdminUser() || (currentUser && t.createdBy===currentUser.id); }
+function ctPersons(){ return (DATA.accounts||[]).filter(function(a){ return a.roleId!==ADMIN_ROLE_ID && (a.allSecteurs || (a.secteurs||[]).indexOf(currentSecteur)>=0); }).map(function(a){ return a.displayName; }).filter(Boolean).sort(function(a,b){ return a.localeCompare(b,'fr'); }); }
+
+// ---------- Brouillon générique (formulaires des onglets personnalisés) ----------
+var ctDraft = null;    // {kind:'def'|'row'|'audit', ...}
+function ctPath(path){ var parts = String(path).split('.'), o = ctDraft; for(var i=0;i<parts.length-1;i++){ if(o==null) return null; o = o[parts[i]]; } return o==null ? null : {o:o, k:parts[parts.length-1]}; }
+function ctGet(path){ var r = ctPath(path); return r ? r.o[r.k] : undefined; }
+function ctSet(path, v){ var r = ctPath(path); if(r) r.o[r.k] = v; }
+function ctIn(path, attrs){ var v = ctGet(path); return '<input type="text" data-cf="'+esc(path)+'" value="'+esc(v==null?'':v)+'"'+(attrs||'')+'>'; }
+
+// ---------- Gérer mes onglets ----------
+var ctManageEdit = null;   // null | 'new' | id
+function ctNewDef(type){
+  return {id:'ct_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), type:type||'suivi', nom:'', description:'', secteur:currentSecteur,
+    cols:[{id:'c1', label:'Sujet', type:'texte'}, {id:'c2', label:'Responsable', type:'personne'}, {id:'c3', label:'Échéance', type:'date', echeance:true, alerteJours:'7'}, {id:'c4', label:'Terminé', type:'ouinon'}],
+    clotureCol:'c4', questions:[{id:'q1', texte:''}], parLigne:true, actionsNok:true, freq:'mois', unite:'', objectif:'', sens:'max'};
+}
+RENDERERS.mesonglets = function(){
+  var list = customTabsSect();
+  var h = '<div class="section">';
+  if(ctManageEdit) return h + ctDefFormHtml() + '</div>';
+  h += '<div class="toolbar"><div><div class="eyebrow">Mes onglets · '+esc((getSecteur(currentSecteur)||{}).nom||currentSecteur)+'</div><div class="tiny" style="max-width:640px; margin-top:4px;">Créez les onglets dont votre secteur a besoin. Ils apparaissent dans le menu, groupe « Mes onglets », pour toutes les personnes du secteur.</div></div>'+
+    '<button class="btn primary" data-action="ct-new">+ Nouvel onglet</button></div>';
+  if(!list.length) h += '<div class="ct-types">'+CT_TYPES.map(function(t){ return '<button class="ct-type-card" data-action="ct-new" data-type="'+t[0]+'"><span class="ct-type-ic">'+CT_ICONS[t[0]]+'</span><b>'+esc(t[1])+'</b><span class="tiny">'+esc(t[2])+'</span></button>'; }).join('')+'</div>';
+  else h += '<div class="table-wrap"><table><thead><tr><th>Onglet</th><th>Type</th><th>Saisies</th><th></th></tr></thead><tbody>'+list.map(function(t){
+    var n = customRows(t.id).length;
+    return '<tr><td><b>'+esc(t.nom)+'</b>'+(t.description? '<div class="tiny">'+esc(t.description)+'</div>' : '')+'</td><td>'+esc(customTypeLabel(t.type))+'</td><td>'+n+'</td>'+
+      '<td style="white-space:nowrap; text-align:right;"><button class="btn small" data-action="ct-open" data-id="'+t.id+'">Ouvrir</button> <button class="btn small" data-action="ct-edit" data-id="'+t.id+'">Modifier</button> '+
+      (customCanDelete(t)? '<button class="btn small danger-outline" data-action="ct-delete" data-id="'+t.id+'">Supprimer</button>' : '')+'</td></tr>';
+  }).join('')+'</tbody></table></div>';
+  return h+'</div>';
+};
+function ctDefFormHtml(){
+  var d = ctDraft.def, isNew = ctManageEdit==='new';
+  var h = '<div class="card ct-def"><div class="eyebrow" style="margin-bottom:12px;">'+(isNew?'Nouvel onglet':'Modifier l\'onglet « '+esc(d.nom)+' »')+'</div>';
+  if(isNew) h += '<div class="ct-types">'+CT_TYPES.map(function(t){ return '<button type="button" class="ct-type-card'+(d.type===t[0]?' on':'')+'" data-action="ct-def-type" data-type="'+t[0]+'"><span class="ct-type-ic">'+CT_ICONS[t[0]]+'</span><b>'+esc(t[1])+'</b><span class="tiny">'+esc(t[2])+'</span></button>'; }).join('')+'</div>';
+  else h += '<p class="tiny" style="margin:0 0 10px;">Type : <b>'+esc(customTypeLabel(d.type))+'</b></p>';
+  h += '<div class="wz-grid" style="margin-top:12px;"><label class="field">Nom de l\'onglet'+ctIn('def.nom', ' id="ct-nom" placeholder="Ex. Suivi des réclamations"')+'</label><label class="field" style="grid-column:span 2;">Description (facultatif)'+ctIn('def.description', ' placeholder="À quoi sert cet onglet"')+'</label></div>';
+  if(d.type==='suivi'){
+    var dateCols = d.cols.filter(function(c){ return c.type==='date'; }), boolCols = d.cols.filter(function(c){ return c.type==='ouinon'; });
+    h += wzBlock('Colonnes', '<div class="wz-list">'+d.cols.map(function(c, i){
+      return '<div class="ct-col"><div class="wz-row">'+ctIn('def.cols.'+i+'.label', ' style="flex:1; min-width:150px;" placeholder="Nom de la colonne"')+
+        '<select data-cf="def.cols.'+i+'.type">'+CT_COL_TYPES.map(function(t){ return '<option value="'+t[0]+'"'+(c.type===t[0]?' selected':'')+'>'+t[1]+'</option>'; }).join('')+'</select>'+
+        '<button class="btn small" data-action="ct-move" data-path="def.cols" data-i="'+i+'" data-dir="-1" '+(i===0?'disabled':'')+'>▲</button><button class="btn small" data-action="ct-move" data-path="def.cols" data-i="'+i+'" data-dir="1" '+(i===d.cols.length-1?'disabled':'')+'>▼</button>'+
+        '<button class="btn small danger-outline" data-action="ct-del" data-path="def.cols" data-i="'+i+'">✕</button></div>'+
+        (c.type==='liste'? '<div class="wz-row ct-sub"><span class="tiny">Choix (séparés par des virgules)</span>'+ctIn('def.cols.'+i+'.optionsTxt', ' style="flex:1; min-width:180px;" placeholder="Ex. Ouvert, En cours, Clos"')+'</div>' : '')+
+        (c.type==='date'? '<div class="wz-row ct-sub"><label class="tiny" style="display:flex; gap:6px; align-items:center;"><input type="checkbox" data-cf-bool="def.cols.'+i+'.echeance"'+(c.echeance?' checked':'')+'> C\'est une échéance (alerte)</label>'+(c.echeance? '<span class="tiny">orange</span>'+ctIn('def.cols.'+i+'.alerteJours', ' style="width:60px;" inputmode="numeric"')+'<span class="tiny">jours avant</span>' : '')+'</div>' : '')+
+        '</div>';
+    }).join('')+'</div><button class="btn small" data-action="ct-add-col">+ Ajouter une colonne</button>');
+    if(dateCols.some(function(c){ return c.echeance; })) h += wzBlock('Clôture', '<label class="field" style="max-width:360px;">Une ligne n\'est plus en alerte quand cette colonne est cochée<select data-cf="def.clotureCol"><option value="">- Aucune -</option>'+boolCols.map(function(c){ return '<option value="'+c.id+'"'+(d.clotureCol===c.id?' selected':'')+'>'+esc(c.label||'(sans nom)')+'</option>'; }).join('')+'</select></label><p class="tiny" style="margin-top:6px;">Les échéances dépassées remontent dans la carte « À traiter » du tableau de bord.</p>');
+  }
+  if(d.type==='checklist'){
+    h += wzBlock('Questions', '<div class="wz-list">'+d.questions.map(function(q, i){
+      return '<div class="wz-row"><span class="wz-n">'+(i+1)+'</span>'+ctIn('def.questions.'+i+'.texte', ' style="flex:1; min-width:200px;" placeholder="Ex. Le poste est rangé"')+
+        '<button class="btn small" data-action="ct-move" data-path="def.questions" data-i="'+i+'" data-dir="-1" '+(i===0?'disabled':'')+'>▲</button><button class="btn small" data-action="ct-move" data-path="def.questions" data-i="'+i+'" data-dir="1" '+(i===d.questions.length-1?'disabled':'')+'>▼</button>'+
+        '<button class="btn small danger-outline" data-action="ct-del" data-path="def.questions" data-i="'+i+'">✕</button></div>';
+    }).join('')+'</div><button class="btn small" data-action="ct-add-q">+ Ajouter une question</button>');
+    h += wzBlock('Options', '<label class="tiny" style="display:flex; gap:6px; align-items:center; margin-bottom:6px;"><input type="checkbox" data-cf-bool="def.parLigne"'+(d.parLigne?' checked':'')+'> Un audit par ligne de production</label>'+
+      '<label class="tiny" style="display:flex; gap:6px; align-items:center;"><input type="checkbox" data-cf-bool="def.actionsNok"'+(d.actionsNok?' checked':'')+'> Créer une action dans le plan d\'actions pour chaque « non conforme »</label>');
+  }
+  if(d.type==='indicateur'){
+    h += wzBlock('Indicateur', '<div class="wz-grid"><label class="field">Saisie<select data-cf="def.freq"><option value="jour"'+(d.freq==='jour'?' selected':'')+'>Chaque jour</option><option value="semaine"'+(d.freq==='semaine'?' selected':'')+'>Chaque semaine</option><option value="mois"'+(d.freq==='mois'?' selected':'')+'>Chaque mois</option></select></label>'+
+      '<label class="field">Unité'+ctIn('def.unite', ' placeholder="Ex. %, pièces, €, ppm"')+'</label>'+
+      '<label class="field">Objectif'+ctIn('def.objectif', ' inputmode="decimal" placeholder="Ex. 95"')+'</label>'+
+      '<label class="field">Bon quand la valeur est<select data-cf="def.sens"><option value="max"'+(d.sens==='max'?' selected':'')+'>au-dessus de l\'objectif</option><option value="min"'+(d.sens==='min'?' selected':'')+'>en dessous de l\'objectif</option></select></label></div>'+
+      '<label class="tiny" style="display:flex; gap:6px; align-items:center; margin-top:10px;"><input type="checkbox" data-cf-bool="def.parLigne"'+(d.parLigne?' checked':'')+'> Une valeur par ligne de production</label>');
+  }
+  h += '<div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="ct-def-cancel">Annuler</button><button class="btn primary" data-action="ct-def-save">'+(isNew?'Créer l\'onglet':'Enregistrer')+'</button></div></div>';
+  return h;
+}
+async function ctDefSave(){
+  var d = ctDraft.def;
+  d.nom = String(d.nom||'').trim();
+  if(!d.nom){ toast('Donnez un nom à l\'onglet.', 'error'); return; }
+  if(customTabsSect().some(function(t){ return t.id!==d.id && t.nom.toLowerCase()===d.nom.toLowerCase(); })){ toast('Un onglet porte déjà ce nom dans le secteur.', 'error'); return; }
+  var out = {id:d.id, type:d.type, nom:d.nom, description:String(d.description||'').trim(), secteur:d.secteur, createdBy:d.createdBy || (currentUser&&currentUser.id), createdAt:d.createdAt || todayStr()};
+  if(d.type==='suivi'){
+    out.cols = d.cols.map(function(c){ var o = {id:c.id, label:String(c.label||'').trim(), type:c.type}; if(c.type==='liste') o.options = String(c.optionsTxt||'').split(',').map(function(x){ return x.trim(); }).filter(Boolean); if(c.type==='date' && c.echeance){ o.echeance = true; o.alerteJours = Math.max(0, Math.floor(wzNum(c.alerteJours))||0); } return o; }).filter(function(c){ return c.label; });
+    if(!out.cols.length){ toast('Ajoutez au moins une colonne.', 'error'); return; }
+    if(out.cols.some(function(c){ return c.type==='liste' && !c.options.length; })){ toast('Une colonne « liste » doit avoir au moins un choix.', 'error'); return; }
+    out.clotureCol = out.cols.some(function(c){ return c.id===d.clotureCol && c.type==='ouinon'; }) ? d.clotureCol : '';
+  }
+  if(d.type==='checklist'){
+    out.questions = d.questions.map(function(q){ return {id:q.id, texte:String(q.texte||'').trim()}; }).filter(function(q){ return q.texte; });
+    if(!out.questions.length){ toast('Ajoutez au moins une question.', 'error'); return; }
+    out.parLigne = !!d.parLigne; out.actionsNok = !!d.actionsNok;
+  }
+  if(d.type==='indicateur'){
+    out.freq = d.freq; out.unite = String(d.unite||'').trim(); out.parLigne = !!d.parLigne; out.sens = d.sens==='min' ? 'min' : 'max';
+    var ob = String(d.objectif||'').trim(); out.objectif = ob==='' ? null : wzNum(ob);
+    if(out.objectif!==null && isNaN(out.objectif)){ toast('Objectif : un nombre.', 'error'); return; }
+  }
+  DATA.customTabs = DATA.customTabs || [];
+  var i = DATA.customTabs.map(function(t){ return t.id; }).indexOf(out.id);
+  if(i>=0) DATA.customTabs[i] = out; else DATA.customTabs.push(out);
+  await save('customTabs');
+  logChange('Mes onglets', i>=0?'Modification':'Création', currentSecteur+' · '+out.nom+' ('+customTypeLabel(out.type)+')');
+  ctManageEdit = null; ctDraft = null;
+  currentTab = out.id; renderNav(); render();
+  toast(i>=0 ? 'Onglet enregistré.' : 'Onglet « '+out.nom+' » créé.');
+}
+function ctEditDraft(t){
+  var d = cfgClone(t);
+  if(d.type==='suivi'){ d.cols.forEach(function(c){ if(c.type==='liste') c.optionsTxt = (c.options||[]).join(', '); if(c.echeance) c.alerteJours = String(c.alerteJours||0); }); d.questions = []; }
+  if(d.type==='checklist'){ d.cols = []; }
+  if(d.type==='indicateur'){ d.cols = []; d.questions = []; d.objectif = d.objectif==null ? '' : String(d.objectif).replace('.',','); }
+  return d;
+}
+
+// ---------- Affichage d'un onglet personnalisé ----------
+var ctSearch = {}, ctFilter = {}, ctIndPeriod = {};
+RENDERERS.__custom = function(){
+  var t = customTabFor(currentTab);
+  if(!t) return emptyState('Onglet introuvable.');
+  var h = '<div class="section"><div class="toolbar"><div><div class="eyebrow">'+esc(t.nom)+'</div>'+(t.description? '<div class="tiny" style="margin-top:4px;">'+esc(t.description)+'</div>' : '')+'</div>'+
+    '<div style="display:flex; gap:8px; flex-wrap:wrap;" class="chokko-noprint"><button class="btn small" data-action="ct-edit" data-id="'+t.id+'">⚙️ Modifier l\'onglet</button>'+
+    (t.type==='suivi'? '<button class="btn small" data-action="ct-xlsx">📊 Export Excel</button>' : '')+'<button class="btn small" data-action="ct-print">🖨️ Imprimer</button></div></div>';
+  if(t.type==='suivi') h += ctSuiviHtml(t);
+  else if(t.type==='checklist') h += ctChecklistHtml(t);
+  else h += ctIndicateurHtml(t);
+  return h+'</div>';
+};
+function ctCellTxt(c, v){
+  if(v===undefined || v===null || v==='') return '';
+  if(c.type==='date') return fmtDate(v);
+  if(c.type==='ouinon') return v ? 'Oui' : 'Non';
+  if(c.type==='nombre') return String(v).replace('.',',');
+  return String(v);
+}
+function ctRowAlert(t, r){
+  if(t.clotureCol && r.v && r.v[t.clotureCol]) return null;
+  var worst = null, today = todayStr();
+  (t.cols||[]).forEach(function(c){
+    if(!c.echeance) return;
+    var v = r.v && r.v[c.id]; if(!v) return;
+    if(v<today){ worst = {level:'danger', col:c, date:v}; }
+    else if(!worst && daysBetween(today, v)<=(Number(c.alerteJours)||0)) worst = {level:'warn', col:c, date:v};
+  });
+  return worst;
+}
+function ctInputFor(c, path, v){
+  if(c.type==='date') return '<input type="date" data-cf="'+esc(path)+'" value="'+esc(v||'')+'">';
+  if(c.type==='nombre') return '<input type="text" inputmode="decimal" data-cf="'+esc(path)+'" value="'+esc(v==null?'':String(v).replace('.',','))+'">';
+  if(c.type==='ouinon') return '<label style="display:flex; gap:6px; align-items:center; font-size:13px;"><input type="checkbox" data-cf-bool="'+esc(path)+'"'+(v?' checked':'')+'> Oui</label>';
+  if(c.type==='liste') return '<select data-cf="'+esc(path)+'"><option value="">-</option>'+(c.options||[]).map(function(o){ return '<option'+(o===v?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+'</select>';
+  if(c.type==='personne'){ var ps = ctPersons(); if(v && ps.indexOf(v)<0) ps.push(v); return '<input type="text" list="ct-persons" data-cf="'+esc(path)+'" value="'+esc(v||'')+'"><datalist id="ct-persons">'+ps.map(function(p){ return '<option value="'+esc(p)+'">'; }).join('')+'</datalist>'; }
+  return '<input type="text" data-cf="'+esc(path)+'" value="'+esc(v||'')+'">';
+}
+function ctSuiviHtml(t){
+  var rows = customRows(t.id).slice(), q = (ctSearch[t.id]||'').toLowerCase(), flt = ctFilter[t.id]||{};
+  var listeCols = t.cols.filter(function(c){ return c.type==='liste'; });
+  var nLate = rows.filter(function(r){ var a = ctRowAlert(t, r); return a && a.level==='danger'; }).length;
+  var h = '';
+  if(ctDraft && ctDraft.kind==='row' && ctDraft.tab===t.id){
+    h += '<div class="card ct-form chokko-noprint"><div class="eyebrow" style="margin-bottom:10px;">'+(ctDraft.rowId? 'Modifier la ligne' : 'Nouvelle ligne')+'</div><div class="ct-form-grid">'+
+      t.cols.map(function(c){ return '<label class="field">'+esc(c.label)+ctInputFor(c, 'v.'+c.id, ctDraft.v[c.id])+'</label>'; }).join('')+
+      '</div><div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="ct-row-cancel">Annuler</button><button class="btn primary" data-action="ct-row-save">Enregistrer</button></div></div>';
+  }
+  h += '<div class="toolbar chokko-noprint" style="margin-top:4px;"><div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;"><input type="search" id="ct-search" placeholder="Rechercher" value="'+esc(ctSearch[t.id]||'')+'" style="min-width:200px;">'+
+    listeCols.map(function(c){ return '<select class="ct-filter" data-col="'+c.id+'"><option value="">'+esc(c.label)+' : tous</option>'+(c.options||[]).map(function(o){ return '<option'+(flt[c.id]===o?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+'</select>'; }).join('')+
+    (nLate? '<span class="badge danger">'+nLate+' en retard</span>' : '')+'</div><button class="btn primary" data-action="ct-row-new">+ Ajouter</button></div>';
+  rows = rows.filter(function(r){
+    if(q && !t.cols.some(function(c){ return ctCellTxt(c, r.v && r.v[c.id]).toLowerCase().indexOf(q)>=0; })) return false;
+    return Object.keys(flt).every(function(k){ return !flt[k] || (r.v && r.v[k])===flt[k]; });
+  });
+  var ech = t.cols.filter(function(c){ return c.echeance; })[0];
+  rows.sort(function(a,b){
+    var la = ctRowAlert(t,a), lb = ctRowAlert(t,b), ra = la? (la.level==='danger'?0:1) : 2, rb = lb? (lb.level==='danger'?0:1) : 2;
+    if(ra!==rb) return ra-rb;
+    if(ech){ var va = (a.v||{})[ech.id]||'9999', vb = (b.v||{})[ech.id]||'9999'; if(va!==vb) return va<vb?-1:1; }
+    return (b.createdAt||'').localeCompare(a.createdAt||'');
+  });
+  if(!customRows(t.id).length) return h + emptyState('Aucune ligne pour l\'instant. Cliquez sur « + Ajouter ».');
+  h += '<div class="table-wrap"><table class="ct-table"><thead><tr>'+t.cols.map(function(c){ return '<th>'+esc(c.label)+'</th>'; }).join('')+'<th class="chokko-noprint"></th></tr></thead><tbody>'+
+    rows.map(function(r){
+      var al = ctRowAlert(t, r);
+      return '<tr class="'+(al? 'ct-'+al.level : '')+'">'+t.cols.map(function(c){
+        var v = r.v && r.v[c.id], txt = esc(ctCellTxt(c, v));
+        if(al && al.col===c) txt += ' '+badge(al.level, al.level==='danger' ? 'En retard' : 'Bientôt');
+        return '<td>'+txt+'</td>';
+      }).join('')+'<td class="chokko-noprint" style="white-space:nowrap; text-align:right;"><button class="btn small" data-action="ct-row-edit" data-id="'+r.id+'">Modifier</button> <button class="btn small danger-outline" data-action="ct-row-del" data-id="'+r.id+'">Suppr.</button></td></tr>';
+    }).join('')+'</tbody></table></div><p class="tiny" style="margin-top:6px;">'+rows.length+' ligne(s) affichée(s) sur '+customRows(t.id).length+'.</p>';
+  return h;
+}
+async function ctRowSave(){
+  var t = customTabFor(ctDraft.tab), rows = customRows(t.id), v = {};
+  t.cols.forEach(function(c){
+    var x = ctDraft.v[c.id];
+    if(c.type==='nombre'){ x = String(x==null?'':x).trim(); x = x==='' ? null : wzNum(x); if(x!==null && isNaN(x)){ v.__err = c.label; } }
+    else if(c.type==='ouinon') x = !!x;
+    else x = x==null ? '' : String(x).trim();
+    v[c.id] = x;
+  });
+  if(v.__err){ toast('« '+v.__err+' » : un nombre est attendu.', 'error'); return; }
+  if(!t.cols.some(function(c){ return c.type!=='ouinon' && v[c.id]!=='' && v[c.id]!==null; })){ toast('La ligne est vide.', 'error'); return; }
+  if(ctDraft.rowId){ var r = rows.filter(function(x){ return x.id===ctDraft.rowId; })[0]; if(r){ r.v = v; r.updatedAt = todayStr(); r.updatedBy = currentUser && currentUser.displayName; } }
+  else rows.push({id:uid('ctr'), v:v, createdAt:new Date().toISOString(), by:currentUser && currentUser.displayName});
+  await save('customData');
+  logChange(t.nom, ctDraft.rowId?'Modification':'Ajout', ctCellTxt(t.cols[0], v[t.cols[0].id]));
+  ctDraft = null; render();
+}
+// ---- Checklist / audit ----
+function ctChecklistHtml(t){
+  var rows = customRows(t.id).slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+  var h = '';
+  if(ctDraft && ctDraft.kind==='audit' && ctDraft.tab===t.id){
+    h += '<div class="card ct-form chokko-noprint"><div class="eyebrow" style="margin-bottom:10px;">Nouvel audit</div><div class="ct-form-grid">'+
+      '<label class="field">Date<input type="date" data-cf="date" value="'+esc(ctDraft.date)+'"></label>'+
+      (t.parLigne? '<label class="field">Ligne<select data-cf="ligne">'+secteurLines().map(function(l){ return '<option'+(l===ctDraft.ligne?' selected':'')+'>'+esc(l)+'</option>'; }).join('')+'</select></label>' : '')+
+      '<label class="field">Auditeur'+ctIn('auditeur')+'</label></div>'+
+      '<div class="table-wrap" style="margin-top:12px;"><table><thead><tr><th style="width:36px;">N°</th><th>Question</th><th style="width:260px;">Réponse</th></tr></thead><tbody>'+
+      t.questions.map(function(qq, i){
+        var cur = ctDraft.rep[qq.id]||'';
+        return '<tr><td>'+(i+1)+'</td><td>'+esc(qq.texte)+'</td><td><div class="ct-rep">'+[['ok','Conforme'],['nok','Non conforme'],['na','Sans objet']].map(function(o){ return '<button type="button" class="ct-rep-b ct-rep-'+o[0]+(cur===o[0]?' on':'')+'" data-action="ct-rep" data-q="'+qq.id+'" data-v="'+o[0]+'">'+o[1]+'</button>'; }).join('')+'</div></td></tr>';
+      }).join('')+'</tbody></table></div>'+
+      '<label class="field" style="margin-top:10px;">Remarque (facultatif)'+ctIn('remarque')+'</label>'+
+      (t.actionsNok? '<p class="tiny" style="margin-top:6px;">Chaque « non conforme » créera une action dans le plan d\'actions.</p>' : '')+
+      '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="ct-row-cancel">Annuler</button><button class="btn primary" data-action="ct-audit-save">Enregistrer l\'audit</button></div></div>';
+  }
+  h += '<div class="toolbar chokko-noprint"><div></div><button class="btn primary" data-action="ct-audit-new">+ Nouvel audit</button></div>';
+  if(!rows.length) return h + emptyState('Aucun audit pour l\'instant.');
+  // Moyenne par mois (12 derniers mois) et par ligne
+  var months = []; var d0 = new Date(); d0.setDate(1);
+  for(var i=11;i>=0;i--){ var dd = new Date(d0.getFullYear(), d0.getMonth()-i, 1); months.push(dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')); }
+  var keys = t.parLigne ? secteurLines() : ['Score'];
+  h += '<div class="card" style="margin-bottom:14px;"><div class="eyebrow" style="margin-bottom:8px;">Score moyen par mois</div><div class="table-wrap"><table class="annual-table"><thead><tr><th></th>'+months.map(function(m){ return '<th>'+esc(CHOKKO_MONTH_ABBR[Number(m.slice(5))-1])+'</th>'; }).join('')+'</tr></thead><tbody>'+
+    keys.map(function(k){
+      return '<tr><td><b>'+esc(k)+'</b></td>'+months.map(function(m){
+        var rs = rows.filter(function(r){ return (r.date||'').slice(0,7)===m && (!t.parLigne || r.ligne===k) && r.score!=null; });
+        if(!rs.length) return '<td class="c-empty">-</td>';
+        var avg = Math.floor(rs.reduce(function(s,r){ return s+r.score; },0)/rs.length*100)/100;
+        return '<td class="score-cell '+scoreCellClass(avg)+'">'+String(avg).replace('.',',')+'%</td>';
+      }).join('')+'</tr>';
+    }).join('')+'</tbody></table></div></div>';
+  h += '<div class="eyebrow" style="margin-bottom:8px;">Historique des audits</div><div class="table-wrap"><table><thead><tr><th>Date</th>'+(t.parLigne?'<th>Ligne</th>':'')+'<th>Auditeur</th><th>Score</th><th>Non conformes</th><th class="chokko-noprint"></th></tr></thead><tbody>'+
+    rows.map(function(r){
+      var noks = t.questions.filter(function(qq){ return (r.rep||{})[qq.id]==='nok'; }).map(function(qq){ return qq.texte; });
+      var open = ctDraft && ctDraft.kind==='detail' && ctDraft.id===r.id;
+      return '<tr><td>'+fmtDate(r.date)+'</td>'+(t.parLigne?'<td>'+esc(r.ligne||'')+'</td>':'')+'<td>'+esc(r.auditeur||'')+'</td><td>'+(r.score==null?'-':badge(scoreLevel(r.score), String(r.score).replace('.',',')+'%'))+'</td>'+
+        '<td class="tiny">'+(noks.length? esc(noks.join(' · ')) : '-')+(r.remarque? '<div style="color:var(--text-faint);">'+esc(r.remarque)+'</div>' : '')+'</td>'+
+        '<td class="chokko-noprint" style="text-align:right;"><button class="btn small danger-outline" data-action="ct-row-del" data-id="'+r.id+'">Suppr.</button></td></tr>';
+    }).join('')+'</tbody></table></div>';
+  return h;
+}
+async function ctAuditSave(){
+  var t = customTabFor(ctDraft.tab), d = ctDraft;
+  var miss = t.questions.filter(function(qq){ return !d.rep[qq.id]; }).length;
+  if(miss){ toast(miss+' question(s) sans réponse.', 'error'); return; }
+  if(!d.date){ toast('Date requise.', 'error'); return; }
+  var ok = 0, nok = 0;
+  t.questions.forEach(function(qq){ if(d.rep[qq.id]==='ok') ok++; if(d.rep[qq.id]==='nok') nok++; });
+  var rec = {id:uid('cta'), date:d.date, ligne:t.parLigne? d.ligne : '', auditeur:String(d.auditeur||'').trim(), rep:cfgClone(d.rep), remarque:String(d.remarque||'').trim(), score:(ok+nok)? Math.floor(ok/(ok+nok)*10000)/100 : null, createdAt:new Date().toISOString()};
+  customRows(t.id).push(rec);
+  await save('customData');
+  if(t.actionsNok && nok){
+    t.questions.forEach(function(qq){
+      if(d.rep[qq.id]!=='nok') return;
+      DATA.actions.push({id:uid('act'), origine:t.nom, secteur:currentSecteur, description:qq.texte+(rec.remarque? ' - '+rec.remarque : ''), ligne:rec.ligne||'', responsable:'', echeance:null, statut:'planifiee', dateCreation:todayStr(), suivi:[]});
+    });
+    await save('actions');
+  }
+  logChange(t.nom, 'Audit', (rec.ligne? rec.ligne+' · ' : '')+(rec.score==null?'-':rec.score+'%')+(nok? ' · '+nok+' NC' : ''));
+  ctDraft = null; render();
+  toast('Audit enregistré'+(t.actionsNok && nok? ' · '+nok+' action(s) créée(s) dans le plan d\'actions' : '')+'.');
+}
+// ---- Indicateur chiffré ----
+function ctPeriods(t, y, m){
+  if(t.freq==='mois') return MONTHS_FR.map(function(mn, i){ return {k:y+'-'+String(i+1).padStart(2,'0'), label:mn.charAt(0).toUpperCase()+mn.slice(1)}; });
+  if(t.freq==='semaine'){
+    var out = [], seen = {}, d = new Date(y, 0, 1);
+    while(d.getFullYear()===y){ var s = fmtISOLocal(d), w = isoWeekInfo(s), k = w.year+'-S'+String(w.week).padStart(2,'0'); if(!seen[k] && w.year===y){ seen[k] = 1; out.push({k:k, label:'S'+String(w.week).padStart(2,'0')}); } d.setDate(d.getDate()+1); }
+    return out;
+  }
+  var n = new Date(y, m+1, 0).getDate(), res = [];
+  for(var i=1;i<=n;i++){ var dt = new Date(y, m, i), ds = fmtISOLocal(dt); res.push({k:ds, label:DAY_LABELS[(dt.getDay()+6)%7]+' '+String(i).padStart(2,'0')}); }
+  return res;
+}
+function ctIndLevel(t, v){
+  if(v===null || v===undefined || t.objectif===null || t.objectif===undefined) return '';
+  return (t.sens==='min' ? v<=t.objectif : v>=t.objectif) ? 'sc-ok' : 'sc-danger';
+}
+function ctIndValue(t, k, ligne){ var r = customRows(t.id).filter(function(x){ return x.p===k && (x.l||'')===(ligne||''); })[0]; return r ? r.val : null; }
+function ctIndicateurHtml(t){
+  var per = ctIndPeriod[t.id] || (ctIndPeriod[t.id] = {y:Number(todayStr().slice(0,4)), m:Number(todayStr().slice(5,7))-1});
+  var periods = ctPeriods(t, per.y, per.m), cols = t.parLigne ? secteurLines() : [''];
+  var h = '<div class="toolbar chokko-noprint"><div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">'+
+    (t.freq==='jour'? '<select id="ct-ind-m">'+MONTHS_FR.map(function(mn, i){ return '<option value="'+i+'"'+(i===per.m?' selected':'')+'>'+mn.charAt(0).toUpperCase()+mn.slice(1)+'</option>'; }).join('')+'</select>' : '')+
+    '<input type="number" id="ct-ind-y" value="'+per.y+'" style="width:80px;">'+
+    '<span class="tiny">'+(t.objectif!=null? 'Objectif : '+(t.sens==='min'?'≤ ':'≥ ')+String(t.objectif).replace('.',',')+(t.unite? ' '+esc(t.unite) : '') : 'Pas d\'objectif')+'</span></div></div>';
+  h += '<div class="card" style="margin-bottom:14px;"><div class="chart-box" style="height:260px;"><canvas id="ct-ind-chart"></canvas></div></div>';
+  h += '<div class="table-wrap"><table class="ct-ind-table"><thead><tr><th>'+(t.freq==='jour'?'Jour':t.freq==='semaine'?'Semaine':'Mois')+'</th>'+cols.map(function(c){ return '<th>'+esc(c||('Valeur'+(t.unite? ' ('+t.unite+')' : '')))+'</th>'; }).join('')+'</tr></thead><tbody>'+
+    periods.map(function(p){
+      return '<tr><td>'+esc(p.label)+'</td>'+cols.map(function(c){
+        var v = ctIndValue(t, p.k, c);
+        return '<td class="'+ctIndLevel(t, v)+'"><input type="text" inputmode="decimal" class="ct-ind-in" data-p="'+esc(p.k)+'" data-l="'+esc(c)+'" value="'+(v==null?'':String(v).replace('.',','))+'"></td>';
+      }).join('')+'</tr>';
+    }).join('')+'</tbody></table></div><p class="tiny" style="margin-top:6px;">La valeur s\'enregistre quand vous quittez la case (Tab ou clic ailleurs). Videz la case pour effacer.</p>';
+  return h;
+}
+var ctIndChart = null;
+function ctRenderIndChart(){
+  var t = customTabFor(currentTab); if(!t || t.type!=='indicateur' || typeof Chart==='undefined') return;
+  var ctx = document.getElementById('ct-ind-chart'); if(!ctx) return;
+  if(ctIndChart){ try{ ctIndChart.destroy(); }catch(e){} }
+  var per = ctIndPeriod[t.id], periods = ctPeriods(t, per.y, per.m), cols = t.parLigne ? secteurLines() : [''];
+  var pal = ['#1F3864','#B2764A','#2E7D4F','#8A4FB5','#2F6FB0','#B23B2E','#6E6A60'];
+  var ds = cols.map(function(c, i){ return {label:c||t.nom, data:periods.map(function(p){ return ctIndValue(t, p.k, c); }), borderColor:pal[i%pal.length], backgroundColor:pal[i%pal.length], spanGaps:true, tension:0.2, pointRadius:3}; });
+  if(t.objectif!=null) ds.push({label:'Objectif', data:periods.map(function(){ return t.objectif; }), borderColor:'#B8730A', borderDash:[6,4], pointRadius:0, borderWidth:1.5});
+  ctIndChart = new Chart(ctx, {type:'line', data:{labels:periods.map(function(p){ return p.label; }), datasets:ds}, options:{responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{position:'bottom'}}}});
+}
+async function ctIndSave(input){
+  var t = customTabFor(currentTab); if(!t) return;
+  var raw = String(input.value||'').trim(), rows = customRows(t.id), k = input.dataset.p, l = input.dataset.l||'';
+  var idx = rows.map(function(r){ return r.p+'|'+(r.l||''); }).indexOf(k+'|'+l);
+  if(raw===''){ if(idx<0) return; rows.splice(idx,1); }
+  else {
+    var v = wzNum(raw);
+    if(isNaN(v)){ toast('Un nombre est attendu.', 'error'); input.value = idx>=0 ? String(rows[idx].val).replace('.',',') : ''; return; }
+    if(idx>=0){ if(rows[idx].val===v) return; rows[idx].val = v; } else rows.push({id:uid('cti'), p:k, l:l, val:v, by:currentUser && currentUser.displayName});
+  }
+  await save('customData');
+  render();
+}
+// Échéances des tableaux de suivi : remontent dans les priorités du secteur
+function customPriorityItems(add){
+  customTabsSect().forEach(function(t){
+    if(t.type!=='suivi') return;
+    customRows(t.id).forEach(function(r){
+      var a = ctRowAlert(t, r); if(!a) return;
+      add(t.id, a.level, ctCellTxt(t.cols[0], r.v && r.v[t.cols[0].id]) || t.nom, t.nom+' · '+a.col.label, a.date);
+    });
+  });
+}
+async function ctExportXlsx(){
+  var t = customTabFor(currentTab); if(!t) return;
+  if(typeof ExcelJS==='undefined'){ uiAlert('La librairie Excel n\'a pas pu être chargée (connexion internet requise). Réessayez.'); return; }
+  var wb = new ExcelJS.Workbook(), ws = wb.addWorksheet(t.nom.slice(0,30).replace(/[\\\/\?\*\[\]:]/g,' '));
+  ws.addRow(t.cols.map(function(c){ return c.label; }).concat(['Alerte']));
+  ws.getRow(1).font = {bold:true};
+  customRows(t.id).forEach(function(r){ var a = ctRowAlert(t, r); ws.addRow(t.cols.map(function(c){ var v = r.v && r.v[c.id]; return c.type==='nombre' ? v : ctCellTxt(c, v); }).concat([a ? (a.level==='danger'?'En retard':'Bientôt') : ''])); });
+  ws.columns.forEach(function(col){ col.width = 22; });
+  var buf = await wb.xlsx.writeBuffer();
+  downloadBlob(new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), t.nom.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w\-]+/g,'_')+'_'+currentSecteur+'_'+todayStr()+'.xlsx');
+  toast('Export Excel prêt.');
+}
+async function ctHandleClick(e){
+  var b = e.target.closest('[data-action^="ct-"]');
+  if(!b) return false;
+  var a = b.dataset.action, t = customTabFor(currentTab);
+  if(a==='ct-new'){ ctManageEdit = 'new'; ctDraft = {kind:'def', def:ctNewDef(b.dataset.type)}; currentTab = 'mesonglets'; renderNav(); render(); var n = document.getElementById('ct-nom'); if(n) n.focus(); return true; }
+  if(a==='ct-def-type'){ ctDraft.def.type = b.dataset.type; render(); return true; }
+  if(a==='ct-edit'){ var tt = customTabFor(b.dataset.id); ctManageEdit = tt.id; ctDraft = {kind:'def', def:ctEditDraft(tt)}; currentTab = 'mesonglets'; renderNav(); render(); return true; }
+  if(a==='ct-open'){ currentTab = b.dataset.id; renderNav(); render(); return true; }
+  if(a==='ct-def-cancel'){ var back = ctManageEdit!=='new' ? ctManageEdit : null; ctManageEdit = null; ctDraft = null; if(back){ currentTab = back; renderNav(); } render(); return true; }
+  if(a==='ct-def-save'){ await ctDefSave(); return true; }
+  if(a==='ct-delete'){
+    var td = customTabFor(b.dataset.id), n2 = customRows(td.id).length;
+    if(!await uiConfirm('Supprimer l\'onglet « '+td.nom+' »'+(n2? ' et ses '+n2+' saisie(s)' : '')+' ?\n\nCette suppression est définitive (sauf restauration d\'une sauvegarde).', {okLabel:'Supprimer', danger:true})) return true;
+    DATA.customTabs = DATA.customTabs.filter(function(x){ return x.id!==td.id; }); delete DATA.customData[td.id];
+    await save('customTabs'); await save('customData');
+    logChange('Mes onglets', 'Suppression', td.nom);
+    renderNav(); render(); return true;
+  }
+  if(a==='ct-add-col'){ var cols = ctDraft.def.cols; cols.push({id:'c'+Date.now().toString(36), label:'', type:'texte'}); render(); return true; }
+  if(a==='ct-add-q'){ ctDraft.def.questions.push({id:'q'+Date.now().toString(36), texte:''}); render(); var qs = document.querySelectorAll('[data-cf^="def.questions."]'); if(qs.length) qs[qs.length-1].focus(); return true; }
+  if(a==='ct-del'){ var arr = ctGet(b.dataset.path); arr.splice(Number(b.dataset.i),1); render(); return true; }
+  if(a==='ct-move'){ var arr2 = ctGet(b.dataset.path), i = Number(b.dataset.i), j = i+Number(b.dataset.dir); var tmp = arr2[i]; arr2[i] = arr2[j]; arr2[j] = tmp; render(); return true; }
+  if(a==='ct-row-new'){ ctDraft = {kind:'row', tab:t.id, rowId:null, v:{}}; render(); return true; }
+  if(a==='ct-row-edit'){ var r = customRows(t.id).filter(function(x){ return x.id===b.dataset.id; })[0]; ctDraft = {kind:'row', tab:t.id, rowId:r.id, v:cfgClone(r.v||{})}; render(); window.scrollTo(0,0); return true; }
+  if(a==='ct-row-cancel'){ ctDraft = null; render(); return true; }
+  if(a==='ct-row-save'){ await ctRowSave(); return true; }
+  if(a==='ct-row-del'){
+    if(!await uiConfirm('Supprimer cette saisie ?', {okLabel:'Supprimer', danger:true})) return true;
+    DATA.customData[t.id] = customRows(t.id).filter(function(x){ return x.id!==b.dataset.id; });
+    await save('customData'); logChange(t.nom, 'Suppression', ''); render(); return true;
+  }
+  if(a==='ct-audit-new'){ ctDraft = {kind:'audit', tab:t.id, date:todayStr(), ligne:secteurLines()[0], auditeur:currentUser? currentUser.displayName : '', rep:{}, remarque:''}; render(); return true; }
+  if(a==='ct-rep'){ ctDraft.rep[b.dataset.q] = b.dataset.v; render(); return true; }
+  if(a==='ct-audit-save'){ await ctAuditSave(); return true; }
+  if(a==='ct-xlsx'){ await ctExportXlsx(); return true; }
+  if(a==='ct-print'){ window.print(); return true; }
+  return false;
+}
+document.addEventListener('input', function(e){
+  var t = e.target; if(!t) return;
+  if(t.id==='ct-search'){ ctSearch[currentTab] = t.value; render(); var s = document.getElementById('ct-search'); if(s){ s.focus(); try{ s.setSelectionRange(t.value.length, t.value.length); }catch(x){} } return; }
+  var el = t.closest && t.closest('[data-cf]');
+  if(el && ctDraft && el.type!=='checkbox') ctSet(el.dataset.cf, el.value);
+});
+document.addEventListener('change', function(e){
+  var t = e.target; if(!t) return;
+  if(t.dataset && t.dataset.cfBool && ctDraft){ ctSet(t.dataset.cfBool, t.checked); render(); return; }
+  if(t.matches && t.matches('select[data-cf]') && ctDraft){ ctSet(t.dataset.cf, t.value); if(/\.type$|^def\.freq$/.test(t.dataset.cf)) render(); return; }
+  if(t.classList && t.classList.contains('ct-filter')){ (ctFilter[currentTab] = ctFilter[currentTab]||{})[t.dataset.col] = t.value; render(); return; }
+  if(t.classList && t.classList.contains('ct-ind-in')){ ctIndSave(t); return; }
+  if(t.id==='ct-ind-m' || t.id==='ct-ind-y'){ var p = ctIndPeriod[currentTab]; if(t.id==='ct-ind-m') p.m = Number(t.value); else p.y = Number(t.value)||p.y; render(); return; }
+});
+
+// ==================== AIDE « ? » ====================
+// Un bouton rond en bas à droite ouvre l'aide de l'onglet affiché : à quoi il sert, comment s'en servir,
+// questions fréquentes. Une recherche parcourt toute l'aide.
+var HELP = [
+  {id:'debut', titre:'Premiers pas', quoi:'L\'outil rassemble le suivi qualité de votre secteur : production et défauts (CHOKKO), audits, actions, formations, prison qualité, métrologie. Chaque technicien voit ses secteurs ; l\'administrateur voit tout.',
+    etapes:['Choisissez votre secteur en haut du menu (si vous en avez plusieurs).', 'Ouvrez « Configurer le secteur » dans Réglages pour régler lignes, onglets, postes, objectifs, références…', 'Saisissez au fil de l\'eau dans chaque onglet : le tableau de bord se remplit tout seul.'],
+    faq:[['Mes saisies sont-elles enregistrées ?', 'Oui, dès que vous validez une saisie. Les données sont partagées : un collègue connecté voit vos modifications en quelques secondes.'],
+      ['Deux personnes modifient en même temps, que se passe-t-il ?', 'Les modifications des deux personnes sont fusionnées. Si vous modifiez exactement la même valeur, c\'est la dernière saisie qui est gardée.'],
+      ['Je ne vois pas un onglet dont j\'ai besoin.', 'Il n\'est pas activé pour votre secteur (« Configurer le secteur », étape 1) ou votre profil n\'y a pas accès (à demander à l\'administrateur).'],
+      ['Comment créer mon propre onglet ?', 'Dans le menu Réglages, « Mes onglets » : choisissez un tableau de suivi, une checklist / audit ou un indicateur chiffré, puis ses colonnes ou ses questions.']]},
+  {id:'dashboard', tab:'dashboard', titre:'Tableau de bord', quoi:'La vue d\'ensemble du secteur : score de conformité, retards, indicateurs. Rien n\'est à saisir ici : tout vient des autres onglets.',
+    etapes:['Lisez le score de conformité et son détail par module.', 'Cliquez sur une carte ou une alerte pour ouvrir l\'onglet concerné.', '« Rapport mensuel » prépare la synthèse du mois à imprimer.', '« Personnaliser mon tableau de bord » réorganise vos cartes (MCU).'],
+    faq:[['Comment est calculé le score ?', 'C\'est la moyenne des modules comptés (propreté, métrologie, CHOKKO, actions…). Le bouton de réglage du score indique les modules pris en compte.'],
+      ['Comment changer les seuils vert / orange / rouge ?', 'Dans « Configurer le secteur », étape « Tableau de bord » : seuils « attention » et « danger » du secteur.'],
+      ['Une carte ne m\'intéresse pas.', 'Masquez-la pour tout le secteur dans « Configurer le secteur » > « Tableau de bord ».']]},
+  {id:'chokko', tab:'chokko', titre:'Suivi CHOKKO', quoi:'Le suivi quotidien de la production et des non-conformités par poste, par équipe et par ligne, avec le coût rebut et le suivi des défauts.',
+    etapes:['Choisissez la ligne et le mois.', '« Saisie », affichage « Par jour » : saisissez la production de chaque équipe et le nombre de défauts par poste. Le CHOKKO (% de pièces bonnes) se calcule seul.', 'Le bouton + à côté d\'un poste crée une action CHOKKO liée à ce poste.', 'Affichage « Par semaine » : synthèse hebdomadaire, mêmes couleurs que l\'affichage par jour.', '« Suivi des défauts » : trois graphiques de défauts au choix, sur la période voulue.', '« Coût rebut » : montants par code défaut, coût par pièce, Pareto. Bouton d\'impression A3.', '🖨️ Imprimer : CHOKKO journalier, hebdomadaire, puis coût rebut et actions.'],
+    faq:[['Pourquoi une case est orange ?', 'Le CHOKKO est sous l\'objectif de la ligne mais dans la marge. En rouge, il est sous la marge.'],
+      ['Comment ajouter ou renommer un poste ?', 'Bouton ⚙️ « Gérer les postes », ou « Configurer le secteur » > CHOKKO > Postes et défauts.'],
+      ['Comment changer l\'objectif ?', 'Le ✎ à côté de l\'objectif, ou « Configurer le secteur » > CHOKKO.'],
+      ['Mes équipes ne sont pas A, B, C ou D.', '« Configurer le secteur » > CHOKKO > « Équipes propres à ce secteur ».'],
+      ['Les chiffres sont-ils arrondis ?', 'Non, ils sont tronqués à deux décimales : 98,789 % s\'affiche 98,78 %.']]},
+  {id:'proprete', tab:'proprete', titre:'Propreté', quoi:'Les audits propreté par ligne et leurs résultats, l\'entretien des équipements et, pour MCU, la contamination, les relevés particules et les relevés des bains.',
+    etapes:['Sous-onglet « Audit » : choisissez la ligne, cochez OK / NG pour chaque critère. Chaque NG crée une action.', '« Résultats » : score mensuel par ligne et évolution.', '« Grille » : créez ou modifiez les critères audités sur chaque ligne.', '« Entretien des équipements » : date du dernier entretien, prochaine échéance (bouton Modifier pour corriger une date).'],
+    faq:[['Une ligne n\'a pas de grille.', 'Créez-la dans le sous-onglet Grille ou dans « Configurer le secteur » > Propreté. Vous pouvez copier la grille d\'une autre ligne.'],
+      ['Comment est calculé le score d\'un audit ?', 'Critères OK / critères audités, tronqué (jamais arrondi au-dessus).']]},
+  {id:'perf', tab:'perf', titre:'Audits de perf', quoi:'Le résultat des audits de performance par ligne, mois par mois, et l\'avancement des audits de tous vos secteurs.',
+    etapes:['« + Saisir un audit de perf » : ligne, mois, puis le résultat en % ou les réponses aux questions si votre secteur en a.', 'Le tableau annuel colore chaque résultat selon les seuils.', '« Imprimer » dans l\'avancement : la liste A4 de ce qui manque, pour le responsable qualité.'],
+    faq:[['Comment ajouter des questions à l\'audit ?', '« Configurer le secteur » > Audits de perf. Chaque question est notée Conforme / Non conforme / Sans objet ; le résultat se calcule seul.'],
+      ['Nos audits sont trimestriels.', 'Réglez la fréquence dans « Configurer le secteur » > Audits de perf : l\'avancement et les alertes suivent.'],
+      ['Comment supprimer un résultat ?', 'Cliquez sur la case du tableau annuel.']]},
+  {id:'metro', tab:'metro', titre:'Métrologie', quoi:'La liste des instruments de mesure avec leur date de validité.',
+    etapes:['Ajoutez un instrument : désignation, ligne, lieu, n° de moyen, échéance, pièce jointe (PV).', 'Le statut passe en orange avant l\'échéance et en rouge une fois dépassée.', 'Export CSV pour la traçabilité.'],
+    faq:[['Où modifier un instrument ?', 'Directement dans la liste de l\'onglet.']]},
+  {id:'actions', tab:'actions', titre:'Plan d\'actions', quoi:'Toutes les actions du secteur, de leur création à la vérification d\'efficacité.',
+    etapes:['Une action naît d\'un défaut CHOKKO, d\'un NG d\'audit, d\'une contamination… ou d\'une saisie directe.', 'Renseignez responsable, échéance, puis passez-la en « Réalisée ».', 'Une date de vérification d\'efficacité est alors proposée ; une fois vérifiée, l\'action est close.'],
+    faq:[['Quand une action est-elle en retard ?', 'Échéance dépassée sans réalisation, ou vérification d\'efficacité dépassée.'],
+      ['Changer le délai de vérification ?', '« Configurer le secteur » > Actions et planning.'],
+      ['Renommer les statuts ?', 'Administrateur : « Configurer le secteur » > Réglages communs.']]},
+  {id:'pareto', tab:'pareto', titre:'Analyses Pareto', quoi:'Les 20 % de causes qui font 80 % des problèmes : défauts CHOKKO, coût rebut, prison, actions, propreté.',
+    etapes:['Choisissez la source et la période.', 'Les barres foncées forment le groupe A (80 % du total), la courbe le cumul.'],
+    faq:[['Une source n\'apparaît pas.', 'L\'onglet correspondant n\'est pas activé pour votre secteur.']]},
+  {id:'planning', tab:'planning', titre:'Planning échéances', quoi:'Les audits et relevés à faire, avec leur date et leur responsable.',
+    etapes:['Ajoutez une échéance : type, ligne, date, responsable.', 'Les échéances dépassées remontent sur le tableau de bord.'],
+    faq:[['Ajouter un type d\'échéance ?', '« Configurer le secteur » > Actions et planning > Types d\'échéances.']]},
+  {id:'prison', tab:'prison', titre:'Prison qualité', quoi:'Les pièces bloquées du secteur : par défaut, référence et état, avec la zone de stockage, les sorties et les chantiers de remise en état.',
+    etapes:['« + Nouveau défaut » : le défaut, puis une ligne par référence avec les quantités par état (complet, sans capot…).', 'Chaque sortie (rebut, réintroduction…) est tracée.', 'PDF : synthèse au format de la feuille papier. Excel blocage SAP : composants à bloquer.', 'Chantiers : fiche de remise en état (lieux, risques, HSE).'],
+    faq:[['L\'export SAP liste une pièce « inconnue ».', 'Sa référence n\'est pas décrite : ajoutez-la avec ses composants dans « Configurer le secteur » > Prison qualité.'],
+      ['Pourquoi le capot n\'est pas compté pour une pièce « sans capot » ?', 'Les composants absents par état se règlent dans « Configurer le secteur » > Prison qualité.']]},
+  {id:'esd', tab:'esd', titre:'Formations ESD', quoi:'Qui est formé à l\'ESD et quand renouveler.',
+    etapes:['Ajoutez une personne et sa date de formation : l\'échéance se calcule.', 'Quatre compteurs : expirées, expire ce mois, à renouveler, à jour.', 'Renouveler = saisir la nouvelle date avec Modifier.'],
+    faq:[['Changer la durée de validité ?', '« Configurer le secteur » > Formations.']]},
+  {id:'cicl', tab:'cicl', titre:'Formations CI/CL', quoi:'Les habilitations par poste et par référence (MCU).',
+    etapes:['Récapitulatif par ligne, puis détail par référence et par poste.', 'Une formation groupée applique la même date à plusieurs postes.'],
+    faq:[['Ajouter une référence ou un poste ?', 'Administrateur : « Configurer le secteur » > Formations > Postes CI/CL.']]},
+  {id:'formations', tab:'formations', titre:'Formations SREM', quoi:'Les formations SREM du secteur et leurs échéances.',
+    etapes:['Ajoutez une personne et sa date de formation.', 'Tri « en retard d\'abord », recherche, export PDF.'],
+    faq:[['Changer la durée de validité ?', '« Configurer le secteur » > Formations.']]},
+  {id:'bibliotheque', tab:'bibliotheque', titre:'Bibliothèque', quoi:'Les liens vers les documents utiles du secteur (procédures, modes opératoires…).', etapes:['Ajoutez un lien avec son titre ; il s\'ouvre d\'un clic.'], faq:[]},
+  {id:'archives', tab:'archives', titre:'Archives', quoi:'Les exports datés, le rapport mensuel et l\'historique des modifications.',
+    etapes:['Exportez un module en CSV pour la traçabilité.', 'Retrouvez qui a modifié quoi dans l\'historique.'],
+    faq:[['Et les sauvegardes ?', 'Administrateur : Paramètres > Sauvegardes.']]},
+  {id:'assistant', tab:'assistant', titre:'Configurer le secteur', quoi:'Tout ce qui se règle pour un secteur, étape par étape, sans toucher au code.',
+    etapes:['Choisissez le secteur (si vous en avez plusieurs).', 'Parcourez les étapes : rien n\'est enregistré avant « Enregistrer » ou « Enregistrer et continuer ».', 'Les pastilles orange signalent ce qui reste à compléter.', 'Terminez par « Valider la configuration » dans le récapitulatif.'],
+    faq:[['Pourquoi certaines étapes n\'apparaissent pas ?', 'Elles suivent les onglets cochés à l\'étape 1.'],
+      ['Qu\'est-ce que « Réglages communs » ?', 'Les réglages valables pour tous les secteurs, réservés à l\'administrateur.']]},
+  {id:'mesonglets', tab:'mesonglets', titre:'Mes onglets', quoi:'Créez vos propres onglets pour votre secteur, sans passer par un développeur.',
+    etapes:['« + Nouvel onglet » : choisissez le type.', 'Tableau de suivi : vos colonnes (texte, nombre, date, liste, oui/non, personne). Une colonne date peut servir d\'échéance avec alerte.', 'Checklist / audit : vos questions ; chaque audit donne un score par ligne.', 'Indicateur chiffré : une valeur par jour, semaine ou mois, avec objectif et graphique.', 'L\'onglet apparaît dans le menu, groupe « Mes onglets ».'],
+    faq:[['Qui voit mon onglet ?', 'Toutes les personnes de votre secteur.'],
+      ['Puis-je modifier les colonnes après coup ?', 'Oui, avec « Modifier l\'onglet ». Une colonne supprimée garde ses valeurs passées en mémoire mais ne s\'affiche plus.']]},
+  {id:'parametres', tab:'parametres', titre:'Paramètres', quoi:'Réservé à l\'administrateur : comptes et profils, secteurs, sauvegardes et apparence.', etapes:['Comptes : créer un compte, choisir son profil et ses secteurs.', 'Sauvegardes : télécharger ou restaurer une sauvegarde.'], faq:[]}
+];
+var helpOpen = false, helpQuery = '';
+function helpEntryForTab(tab){ return HELP.filter(function(h){ return h.tab===tab; })[0] || (customTabFor(tab) ? HELP.filter(function(h){ return h.id==='mesonglets'; })[0] : null); }
+function helpEntryHtml(h, open){
+  return '<details class="help-entry"'+(open?' open':'')+'><summary>'+esc(h.titre)+'</summary>'+
+    '<p>'+esc(h.quoi)+'</p>'+
+    (h.etapes && h.etapes.length? '<div class="help-h">Comment faire</div><ol>'+h.etapes.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ol>' : '')+
+    (h.faq && h.faq.length? '<div class="help-h">Questions fréquentes</div>'+h.faq.map(function(f){ return '<div class="help-faq"><b>'+esc(f[0])+'</b><div>'+esc(f[1])+'</div></div>'; }).join('') : '')+
+  '</details>';
+}
+function helpPanelHtml(){
+  var cur = helpEntryForTab(currentTab), ct = customTabFor(currentTab);
+  var q = helpQuery.trim().toLowerCase();
+  var h = '<div class="help-head"><b>Aide</b><button class="btn small" data-help="close" title="Fermer">✕</button></div>'+
+    '<input type="search" id="help-search" placeholder="Rechercher dans l\'aide (ex. objectif, équipe, SAP)" value="'+esc(helpQuery)+'">';
+  if(q){
+    var words = q.split(/\s+/).filter(Boolean);
+    var hits = HELP.filter(function(e){ var txt = (e.titre+' '+e.quoi+' '+(e.etapes||[]).join(' ')+' '+(e.faq||[]).map(function(f){ return f.join(' '); }).join(' ')).toLowerCase(); return words.every(function(w){ return txt.indexOf(w)>=0; }); });
+    h += '<div class="help-body">'+(hits.length? hits.map(function(e){ return helpEntryHtml(e, true); }).join('') : '<p class="tiny">Rien trouvé. Essayez un autre mot.</p>')+'</div>';
+  } else {
+    h += '<div class="help-body">';
+    if(ct) h += '<div class="help-cur">Onglet « '+esc(ct.nom)+' »</div><p class="tiny" style="margin:0 0 8px;">'+esc(ct.description || customTypeLabel(ct.type))+'</p>';
+    if(cur) h += helpEntryHtml(cur, true);
+    h += '<div class="help-h" style="margin-top:14px;">Autres sujets</div>'+HELP.filter(function(e){ return e!==cur && (!e.tab || e.tab==='mesonglets' || tabAllowedForHelp(e.tab)); }).map(function(e){ return helpEntryHtml(e, false); }).join('');
+    h += '</div>';
+  }
+  return h;
+}
+function tabAllowedForHelp(tab){
+  if(tab==='assistant') return true;
+  if(tab==='parametres') return isAdminUser();
+  return secteurTabs().indexOf(tab)>=0 || tab==='dashboard';
+}
+function helpRender(){
+  var btn = document.getElementById('help-btn');
+  if(!currentUser){ if(btn) btn.remove(); var p0 = document.getElementById('help-panel'); if(p0) p0.remove(); return; }
+  if(!btn){ btn = document.createElement('button'); btn.id = 'help-btn'; btn.className = 'help-btn'; btn.type = 'button'; btn.title = 'Aide sur cet onglet'; btn.textContent = '?'; btn.setAttribute('data-help','toggle'); document.body.appendChild(btn); }
+  var p = document.getElementById('help-panel');
+  if(!helpOpen){ if(p) p.remove(); btn.classList.remove('on'); return; }
+  btn.classList.add('on');
+  if(!p){ p = document.createElement('aside'); p.id = 'help-panel'; p.className = 'help-panel'; document.body.appendChild(p); }
+  p.innerHTML = helpPanelHtml();
+}
+document.addEventListener('click', function(e){
+  var b = e.target.closest && e.target.closest('[data-help]');
+  if(!b) return;
+  var a = b.getAttribute('data-help');
+  if(a==='toggle'){ helpOpen = !helpOpen; helpQuery = ''; helpRender(); if(helpOpen){ var s = document.getElementById('help-search'); if(s) s.focus(); } }
+  if(a==='close'){ helpOpen = false; helpRender(); }
+});
+document.addEventListener('input', function(e){
+  if(e.target && e.target.id==='help-search'){ helpQuery = e.target.value; var pos = e.target.selectionStart; helpRender(); var s = document.getElementById('help-search'); if(s){ s.focus(); try{ s.setSelectionRange(pos,pos); }catch(x){} } }
+});
+document.addEventListener('keydown', function(e){ if(e.key==='Escape' && helpOpen){ helpOpen = false; helpRender(); } });
 
 // ==================== PARAMÈTRES : COMPTES, SECTEURS, SAUVEGARDES, APPARENCE ====================
 var psetSub = 'comptes';
@@ -10425,6 +11129,7 @@ async function handleParamClick(e){
 
 function render(){
   applyAppConfig();
+  applySecteurConfig();
   if(currentTab==='ateq'){ currentTab = 'chokko'; chokkoView = 'defauts'; }
   if(currentTab==='comptes'){ currentTab = 'parametres'; psetSub = 'comptes'; }
   updateHeaderSubtitle();
@@ -10439,10 +11144,12 @@ function render(){
   }
   // Préserver la position de défilement des tableaux larges et des fenêtres (sinon retour à gauche à chaque mise à jour)
   var scrollSnap = captureScrollPositions();
-  var fn = RENDERERS[currentTab] || RENDERERS.dashboard;
+  var fn = (String(currentTab).indexOf('ct_')===0 ? RENDERERS.__custom : RENDERERS[currentTab]) || RENDERERS.dashboard;
   view.innerHTML = fn() + (actionDetailId ? actionDetailModalHtml() : '') + (czModal ? czModalHtml() : '');
   try{ hydrateBlobThumbs(); }catch(e){}
   try{ czApplyTexts(view); }catch(e){ console.error('textes', e); }
+  try{ helpRender(); }catch(e){ console.error('aide', e); }
+  if(String(currentTab).indexOf('ct_')===0){ try{ ctRenderIndChart(); }catch(e){} }
   restoreScrollPositions(scrollSnap);
   if(focusInfo){
     var el = document.getElementById(focusInfo.id);
@@ -10856,9 +11563,11 @@ function computePriorities(){
       var who = (a.responsable||'').trim() || 'sans responsable';
       if(isActionLate(a)) add('actions', 'danger', a.description||'Action', who+(a.ligne? ' · '+a.ligne : '')+(a.origine? ' · '+a.origine : ''), a.echeance, {id:a.id});
       else if(isVerifLate(a)) add('actions', 'danger', 'Vérification d\'efficacité : '+(a.description||''), who+' · vérif. prévue', a.verifPrevue, {id:a.id});
-      else if(isActionOpen(a) && !isActionDone(a) && a.echeance && a.echeance>=today && daysBetween(today, a.echeance)<=(Number(cfg('prioDelais').actionsJours)||7)) add('actions', 'warn', a.description||'Action', who+(a.ligne? ' · '+a.ligne : ''), a.echeance, {id:a.id});
+      else if(isActionOpen(a) && !isActionDone(a) && a.echeance && a.echeance>=today && daysBetween(today, a.echeance)<=alerteActionsJours()) add('actions', 'warn', a.description||'Action', who+(a.ligne? ' · '+a.ligne : ''), a.echeance, {id:a.id});
     });
   }
+  // --- Mes onglets : échéances des tableaux de suivi
+  try{ customPriorityItems(add); }catch(e){}
   // --- Métrologie
   if(has('metro')){
     bySecteur(DATA.metro).forEach(function(e){
@@ -10963,7 +11672,7 @@ function prioritiesForSecteur(sid){
   try{ currentSecteur = sid; return computePriorities(); }
   finally{ currentSecteur = saved; }
 }
-function prioModuleMeta(id){ return PRIO_MODULES.filter(function(m){ return m.id===id; })[0] || {id:id, label:id, tab:'dashboard'}; }
+function prioModuleMeta(id){ var ctm = customTabFor(id); if(ctm) return {id:id, label:ctm.nom, tab:ctm.id}; return PRIO_MODULES.filter(function(m){ return m.id===id; })[0] || {id:id, label:id, tab:'dashboard'}; }
 function renderPrioritiesDashboard(){
   var items = computePriorities();
   var late = items.filter(function(i){ return i.level==='danger'; }), soon = items.filter(function(i){ return i.level==='warn'; });
@@ -12471,13 +13180,15 @@ var SVG_ICONS = {
   comptes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
   production: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>',
   qualite: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 6.5 7 1-5 5 1.2 7L12 18l-6.2 3.5L7 14.5l-5-5 7-1z"/></svg>',
+  mesonglets: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>',
+  perso: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 6.5 7 1-5 5 1.2 7L12 18l-6.2 3.5L7 14.5l-5-5 7-1z"/></svg>',
   assistant: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>',
   admin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
 };
 var EMOJI_ICONS = {
   dashboard:'📊', proprete:'🧼', metro:'📏', ateq:'⚠️', chokko:'🏭', perf:'📈',
   actions:'✅', pareto:'📶', planning:'🗓️', prison:'🔒', bibliotheque:'📚', archives:'🗄️',
-  esd:'🎓', cicl:'🔧', formations:'🎓', comptes:'⚙️', parametres:'🛠️', assistant:'🧭',
+  esd:'🎓', cicl:'🔧', formations:'🎓', comptes:'⚙️', parametres:'🛠️', assistant:'🧭', mesonglets:'➕', perso:'⭐',
   production:'📦', qualite:'📋', admin:'⚙️'
 };
 function currentIconSet(){ return (DATA.uiSettings && DATA.uiSettings.iconStyle==='emoji') ? EMOJI_ICONS : SVG_ICONS; }
@@ -12485,11 +13196,14 @@ var TAB_GROUPS_DEF = [
   {id:'production', label:'Production', tabs:['proprete','metro','chokko','perf']},
   {id:'qualite',    label:'Qualité',    tabs:['actions','pareto','planning','prison','bibliotheque','archives']},
   {id:'formations', label:'Formations', tabs:['esd','cicl','formations']},
-  {id:'admin',      label:'Réglages',   tabs:['assistant','parametres']}
+  {id:'admin',      label:'Réglages',   tabs:['assistant','mesonglets','parametres']}
 ];
 Object.defineProperty(window, 'TAB_GROUPS', {get:function(){
   var icons = currentIconSet();
-  return TAB_GROUPS_DEF.map(function(g){ return {id:g.id, label:g.label, icon:icons[g.id], tabs:g.tabs}; });
+  var gs = TAB_GROUPS_DEF.map(function(g){ return {id:g.id, label:g.label, icon:icons[g.id], tabs:g.tabs}; });
+  var perso = (typeof customTabsSect==='function' && currentUser) ? customTabsSect().map(function(t){ return t.id; }) : [];
+  if(perso.length) gs.splice(gs.length-1, 0, {id:'perso', label:'Mes onglets', icon:icons.perso||'', tabs:perso});
+  return gs;
 }});
 Object.defineProperty(window, 'TAB_ICONS', {get:function(){ return currentIconSet(); }});
 var sidebarCollapsed = false;
@@ -12598,15 +13312,18 @@ function renderNav(){
   // le menu était calculé sur le secteur par défaut MCU)
   var us0 = userSecteurs();
   if(us0.length && us0.indexOf(currentSecteur)<0){ currentSecteur = us0[0]; }
+  applySecteurConfig();
   var sTabs = secteurTabs();
   var allowedTabsIds = ALL_TABS.filter(function(tb){ return sTabs.indexOf(tb[0])>=0 && tabAllowed(tb[0]); }).map(function(tb){return tb[0];});
   var isAdmin = currentUser && currentUser.roleId===ADMIN_ROLE_ID;
   if(currentUser) allowedTabsIds.push('assistant');   // chacun configure ses secteurs
+  if(currentUser){ allowedTabsIds.push('mesonglets'); customTabsSect().forEach(function(ct){ allowedTabsIds.push(ct.id); }); }
   if(isAdmin){ allowedTabsIds.push('parametres'); }   // comptes, secteurs, sauvegardes : administrateur
 
   function tabLabel(id){
     var found = ALL_TABS.find(function(tb){return tb[0]===id;});
-    return t('tab_'+id, found?found[1]:(id==='comptes'?'Comptes':id==='parametres'?'Paramètres':id==='assistant'?'Configurer le secteur':id));
+    var ctl = customTabFor(id); if(ctl) return ctl.nom;
+    return t('tab_'+id, found?found[1]:(id==='comptes'?'Comptes':id==='parametres'?'Paramètres':id==='assistant'?'Configurer le secteur':id==='mesonglets'?'Gérer mes onglets':id));
   }
 
   var sidebar = document.getElementById('sidebar');
@@ -12642,7 +13359,7 @@ function renderNav(){
     html += '<div class="sidebar-group-items">';
     html += visibleTabs.map(function(tid){
       return '<button class="sidebar-item'+(currentTab===tid?' active':'')+'" data-tab="'+tid+'">'+
-        '<span class="sidebar-icon">'+(TAB_ICONS[tid]||'')+'</span><span class="sidebar-label-text">'+esc(tabLabel(tid))+'</span></button>';
+        '<span class="sidebar-icon">'+(TAB_ICONS[tid]||customTabIcon(tid))+'</span><span class="sidebar-label-text">'+esc(tabLabel(tid))+'</span></button>';
     }).join('');
     html += '</div></div>';
     if(hasActive) sidebarGroupsOpen[group.id] = true;
@@ -12668,6 +13385,7 @@ function renderUserbox(){
   box.innerHTML = '<div style="text-align:right;"><div class="uname">'+esc(currentUser.displayName)+'</div><div class="urole">'+esc(role?role.name:'')+'</div></div><button class="btn small" data-action="logout">Déconnexion</button>';
 }
 function renderLoginOverlay(error){
+  try{ if(!currentUser){ helpOpen = false; var hb = document.getElementById('help-btn'); if(hb) hb.remove(); var hp = document.getElementById('help-panel'); if(hp) hp.remove(); } }catch(e){}
   var el = document.getElementById('login-overlay');
   var logoSrc = '';
   var existingLogo = document.querySelector('.sidebar-logo-full');
@@ -13718,6 +14436,7 @@ app.addEventListener('click', async function(e){
   if(e.target.closest('[data-action="close-contam-detail"]')){ openContamDetailId = null; render(); return; }
 
   if(await wzHandleClick(e)) return;
+  if(await ctHandleClick(e)) return;
   var czB = e.target.closest('[data-action^="cz-"],[data-action^="pset-"]');
   if(czB){
     var ca = czB.dataset.action;
