@@ -665,6 +665,55 @@ tr.chantier-row:hover td{background:var(--neutral-bg, #F4F2EE);}
 #def-print{display:none;}
 body.customize-on [data-action="chokko-manage-postes-open"], body.customize-on .chk-obj-edit, body.customize-on [data-action="propr-grid-open"], body.customize-on [data-action="rebut-edit-codes"], body.customize-on .chokko-icon-btn[data-action="chokko-manage-postes-open"]{box-shadow:0 0 0 2px #E8B25F; border-radius:6px;}
 .cz-modal{max-height:88vh; overflow:auto;}
+div.entryform.cols3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+@media (max-width:760px){div.entryform.cols3{grid-template-columns:1fr;}}
+.pf-q-table select{min-width:130px;}
+/* ---- Assistant de configuration ---- */
+.wz-top{display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; margin-bottom:16px;}
+.wz-top .tiny{max-width:620px; margin-top:4px;}
+.wz-body{display:grid; grid-template-columns:230px minmax(0,1fr); gap:20px; align-items:start;}
+.wz-steps{display:flex; flex-direction:column; gap:4px; position:sticky; top:12px;}
+.wz-steps button{display:flex; align-items:center; gap:10px; text-align:left; padding:9px 10px; border:1px solid transparent; border-radius:var(--radius-sm); background:none; cursor:pointer; font:inherit; font-size:13px; color:var(--text-muted);}
+.wz-steps button:hover{background:var(--accent-bg, #EEF3F2);}
+.wz-steps button.active{background:#fff; border-color:var(--border); color:var(--text); font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.wz-num-pill{flex:0 0 24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; background:var(--neutral-bg, #EEE); color:var(--text-muted);}
+.wz-num-pill.cur{background:var(--accent); color:#fff;}
+.wz-num-pill.warn{background:var(--warn-bg, #FFF1DC); color:var(--warn, #B9792A);}
+.wz-step-l{flex:1;}
+.wz-dot{width:7px; height:7px; border-radius:50%; background:var(--warn, #D9A35B);}
+.wz-main{background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:20px 22px; min-width:0;}
+.wz-pos{color:var(--text-faint); margin-bottom:4px;}
+.wz-title{font-size:19px; margin:0 0 6px;}
+.wz-intro{color:var(--text-muted); font-size:13px; margin:0 0 16px; max-width:720px; line-height:1.45;}
+.wz-block{border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px; margin:0 0 14px; background:#FCFBF8;}
+.wz-block-h{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;}
+.wz-list{display:flex; flex-direction:column; gap:6px; margin-bottom:8px;}
+.wz-row{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+.wz-n{min-width:22px; font-family:var(--mono); font-size:12px; color:var(--text-faint); text-align:right;}
+.wz-checks{display:grid; grid-template-columns:repeat(auto-fill, minmax(210px,1fr)); gap:8px;}
+.wz-check{display:flex; gap:8px; align-items:flex-start; padding:9px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:#fff; cursor:pointer; font-size:13px;}
+.wz-check.on{border-color:var(--accent); background:var(--accent-bg, #EEF3F2);}
+.wz-check input{margin-top:2px;}
+.wz-check span{display:flex; flex-direction:column; gap:2px;}
+.wz-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:12px;}
+.wz-table td, .wz-table th{vertical-align:middle;}
+.wz-table input{min-width:0; width:100%; box-sizing:border-box;}
+.wz-table input.wz-num, .wz-grid input.wz-num{max-width:120px;}
+.wz-table tr.wz-open td{background:#FFF9EF;}
+.wz-warn-txt{color:var(--warn, #B9792A); font-weight:600;}
+.wz-nav{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:20px; padding-top:14px; border-top:1px solid var(--border);}
+.wz-nav-r{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+.wz-dirty{color:var(--warn, #B9792A);}
+.wz-communs{display:flex; flex-direction:column; gap:8px;}
+.wz-commun{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:#FCFBF8;}
+.wz-recap{display:flex; flex-direction:column; gap:8px;}
+.wz-recap-row{display:flex; gap:12px; align-items:flex-start; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm);}
+.wz-recap-row.warn{border-color:#E8C58A; background:#FFF9EF;}
+.wz-recap-ic{flex:0 0 24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; background:var(--ok-bg, #E3F2E8); color:var(--ok, #2E7D4F);}
+.wz-recap-row.warn .wz-recap-ic{background:#FCE3BF; color:#9A5F12;}
+.wz-issues{margin:4px 0 0; padding-left:18px; font-size:12px; color:#7A5418;}
+.wz-banner{display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; padding:12px 16px; margin-bottom:16px; border:1px solid #E8C58A; background:#FFF9EF; border-radius:var(--radius);}
+@media (max-width:760px){ .wz-body{grid-template-columns:1fr;} .wz-steps{position:static; flex-direction:row; overflow-x:auto; padding-bottom:4px;} .wz-steps button{flex:0 0 auto;} .wz-step-l{white-space:nowrap;} .wz-main{padding:14px;} .wz-row{flex-wrap:nowrap;} .wz-row input, .wz-row select{min-width:0 !important; flex:1 1 auto; width:auto;} .wz-row select{flex:0 1 120px;} }
 .cz-pin, .cz-pin-row{display:none;}
 body.cz-admin .cz-pin{display:inline-flex; align-items:center; gap:4px; font:600 11px/1.2 inherit; font-family:inherit; padding:3px 8px; margin:0 0 0 8px; border:1.5px dashed #D9A35B; background:#FFF6E8; color:#6B4A1E; border-radius:999px; cursor:pointer; vertical-align:middle; text-transform:none; letter-spacing:0;}
 body.cz-admin .cz-pin:hover{background:#FCEBD2;}
@@ -1007,7 +1056,6 @@ tr.releve-cur-week td:first-child{font-weight:700;}
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:14px;">
-        <button id="cz-toggle" class="btn small" type="button" title="Modifier les textes, listes, seuils et objectifs directement à l'écran">✏️ Modifier</button>
         <span id="sync-indicator"><span class="dot"></span>Enregistrement...</span>
         <div class="userbox" id="userbox"></div>
       </div>
@@ -1185,9 +1233,9 @@ var KEYS = {
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
   esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1',
-  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', chokkoPosteConfig:'mcu_chokko_poste_config_v1', bibliotheque:'app_bibliotheque_v1', prisonLots:'mcu_prison_lots_v1', prisonSnapshots:'mcu_prison_snapshots_v1', prisonChantiers:'mcu_prison_chantiers_v1', prisonMoves:'mcu_prison_moves_v1', rebutCouts:'mcu_rebut_couts_v1', rebutCodes:'mcu_rebut_codes_v1', actionsSnapshots:'mcu_actions_snapshots_v1', uiSettings:'app_ui_settings_v1', appConfig:'app_config_v1'
+  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', chokkoPosteConfig:'mcu_chokko_poste_config_v1', bibliotheque:'app_bibliotheque_v1', prisonLots:'mcu_prison_lots_v1', prisonSnapshots:'mcu_prison_snapshots_v1', prisonChantiers:'mcu_prison_chantiers_v1', prisonMoves:'mcu_prison_moves_v1', rebutCouts:'mcu_rebut_couts_v1', rebutCodes:'mcu_rebut_codes_v1', sapBom:'app_sap_bom_v1', actionsSnapshots:'mcu_actions_snapshots_v1', uiSettings:'app_ui_settings_v1', appConfig:'app_config_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, bibliotheque:[], prisonLots:[], prisonSnapshots:[], prisonChantiers:[], prisonMoves:[], rebutCouts:{}, rebutCodes:{}, actionsSnapshots:[], appConfig:{}, uiSettings:{sidebarColor:null, iconStyle:'svg'}};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, bibliotheque:[], prisonLots:[], prisonSnapshots:[], prisonChantiers:[], prisonMoves:[], rebutCouts:{}, rebutCodes:{}, sapBom:{}, actionsSnapshots:[], appConfig:{}, uiSettings:{sidebarColor:null, iconStyle:'svg'}};
 var RENDERERS = {};
 var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['pareto','Analyses Pareto'],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['prison','Prison qualité'],['bibliotheque','Bibliothèque'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
@@ -1861,7 +1909,7 @@ var BACKUP_LABELS = {metro:'Métrologie', planning:'Planning échéances', ateq:
   formations:'Formations SREM', postits:'Post-it', labelOverrides:'Libellés personnalisés', cicl:'Formations CI/CL', chokko:'Suivi CHOKKO',
   chokkoNotes:'Notes CHOKKO', ciclPersons:'Personnes CI/CL', chokkoColors:'Couleurs CHOKKO', chokkoHighlights:'Surlignages CHOKKO',
   chokkoRecentColors:'Couleurs récentes CHOKKO', chokkoPosteLabels:'Libellés postes CHOKKO', chokkoUnitCost:'Coût par pièce CHOKKO',
-  chokkoPosteConfig:'Postes CHOKKO', bibliotheque:'Bibliothèque', prisonLots:'Prison qualité', prisonSnapshots:'Prison qualité (historique)', prisonChantiers:'Prison qualité (chantiers)', prisonMoves:'Prison qualité (traçabilité des sorties)', rebutCouts:'Coût rebut (montants)', rebutCodes:'Coût rebut (codes défauts)',
+  chokkoPosteConfig:'Postes CHOKKO', bibliotheque:'Bibliothèque', prisonLots:'Prison qualité', prisonSnapshots:'Prison qualité (historique)', prisonChantiers:'Prison qualité (chantiers)', prisonMoves:'Prison qualité (traçabilité des sorties)', rebutCouts:'Coût rebut (montants)', rebutCodes:'Coût rebut (codes défauts)', sapBom:'Prison qualité (nomenclatures SAP)',
   actionsSnapshots:'Évolution des actions', uiSettings:'Réglages d\'affichage', appConfig:'Paramètres de l\'application'};
 var BACKUP_NO_DEFAULT_RESTORE = ['accounts','roles','uiSettings'];
 var backupIndexCache = null;
@@ -4789,11 +4837,19 @@ var esdFormOpen = false;
 var esdEditId = null;
 var esdSearch = '';
 
-function esdEcheance(p){ // date d'échéance = date formation + 1 an
-  if(!p.dateFormation) return null;
-  var d = new Date(p.dateFormation+'T00:00:00');
-  d.setFullYear(d.getFullYear()+1);
+// Durées de validité des formations, réglées par secteur dans l'assistant (12 mois et alerte à 60 jours par défaut)
+function formDurees(sid){ var s = getSecteur(sid||currentSecteur) || {}; var d = s.formDurees || {}; return {esd:Number(d.esd)||12, srem:Number(d.srem)||12, cicl:Number(d.cicl)||12, alerte:(d.alerte===0||Number(d.alerte))? Number(d.alerte) : 60}; }
+function formEcheanceMois(dateStr, mois){
+  if(!dateStr) return null;
+  var d = new Date(dateStr+'T00:00:00'), day = d.getDate();
+  d.setDate(1); d.setMonth(d.getMonth()+mois);
+  var last = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+  d.setDate(Math.min(day, last));
   return fmtISOLocal(d);
+}
+function formDureeTxt(mois){ return mois%12===0 ? (mois/12)+' an'+(mois>12?'s':'') : mois+' mois'; }
+function esdEcheance(p){ // date d'échéance = date formation + durée réglée pour le secteur (1 an par défaut)
+  return formEcheanceMois(p.dateFormation, formDurees(p.secteur||'MCU').esd);
 }
 function esdStatus(p){
   var ech = esdEcheance(p);
@@ -4804,7 +4860,7 @@ function esdStatus(p){
   if(ech < today) return {level:'danger', label:'Expirée'};
   if(echYYYYMM === curYYYYMM) return {level:'urgent', label:'Expire ce mois'};
   var d = daysBetween(today, ech);
-  if(d <= 60) return {level:'warn', label:'À renouveler'};
+  if(d <= formDurees(p.secteur||'MCU').alerte) return {level:'warn', label:'À renouveler'};
   return {level:'ok', label:'À jour'};
 }
 
@@ -4858,7 +4914,7 @@ RENDERERS.esd = function(){
   if(esdFormOpen) html += esdForm();
 
   html += '<div class="table-wrap"><table><thead><tr>'+
-    '<th>Nom</th><th>Dernière formation</th><th>Échéance (1 an)</th><th>Statut</th><th class="row-actions-noprint"></th>'+
+    '<th>Nom</th><th>Dernière formation</th><th>Échéance ('+formDureeTxt(formDurees('MCU').esd)+')</th><th>Statut</th><th class="row-actions-noprint"></th>'+
   '</tr></thead><tbody>';
 
   if(!filtered.length){
@@ -5015,19 +5071,14 @@ async function applyCiclTrainingForPerson(person, dateStr){
   return count;
 }
 
-function ciclEcheance(p){
-  if(!p.dateFormation) return null;
-  var d = new Date(p.dateFormation+'T00:00:00');
-  d.setFullYear(d.getFullYear()+1);
-  return fmtISOLocal(d);
-}
+function ciclEcheance(p){ return formEcheanceMois(p.dateFormation, formDurees(p.secteur||'MCU').cicl); }
 function ciclStatus(p){
   var ech = ciclEcheance(p);
   if(!ech) return {level:'neutral', label:'Sans date'};
   var today = todayStr();
   if(ech < today) return {level:'danger', label:'Expirée'};
   if(ech.slice(0,7) === today.slice(0,7)) return {level:'urgent', label:'Expire ce mois'};
-  if(daysBetween(today, ech) <= 60) return {level:'warn', label:'À renouveler'};
+  if(daysBetween(today, ech) <= formDurees(p.secteur||'MCU').alerte) return {level:'warn', label:'À renouveler'};
   return {level:'ok', label:'À jour'};
 }
 function ciclRecordsForRef(ref){
@@ -5271,7 +5322,7 @@ function ciclLigneView(ligne){
     if(!records.length){
       html += emptyState('Aucun régleur formé sur cette référence.');
     } else {
-      html += '<div class="table-wrap"><table><thead><tr><th>Poste</th><th>Nom</th><th>Dernière formation</th><th>Échéance (1 an)</th><th>Statut</th><th class="row-actions-noprint"></th></tr></thead><tbody>';
+      html += '<div class="table-wrap"><table><thead><tr><th>Poste</th><th>Nom</th><th>Dernière formation</th><th>Échéance ('+formDureeTxt(formDurees('MCU').cicl)+')</th><th>Statut</th><th class="row-actions-noprint"></th></tr></thead><tbody>';
       var prevPoste = null;
       html += records.map(function(p){
         if(ciclEditId===p.id){ prevPoste = p.poste; return ciclEditRow(p, ref); }
@@ -5452,19 +5503,39 @@ RENDERERS.perf = function(){
 };
 function perfForm(){
   var lines = secteurLines();
-  var today = new Date();
-  return '<div class="card" style="max-width:460px; margin-bottom:16px;">'+
-    '<div class="eyebrow" style="margin-bottom:10px;">Audit de perf - '+esc(currentSecteur)+'</div>'+
-    '<div class="entryform cols2">'+
-    '<label class="field">Ligne<select id="pf-ligne">'+lines.map(function(l){return '<option value="'+esc(l)+'">'+esc(l)+'</option>';}).join('')+'</select></label>'+
+  var today = new Date(), qs = perfQuestions();
+  var head = '<label class="field">Ligne<select id="pf-ligne">'+lines.map(function(l){return '<option value="'+esc(l)+'">'+esc(l)+'</option>';}).join('')+'</select></label>'+
     '<label class="field">Mois<select id="pf-mois">'+MONTHS_FR.map(function(m,i){return '<option value="'+i+'"'+(i===today.getMonth()?' selected':'')+'>'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>';}).join('')+'</select></label>'+
-    '<label class="field">Année<input type="number" id="pf-annee" value="'+perfYear+'"></label>'+
-    '<label class="field">Résultat (%)<input type="number" id="pf-pct" min="0" max="100" step="1"></label>'+
-    '</div>'+
+    '<label class="field">Année<input type="number" id="pf-annee" value="'+perfYear+'"></label>';
+  if(!qs.length){
+    return '<div class="card" style="max-width:460px; margin-bottom:16px;">'+
+      '<div class="eyebrow" style="margin-bottom:10px;">Audit de perf - '+esc(currentSecteur)+'</div>'+
+      '<div class="entryform cols2">'+head+'<label class="field">Résultat (%)<input type="number" id="pf-pct" min="0" max="100" step="1"></label></div>'+
+      '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="cancel-perf">Annuler</button><button class="btn primary" data-action="save-perf">Enregistrer</button></div></div>';
+  }
+  return '<div class="card" style="max-width:760px; margin-bottom:16px;">'+
+    '<div class="eyebrow" style="margin-bottom:10px;">Audit de perf - '+esc(currentSecteur)+' · '+qs.length+' question'+(qs.length>1?'s':'')+'</div>'+
+    '<div class="entryform cols3">'+head+'</div>'+
+    '<div class="table-wrap" style="margin-top:12px;"><table class="pf-q-table"><thead><tr><th style="width:36px;">N°</th><th>Question</th><th style="width:150px;">Réponse</th></tr></thead><tbody>'+
+    qs.map(function(q, i){
+      return '<tr><td>'+(i+1)+'</td><td>'+esc(q.texte)+'</td><td><select class="pf-q" data-i="'+i+'"><option value="">-</option><option value="ok">Conforme</option><option value="nok">Non conforme</option><option value="na">Sans objet</option></select></td></tr>';
+    }).join('')+'</tbody></table></div>'+
+    '<p class="tiny" style="margin-top:8px;">Résultat = réponses conformes / réponses conformes et non conformes (les « sans objet » ne comptent pas).</p>'+
     '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="cancel-perf">Annuler</button><button class="btn primary" data-action="save-perf">Enregistrer</button></div></div>';
 }
 async function handleSavePerf(){
-  var pct = document.getElementById('pf-pct').value;
+  var reponses = null, pct;
+  var qSel = document.querySelectorAll('.pf-q');
+  if(qSel.length){
+    var qs = perfQuestions(), ok = 0, nok = 0, vide = 0;
+    reponses = [];
+    Array.prototype.forEach.call(qSel, function(sel){ var q = qs[Number(sel.dataset.i)] || {}; reponses.push({texte:q.texte||'', rep:sel.value}); if(sel.value==='ok') ok++; else if(sel.value==='nok') nok++; else if(!sel.value) vide++; });
+    if(vide){ toast(vide+' question(s) sans réponse.', 'error'); return; }
+    if(!(ok+nok)){ toast('Toutes les réponses sont « sans objet » : aucun résultat calculable.', 'error'); return; }
+    pct = String(Math.floor(ok/(ok+nok)*10000)/100);
+  } else {
+    pct = document.getElementById('pf-pct').value;
+  }
   if(pct===''){ toast('Merci de saisir le résultat.', 'error'); return; }
   var ligne = document.getElementById('pf-ligne').value;
   var mois = Number(document.getElementById('pf-mois').value);
@@ -5472,8 +5543,11 @@ async function handleSavePerf(){
   var existing = bySecteur(DATA.perf).find(function(r){ return r.ligne===ligne && r.mois===mois && r.annee===annee; });
   if(existing){
     existing.resultatPct = parseFloat(pct);
+    if(reponses) existing.reponses = reponses;
   } else {
-    DATA.perf.push({id:uid('perf'), secteur:currentSecteur, ligne:ligne, mois:mois, annee:annee, resultatPct:parseFloat(pct)});
+    var rec = {id:uid('perf'), secteur:currentSecteur, ligne:ligne, mois:mois, annee:annee, resultatPct:parseFloat(pct)};
+    if(reponses) rec.reponses = reponses;
+    DATA.perf.push(rec);
   }
   await save('perf');
   logChange('Audits perf', 'Saisie', currentSecteur+' · '+ligne+' - '+MONTHS_FR[mois]+' : '+pct+'%');
@@ -5521,12 +5595,7 @@ function renderPerfChart(){
 var formationFormOpen = false;
 var formationEditId = null;
 var formationSearch = '';
-function formationEcheance(p){
-  if(!p.dateFormation) return null;
-  var d = new Date(p.dateFormation+'T00:00:00');
-  d.setFullYear(d.getFullYear()+1);
-  return fmtISOLocal(d);
-}
+function formationEcheance(p){ return formEcheanceMois(p.dateFormation, formDurees(p.secteur||currentSecteur).srem); }
 // ---------- PRISON QUALITE (stock de pièces bloquées) ----------
 var PRISON_QTY_COLS = [['complet','Complet'],['sansCapot','Sans capot'],['sansPcb','Sans PCB']];
 var prisonLotFormOpen = false; // false | 'new' | id du lot en modification
@@ -6194,10 +6263,25 @@ var SAP_BOM = (function(){
   add('SPEC B','162R SPEC B', c162('6800015738'));
   return B;
 })();
+// Nomenclatures par secteur : celles réglées dans l'assistant ; MCU repart de la liste d'origine tant que rien n'a été modifié
+function sapBomList(sid){
+  sid = sid || currentSecteur;
+  var c = DATA.sapBom && DATA.sapBom[sid];
+  if(Array.isArray(c)) return c;
+  return sid==='MCU' ? SAP_BOM : [];
+}
+function sapBomEditable(sid){
+  DATA.sapBom = DATA.sapBom || {};
+  if(!Array.isArray(DATA.sapBom[sid])) DATA.sapBom[sid] = cfgClone(sapBomList(sid));
+  return DATA.sapBom[sid];
+}
 // Réf. saisie en prison (« 18889 », « 19722 (SPEC B) », « SPEC A »…) -> entrée de nomenclature
-function sapBomFor(refSaisie){
+function sapBomFor(refSaisie, sid){
   var s = String(refSaisie||'').toUpperCase().trim();
   if(!s) return null;
+  var SAP_BOM = sapBomList(sid);
+  var exactRef = SAP_BOM.filter(function(b){ return String(b.ref).toUpperCase().trim()===s; })[0];
+  if(exactRef) return exactRef;
   var m = s.match(/\d{4,}/);
   if(m){
     var num = m[0].replace(/^0+/, '');
@@ -6209,14 +6293,14 @@ function sapBomFor(refSaisie){
   if(/SPEC\s*B\b/.test(s)) return SAP_BOM.filter(function(b){ return b.ref==='SPEC B'; })[0];
   return null;
 }
-function sapTypeLabel(t){ var f = SAP_COMP_TYPES.filter(function(x){ return x[0]===t; })[0]; return f ? f[1] : t; }
+function sapTypeLabel(t){ var f = SAP_COMP_TYPES.filter(function(x){ return x[0]===t; })[0]; return f ? f[1] : t; }   // un type libre garde son nom tel quel
 async function exportPrisonSapExcel(lots){
   if(typeof ExcelJS==='undefined'){ uiAlert('La librairie Excel n\'a pas pu être chargée (connexion internet requise). Réessayez.'); return; }
   var etats = PRISON_QTY_COLS;
   var detail = [], agg = {}, unknown = [];
   lots.forEach(function(lot){
     (lot.lignes||[]).forEach(function(l){
-      var bom = sapBomFor(l.ref);
+      var bom = sapBomFor(l.ref, lot.secteur||'MCU');
       etats.forEach(function(et){
         var q = Number(l[et[0]])||0; if(!q) return;
         if(!bom){ unknown.push({defaut:lot.defaut, ligne:l.ligne||'', ref:l.ref||'', etat:et[1], qty:q}); return; }
@@ -7080,7 +7164,7 @@ RENDERERS.formations = function(){
     var today = todayStr();
     if(ech < today) return {level:'danger', label:'Expirée'};
     if(ech.slice(0,7)===today.slice(0,7)) return {level:'urgent', label:'Expire ce mois'};
-    if(daysBetween(today, ech)<=60) return {level:'warn', label:'À renouveler'};
+    if(daysBetween(today, ech)<=formDurees(p.secteur||currentSecteur).alerte) return {level:'warn', label:'À renouveler'};
     return {level:'ok', label:'À jour'};
   }
   var expired = list.filter(function(p){ return fStatus(p).level==='danger'; }).length;
@@ -9604,8 +9688,7 @@ function paramDiversHtml(){ return pcJoin(['teams','bains']); }
 //    les listes, seuils et objectifs communs ont un bouton ✏️ à l'endroit où ils s'affichent ;
 //  - technicien : les réglages de ses lignes (postes et défauts CHOKKO, objectifs, codes rebut, grilles d'audit) sont encadrés.
 // Paramètres ne garde que les comptes, secteurs, sauvegardes et l'apparence.
-var customizeMode = false;
-try{ customizeMode = localStorage.getItem('cz_mode_v1')==='1'; }catch(e){}
+var customizeMode = false;   // ancien mode « ✏️ Modifier » : remplacé par l'assistant de configuration
 var czModal = null;   // {cards:[ids], keys, title}
 function isAdminUser(){ return !!(currentUser && currentUser.roleId===ADMIN_ROLE_ID); }
 function setCustomizeMode(on){
@@ -9790,6 +9873,423 @@ document.addEventListener('keydown', function(e){
   if(e.key==='Escape') czTxtPopClose();
 });
 
+// ==================== ASSISTANT DE CONFIGURATION DU SECTEUR ====================
+// Un parcours guidé, étape par étape, qui montre tout ce qui se règle pour un secteur :
+// secteur et onglets, CHOKKO, propreté, prison qualité (réf. ↔ composants SAP), formations, audits de perf,
+// tableau de bord, réglages communs (administrateur) et récapitulatif.
+// Chaque technicien configure ses secteurs ; l'administrateur peut tout configurer.
+// Les champs d'une étape ne sont enregistrés qu'au clic sur « Enregistrer » ou « Suivant » (jamais à la frappe).
+var wzStep = 'secteur';
+var wzDraft = null, wzDraftKey = null, wzDirty = false;
+var wzLigne = null;          // ligne dont on modifie les codes rebut (étape CHOKKO)
+var wzBomOpen = null;        // index de la référence dont on modifie les composants (étape prison)
+var wzBomSearch = '';
+var WZ_TABS = [['chokko','Suivi CHOKKO','Production, défauts par poste, coût rebut'],['proprete','Propreté','Audits propreté, entretien des équipements'],['perf','Audits de perf','Résultat mensuel par ligne'],['metro','Métrologie','Instruments et échéances'],['actions','Plan d\'actions','Actions issues des défauts et audits'],['planning','Planning échéances','Audits et relevés planifiés'],['prison','Prison qualité','Pièces bloquées, chantiers, export SAP'],['formations','Formations SREM','Échéances par personne'],['esd','Formations ESD','Réservé à MCU'],['cicl','Formations CI/CL','Réservé à MCU'],['archives','Archives','Exports et rapport mensuel']];
+var WZ_WIDGET_TAB = {w_chokko_trend:'chokko', w_causes_bar:'chokko', w_chokko:'chokko', w_production:'chokko', w_cicl:'cicl', w_ciclcoverage:'cicl', w_esd:'esd', w_srem:'formations', w_particules:'proprete', w_contamination:'proprete', w_vidange:'proprete', w_planning:'planning', w_actions:'actions', w_my_actions:'actions'};
+var WZ_COMMUNS = [
+  ['seuils', 'Seuils du score de conformité', 'À partir de quel score un secteur passe en « attention » ou en « danger ».'],
+  ['prio', 'Délais d\'alerte du tableau de bord', 'Combien de jours avant l\'échéance une action ou une contamination remonte en alerte.'],
+  ['chokkoObj,teams', 'CHOKKO : marge et équipes', 'Marge orange autour de l\'objectif, liste des équipes de la grille.'],
+  ['entretien', 'Entretien des équipements', 'Intervalle entre deux entretiens et délai d\'alerte.'],
+  ['prisonEtats,prisonDest', 'Prison : états et destinations', 'Colonnes de quantités (complet, sans capot…) et destinations des sorties.'],
+  ['chantier', 'Prison : fiche de chantier', 'Lieux, risques, Kakotora et consignes HSE proposés sur la fiche.'],
+  ['lineRefs,refCriteria', 'Contamination (MCU)', 'Références par ligne, critères et seuils de contamination.'],
+  ['bains', 'Relevés des bains (MCU)', 'Liste des bains et couleurs des courbes.'],
+  ['ciclRefs,ciclPostes', 'Formations CI/CL (MCU)', 'Références par ligne et postes à habiliter.']
+];
+function wzSecteurObj(){ return getSecteur(currentSecteur) || {id:currentSecteur, nom:currentSecteur, lignes:[], tabs:[]}; }
+function wzHas(tab){ return secteurTabs().indexOf(tab)>=0; }
+function wzSteps(){
+  var st = [{id:'secteur', label:'Secteur et onglets'}];
+  if(wzHas('chokko')) st.push({id:'chokko', label:'Suivi CHOKKO'});
+  if(wzHas('proprete')) st.push({id:'proprete', label:'Propreté'});
+  if(wzHas('prison')) st.push({id:'prison', label:'Prison qualité'});
+  if(wzHas('esd') || wzHas('formations') || wzHas('cicl')) st.push({id:'formations', label:'Formations'});
+  if(wzHas('perf')) st.push({id:'perf', label:'Audits de perf'});
+  st.push({id:'tableau', label:'Tableau de bord'});
+  if(isAdminUser()) st.push({id:'communs', label:'Réglages communs'});
+  st.push({id:'recap', label:'Récapitulatif'});
+  return st;
+}
+// Points à compléter par étape (servent aux pastilles du parcours et au récapitulatif)
+function wzIssues(id){
+  var sec = wzSecteurObj(), lignes = sec.lignes||[], out = [];
+  if(id==='secteur'){ if(!lignes.length) out.push('Aucune ligne déclarée.'); }
+  if(id==='chokko'){
+    lignes.forEach(function(l){
+      if(!chokkoPostes(l).length) out.push(l+' : aucun poste CHOKKO.');
+      if(!rebutCodes(l).length) out.push(l+' : aucun code de coût rebut.');
+    });
+  }
+  if(id==='proprete'){
+    proprLines().forEach(function(l){ if(!(DATA.checklist[checklistKeyForLigne(l)]||[]).length) out.push(l+' : pas de grille d\'audit.'); });
+  }
+  if(id==='prison'){ if(!sapBomList(currentSecteur).length) out.push('Aucune référence : l\'export SAP ne pourra pas détailler les composants.'); }
+  return out;
+}
+function wzInfo(id){
+  var sec = wzSecteurObj(), lignes = sec.lignes||[];
+  if(id==='secteur') return lignes.length+' ligne'+(lignes.length>1?'s':'')+' · '+secteurTabs().filter(function(t){ return WZ_TABS.some(function(x){ return x[0]===t; }); }).length+' onglets actifs';
+  if(id==='chokko') return lignes.map(function(l){ return l+' ≥ '+String(chokkoObjectif(l)).replace('.',',')+' %'; }).join(' · ');
+  if(id==='proprete'){ var pl = proprLines(); return pl.filter(function(l){ return (DATA.checklist[checklistKeyForLigne(l)]||[]).length; }).length+' / '+pl.length+' lignes avec une grille'; }
+  if(id==='prison'){ var n = sapBomList(currentSecteur).length; return n+' référence'+(n>1?'s':'')+' décrite'+(n>1?'s':''); }
+  if(id==='formations'){ var d = formDurees(); return 'Validité '+formDureeTxt(d.srem)+(currentSecteur==='MCU'? ' (SREM), '+formDureeTxt(d.esd)+' (ESD), '+formDureeTxt(d.cicl)+' (CI/CL)' : '')+' · alerte '+d.alerte+' j avant'; }
+  if(id==='perf'){ var q = perfQuestions().length; return (PERF_FREQS.filter(function(f){ return f[0]===perfFreq(); })[0]||[0,''])[1]+' · '+(q? q+' question'+(q>1?'s':'') : 'résultat saisi directement en %'); }
+  if(id==='tableau'){ var h = (sec.dashHidden||[]).length, a = (sec.alertHidden||[]).length; return (h? h+' carte(s) masquée(s)' : 'toutes les cartes')+' · '+(a? a+' type(s) d\'alerte coupé(s)' : 'toutes les alertes'); }
+  return '';
+}
+// ---------- Brouillon de l'étape ----------
+function wzBuildDraft(){
+  var sec = wzSecteurObj(), id = wzStep;
+  wzDraftKey = currentSecteur+'|'+id; wzDirty = false;
+  if(id==='secteur') wzDraft = {nom:sec.nom||sec.id, lignes:(sec.lignes||[]).slice(), tabs:(sec.tabs||[]).slice()};
+  else if(id==='chokko'){
+    wzDraft = {obj:{}, cost:{}, codes:{}};
+    (sec.lignes||[]).forEach(function(l){ wzDraft.obj[l] = String(chokkoObjectif(l)).replace('.',','); wzDraft.cost[l] = String(chokkoCostObjectif(l)).replace('.',','); });
+  }
+  else if(id==='prison') wzDraft = {bom:cfgClone(sapBomList(currentSecteur))};
+  else if(id==='formations'){ var d = formDurees(); wzDraft = {esd:String(d.esd), srem:String(d.srem), cicl:String(d.cicl), alerte:String(d.alerte)}; }
+  else if(id==='perf') wzDraft = {freq:String(perfFreq()), questions:(Array.isArray(sec.perfQuestions)? sec.perfQuestions : []).map(function(q){ return {texte:q.texte||''}; })};
+  else if(id==='tableau') wzDraft = {dashHidden:(sec.dashHidden||[]).slice(), alertHidden:(sec.alertHidden||[]).slice()};
+  else wzDraft = {};
+}
+function wzEnsureDraft(){ if(!wzDraft || wzDraftKey!==currentSecteur+'|'+wzStep) wzBuildDraft(); }
+function wzPath(path){ var parts = String(path).split('.'), o = wzDraft; for(var i=0;i<parts.length-1;i++){ o = o[parts[i]]; if(o===undefined) return null; } return {o:o, k:parts[parts.length-1]}; }
+function wzGet(path){ var r = wzPath(path); return r ? r.o[r.k] : undefined; }
+function wzSet(path, v){ var r = wzPath(path); if(r){ r.o[r.k] = v; wzDirty = true; } }
+function wzNum(v){ var n = Number(String(v==null?'':v).replace(',', '.').trim()); return String(v==null?'':v).trim()==='' ? NaN : n; }
+async function wzCommit(){
+  if(!wzDraft || !wzDirty) return true;
+  var d = wzDraft, sid = currentSecteur;
+  await ensureSecteursData();
+  var sec = DATA.secteurs.find(function(s){ return s.id===sid; });
+  if(!sec){ toast('Secteur introuvable.', 'error'); return false; }
+  if(wzStep==='secteur'){
+    var seen = {}, lignes = d.lignes.map(function(l){ return String(l||'').trim().toUpperCase(); }).filter(function(l){ if(!l || seen[l]) return false; seen[l] = 1; return true; });
+    if(!lignes.length){ toast('Au moins une ligne est nécessaire.', 'error'); return false; }
+    var retirees = (sec.lignes||[]).filter(function(l){ return lignes.indexOf(l)<0; });
+    if(retirees.length && !await uiConfirm('Retirer '+retirees.join(', ')+' du secteur ?\n\nLes données déjà saisies sur '+(retirees.length>1?'ces lignes':'cette ligne')+' sont conservées mais ne s\'afficheront plus.', {okLabel:'Retirer', danger:true})) return false;
+    sec.nom = String(d.nom||'').trim() || sec.id; sec.lignes = lignes; sec.tabs = d.tabs.slice();
+    await save('secteurs');
+    logChange('Assistant', 'Secteur '+sid, lignes.join(', ')+' · onglets : '+sec.tabs.join(', '));
+    applyAppConfig(true);
+  }
+  else if(wzStep==='chokko'){
+    var o1 = cfgClone(cfg('chokkoObj')) || {}, o2 = cfgClone(cfg('chokkoCostObj')) || {}, bad = null;
+    Object.keys(d.obj).forEach(function(l){
+      var p = wzNum(d.obj[l]), c = wzNum(d.cost[l]);
+      if(!(p>0 && p<=100)) bad = bad || l+' : objectif CHOKKO entre 0 et 100 %.';
+      else if(!(c>=0)) bad = bad || l+' : objectif coût par pièce invalide.';
+      else { o1[l] = Math.floor(p*100)/100; o2[l] = Math.floor(c*10000)/10000; }
+    });
+    var codesBad = null;
+    Object.keys(d.codes).forEach(function(l){
+      var seenC = {};
+      d.codes[l].forEach(function(c){ var k = String(c[0]||'').trim(); if(!k) return; if(seenC[k]) codesBad = codesBad || l+' : le code '+k+' est en double.'; seenC[k] = 1; });
+    });
+    if(bad || codesBad){ toast(bad || codesBad, 'error'); return false; }
+    DATA.appConfig = DATA.appConfig || {};
+    DATA.appConfig.chokkoObj = o1; DATA.appConfig.chokkoCostObj = o2;
+    await save('appConfig'); applyAppConfig(true);
+    if(Object.keys(d.codes).length){
+      DATA.rebutCodes = DATA.rebutCodes || {};
+      Object.keys(d.codes).forEach(function(l){ DATA.rebutCodes[l] = d.codes[l].map(function(c){ return [String(c[0]||'').trim(), String(c[1]||'').trim()]; }).filter(function(c){ return c[0]; }); });
+      await save('rebutCodes');
+    }
+    logChange('Assistant', 'CHOKKO '+sid, 'Objectifs'+(Object.keys(d.codes).length? ' et codes rebut ('+Object.keys(d.codes).join(', ')+')' : ''));
+  }
+  else if(wzStep==='prison'){
+    var refs = {}, err = null;
+    var list = d.bom.map(function(b){ return {ref:String(b.ref||'').trim(), desig:String(b.desig||'').trim(), comps:(b.comps||[]).map(function(c){ return [String(c[0]||'').trim() || 'autre', String(c[1]||'').trim()]; }).filter(function(c){ return c[1]; })}; })
+      .filter(function(b){ return b.ref || b.desig || b.comps.length; });
+    list.forEach(function(b){ var k = b.ref.toUpperCase(); if(!b.ref) err = err || 'Une référence sans numéro : renseignez-le ou supprimez la ligne.'; else if(refs[k]) err = err || 'La référence '+b.ref+' est en double.'; refs[k] = 1; });
+    if(err){ toast(err, 'error'); return false; }
+    DATA.sapBom = DATA.sapBom || {}; DATA.sapBom[sid] = list;
+    await save('sapBom');
+    logChange('Assistant', 'Nomenclatures SAP '+sid, list.length+' référence(s)');
+  }
+  else if(wzStep==='formations'){
+    var vals = {esd:wzNum(d.esd), srem:wzNum(d.srem), cicl:wzNum(d.cicl), alerte:wzNum(d.alerte)};
+    if(['esd','srem','cicl'].some(function(k){ return !(vals[k]>=1 && vals[k]<=120 && Math.floor(vals[k])===vals[k]); })){ toast('Durée de validité : un nombre entier de mois entre 1 et 120.', 'error'); return false; }
+    if(!(vals.alerte>=0 && vals.alerte<=365)){ toast('Alerte « à renouveler » : entre 0 et 365 jours.', 'error'); return false; }
+    sec.formDurees = {esd:vals.esd, srem:vals.srem, cicl:vals.cicl, alerte:Math.floor(vals.alerte)};
+    await save('secteurs');
+    logChange('Assistant', 'Formations '+sid, 'SREM '+vals.srem+' mois, ESD '+vals.esd+' mois, CI/CL '+vals.cicl+' mois, alerte '+Math.floor(vals.alerte)+' j');
+  }
+  else if(wzStep==='perf'){
+    sec.perfFreq = Number(d.freq)||1;
+    sec.perfQuestions = d.questions.map(function(q){ return {texte:String(q.texte||'').trim()}; }).filter(function(q){ return q.texte; });
+    await save('secteurs');
+    logChange('Assistant', 'Audits de perf '+sid, (PERF_FREQS.filter(function(f){ return f[0]===sec.perfFreq; })[0]||[0,''])[1]+' · '+sec.perfQuestions.length+' question(s)');
+  }
+  else if(wzStep==='tableau'){
+    sec.dashHidden = d.dashHidden.slice(); sec.alertHidden = d.alertHidden.slice();
+    await save('secteurs');
+    logChange('Assistant', 'Tableau de bord '+sid, sec.dashHidden.length+' carte(s) masquée(s), '+sec.alertHidden.length+' alerte(s) coupée(s)');
+  }
+  wzDirty = false; wzDraft = null;
+  toast('Enregistré.');
+  return true;
+}
+async function wzGo(step){
+  if(!await wzCommit()) return;
+  wzStep = step; wzDraft = null; wzBomOpen = null; wzLigne = null;
+  renderNav(); render();
+  var v = document.getElementById('view'); if(v) v.scrollIntoView({block:'start'});
+}
+// ---------- Rendu des étapes ----------
+function wzInput(path, attrs){ var v = wzGet(path); return '<input type="text" data-wz="'+esc(path)+'" value="'+esc(v==null?'':v)+'"'+(attrs||'')+'>'; }
+function wzStepHead(title, intro){ return '<h2 class="wz-title">'+esc(title)+'</h2>'+(intro? '<p class="wz-intro">'+intro+'</p>' : ''); }
+function wzBlock(title, body, aside){ return '<div class="wz-block"><div class="wz-block-h"><b>'+esc(title)+'</b>'+(aside||'')+'</div>'+body+'</div>'; }
+function wzSecteurHtml(){
+  var d = wzDraft;
+  var h = wzStepHead('Secteur et onglets', 'Le nom du secteur, ses lignes de production et les onglets dont il a besoin. Les étapes suivantes s\'adaptent aux onglets cochés.');
+  h += wzBlock('Nom affiché', '<label class="field" style="max-width:320px;">Nom du secteur ('+esc(currentSecteur)+')'+wzInput('nom')+'</label>');
+  h += wzBlock('Lignes de production', '<div class="wz-list">'+d.lignes.map(function(l, i){
+      return '<div class="wz-row">'+wzInput('lignes.'+i, ' style="max-width:200px;" placeholder="Ex. : PV01"')+
+        '<button class="btn small" data-action="wz-move" data-path="lignes" data-i="'+i+'" data-dir="-1" '+(i===0?'disabled':'')+' title="Monter">▲</button>'+
+        '<button class="btn small" data-action="wz-move" data-path="lignes" data-i="'+i+'" data-dir="1" '+(i===d.lignes.length-1?'disabled':'')+' title="Descendre">▼</button>'+
+        '<button class="btn small danger-outline" data-action="wz-del" data-path="lignes" data-i="'+i+'" title="Retirer la ligne">✕</button></div>';
+    }).join('')+'</div><button class="btn small" data-action="wz-add" data-path="lignes" data-tpl="&quot;&quot;">+ Ajouter une ligne</button>');
+  var tabs = WZ_TABS.filter(function(t){ return currentSecteur==='MCU' || MCU_ONLY_TABS.indexOf(t[0])<0; });
+  h += wzBlock('Onglets du secteur', '<div class="wz-checks">'+tabs.map(function(t){
+      var on = d.tabs.indexOf(t[0])>=0;
+      return '<label class="wz-check'+(on?' on':'')+'"><input type="checkbox" data-wz-check="tabs" value="'+t[0]+'"'+(on?' checked':'')+'><span><b>'+esc(t[1])+'</b><span class="tiny">'+esc(t[2])+'</span></span></label>';
+    }).join('')+'</div><p class="tiny" style="margin-top:8px;">Le tableau de bord, la bibliothèque et les analyses Pareto sont toujours présents.</p>');
+  return h;
+}
+function wzChokkoHtml(){
+  var d = wzDraft, sec = wzSecteurObj(), lignes = sec.lignes||[];
+  var h = wzStepHead('Suivi CHOKKO', 'Pour chaque ligne : l\'objectif CHOKKO, l\'objectif de coût par pièce, les postes (défauts suivis dans la grille) et les codes du coût rebut.');
+  h += '<div class="table-wrap"><table class="wz-table"><thead><tr><th>Ligne</th><th>Objectif CHOKKO (%)</th><th>Objectif coût / pièce (€)</th><th>Postes et défauts</th><th>Codes coût rebut</th></tr></thead><tbody>'+
+    lignes.map(function(l){
+      var np = chokkoPostes(l).length, nc = (d.codes[l] || rebutCodes(l)).length;
+      return '<tr><td><b>'+esc(l)+'</b></td><td>'+wzInput('obj.'+l, ' class="wz-num" inputmode="decimal"')+'</td><td>'+wzInput('cost.'+l, ' class="wz-num" inputmode="decimal"')+'</td>'+
+        '<td><span class="'+(np?'':'wz-warn-txt')+'">'+np+' poste'+(np>1?'s':'')+'</span> <button class="btn small" data-action="wz-postes" data-ligne="'+esc(l)+'">Modifier</button></td>'+
+        '<td><span class="'+(nc?'':'wz-warn-txt')+'">'+nc+' code'+(nc>1?'s':'')+'</span> <button class="btn small'+(wzLigne===l?' primary':'')+'" data-action="wz-codes" data-ligne="'+esc(l)+'">'+(wzLigne===l?'Ouvert ci-dessous':'Modifier')+'</button></td></tr>';
+    }).join('')+'</tbody></table></div>';
+  h += '<p class="tiny" style="margin-top:6px;">Le CHOKKO est vert au-dessus de l\'objectif et orange dans la marge commune de '+String(Number(cfg('chokkoMarge'))||0).replace('.',',')+' point(s)'+(isAdminUser()? ' (réglable dans « Réglages communs »)' : '')+'. Les postes s\'enregistrent directement dans leur fenêtre.</p>';
+  if(wzLigne && lignes.indexOf(wzLigne)>=0){
+    if(!d.codes[wzLigne]) d.codes[wzLigne] = rebutCodes(wzLigne).map(function(c){ return [c[0], c[1]]; });
+    var codes = d.codes[wzLigne], base = 'codes.'+wzLigne;
+    h += wzBlock('Codes du coût rebut - '+wzLigne, '<p class="tiny" style="margin:0 0 8px;">Le code est celui de SAP (ex. 4958). Retirer un code ne supprime pas les montants déjà saisis.</p>'+
+      '<div class="wz-list">'+codes.map(function(c, i){
+        return '<div class="wz-row">'+wzInput(base+'.'+i+'.0', ' style="width:90px;" placeholder="Code"')+wzInput(base+'.'+i+'.1', ' style="flex:1; min-width:160px;" placeholder="Libellé du défaut"')+
+          '<button class="btn small danger-outline" data-action="wz-del" data-path="'+esc(base)+'" data-i="'+i+'" title="Retirer">✕</button></div>';
+      }).join('')+'</div><button class="btn small" data-action="wz-add" data-path="'+esc(base)+'" data-tpl="[&quot;&quot;,&quot;&quot;]">+ Ajouter un code</button>',
+      '<button class="btn small" data-action="wz-codes" data-ligne="">Fermer</button>');
+  }
+  if(chokkoManagePostesOpen) h += chokkoManagePostesModal(chokkoLigne);
+  return h;
+}
+function wzPropreteHtml(){
+  var pl = proprLines();
+  var h = wzStepHead('Propreté', 'La grille d\'audit de chaque ligne : les critères vérifiés à chaque audit propreté. Elles s\'enregistrent directement dans leur fenêtre.');
+  h += '<div class="table-wrap"><table class="wz-table"><thead><tr><th>Ligne</th><th>Grille d\'audit</th><th></th></tr></thead><tbody>'+
+    pl.map(function(l){
+      var key = checklistKeyForLigne(l), n = (DATA.checklist[key]||[]).length;
+      return '<tr><td><b>'+esc(l)+'</b>'+(key==='MCU1_MCU2'? ' <span class="tiny">(grille commune MCU1 et MCU2)</span>' : '')+'</td><td class="'+(n?'':'wz-warn-txt')+'">'+(n? n+' critère'+(n>1?'s':'') : 'Pas de grille')+'</td>'+
+        '<td style="text-align:right;"><button class="btn small'+(n?'':' primary')+'" data-action="propr-grid-open" data-ligne="'+esc(l)+'">'+(n?'Modifier':'Créer la grille')+'</button></td></tr>';
+    }).join('')+'</tbody></table></div>';
+  var v = cfg('vidange') || {};
+  h += wzBlock('Entretien des équipements', '<p class="tiny" style="margin:0;">Un entretien tous les <b>'+esc(String(v.intervalle||''))+' jours</b>, alerte <b>'+esc(String(v.alerteJours||''))+' jours</b> avant. '+(isAdminUser()? '' : 'Réglé par l\'administrateur pour tous les secteurs.')+'</p>',
+    isAdminUser()? '<button class="btn small" data-action="cz-open" data-cards="entretien">Modifier</button>' : '');
+  if(proprGridModal) h += proprGridModalHtml();
+  return h;
+}
+function wzPrisonHtml(){
+  var d = wzDraft, bom = d.bom;
+  var h = wzStepHead('Prison qualité', 'Les références de pièces de votre secteur et leurs composants. À l\'export « Excel blocage SAP », chaque pièce en prison est décomposée en composants à bloquer (une pièce « sans capot » n\'a plus son capot ni ses vis).');
+  var q = wzBomSearch.toLowerCase();
+  var idx = bom.map(function(b, i){ return i; }).filter(function(i){ var b = bom[i]; return !q || (String(b.ref)+' '+String(b.desig)).toLowerCase().indexOf(q)>=0 || i===wzBomOpen; });
+  var typeOpts = function(cur){
+    var known = SAP_COMP_TYPES.some(function(t){ return t[0]===cur; });
+    return SAP_COMP_TYPES.map(function(t){ return '<option value="'+t[0]+'"'+(t[0]===cur?' selected':'')+'>'+esc(t[1])+'</option>'; }).join('')+(!known && cur? '<option value="'+esc(cur)+'" selected>'+esc(cur)+'</option>' : '');
+  };
+  var body = '<div class="wz-row" style="margin-bottom:8px;"><input type="search" id="wz-bom-search" placeholder="Rechercher une référence ou une désignation" value="'+esc(wzBomSearch)+'" style="flex:1; min-width:200px;"><button class="btn small primary" data-action="wz-bom-add">+ Nouvelle référence</button></div>';
+  body += bom.length ? '<div class="table-wrap"><table class="wz-table"><thead><tr><th>Référence (saisie en prison)</th><th>Désignation</th><th>Composants</th><th></th></tr></thead><tbody>'+
+    idx.map(function(i){
+      var b = bom[i], open = wzBomOpen===i, comps = b.comps||[];
+      var row = '<tr class="'+(open?'wz-open':'')+'"><td>'+wzInput('bom.'+i+'.ref', ' placeholder="Ex. 6900004161"')+'</td><td>'+wzInput('bom.'+i+'.desig', ' placeholder="Ex. 141P LP"')+'</td>'+
+        '<td>'+comps.length+' composant'+(comps.length>1?'s':'')+' <button class="btn small'+(open?' primary':'')+'" data-action="wz-bom-open" data-i="'+i+'">'+(open?'Fermer':'Détail')+'</button></td>'+
+        '<td style="text-align:right;"><button class="btn small danger-outline" data-action="wz-del" data-path="bom" data-i="'+i+'" title="Supprimer cette référence">✕</button></td></tr>';
+      if(open){
+        row += '<tr class="wz-open"><td colspan="4"><div class="wz-list">'+comps.map(function(c, j){
+          return '<div class="wz-row"><select data-wz="bom.'+i+'.comps.'+j+'.0">'+typeOpts(c[0])+'</select>'+wzInput('bom.'+i+'.comps.'+j+'.1', ' style="flex:1; min-width:160px;" placeholder="N° du composant dans SAP"')+
+            '<button class="btn small danger-outline" data-action="wz-del" data-path="bom.'+i+'.comps" data-i="'+j+'" title="Retirer">✕</button></div>';
+        }).join('')+'</div><button class="btn small" data-action="wz-add" data-path="bom.'+i+'.comps" data-tpl="[&quot;carter&quot;,&quot;&quot;]">+ Ajouter un composant</button></td></tr>';
+      }
+      return row;
+    }).join('')+'</tbody></table></div>' : emptyState('Aucune référence pour ce secteur. Ajoutez les références que vous mettez en prison et leurs composants.');
+  body += '<p class="tiny" style="margin-top:8px;">La référence saisie dans la prison est reconnue même abrégée (« 4161 » pour 6900004161). Une pièce sans référence décrite apparaît à part dans l\'export, à compléter.</p>';
+  h += wzBlock('Références et composants ('+bom.length+')', body);
+  if(isAdminUser()) h += wzBlock('États et destinations', '<p class="tiny" style="margin:0;">États : '+esc(cfg('prisonEtats').map(function(e){ return e[1]; }).join(', '))+'. Communs à tous les secteurs.</p>', '<button class="btn small" data-action="cz-open" data-cards="prisonEtats,prisonDest">Modifier</button>');
+  return h;
+}
+function wzFormationsHtml(){
+  var mcu = currentSecteur==='MCU';
+  var h = wzStepHead('Formations', 'Combien de temps une formation reste valable, et combien de jours avant l\'échéance elle passe en « à renouveler ». Les échéances de tout le secteur se recalculent aussitôt.');
+  var row = function(k, label){ return '<label class="field">'+label+wzInput(k, ' class="wz-num" inputmode="numeric"')+'</label>'; };
+  h += wzBlock('Durées de validité (en mois)', '<div class="wz-grid">'+(wzHas('formations')? row('srem','Formations SREM') : '')+(mcu && wzHas('esd')? row('esd','Formations ESD') : '')+(mcu && wzHas('cicl')? row('cicl','Formations CI/CL') : '')+'</div>');
+  h += wzBlock('Alerte', '<div class="wz-grid">'+row('alerte','« À renouveler » à partir de (jours avant l\'échéance)')+'</div><p class="tiny" style="margin-top:6px;">Une formation qui expire dans le mois en cours apparaît toujours en « expire ce mois ».</p>');
+  if(mcu && isAdminUser() && wzHas('cicl')) h += wzBlock('Postes CI/CL', '<p class="tiny" style="margin:0;">Références par ligne et postes à habiliter.</p>', '<button class="btn small" data-action="cz-open" data-cards="ciclRefs,ciclPostes">Modifier</button>');
+  return h;
+}
+function wzPerfHtml(){
+  var d = wzDraft;
+  var h = wzStepHead('Audits de perf', 'À quelle fréquence chaque ligne est auditée, et les questions de l\'audit. Sans question, le résultat est saisi directement en %.');
+  h += wzBlock('Fréquence', '<div class="wz-checks">'+PERF_FREQS.map(function(f){
+      var on = String(f[0])===String(d.freq);
+      return '<label class="wz-check'+(on?' on':'')+'"><input type="radio" name="wz-freq" data-wz="freq" value="'+f[0]+'"'+(on?' checked':'')+'><span><b>'+esc(f[1])+'</b><span class="tiny">'+(f[0]===1? 'un audit par ligne et par mois' : 'un audit par ligne sur '+f[0]+' mois')+'</span></span></label>';
+    }).join('')+'</div><p class="tiny" style="margin-top:6px;">L\'avancement des audits et les alertes du tableau de bord suivent cette fréquence.</p>');
+  h += wzBlock('Questions de l\'audit ('+d.questions.length+')', (d.questions.length? '<div class="wz-list">'+d.questions.map(function(q, i){
+      return '<div class="wz-row"><span class="wz-n">'+(i+1)+'</span>'+wzInput('questions.'+i+'.texte', ' style="flex:1; min-width:200px;" placeholder="Ex. : Les standards de travail sont affichés et à jour"')+
+        '<button class="btn small" data-action="wz-move" data-path="questions" data-i="'+i+'" data-dir="-1" '+(i===0?'disabled':'')+'>▲</button>'+
+        '<button class="btn small" data-action="wz-move" data-path="questions" data-i="'+i+'" data-dir="1" '+(i===d.questions.length-1?'disabled':'')+'>▼</button>'+
+        '<button class="btn small danger-outline" data-action="wz-del" data-path="questions" data-i="'+i+'">✕</button></div>';
+    }).join('')+'</div>' : '<p class="tiny" style="margin:0 0 8px;">Aucune question : le résultat de l\'audit est saisi directement en %.</p>')+
+    '<button class="btn small" data-action="wz-add" data-path="questions" data-tpl="{&quot;texte&quot;:&quot;&quot;}">+ Ajouter une question</button>'+
+    '<p class="tiny" style="margin-top:8px;">Avec des questions, chacune est notée Conforme, Non conforme ou Sans objet, et le résultat se calcule seul.</p>');
+  return h;
+}
+function wzTableauHtml(){
+  var d = wzDraft, tabs = secteurTabs();
+  var h = wzStepHead('Tableau de bord', 'Les cartes et les alertes affichées sur le tableau de bord du secteur. Chacun peut ensuite réorganiser ses cartes avec « Personnaliser mon tableau de bord ».');
+  var wids = currentSecteur==='MCU'
+    ? DASHBOARD_WIDGETS_DEFAULT.map(function(w){ return w.id; }).filter(function(id){ var t = WZ_WIDGET_TAB[id]; return WIDGET_TITLES[id] && (!t || tabs.indexOf(t)>=0); }).map(function(id){ return [id, WIDGET_TITLES[id]]; })
+    : SECTEUR_DASH_CARDS.filter(function(c){ return !c[2] || tabs.indexOf(c[2])>=0; });
+  h += wzBlock('Cartes affichées', '<div class="wz-checks">'+wids.map(function(c){
+      var on = d.dashHidden.indexOf(c[0])<0;
+      return '<label class="wz-check'+(on?' on':'')+'"><input type="checkbox" data-wz-check="dashHidden" data-inv="1" value="'+c[0]+'"'+(on?' checked':'')+'><span><b>'+esc(c[1])+'</b></span></label>';
+    }).join('')+'</div>');
+  var mods = PRIO_MODULES.filter(function(m){ return tabs.indexOf(m.tab)>=0; });
+  h += wzBlock(currentSecteur==='MCU'? 'Points « à traiter » (rapport mensuel, vue multi-secteurs)' : 'Points de la carte « À traiter »', '<div class="wz-checks">'+mods.map(function(m){
+      var on = d.alertHidden.indexOf(m.id)<0;
+      return '<label class="wz-check'+(on?' on':'')+'"><input type="checkbox" data-wz-check="alertHidden" data-inv="1" value="'+m.id+'"'+(on?' checked':'')+'><span><b>'+esc(m.label)+'</b></span></label>';
+    }).join('')+'</div>');
+  return h;
+}
+function wzCommunsHtml(){
+  var h = wzStepHead('Réglages communs', 'Ces réglages valent pour tous les secteurs. Ils ne sont modifiables que par l\'administrateur.');
+  h += '<div class="wz-communs">'+WZ_COMMUNS.map(function(c){
+    var ids = c[0].split(','), custom = ids.some(function(id){ return (PCARDS[id].keys||[]).some(cfgIsCustom); });
+    return '<div class="wz-commun"><div><b>'+esc(c[1])+'</b>'+(custom? ' <span class="badge warn" style="font-size:10px;">modifié</span>' : '')+'<div class="tiny">'+esc(c[2])+'</div></div><button class="btn small" data-action="cz-open" data-cards="'+c[0]+'">Modifier</button></div>';
+  }).join('')+'</div>';
+  return h;
+}
+function wzRecapHtml(){
+  var sec = wzSecteurObj();
+  var h = wzStepHead('Récapitulatif', sec.setupDone ? 'Configuration validée le '+fmtDate(sec.setupDone)+'. Vous pouvez revenir sur n\'importe quelle étape.' : 'Vérifiez chaque étape, puis validez la configuration du secteur.');
+  var total = 0;
+  h += '<div class="wz-recap">'+wzSteps().filter(function(s){ return s.id!=='recap' && s.id!=='communs'; }).map(function(s){
+    var iss = wzIssues(s.id); total += iss.length;
+    return '<div class="wz-recap-row '+(iss.length?'warn':'ok')+'"><span class="wz-recap-ic">'+(iss.length?'!':'✓')+'</span><div style="flex:1; min-width:0;"><b>'+esc(s.label)+'</b><div class="tiny">'+esc(wzInfo(s.id))+'</div>'+
+      (iss.length? '<ul class="wz-issues">'+iss.slice(0,6).map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+(iss.length>6? '<li>… et '+(iss.length-6)+' autre(s)</li>' : '')+'</ul>' : '')+
+      '</div><button class="btn small" data-action="wz-goto" data-step="'+s.id+'">Modifier</button></div>';
+  }).join('')+'</div>';
+  h += '<div class="actions-row" style="margin-top:14px; justify-content:flex-start; align-items:center; gap:12px; flex-wrap:wrap;"><button class="btn primary" data-action="wz-finish">'+(sec.setupDone? 'Valider à nouveau' : 'Valider la configuration')+'</button>'+
+    (total? '<span class="tiny" style="color:var(--text-faint);">'+total+' point(s) à compléter : vous pouvez valider quand même et y revenir plus tard.</span>' : '')+'</div>';
+  return h;
+}
+RENDERERS.assistant = function(){
+  var us = userSecteurs();
+  if(!us.length) return emptyState('Aucun secteur rattaché à votre compte.');
+  var steps = wzSteps();
+  if(!steps.some(function(s){ return s.id===wzStep; })) wzStep = 'secteur';
+  wzEnsureDraft();
+  var allSecs = (DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT;
+  var pos = steps.map(function(s){ return s.id; }).indexOf(wzStep);
+  var h = '<div class="wz">';
+  h += '<div class="wz-top"><div><div class="eyebrow">Configurer le secteur</div><div class="tiny">Tout ce qui se règle pour un secteur, étape par étape. Rien n\'est enregistré tant que vous ne cliquez pas sur « Enregistrer » ou « Suivant ».</div></div>'+
+    (us.length>1? '<label class="field" style="min-width:180px;">Secteur<select id="wz-secteur">'+us.map(function(id){ var sc = allSecs.find(function(x){ return x.id===id; }) || {nom:id}; return '<option value="'+esc(id)+'"'+(id===currentSecteur?' selected':'')+'>'+esc(sc.nom||id)+(sc.setupDone?'':' (à configurer)')+'</option>'; }).join('')+'</select></label>' : '<b>'+esc(wzSecteurObj().nom||currentSecteur)+'</b>')+'</div>';
+  h += '<div class="wz-body"><nav class="wz-steps">'+steps.map(function(s, i){
+    var iss = (s.id==='recap'||s.id==='communs') ? [] : wzIssues(s.id);
+    return '<button data-action="wz-goto" data-step="'+s.id+'" class="'+(s.id===wzStep?'active':'')+'"><span class="wz-num-pill '+(s.id===wzStep?'cur':iss.length?'warn':'')+'">'+(i+1)+'</span><span class="wz-step-l">'+esc(s.label)+'</span>'+(iss.length? '<span class="wz-dot" title="'+iss.length+' point(s) à compléter"></span>' : '')+'</button>';
+  }).join('')+'</nav>';
+  var fn = {secteur:wzSecteurHtml, chokko:wzChokkoHtml, proprete:wzPropreteHtml, prison:wzPrisonHtml, formations:wzFormationsHtml, perf:wzPerfHtml, tableau:wzTableauHtml, communs:wzCommunsHtml, recap:wzRecapHtml}[wzStep];
+  h += '<div class="wz-main"><div class="tiny wz-pos">Étape '+(pos+1)+' sur '+steps.length+'</div>'+fn();
+  if(wzStep!=='recap'){
+    var editable = ['secteur','chokko','prison','formations','perf','tableau'].indexOf(wzStep)>=0;
+    h += '<div class="wz-nav">'+(pos>0? '<button class="btn" data-action="wz-prev">← Précédent</button>' : '<span></span>')+
+      '<span class="wz-nav-r">'+(editable? '<span class="wz-dirty tiny" id="wz-dirty"'+(wzDirty?'':' hidden')+'>Modifications non enregistrées</span><button class="btn" data-action="wz-cancel" id="wz-cancel-btn"'+(wzDirty?'':' disabled')+'>Annuler</button><button class="btn" data-action="wz-save">Enregistrer</button>' : '')+
+      '<button class="btn primary" data-action="wz-next">'+(editable? 'Enregistrer et continuer →' : 'Suivant →')+'</button></span></div>';
+  }
+  h += '</div></div></div>';
+  return h;
+};
+function wzMarkDirty(){
+  var a = document.getElementById('wz-dirty'), b = document.getElementById('wz-cancel-btn');
+  if(a) a.hidden = !wzDirty; if(b) b.disabled = !wzDirty;
+}
+// Saisie : met à jour le brouillon, sans enregistrer
+document.addEventListener('input', function(e){
+  if(e.target && e.target.id==='wz-bom-search'){ wzBomSearch = e.target.value; var pos = e.target.selectionStart; render(); var el = document.getElementById('wz-bom-search'); if(el){ el.focus(); try{ el.setSelectionRange(pos, pos); }catch(x){} } return; }
+  var el2 = e.target && e.target.closest && e.target.closest('[data-wz]');
+  if(el2 && wzDraft && el2.type!=='radio'){ wzSet(el2.dataset.wz, el2.value); wzMarkDirty(); }
+});
+document.addEventListener('change', async function(e){
+  var t = e.target;
+  if(!t) return;
+  if(t.id==='wz-secteur'){
+    var to = t.value;
+    if(!await wzCommit()){ t.value = currentSecteur; return; }
+    currentSecteur = to; wzDraft = null; wzBomOpen = null; wzLigne = null; renderNav(); render(); return;
+  }
+  if(t.matches && t.matches('select[data-wz]') && wzDraft){ wzSet(t.dataset.wz, t.value); wzMarkDirty(); return; }
+  if(t.type==='radio' && t.dataset && t.dataset.wz && wzDraft){ wzSet(t.dataset.wz, t.value); render(); return; }
+  if(t.dataset && t.dataset.wzCheck && wzDraft){
+    var arr = wzGet(t.dataset.wzCheck), v = t.value, inv = t.dataset.inv==='1', want = inv ? !t.checked : t.checked, i = arr.indexOf(v);
+    if(want && i<0) arr.push(v); if(!want && i>=0) arr.splice(i,1);
+    wzDirty = true; render();
+  }
+});
+async function wzHandleClick(e){
+  var b = e.target.closest('[data-action^="wz-"]');
+  if(!b) return false;
+  var a = b.dataset.action;
+  if(a==='wz-goto'){ await wzGo(b.dataset.step); return true; }
+  var steps = wzSteps().map(function(s){ return s.id; }), pos = steps.indexOf(wzStep);
+  if(a==='wz-next'){ if(pos<steps.length-1) await wzGo(steps[pos+1]); return true; }
+  if(a==='wz-prev'){ if(pos>0) await wzGo(steps[pos-1]); return true; }
+  if(a==='wz-save'){ if(!wzDirty){ toast('Rien à enregistrer.'); return true; } if(await wzCommit()){ renderNav(); render(); } return true; }
+  if(a==='wz-cancel'){ wzDraft = null; wzDirty = false; render(); return true; }
+  if(a==='wz-add'){ var arr = wzGet(b.dataset.path); if(Array.isArray(arr)){ arr.push(JSON.parse(b.dataset.tpl)); wzDirty = true; render(); var ins = document.querySelectorAll('[data-wz^="'+b.dataset.path+'.'+(arr.length-1)+'"]'); if(ins.length) ins[0].focus(); } return true; }
+  if(a==='wz-del'){ var arr2 = wzGet(b.dataset.path), i = Number(b.dataset.i); if(Array.isArray(arr2)){ arr2.splice(i,1); if(b.dataset.path==='bom' && wzBomOpen!==null){ wzBomOpen = wzBomOpen===i ? null : (wzBomOpen>i ? wzBomOpen-1 : wzBomOpen); } wzDirty = true; render(); } return true; }
+  if(a==='wz-move'){ var arr3 = wzGet(b.dataset.path), k = Number(b.dataset.i), j = k+Number(b.dataset.dir); if(Array.isArray(arr3) && j>=0 && j<arr3.length){ var tmp = arr3[k]; arr3[k] = arr3[j]; arr3[j] = tmp; wzDirty = true; render(); } return true; }
+  if(a==='wz-postes'){ chokkoLigne = b.dataset.ligne; chokkoManagePostesOpen = true; render(); return true; }
+  if(a==='wz-codes'){ wzLigne = b.dataset.ligne || null; render(); return true; }
+  if(a==='wz-bom-open'){ var bi = Number(b.dataset.i); wzBomOpen = wzBomOpen===bi ? null : bi; render(); return true; }
+  if(a==='wz-bom-add'){ wzDraft.bom.unshift({ref:'', desig:'', comps:[['carter','']]}); wzBomOpen = 0; wzBomSearch = ''; wzDirty = true; render(); var r0 = document.querySelector('[data-wz="bom.0.ref"]'); if(r0) r0.focus(); return true; }
+  if(a==='wz-finish'){
+    if(!await wzCommit()) return true;
+    await ensureSecteursData();
+    var sec = DATA.secteurs.find(function(s){ return s.id===currentSecteur; });
+    if(sec){ sec.setupDone = todayStr(); await save('secteurs'); logChange('Assistant', 'Configuration validée', currentSecteur); }
+    toast('Configuration du secteur validée.');
+    renderNav(); render(); return true;
+  }
+  if(a==='wz-start'){ currentTab = 'assistant'; wzStep = 'secteur'; wzDraft = null; renderNav(); render(); return true; }
+  return false;
+}
+// Carte « À traiter » du tableau de bord d'un secteur : retards et échéances proches (alertes choisies dans l'assistant)
+function secteurTodoCardHtml(){
+  var items = computePriorities(), late = items.filter(function(i){ return i.level==='danger'; }).length;
+  var h = '<div class="section card" style="margin-bottom:18px;"><div class="eyebrow" style="margin-bottom:10px;">À traiter'+(items.length? ' · '+late+' en retard, '+(items.length-late)+' à venir' : '')+'</div>';
+  if(!items.length) return h+'<p class="tiny" style="margin:0;">Rien en retard ni à échéance proche.</p></div>';
+  h += '<div class="alertlist">'+items.slice(0,8).map(function(it){
+    var meta = prioModuleMeta(it.module);
+    return '<div class="alertitem" style="cursor:pointer;" data-action="goto-widget-tab" data-tab="'+esc(meta.tab)+'"><div>'+badge(it.level==='danger'?'danger':'warn', it.level==='danger'?'Retard':'Bientôt')+'</div><div><div class="txt">'+esc(it.title)+'</div><div class="meta">'+esc(meta.label)+(it.sub? ' · '+esc(it.sub) : '')+(prioDelayTxt(it)? ' · '+esc(prioDelayTxt(it)) : '')+'</div></div></div>';
+  }).join('')+'</div>'+(items.length>8? '<p class="tiny" style="margin:8px 0 0;">… et '+(items.length-8)+' autre(s).</p>' : '')+'</div>';
+  return h;
+}
+var SECTEUR_DASH_CARDS = [['w_todo','À traiter (retards et échéances)'],['w_score','Score de conformité'],['w_indicateurs','Indicateurs (perf, métrologie, actions)'],['w_chokko','Suivi CHOKKO', 'chokko'],['w_actions','Suivi des actions'],['w_perf','Audits de perf par ligne', 'perf']];
+// Rappel sur le tableau de bord tant que le secteur n'a pas été configuré
+function wzDashboardBanner(){
+  var sec = getSecteur(currentSecteur);
+  if(!sec || sec.setupDone || !currentUser) return '';
+  return '<div class="wz-banner"><div><b>Le secteur '+esc(sec.nom||sec.id)+' n\'est pas encore configuré.</b><div class="tiny">L\'assistant passe en revue, étape par étape, tout ce qui se règle : lignes, onglets, postes CHOKKO, grilles, références de la prison, formations, audits…</div></div><button class="btn primary" data-action="wz-start">Configurer le secteur</button></div>';
+}
+
 // ==================== PARAMÈTRES : COMPTES, SECTEURS, SAUVEGARDES, APPARENCE ====================
 var psetSub = 'comptes';
 var PSET_SECTIONS = [['comptes','Comptes et secteurs'], ['sauvegardes','Sauvegardes'], ['apparence','Apparence et réglages modifiés']];
@@ -9807,9 +10307,9 @@ function psetModifiesHtml(){
     rows.push('<tr><td><span class="tiny" style="color:var(--text-faint);">Texte</span> '+esc(orig)+' → <b>'+esc(ov[k])+'</b></td><td style="text-align:right;"><button class="btn small danger-outline" data-action="pset-txt-reset" data-key="'+esc(k)+'">Texte d\'origine</button></td></tr>');
   });
   return '<div class="card" style="margin-top:18px;"><div class="eyebrow">Ce qui a été modifié</div>'+
-    '<p class="tiny" style="margin:6px 0 10px;">Tout ce qui diffère de l\'outil livré. Pour modifier autre chose : bouton <b>✏️ Modifier</b> en haut, puis cliquez directement sur l\'élément à l\'écran.</p>'+
+    '<p class="tiny" style="margin:6px 0 10px;">Tout ce qui diffère de l\'outil livré. Le reste se règle secteur par secteur dans l\'assistant.</p>'+
     (rows.length ? '<div class="table-wrap"><table><tbody>'+rows.join('')+'</tbody></table></div>' : emptyState('Rien n\'a été modifié : l\'outil est tel qu\'à sa livraison.'))+
-    '<button class="btn primary" data-action="cz-toggle-on" style="margin-top:12px;">✏️ Passer en mode modification</button></div>';
+    '<button class="btn primary" data-action="wz-start" style="margin-top:12px;">Ouvrir l\'assistant de configuration</button></div>';
 }
 RENDERERS.parametres = function(){
   if(!isAdminUser()) return emptyState('Accès réservé aux administrateurs.');
@@ -10044,6 +10544,9 @@ function renderSecteurDashboard(){
   var lines = secteurLines();
   var html = '<div class="section dash-actions-noprint prio-toolbar"><button class="btn" data-action="monthly-report">📄 Rapport mensuel</button></div>';
   if(userSecteurs().length>1) html += renderMultiSecteurBanner()+renderPerfAuditProgress()+sectorDetailHeading();
+  html += wzDashboardBanner();
+  var hid = (sec && sec.dashHidden) || [], show = function(id){ return hid.indexOf(id)<0; };   // cartes choisies dans l'assistant
+  if(show('w_todo')) html += secteurTodoCardHtml();
 
   var curM = Number(todayStr().split('-')[1])-1;
   var curY = Number(todayStr().split('-')[0]);
@@ -10061,7 +10564,7 @@ function renderSecteurDashboard(){
   secteurGaugeScore = gsS.score;
 
   var glvl = secteurGaugeScore!==null ? scoreLevel(secteurGaugeScore) : 'neutral';
-  html += '<div class="section card" style="margin-bottom:18px;">'+
+  if(show('w_score')) html += '<div class="section card" style="margin-bottom:18px;">'+
     '<div class="eyebrow" style="text-align:center; margin-bottom:14px;">Score de conformité - secteur '+esc(sec?sec.nom:currentSecteur)+'</div>'+
     '<div style="display:flex; justify-content:center;">'+
       '<div style="position:relative; width:200px; height:200px;"><canvas id="chart-global-gauge"></canvas>'+
@@ -10077,15 +10580,17 @@ function renderSecteurDashboard(){
       : '<p class="tiny" style="text-align:center; margin-top:12px;">Le score se calculera dès les premières saisies (audits perf, métrologie, actions).</p>')+
   '</div>';
 
+  if(show('w_indicateurs')){
   html += '<div class="section"><div class="grid grid-4">';
   html += '<div class="statcard"><div class="eyebrow">Perf moyenne du mois</div><div class="val" style="color:var(--'+(perfMoy===null?'text':scoreLevel(perfMoy))+');">'+(perfMoy!==null?perfMoy+'%':'-')+'</div><div class="tiny">'+perfMonth.length+'/'+lines.length+' lignes auditées</div></div>';
   html += '<div class="statcard s-'+ms.level+'"><div class="eyebrow">Métrologie</div><div class="tiny" style="margin-top:6px;">'+ms.late+' en retard · <b style="color:#C25A00;">'+(ms.urgent||0)+' expire ce mois</b> · '+ms.warn+' à prévoir</div></div>';
   html += '<div class="statcard '+(late?'s-danger':'')+'"><div class="eyebrow">Actions en retard</div><div class="val">'+late+'</div></div>';
   html += '<div class="statcard"><div class="eyebrow">Actions ouvertes</div><div class="val">'+openA+'</div></div>';
   html += '</div></div>';
+  }
 
   // Suivi CHOKKO des lignes du secteur (saisi par les techniciens)
-  if(secteurTabs().indexOf('chokko')>=0 && tabAllowed('chokko')){
+  if(show('w_chokko') && secteurTabs().indexOf('chokko')>=0 && tabAllowed('chokko')){
     var cards = lines.map(function(l){
       var avg = chokkoMonthAverage(l, curY, curM);
       var lvl = chokkoLevelVsObjectif(avg, l);
@@ -10101,9 +10606,10 @@ function renderSecteurDashboard(){
   }
 
   // Suivi de toutes les actions du secteur
-  html += '<div class="section card" style="margin-bottom:18px;">'+renderActionsPanel()+'</div>';
+  if(show('w_actions')) html += '<div class="section card" style="margin-bottom:18px;">'+renderActionsPanel()+'</div>';
 
   // Perf par ligne du mois en cours
+  if(show('w_perf')){
   html += '<div class="section card" style="margin-bottom:18px;"><div class="eyebrow" style="margin-bottom:10px;">Audits de perf - '+MONTHS_FR[curM].charAt(0).toUpperCase()+MONTHS_FR[curM].slice(1)+' '+curY+'</div>';
   html += '<div class="linebadges">'+lines.map(function(l){
     var r = perfMonth.find(function(x){ return x.ligne===l; });
@@ -10111,6 +10617,7 @@ function renderSecteurDashboard(){
     return '<div class="linebadge"><b>'+esc(l)+'</b> '+b+'</div>';
   }).join('')+'</div></div>';
 
+  }
   return html;
 }
 
@@ -10186,7 +10693,7 @@ function renderPerfAuditProgress(){
   html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:12px;">';
   secteursList.forEach(function(s){
     var lignes = (s.lignes||[]).map(function(l){
-      var entry = DATA.perf.find(function(p){ return (p.secteur||'MCU')===s.id && p.ligne===l && p.annee===y && p.mois===m && p.resultatPct!==null && p.resultatPct!==undefined; });
+      var entry = perfEntryFor(s.id, l, y, m);
       totalLignes++;
       if(entry) doneLignes++;
       return {ligne:l, done: !!entry, pct: entry? entry.resultatPct : null};
@@ -10195,7 +10702,7 @@ function renderPerfAuditProgress(){
     var pct = lignes.length? Math.floor(doneCount/lignes.length*100) : 0;
     var lvl = pct===100? 'ok' : pct===0? 'danger' : 'warn';
     html += '<div style="border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; cursor:pointer;" data-action="perf-progress-goto" data-id="'+s.id+'">'+
-      '<div style="font-weight:700; margin-bottom:6px;">'+esc(s.nom)+'</div>'+
+      '<div style="font-weight:700; margin-bottom:6px;">'+esc(s.nom)+(perfFreq(s.id)>1? ' <span class="tiny" style="font-weight:400; color:var(--text-faint);">· '+esc(perfPeriodLabel(s.id, m))+'</span>' : '')+'</div>'+
       '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">'+
         '<span style="font-family:var(--mono); font-size:22px; font-weight:700; color:var(--'+lvl+');">'+pct+'%</span>'+
         '<span class="tiny" style="color:var(--text-faint);">'+doneCount+'/'+lignes.length+' lignes</span>'+
@@ -10209,8 +10716,19 @@ function renderPerfAuditProgress(){
   return html;
 }
 // Impression A4 portrait du détail de l'avancement des audits de perf (responsable qualité)
+// Fréquence des audits de perf réglée par secteur (1 = mensuelle, 2 = tous les 2 mois, 3 = trimestrielle, 6 = semestrielle)
+var PERF_FREQS = [[1,'Mensuelle'],[2,'Tous les 2 mois'],[3,'Trimestrielle'],[6,'Semestrielle']];
+function perfFreq(sid){ var s = getSecteur(sid||currentSecteur) || {}; var f = Number(s.perfFreq)||1; return [1,2,3,6].indexOf(f)>=0 ? f : 1; }
+function perfPeriodMonths(sid, m){ var f = perfFreq(sid), st = Math.floor(m/f)*f, out = []; for(var i=st;i<st+f && i<12;i++) out.push(i); return out; }
+function perfPeriodLabel(sid, m){
+  var ms = perfPeriodMonths(sid, m), cap = function(i){ var x = MONTHS_FR[i]; return x.charAt(0).toUpperCase()+x.slice(1); };
+  return ms.length===1 ? cap(ms[0]) : cap(ms[0])+' – '+cap(ms[ms.length-1]);
+}
+function perfQuestions(sid){ var s = getSecteur(sid||currentSecteur) || {}; return Array.isArray(s.perfQuestions) ? s.perfQuestions.filter(function(q){ return q && String(q.texte||'').trim(); }) : []; }
+// Audit réalisé sur la période (le mois, ou le trimestre… selon la fréquence du secteur)
 function perfEntryFor(sid, ligne, y, m){
-  return DATA.perf.find(function(p){ return (p.secteur||'MCU')===sid && p.ligne===ligne && p.annee===y && p.mois===m && p.resultatPct!==null && p.resultatPct!==undefined; }) || null;
+  var ms = perfPeriodMonths(sid, m);
+  return DATA.perf.find(function(p){ return (p.secteur||'MCU')===sid && p.ligne===ligne && p.annee===y && ms.indexOf(p.mois)>=0 && p.resultatPct!==null && p.resultatPct!==undefined; }) || null;
 }
 async function printPerfProgress(){
   var y = perfProgressYear, m = perfProgressMonth;
@@ -10371,10 +10889,9 @@ function computePriorities(){
   }
   // --- Audits de perf du mois (secteurs sans planning dédié : à partir du 15)
   if(has('perf') && !isMCU && Number(today.slice(8,10))>=15 && !bySecteur(DATA.planning).some(function(p){ return p.type==='perf'; })){
-    var cy = Number(today.slice(0,4)), cm = Number(today.slice(5,7))-1;
-    secteurLines().forEach(function(l){
-      var done = DATA.perf.some(function(p){ return (p.secteur||'')===currentSecteur && p.ligne===l && p.annee===cy && p.mois===cm; });
-      if(!done) add('perf', 'warn', 'Audit de perf '+l+' non réalisé', MONTHS_FR[cm]+' '+cy, null);
+    var cy = Number(today.slice(0,4)), cm = Number(today.slice(5,7))-1, pms = perfPeriodMonths(currentSecteur, cm);
+    if(pms[pms.length-1]===cm) secteurLines().forEach(function(l){   // alerte dans le dernier mois de la période
+      if(!perfEntryFor(currentSecteur, l, cy, cm)) add('perf', 'warn', 'Audit de perf '+l+' non réalisé', perfPeriodLabel(currentSecteur, cm)+' '+cy, null);
     });
   }
   // --- Contamination : échantillons collectés en attente d'analyse depuis plus de 14 jours
@@ -10438,7 +10955,8 @@ function computePriorities(){
     if(a.level!==b.level) return a.level==='danger' ? -1 : 1;
     return (a.date||'9999').localeCompare(b.date||'9999');
   });
-  return items;
+  var alHid = (getSecteur(currentSecteur)||{}).alertHidden || [];   // alertes désactivées pour ce secteur dans l'assistant
+  return alHid.length ? items.filter(function(it){ return alHid.indexOf(it.module)<0; }) : items;
 }
 function prioritiesForSecteur(sid){
   var saved = currentSecteur;
@@ -10824,9 +11342,11 @@ RENDERERS.dashboard = function(){
   W.w_alerts = '<h2>'+esc(t('title_alerts','Alertes'))+'</h2><div id="alerts-section">'+renderAlertsSection()+'</div>';
 
   // ===== Assemblage avec disposition personnalisable =====
-  var layout = getDashboardLayout().filter(function(w){ return !w.hidden; }); // "hidden" = supprimé du modèle
+  var secHid = (getSecteur(currentSecteur)||{}).dashHidden || [];   // cartes masquées pour ce secteur dans l'assistant
+  var layout = getDashboardLayout().filter(function(w){ return !w.hidden && secHid.indexOf(w.id)<0; }); // "hidden" = supprimé du modèle
   var html = '';
   if(userSecteurs().length>1) html += renderMultiSecteurBanner()+renderPerfAuditProgress()+sectorDetailHeading();
+  html += wzDashboardBanner();
   html += renderTodayBanner();
 
   html += '<div id="dashboard-canvas">';
@@ -11951,12 +12471,13 @@ var SVG_ICONS = {
   comptes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
   production: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>',
   qualite: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 6.5 7 1-5 5 1.2 7L12 18l-6.2 3.5L7 14.5l-5-5 7-1z"/></svg>',
+  assistant: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>',
   admin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
 };
 var EMOJI_ICONS = {
   dashboard:'📊', proprete:'🧼', metro:'📏', ateq:'⚠️', chokko:'🏭', perf:'📈',
   actions:'✅', pareto:'📶', planning:'🗓️', prison:'🔒', bibliotheque:'📚', archives:'🗄️',
-  esd:'🎓', cicl:'🔧', formations:'🎓', comptes:'⚙️', parametres:'🛠️',
+  esd:'🎓', cicl:'🔧', formations:'🎓', comptes:'⚙️', parametres:'🛠️', assistant:'🧭',
   production:'📦', qualite:'📋', admin:'⚙️'
 };
 function currentIconSet(){ return (DATA.uiSettings && DATA.uiSettings.iconStyle==='emoji') ? EMOJI_ICONS : SVG_ICONS; }
@@ -11964,7 +12485,7 @@ var TAB_GROUPS_DEF = [
   {id:'production', label:'Production', tabs:['proprete','metro','chokko','perf']},
   {id:'qualite',    label:'Qualité',    tabs:['actions','pareto','planning','prison','bibliotheque','archives']},
   {id:'formations', label:'Formations', tabs:['esd','cicl','formations']},
-  {id:'admin',      label:'Réglages',   tabs:['parametres']}
+  {id:'admin',      label:'Réglages',   tabs:['assistant','parametres']}
 ];
 Object.defineProperty(window, 'TAB_GROUPS', {get:function(){
   var icons = currentIconSet();
@@ -12080,11 +12601,12 @@ function renderNav(){
   var sTabs = secteurTabs();
   var allowedTabsIds = ALL_TABS.filter(function(tb){ return sTabs.indexOf(tb[0])>=0 && tabAllowed(tb[0]); }).map(function(tb){return tb[0];});
   var isAdmin = currentUser && currentUser.roleId===ADMIN_ROLE_ID;
+  if(currentUser) allowedTabsIds.push('assistant');   // chacun configure ses secteurs
   if(isAdmin){ allowedTabsIds.push('parametres'); }   // comptes, secteurs, sauvegardes : administrateur
 
   function tabLabel(id){
     var found = ALL_TABS.find(function(tb){return tb[0]===id;});
-    return t('tab_'+id, found?found[1]:(id==='comptes'?'Comptes':id==='parametres'?'Paramètres':id));
+    return t('tab_'+id, found?found[1]:(id==='comptes'?'Comptes':id==='parametres'?'Paramètres':id==='assistant'?'Configurer le secteur':id));
   }
 
   var sidebar = document.getElementById('sidebar');
@@ -13195,6 +13717,7 @@ app.addEventListener('click', async function(e){
   if(viewContamBtn){ openContamDetailId = viewContamBtn.dataset.id; render(); return; }
   if(e.target.closest('[data-action="close-contam-detail"]')){ openContamDetailId = null; render(); return; }
 
+  if(await wzHandleClick(e)) return;
   var czB = e.target.closest('[data-action^="cz-"],[data-action^="pset-"]');
   if(czB){
     var ca = czB.dataset.action;
