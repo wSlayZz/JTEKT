@@ -589,7 +589,7 @@ tr.releve-recap-sel td:first-child{font-weight:700; box-shadow:inset 4px 0 0 #1F
 /* CHOKKO : TOTAL NC en rouge, production par équipe (A, B, C ou D) en noir gras */
 .chokko-grid td.chk-tnc{color:#C0272D; font-weight:700;}
 .chokko-grid tr.chk-team-row input.chokko-prod-cell{color:#000 !important; font-weight:700;}
-@media print{ .chokko-grid td.chk-tnc{color:#C0272D !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;} .chokko-grid tr.chk-team-row input.chokko-prod-cell{color:#000 !important; font-weight:700 !important;} }
+@media print{ .chokko-grid td.chk-tnc{color:#6B3A1F !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;} .chokko-grid tr.chk-team-row input.chokko-prod-cell{color:#000 !important; font-weight:700 !important;} }
 .chantier-modal{max-width:860px;}
 .chantier-modal .entryform{display:grid; grid-template-columns:1fr 1fr; gap:8px 14px;}
 .chantier-modal .entryform .field{margin:0;}
@@ -789,6 +789,33 @@ div.entryform.cols3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
 .help-faq b{display:block; margin-bottom:2px;}
 .help-faq:last-child{padding-bottom:10px;}
 @media print{ .help-btn, .help-panel{display:none !important;} }
+/* ---- Impressions : en-tête commun, listes compactes ---- */
+#list-print-head{display:none;}
+@media print{
+  .qp-head{display:flex; align-items:center; justify-content:space-between; padding-bottom:6px; margin-bottom:10px; border-bottom:2px solid #1F3864; font-family:Arial, Helvetica, sans-serif;}
+  .qp-head img{height:28px; width:auto;}
+  .qp-head div{text-align:right; font-size:14px;} .qp-head div span{display:block; font-size:10px; color:#555;}
+  body.print-list #list-print-head{display:block !important;}
+  body.print-list header.top{display:none !important;}
+  body.print-list .app-content{padding:0 !important;}
+  body.print-list table th, body.print-list table td{padding:3px 6px !important; font-size:9.5px !important; line-height:1.25;}
+  body.print-list table tr{break-inside:avoid;}
+  body.print-list thead{display:table-header-group;}
+  body.print-list .badge{font-size:8.5px !important; padding:1px 5px !important;}
+  body.print-list .grid, body.print-list .grid-4{gap:6px !important;}
+  body.print-list .statcard{padding:6px 10px !important;}
+  body.print-list .statcard .val{font-size:18px !important;}
+  .print-keep{break-inside:avoid; page-break-inside:avoid;}
+  .print-keep h2{font-size:13px !important;}
+  #qos-print .qos-kpis{grid-template-columns:repeat(5,1fr) !important;}
+  #qos-print .qos-line{padding:5px 8px !important; margin-bottom:5px !important;}
+  #qos-print .qos-line-kpis{gap:14px;} #qos-print .qos-line-kpis i{font-size:8px;} #qos-print .qos-line-kpis b{font-size:12px !important;}
+  #qos-print .qos-mini td, #qos-print .qos-mini th{padding:2px 4px !important; font-size:8.5px !important;}
+  #qos-print .qos-sub{font-size:8.5px; margin-bottom:2px;}
+  #qos-print .qos-actions table td, #qos-print .qos-actions table th{font-size:8.5px !important; padding:2px 4px !important;}
+  #qos-print .qos-line-empty{padding:4px 8px !important;}
+  #qos-print .eyebrow{font-size:9px;}
+}
 @media (max-width:760px){ .help-panel{width:100vw;} }
 .cz-pin, .cz-pin-row{display:none;}
 body.cz-admin .cz-pin{display:inline-flex; align-items:center; gap:4px; font:600 11px/1.2 inherit; font-family:inherit; padding:3px 8px; margin:0 0 0 8px; border:1.5px dashed #D9A35B; background:#FFF6E8; color:#6B4A1E; border-radius:999px; cursor:pointer; vertical-align:middle; text-transform:none; letter-spacing:0;}
@@ -2193,7 +2220,28 @@ async function withBtnLoading(btn, promiseFn){
   try{ return await promiseFn(); }
   finally{ btn.classList.remove('btn-loading'); btn.disabled = false; }
 }
+// Nettoyage après impression : sur l'événement afterprint uniquement (filet de sécurité très long).
+// Un délai court retirait la feuille d'impression pendant que l'aperçu était encore ouvert : pages blanches.
+// Impression d'une liste affichée à l'écran (formations…) : en-tête Acurion + titre, mise en page compacte
+function printListPage(title){
+  var view = document.getElementById('view'); if(!view) return;
+  var old = document.getElementById('list-print-head'); if(old) old.remove();
+  var logoEl = document.querySelector('.sidebar-logo-full');
+  var head = document.createElement('div'); head.id = 'list-print-head'; head.className = 'print-only';
+  head.innerHTML = '<div class="qp-head">'+(logoEl && logoEl.src ? '<img src="'+logoEl.src+'" alt="Acurion">' : '<span></span>')+'<div><b>'+esc(title)+'</b><span>Secteur '+esc((getSecteur(currentSecteur)||{}).nom||currentSecteur)+' · édité le '+fmtDate(todayStr())+(currentUser? ' par '+esc(currentUser.displayName) : '')+'</span></div></div>';
+  view.insertBefore(head, view.firstChild);
+  document.body.classList.add('print-list');
+  onPrintDone(function(){ document.body.classList.remove('print-list'); var h = document.getElementById('list-print-head'); if(h) h.remove(); });
+  waitImages(head).then(function(){ setTimeout(function(){ printWithPageSize('A4 portrait'); }, 60); });
+}
+function onPrintDone(fn){
+  var done = false;
+  var run = function(){ if(done) return; done = true; window.removeEventListener('afterprint', run); try{ fn(); }catch(e){ console.error(e); } };
+  window.addEventListener('afterprint', run);
+  setTimeout(run, 180000);
+}
 function printWithPageSize(sizeRule){
+  var prevSize = document.getElementById('dynamic-print-size'); if(prevSize) prevSize.remove();
   var styleEl = document.createElement('style');
   styleEl.id = 'dynamic-print-size';
   styleEl.textContent = '@page{ size:'+sizeRule+'; margin:8mm; }';
@@ -2204,8 +2252,7 @@ function printWithPageSize(sizeRule){
     if(el) el.remove();
     window.removeEventListener('afterprint', cleanup);
   };
-  window.addEventListener('afterprint', cleanup);
-  setTimeout(cleanup, 4000); // filet de sécurité si l'événement afterprint n'est pas déclenché
+  onPrintDone(cleanup);
 }
 function toast(message, type){
   var layer = document.getElementById('toast-layer');
@@ -5193,7 +5240,7 @@ function ciclPrintSummary(){
       byName[r.nom].push(r);
     });
     var names = Object.keys(byName).sort(function(a,b){return a.localeCompare(b,'fr',{sensitivity:'base'});});
-    html += '<div'+(idx>0?' class="print-page-break"':'')+' style="padding:10px 0;">';
+    html += '<div class="print-keep" style="padding:10px 0;">';
     html += '<h2 style="margin:0 0 10px;">Formations CI/CL - '+ligne+'</h2>';
     if(!names.length){
       html += '<p class="tiny">Aucun régleur formé sur cette ligne.</p>';
@@ -6183,7 +6230,7 @@ function printChantier(id){
   document.body.classList.add('print-actions-sheet');
   var cleanup = function(){ document.body.classList.remove('print-actions-sheet'); var s = document.getElementById('actions-print-sheet'); if(s) s.remove(); window.removeEventListener('afterprint', cleanup); };
   window.addEventListener('afterprint', cleanup);
-  setTimeout(cleanup, 4000);
+  onPrintDone(cleanup);
   printWithPageSize('A4 portrait');
 }
 
@@ -7051,9 +7098,8 @@ function printPareto(){
   document.body.appendChild(sheet);
   document.body.classList.add('print-pareto-sheet');
   var cleanup = function(){ document.body.classList.remove('print-pareto-sheet'); var s = document.getElementById('pareto-print-sheet'); if(s) s.remove(); window.removeEventListener('afterprint', cleanup); };
-  window.addEventListener('afterprint', cleanup);
-  setTimeout(cleanup, 4000);
-  printWithPageSize('A4 landscape');
+  onPrintDone(cleanup);
+  waitImages(sheet).then(function(){ setTimeout(function(){ printWithPageSize('A4 landscape'); }, 60); });
 }
 function paretoRowByKey(key){
   var cur = paretoCurrent(); if(!cur) return null;
@@ -7181,7 +7227,7 @@ function printMonthlyReport(key){
   logChange('Rapport', 'Rapport mensuel', 'Secteur '+currentSecteur+' - '+rptMonthLabel(key));
   var cleanup = function(){ document.body.classList.remove('print-monthly-report'); var s = document.getElementById('monthly-report'); if(s) s.remove(); window.removeEventListener('afterprint', cleanup); };
   window.addEventListener('afterprint', cleanup);
-  setTimeout(cleanup, 6000);
+  onPrintDone(cleanup);
   waitImages(sheet).then(function(){ setTimeout(function(){ printWithPageSize('A4 portrait'); }, 60); });
 }
 
@@ -7997,7 +8043,7 @@ async function printChokkoSynthese(){
     if(savedView!=='saisie' || savedMode!=='jour'){ chokkoView = savedView; render(); }
   };
   window.addEventListener('afterprint', cleanup);
-  setTimeout(cleanup, 5000);
+  onPrintDone(cleanup);
   logChange('CHOKKO', 'Export PDF', chokkoLigne+' - '+MONTHS_FR[chokkoMonth]+' '+chokkoYear);
   setTimeout(function(){ printWithPageSize('A3 landscape'); }, 60);
 }
@@ -8556,7 +8602,7 @@ function chokkoSaisieView(){
   '</div>';
   html += chokkoActionsTableHtml(ligne, postes, days);
   // Pareto général du mois : total des défauts de la ligne, tout en bas de l'onglet
-  html += '<div class="card" style="margin-top:18px;" id="chokko-pareto-card">'+
+  html += '<div class="card chokko-noprint" style="margin-top:18px;" id="chokko-pareto-card">'+
     '<div class="eyebrow" style="margin-bottom:8px;">Pareto des défauts - '+esc(ligne)+' - '+esc(MONTHS_FR[chokkoMonth].charAt(0).toUpperCase()+MONTHS_FR[chokkoMonth].slice(1))+' '+chokkoYear+'</div>'+
     '<div id="chokko-pareto-body"></div></div>';
 
@@ -8851,7 +8897,7 @@ async function printChokkoDefReport(){
   var done = false;
   var cleanup = function(){ if(done) return; done = true; window.removeEventListener('afterprint', cleanup); document.body.classList.remove('print-def-report'); var sh = document.getElementById('def-print'); if(sh) sh.remove(); };
   window.addEventListener('afterprint', cleanup);
-  setTimeout(cleanup, 5000);
+  onPrintDone(cleanup);
   logChange('CHOKKO', 'Impression suivi défauts', ligne+' - '+slots.join(', '));
   setTimeout(function(){ printWithPageSize('A3 landscape'); }, 60);
 }
@@ -10756,7 +10802,7 @@ async function printQos(){
   var fin = false;
   var cleanup = function(){ if(fin) return; fin = true; window.removeEventListener('afterprint', cleanup); document.body.classList.remove('print-qos'); var sh = document.getElementById('qos-print'); if(sh) sh.remove(); };
   window.addEventListener('afterprint', cleanup);
-  setTimeout(cleanup, 5000);
+  onPrintDone(cleanup);
   logChange('Réunion QOS', 'Impression du support', qosMonthName(m)+' '+y);
   setTimeout(function(){ printWithPageSize('A4 landscape'); }, 60);
 }
@@ -11378,7 +11424,7 @@ async function printPerfProgress(){
   var fin = false;
   var cleanup = function(){ if(fin) return; fin = true; window.removeEventListener('afterprint', cleanup); document.body.classList.remove('print-perf-progress'); var sh = document.getElementById('perf-print'); if(sh) sh.remove(); };
   window.addEventListener('afterprint', cleanup);
-  setTimeout(cleanup, 5000);
+  onPrintDone(cleanup);
   logChange('Audits de perf', 'Impression avancement', moisNom+' '+y);
   setTimeout(function(){ printWithPageSize('A4 portrait'); }, 60);
 }
@@ -14476,7 +14522,7 @@ app.addEventListener('click', async function(e){
     document.body.classList.add('print-prison');
     var rmPrisonPrint = function(){ document.body.classList.remove('print-prison'); window.removeEventListener('afterprint', rmPrisonPrint); };
     window.addEventListener('afterprint', rmPrisonPrint);
-    setTimeout(rmPrisonPrint, 4000);
+    onPrintDone(rmPrisonPrint);
     printWithPageSize('A3 landscape');
     return;
   }
@@ -14733,9 +14779,9 @@ app.addEventListener('click', async function(e){
   var chokkoViewBtn = e.target.closest('[data-action="chokko-view"]');
   if(chokkoViewBtn){ chokkoView = chokkoViewBtn.dataset.view; render(); return; }
   if(e.target.closest('[data-action="chokko-print"]')){ await printChokkoSynthese(); return; }
-  if(e.target.closest('[data-action="esd-print"]')){ printWithPageSize('A4 portrait'); return; }
-  if(e.target.closest('[data-action="formations-print"]')){ printWithPageSize('A4 portrait'); return; }
-  if(e.target.closest('[data-action="cicl-print"]')){ printWithPageSize('A4 portrait'); return; }
+  if(e.target.closest('[data-action="esd-print"]')){ printListPage('Formations ESD'); return; }
+  if(e.target.closest('[data-action="formations-print"]')){ printListPage('Formations SREM'); return; }
+  if(e.target.closest('[data-action="cicl-print"]')){ printListPage('Formations CI/CL'); return; }
   if(e.target.closest('[data-action="chokko-export"]')){
     var exportBtn = e.target.closest('[data-action="chokko-export"]');
     await withBtnLoading(exportBtn, handleExportChokkoExcel);
