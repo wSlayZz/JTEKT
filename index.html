@@ -714,6 +714,61 @@ div.entryform.cols3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
 .wz-issues{margin:4px 0 0; padding-left:18px; font-size:12px; color:#7A5418;}
 .wz-banner{display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; padding:12px 16px; margin-bottom:16px; border:1px solid #E8C58A; background:#FFF9EF; border-radius:var(--radius);}
 @media (max-width:760px){ .wz-body{grid-template-columns:1fr;} .wz-steps{position:static; flex-direction:row; overflow-x:auto; padding-bottom:4px;} .wz-steps button{flex:0 0 auto;} .wz-step-l{white-space:nowrap;} .wz-main{padding:14px;} .wz-row{flex-wrap:nowrap;} .wz-row input, .wz-row select{min-width:0 !important; flex:1 1 auto; width:auto;} .wz-row select{flex:0 1 120px;} }
+/* ---- Réunion QOS ---- */
+.qos-pills{margin-bottom:14px;}
+.qos-kpis{display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:14px;}
+.qos-kpis div{background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; display:flex; flex-direction:column; gap:2px;}
+.qos-kpis span{font-size:24px; font-weight:700; font-family:var(--mono);}
+.qos-kpis i{font-style:normal; font-size:12px; color:var(--text-muted);}
+.qos-eur{color:var(--danger) !important;}
+.qos-table td{vertical-align:middle;}
+.qos-table tr.qos-sec-first td{border-top:2px solid var(--border-strong);}
+.qos-sec-cell{background:#FAF9F5; min-width:130px;}
+.qos-link{background:none; border:none; padding:0; font:inherit; font-weight:700; color:var(--accent); cursor:pointer; text-align:left;}
+.qos-link:hover{text-decoration:underline;}
+.qos-delta{font-size:11.5px; font-weight:700; white-space:nowrap;}
+.qos-delta.up-good{color:var(--ok, #2E7D4F);}
+.qos-delta.up-bad{color:var(--danger);}
+.qos-line{margin-bottom:14px;}
+.qos-act-head{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px;}
+.qos-line-head{display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-bottom:12px;}
+.qos-line-kpis{display:flex; gap:22px; flex-wrap:wrap;}
+.qos-line-kpis div{display:flex; flex-direction:column; gap:1px; min-width:110px;}
+.qos-line-kpis i{font-style:normal; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-faint);}
+.qos-line-kpis b{font-size:20px; font-family:var(--mono);}
+.qos-lv-ok{color:var(--ok, #2E7D4F);} .qos-lv-warn{color:#B8730A;} .qos-lv-danger{color:var(--danger);}
+.qos-cols{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+.qos-cols > div{min-width:0; overflow-x:auto;}
+.qos-sub{font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); margin-bottom:6px;}
+.qos-mini{width:100%; border-collapse:collapse; font-size:13px;}
+.qos-mini th{font-size:11px; text-align:left; color:var(--text-faint); font-weight:600; padding:4px 6px; border-bottom:1px solid var(--border);}
+.qos-mini td{padding:6px; border-bottom:1px solid var(--border); vertical-align:top;}
+.qos-note{color:var(--text-muted); margin-top:2px;}
+.qos-mini td:not(:first-child), .qos-mini th{white-space:nowrap;}
+.qos-line-empty{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 16px;}
+.qos-table tr.qos-late td{background:#FDF1EF;}
+.qos-table tr.qos-editing td{background:#FFF9EF;}
+.qos-table tr.qos-editing input, .qos-table tr.qos-editing select{width:100%; min-width:120px; box-sizing:border-box;}
+#qos-print{display:none;}
+@media (max-width:900px){ .qos-cols{grid-template-columns:1fr;} .qos-kpis{grid-template-columns:repeat(2,1fr);} }
+@media print{
+  body.print-qos > *:not(#qos-print){display:none !important;}
+  body.print-qos #qos-print{display:block !important; font-family:Arial, Helvetica, sans-serif; color:#111; font-size:10px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  #qos-print .qp-page{page-break-after:always; break-after:page;}
+  #qos-print .qp-page:last-child{page-break-after:auto; break-after:auto;}
+  #qos-print .qp-head{display:flex; align-items:center; justify-content:space-between; padding-bottom:6px; margin-bottom:10px; border-bottom:2px solid #1F3864;}
+  #qos-print .qp-head img{height:28px; width:auto;}
+  #qos-print .qp-head div{text-align:right; font-size:14px;} #qos-print .qp-head div span{display:block; font-size:10px; color:#555;}
+  #qos-print .qos-noprint, #qos-print .btn{display:none !important;}
+  #qos-print .card{border:1px solid #bbb; border-radius:6px; padding:8px 10px; margin-bottom:8px; box-shadow:none; break-inside:avoid;}
+  #qos-print .qos-kpis{gap:6px; margin-bottom:8px;} #qos-print .qos-kpis div{padding:5px 8px;} #qos-print .qos-kpis span{font-size:16px;}
+  #qos-print table{width:100%; border-collapse:collapse;} #qos-print th, #qos-print td{border:1px solid #ccc; padding:3px 5px; font-size:9.5px; text-align:left;}
+  #qos-print .qos-line-kpis b{font-size:14px;} #qos-print .qos-line-head{margin-bottom:6px;}
+  #qos-print .qos-cols{grid-template-columns:1fr 1fr; gap:10px;} #qos-print .qos-cols > div{overflow:visible;}
+  #qos-print .qos-link{color:#111; font-weight:600;}
+  #qos-print .table-wrap{overflow:visible; border:none;}
+  #qos-print .tiny{font-size:8.5px;}
+}
 /* ---- Aide « ? » ---- */
 .help-btn{position:fixed; right:20px; bottom:20px; z-index:1500; width:46px; height:46px; border-radius:50%; border:none; background:var(--accent); color:#fff; font:700 21px/1 var(--sans); cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.2);}
 .help-btn:hover, .help-btn.on{background:var(--accent-dark);}
@@ -734,25 +789,6 @@ div.entryform.cols3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
 .help-faq b{display:block; margin-bottom:2px;}
 .help-faq:last-child{padding-bottom:10px;}
 @media print{ .help-btn, .help-panel{display:none !important;} }
-/* ---- Onglets personnalisés ---- */
-.ct-types{display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr)); gap:10px;}
-.ct-type-card{display:flex; flex-direction:column; gap:6px; align-items:flex-start; text-align:left; padding:14px; border:1px solid var(--border); border-radius:var(--radius); background:#fff; cursor:pointer; font:inherit;}
-.ct-type-card:hover{border-color:var(--accent);}
-.ct-type-card.on{border-color:var(--accent); background:var(--accent-bg, #EEF3F2); box-shadow:0 0 0 1px var(--accent) inset;}
-.ct-type-ic{width:26px; height:26px; color:var(--accent);}
-.ct-type-ic svg{width:26px; height:26px;}
-.ct-col{border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px; background:#fff;}
-.ct-sub{margin-top:6px; padding-left:4px;}
-.ct-form-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:10px;}
-.ct-table tr.ct-danger td{background:#FDF1EF;}
-.ct-table tr.ct-warn td{background:#FFF8EC;}
-.ct-rep{display:flex; gap:4px; flex-wrap:wrap;}
-.ct-rep-b{border:1px solid var(--border-strong); background:#fff; border-radius:999px; padding:4px 10px; font:inherit; font-size:12px; cursor:pointer;}
-.ct-rep-ok.on{background:#E3F2E8; border-color:#2E7D4F; color:#1F5C38; font-weight:700;}
-.ct-rep-nok.on{background:#FBE3E0; border-color:#B23B2E; color:#8A2B21; font-weight:700;}
-.ct-rep-na.on{background:#EEECE6; border-color:#6E6A60; font-weight:700;}
-.ct-ind-table input{width:100px; padding:4px 6px;}
-.ct-ind-table td.sc-ok input, .ct-ind-table td.sc-danger input{background:transparent; font-weight:700;}
 @media (max-width:760px){ .help-panel{width:100vw;} }
 .cz-pin, .cz-pin-row{display:none;}
 body.cz-admin .cz-pin{display:inline-flex; align-items:center; gap:4px; font:600 11px/1.2 inherit; font-family:inherit; padding:3px 8px; margin:0 0 0 8px; border:1.5px dashed #D9A35B; background:#FFF6E8; color:#6B4A1E; border-radius:999px; cursor:pointer; vertical-align:middle; text-transform:none; letter-spacing:0;}
@@ -1273,11 +1309,11 @@ var KEYS = {
   propAudits:'mcu_propaudits_v1', contamination:'mcu_contamination_v1', vidange:'mcu_vidange_v1',
   accounts:'mcu_accounts_v1', roles:'mcu_roles_v1', changelog:'mcu_changelog_v1', scoreHistory:'mcu_score_history_v1', particules:'mcu_particules_v1',
   esd:'mcu_esd_v1', perf:'app_perf_v1', secteurs:'app_secteurs_v1', formations:'app_formations_v1',
-  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', chokkoPosteConfig:'mcu_chokko_poste_config_v1', bibliotheque:'app_bibliotheque_v1', prisonLots:'mcu_prison_lots_v1', prisonSnapshots:'mcu_prison_snapshots_v1', prisonChantiers:'mcu_prison_chantiers_v1', prisonMoves:'mcu_prison_moves_v1', rebutCouts:'mcu_rebut_couts_v1', rebutCodes:'mcu_rebut_codes_v1', sapBom:'app_sap_bom_v1', customTabs:'app_custom_tabs_v1', customData:'app_custom_data_v1', actionsSnapshots:'mcu_actions_snapshots_v1', uiSettings:'app_ui_settings_v1', appConfig:'app_config_v1'
+  postits:'app_postits_v1', labelOverrides:'app_label_overrides_v1', cicl:'mcu_cicl_v1', chokko:'mcu_chokko_v1', chokkoNotes:'mcu_chokko_notes_v1', ciclPersons:'mcu_cicl_persons_v1', chokkoColors:'mcu_chokko_colors_v1', chokkoHighlights:'mcu_chokko_highlights_v1', chokkoRecentColors:'mcu_chokko_recent_colors_v1', chokkoPosteLabels:'mcu_chokko_poste_labels_v1', chokkoUnitCost:'mcu_chokko_unit_cost_v1', chokkoPosteConfig:'mcu_chokko_poste_config_v1', bibliotheque:'app_bibliotheque_v1', prisonLots:'mcu_prison_lots_v1', prisonSnapshots:'mcu_prison_snapshots_v1', prisonChantiers:'mcu_prison_chantiers_v1', prisonMoves:'mcu_prison_moves_v1', rebutCouts:'mcu_rebut_couts_v1', rebutCodes:'mcu_rebut_codes_v1', sapBom:'app_sap_bom_v1', actionsSnapshots:'mcu_actions_snapshots_v1', uiSettings:'app_ui_settings_v1', appConfig:'app_config_v1'
 };
-var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, bibliotheque:[], prisonLots:[], prisonSnapshots:[], prisonChantiers:[], prisonMoves:[], rebutCouts:{}, rebutCodes:{}, sapBom:{}, customTabs:[], customData:{}, actionsSnapshots:[], appConfig:{}, uiSettings:{sidebarColor:null, iconStyle:'svg'}};
+var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, bibliotheque:[], prisonLots:[], prisonSnapshots:[], prisonChantiers:[], prisonMoves:[], rebutCouts:{}, rebutCodes:{}, sapBom:{}, actionsSnapshots:[], appConfig:{}, uiSettings:{sidebarColor:null, iconStyle:'svg'}};
 var RENDERERS = {};
-var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['chokko','Suivi CHOKKO'],['actions',"Plan d'actions"],['pareto','Analyses Pareto'],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['prison','Prison qualité'],['bibliotheque','Bibliothèque'],['archives','Archives']];
+var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['chokko','Suivi CHOKKO'],['qos','Réunion QOS'],['actions',"Plan d'actions"],['pareto','Analyses Pareto'],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['prison','Prison qualité'],['bibliotheque','Bibliothèque'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
 
 // ============ LABELS PERSONNALISABLES ============
@@ -1446,10 +1482,12 @@ function secteurTabs(){
   // Filet de sécurité : les configurations MCU enregistrées avant l'ajout de l'onglet Formations SREM
   // ne le contiennent pas encore. On le rajoute systématiquement pour ce secteur, sans dépendre d'une
   // migration de données côté Supabase.
-  if(currentSecteur==='MCU' && tabs.indexOf('formations')<0) tabs.push('formations');
-  if(currentSecteur==='MCU' && tabs.indexOf('perf')<0) tabs.push('perf');
+  // (sauf si les onglets ont été choisis dans l'assistant : le choix fait foi)
+  if(currentSecteur==='MCU' && !(s && s.tabsManual) && tabs.indexOf('formations')<0) tabs.push('formations');
+  if(currentSecteur==='MCU' && !(s && s.tabsManual) && tabs.indexOf('perf')<0) tabs.push('perf');
   if(tabs.indexOf('bibliotheque')<0) tabs.push('bibliotheque');
   if(tabs.indexOf('pareto')<0) tabs.push('pareto');
+  if(tabs.indexOf('chokko')>=0 && tabs.indexOf('qos')<0) tabs.push('qos');   // réunion QOS : secteurs qui suivent le CHOKKO
   tabs = tabs.filter(function(t){ return t!=='ateq'; });   // onglet ATEQ retiré : le suivi des défauts se fait dans CHOKKO
   // Modules dont les données ne sont pas rangées par secteur (contamination, ESD, CI/CL des références MCU) :
   // réservés à MCU, sinon un technicien d'un autre secteur verrait les données MCU.
@@ -1949,7 +1987,7 @@ var BACKUP_LABELS = {metro:'Métrologie', planning:'Planning échéances', ateq:
   formations:'Formations SREM', postits:'Post-it', labelOverrides:'Libellés personnalisés', cicl:'Formations CI/CL', chokko:'Suivi CHOKKO',
   chokkoNotes:'Notes CHOKKO', ciclPersons:'Personnes CI/CL', chokkoColors:'Couleurs CHOKKO', chokkoHighlights:'Surlignages CHOKKO',
   chokkoRecentColors:'Couleurs récentes CHOKKO', chokkoPosteLabels:'Libellés postes CHOKKO', chokkoUnitCost:'Coût par pièce CHOKKO',
-  chokkoPosteConfig:'Postes CHOKKO', bibliotheque:'Bibliothèque', prisonLots:'Prison qualité', prisonSnapshots:'Prison qualité (historique)', prisonChantiers:'Prison qualité (chantiers)', prisonMoves:'Prison qualité (traçabilité des sorties)', rebutCouts:'Coût rebut (montants)', rebutCodes:'Coût rebut (codes défauts)', sapBom:'Prison qualité (nomenclatures SAP)', customTabs:'Mes onglets (définitions)', customData:'Mes onglets (saisies)',
+  chokkoPosteConfig:'Postes CHOKKO', bibliotheque:'Bibliothèque', prisonLots:'Prison qualité', prisonSnapshots:'Prison qualité (historique)', prisonChantiers:'Prison qualité (chantiers)', prisonMoves:'Prison qualité (traçabilité des sorties)', rebutCouts:'Coût rebut (montants)', rebutCodes:'Coût rebut (codes défauts)', sapBom:'Prison qualité (nomenclatures SAP)',
   actionsSnapshots:'Évolution des actions', uiSettings:'Réglages d\'affichage', appConfig:'Paramètres de l\'application'};
 var BACKUP_NO_DEFAULT_RESTORE = ['accounts','roles','uiSettings'];
 var backupIndexCache = null;
@@ -10033,7 +10071,7 @@ function wzInfo(id){
 function wzBuildDraft(){
   var sec = wzSecteurObj(), id = wzStep;
   wzDraftKey = currentSecteur+'|'+id; wzDirty = false;
-  if(id==='secteur') wzDraft = {nom:sec.nom||sec.id, lignes:(sec.lignes||[]).slice(), tabs:(sec.tabs||[]).slice()};
+  if(id==='secteur') wzDraft = {nom:sec.nom||sec.id, lignes:(sec.lignes||[]).slice(), tabs:secteurTabs().filter(function(t){ return WZ_TABS.some(function(x){ return x[0]===t; }); })};   // onglets réellement affichés
   else if(id==='chokko'){
     wzDraft = {obj:{}, cost:{}, codes:{}, teams:cfgClone(CHOKKO_TEAMS), teamsPropres:Array.isArray(sec.chokkoTeams) && sec.chokkoTeams.length>0, marge:(sec.chokkoMarge!==undefined && sec.chokkoMarge!==null && sec.chokkoMarge!=='') ? String(sec.chokkoMarge).replace('.',',') : ''};
     (sec.lignes||[]).forEach(function(l){ wzDraft.obj[l] = String(chokkoObjectif(l)).replace('.',','); wzDraft.cost[l] = String(chokkoCostObjectif(l)).replace('.',','); });
@@ -10061,7 +10099,9 @@ async function wzCommit(){
     if(!lignes.length){ toast('Au moins une ligne est nécessaire.', 'error'); return false; }
     var retirees = (sec.lignes||[]).filter(function(l){ return lignes.indexOf(l)<0; });
     if(retirees.length && !await uiConfirm('Retirer '+retirees.join(', ')+' du secteur ?\n\nLes données déjà saisies sur '+(retirees.length>1?'ces lignes':'cette ligne')+' sont conservées mais ne s\'afficheront plus.', {okLabel:'Retirer', danger:true})) return false;
-    sec.nom = String(d.nom||'').trim() || sec.id; sec.lignes = lignes; sec.tabs = d.tabs.slice();
+    var keep = (sec.tabs||[]).filter(function(t){ return !WZ_TABS.some(function(x){ return x[0]===t; }); });   // dashboard, bibliothèque…
+    if(keep.indexOf('dashboard')<0) keep.unshift('dashboard');
+    sec.nom = String(d.nom||'').trim() || sec.id; sec.lignes = lignes; sec.tabs = keep.concat(d.tabs); sec.tabsManual = true;
     await save('secteurs');
     logChange('Assistant', 'Secteur '+sid, lignes.join(', ')+' · onglets : '+sec.tabs.join(', '));
     applyAppConfig(true);
@@ -10447,426 +10487,244 @@ function wzDashboardBanner(){
   return '<div class="wz-banner"><div><b>Le secteur '+esc(sec.nom||sec.id)+' n\'est pas encore configuré.</b><div class="tiny">L\'assistant passe en revue, étape par étape, tout ce qui se règle : lignes, onglets, postes CHOKKO, grilles, références de la prison, formations, audits…</div></div><button class="btn primary" data-action="wz-start">Configurer le secteur</button></div>';
 }
 
-// ==================== ONGLETS PERSONNALISÉS ====================
-// Chaque technicien peut créer, pour son secteur, ses propres onglets sans passer par le code :
-//  - « suivi »      : tableau de suivi avec ses colonnes (texte, nombre, date, liste, oui/non, personne), échéances et alertes ;
-//  - « checklist »  : checklist / audit, une liste de questions notées Conforme / Non conforme / Sans objet, score et historique ;
-//  - « indicateur » : une valeur saisie par jour, semaine ou mois (par ligne ou globale), objectif et graphique.
-// Définitions : DATA.customTabs ; saisies : DATA.customData[idOnglet] = [enregistrements].
-var CT_TYPES = [
-  ['suivi', 'Tableau de suivi', 'Vos colonnes (texte, nombre, date, liste, oui/non, personne), filtres, export Excel, alertes sur les échéances.'],
-  ['checklist', 'Checklist / audit', 'Une liste de questions notées Conforme / Non conforme / Sans objet, un score par audit et l\'historique.'],
-  ['indicateur', 'Indicateur chiffré', 'Une valeur par jour, semaine ou mois, avec un objectif, des couleurs et un graphique.']
-];
-var CT_COL_TYPES = [['texte','Texte'],['nombre','Nombre'],['date','Date'],['liste','Liste de choix'],['ouinon','Oui / non'],['personne','Personne']];
-var CT_ICONS = {
-  suivi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>',
-  checklist:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M3 6l1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg>',
-  indicateur:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>'
-};
-var CT_EMOJI = {suivi:'📋', checklist:'☑️', indicateur:'📈'};
-function customTabsSect(sid){ sid = sid || currentSecteur; return (DATA.customTabs||[]).filter(function(t){ return t.secteur===sid; }); }
-function customTabFor(id){ return (DATA.customTabs||[]).filter(function(t){ return t.id===id; })[0] || null; }
-function customTypeLabel(type){ var f = CT_TYPES.filter(function(x){ return x[0]===type; })[0]; return f ? f[1] : type; }
-function customTabIcon(id){ var t = customTabFor(id); if(!t) return ''; return (DATA.uiSettings && DATA.uiSettings.iconStyle==='emoji') ? (CT_EMOJI[t.type]||'') : (CT_ICONS[t.type]||''); }
-function customRows(id){ DATA.customData = DATA.customData || {}; if(!Array.isArray(DATA.customData[id])) DATA.customData[id] = []; return DATA.customData[id]; }
-function customCanDelete(t){ return isAdminUser() || (currentUser && t.createdBy===currentUser.id); }
-function ctPersons(){ return (DATA.accounts||[]).filter(function(a){ return a.roleId!==ADMIN_ROLE_ID && (a.allSecteurs || (a.secteurs||[]).indexOf(currentSecteur)>=0); }).map(function(a){ return a.displayName; }).filter(Boolean).sort(function(a,b){ return a.localeCompare(b,'fr'); }); }
-
-// ---------- Brouillon générique (formulaires des onglets personnalisés) ----------
-var ctDraft = null;    // {kind:'def'|'row'|'audit', ...}
-function ctPath(path){ var parts = String(path).split('.'), o = ctDraft; for(var i=0;i<parts.length-1;i++){ if(o==null) return null; o = o[parts[i]]; } return o==null ? null : {o:o, k:parts[parts.length-1]}; }
-function ctGet(path){ var r = ctPath(path); return r ? r.o[r.k] : undefined; }
-function ctSet(path, v){ var r = ctPath(path); if(r) r.o[r.k] = v; }
-function ctIn(path, attrs){ var v = ctGet(path); return '<input type="text" data-cf="'+esc(path)+'" value="'+esc(v==null?'':v)+'"'+(attrs||'')+'>'; }
-
-// ---------- Gérer mes onglets ----------
-var ctManageEdit = null;   // null | 'new' | id
-function ctNewDef(type){
-  return {id:'ct_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), type:type||'suivi', nom:'', description:'', secteur:currentSecteur,
-    cols:[{id:'c1', label:'Sujet', type:'texte'}, {id:'c2', label:'Responsable', type:'personne'}, {id:'c3', label:'Échéance', type:'date', echeance:true, alerteJours:'7'}, {id:'c4', label:'Terminé', type:'ouinon'}],
-    clotureCol:'c4', questions:[{id:'q1', texte:''}], parLigne:true, actionsNok:true, freq:'mois', unite:'', objectif:'', sens:'max'};
+// ==================== RÉUNION QOS (point qualité mensuel avec les techniciens) ====================
+// Une réunion par mois, tous secteurs : vue d'ensemble, puis une page par secteur que le technicien présente.
+// Défauts : CHOKKO (top défauts par poste) et coût rebut (top codes). Actions liées : création depuis un défaut,
+// mise à jour du statut, de l'échéance et du responsable sans quitter la QOS. Impression A4 paysage.
+var qosY = null, qosM = null, qosView = 'all';
+var qosEditId = null, qosEditDraft = null;
+var QOS_TOP = 3;   // défauts affichés par ligne
+function qosInitPeriod(){
+  if(qosY!==null) return;
+  var t = todayStr(), y = Number(t.slice(0,4)), m = Number(t.slice(5,7))-1;
+  if(Number(t.slice(8,10))<=20){ m--; if(m<0){ m = 11; y--; } }   // en début de mois, on fait le point sur le mois écoulé
+  qosY = y; qosM = m;
 }
-RENDERERS.mesonglets = function(){
-  var list = customTabsSect();
+function qosPrev(y, m){ return m===0 ? {y:y-1, m:11} : {y:y, m:m-1}; }
+function qosMonthName(m){ var s = MONTHS_FR[m]; return s.charAt(0).toUpperCase()+s.slice(1); }
+// Calcule dans le contexte d'un secteur (équipes, seuils… propres au secteur), puis revient au secteur affiché
+function withSecteur(sid, fn){
+  var prev = currentSecteur;
+  if(sid===prev) return fn();
+  currentSecteur = sid; applySecteurConfig();
+  try{ return fn(); } finally { currentSecteur = prev; applySecteurConfig(); }
+}
+function qosSecteurs(){
+  var all = (DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT;
+  return userSecteurs().map(function(id){ return all.find(function(s){ return s.id===id; }); }).filter(function(s){
+    return s && withSecteur(s.id, function(){ return secteurTabs().indexOf('chokko')>=0; });
+  });
+}
+function qosTrunc(v, d){ var f = Math.pow(10, d); return (v<0 ? -Math.floor(-v*f+1e-9) : Math.floor(v*f+1e-9))/f; }
+function qosEur(v){ return (v===null || v===undefined || isNaN(v)) ? '-' : fmtEur(qosTrunc(Number(v), 2)); }
+function qosCpp(v){ return (v===null || v===undefined || isNaN(v)) ? '-' : qosTrunc(Number(v), 3).toLocaleString('fr-FR', {minimumFractionDigits:3, maximumFractionDigits:3})+' €'; }
+function qosNum(v){ return Number(v||0).toLocaleString('fr-FR'); }
+// Statistiques d'une ligne sur le mois (à appeler dans le contexte de son secteur)
+function qosLineStats(l, y, m){
+  var p = qosPrev(y, m);
+  var dates = chokkoMonthDays(l, y, m).map(function(d){ return d.date; });
+  var st = chokkoPeriodStats(l, dates);
+  var stp = chokkoPeriodStats(l, chokkoMonthDays(l, p.y, p.m).map(function(d){ return d.date; }));
+  var names = {}; chokkoPostes(l).forEach(function(x){ names[x[0]] = x[1]; });
+  var top = Object.keys(st.nc).map(function(k){ return {id:k, nom:names[k]||'', nc:st.nc[k], prev:stp.nc[k]||0, part:st.totalNC? st.nc[k]/st.totalNC*100 : 0}; })
+    .sort(function(a,b){ return b.nc-a.nc; });
+  var reb = rebutParetoResFor(l, y, [m]);
+  var rebPrev = rebutMonthTotal(l, p.y, p.m);
+  return {ligne:l, pct:st.pct, prevPct:stp.pct, prod:st.prod, nc:st.totalNC, prevNc:stp.totalNC, top:top, obj:chokkoObjectif(l),
+    level:st.pct===null ? 'neutral' : chokkoLevelVsObjectif(st.pct, l), rebut:reb, rebutTotal:reb.total, rebutPrev:rebPrev,
+    cpp:chokkoMonthCost(l, y, m), cppObj:chokkoCostObjectif(l), hasData:st.prod>0 || st.totalNC>0 || reb.total>0};
+}
+function qosSectorActions(sid){
+  return DATA.actions.filter(function(a){
+    if((a.secteur||'MCU')!==sid) return false;
+    var src = a.source && a.source.type;
+    return src==='chokko' || src==='rebut' || src==='qos' || a.origine==='CHOKKO' || a.origine==='Coût rebut' || a.origine==='QOS';
+  });
+}
+function qosDelta(cur, prev, unit, goodWhenUp){
+  if(cur===null || cur===undefined || prev===null || prev===undefined) return '';
+  var d = qosTrunc(cur-prev, 2); if(!d) return '<span class="qos-delta">=</span>';
+  var good = goodWhenUp ? d>0 : d<0;
+  return '<span class="qos-delta '+(good?'up-good':'up-bad')+'">'+(d>0?'▲ +':'▼ ')+String(d).replace('.',',')+(unit||'')+'</span>';
+}
+function qosOpenCount(list){ return list.filter(function(a){ return isActionOpen(a) && !isActionDone(a); }).length; }
+// ---------- Vue d'ensemble ----------
+function qosOverviewHtml(secs, y, m){
+  var rows = '', totNc = 0, totReb = 0, totOpen = 0, totLate = 0;
+  secs.forEach(function(s){
+    withSecteur(s.id, function(){
+      var acts = qosSectorActions(s.id), open = qosOpenCount(acts), late = acts.filter(isActionLate).length;
+      totOpen += open; totLate += late;
+      (s.lignes||[]).forEach(function(l, i){
+        var st = qosLineStats(l, y, m); totNc += st.nc; totReb += st.rebutTotal;
+        var t1 = st.top[0];
+        rows += '<tr'+(i===0?' class="qos-sec-first"':'')+'>'+(i===0? '<td rowspan="'+s.lignes.length+'" class="qos-sec-cell"><button class="qos-link" data-action="qos-view" data-sid="'+esc(s.id)+'">'+esc(s.nom)+'</button><div class="tiny">'+open+' action(s) en cours'+(late? ' · <b style="color:var(--danger);">'+late+' en retard</b>' : '')+'</div></td>' : '')+
+          '<td><b>'+esc(l)+'</b></td>'+
+          (st.pct===null ? '<td class="c-empty">Pas de saisie</td><td></td>' : '<td>'+badge(st.level==='ok'?'ok':st.level==='warn'?'warn':'danger', pct2(st.pct).replace('.',',')+' %')+' <span class="tiny">obj. '+String(st.obj).replace('.',',')+' %</span></td><td>'+qosDelta(st.pct, st.prevPct, ' pt', true)+'</td>')+
+          '<td>'+(st.nc? qosNum(st.nc) : '-')+'</td>'+
+          '<td>'+(t1? '<b>'+esc(t1.id)+'</b>'+(t1.nom? ' - '+esc(t1.nom) : '')+' <span class="tiny">('+qosNum(t1.nc)+')</span>' : '-')+'</td>'+
+          '<td class="qos-eur">'+(st.rebutTotal? qosEur(st.rebutTotal) : '-')+'</td>'+
+          '<td>'+(st.rebutTotal? qosDelta(st.rebutTotal, st.rebutPrev||0, ' €', false) : '')+'</td>'+
+          '<td class="qos-eur">'+qosCpp(st.cpp)+'</td></tr>';
+      });
+    });
+  });
+  var h = '<div class="qos-kpis"><div><span>'+secs.length+'</span><i>secteur(s)</i></div><div><span>'+qosNum(totNc)+'</span><i>pièces NC sur le mois</i></div><div><span class="qos-eur">'+qosEur(totReb)+'</span><i>coût rebut du mois</i></div><div><span>'+totOpen+'</span><i>actions en cours</i></div><div><span'+(totLate?' style="color:var(--danger);"':'')+'>'+totLate+'</span><i>actions en retard</i></div></div>';
+  h += '<div class="card"><div class="eyebrow" style="margin-bottom:10px;">Vue d\'ensemble · '+esc(qosMonthName(m))+' '+y+'</div><div class="table-wrap"><table class="qos-table"><thead><tr><th>Secteur</th><th>Ligne</th><th>CHOKKO du mois</th><th>vs mois préc.</th><th>Pièces NC</th><th>1er défaut</th><th>Coût rebut</th><th>vs mois préc.</th><th>Coût / pièce</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<p class="tiny qos-noprint" style="margin-top:8px;">Cliquez sur un secteur pour ouvrir sa page. Valeurs tronquées, jamais arrondies au-dessus.</p></div>';
+  return h;
+}
+// ---------- Page d'un secteur ----------
+function qosActionRowHtml(a){
+  var cat = actionPanelCategory(a), meta = actionMeta(a), editing = qosEditId===a.id;
+  var srcLbl = a.source && a.source.label ? a.source.label : (a.origine||'');
+  if(editing){
+    var d = qosEditDraft;
+    var resp = DATA.accounts.filter(function(x){ return x.displayName && x.displayName!=='Administrateur'; }).map(function(x){ return x.displayName; }).sort(function(p,q){ return p.localeCompare(q,'fr'); });
+    return '<tr class="qos-editing"><td colspan="2"><b>'+esc(a.description||'')+'</b><div class="tiny">'+esc(srcLbl)+'</div></td>'+
+      '<td><input type="text" list="qos-resp-list" id="qos-ed-resp" value="'+esc(d.responsable)+'" placeholder="Responsable"><datalist id="qos-resp-list">'+resp.map(function(r){ return '<option value="'+esc(r)+'">'; }).join('')+'</datalist></td>'+
+      '<td><input type="date" id="qos-ed-ech" value="'+esc(d.echeance||'')+'"></td>'+
+      '<td><select id="qos-ed-statut">'+ACTION_STATUSES.map(function(s){ return '<option value="'+s[0]+'"'+(s[0]===d.statut?' selected':'')+'>'+esc(s[1])+'</option>'; }).join('')+'</select></td>'+
+      '<td style="white-space:nowrap; text-align:right;"><button class="btn small" data-action="qos-edit-cancel">Annuler</button> <button class="btn small primary" data-action="qos-edit-save">Enregistrer</button></td></tr>';
+  }
+  return '<tr class="'+(cat==='late'?'qos-late':'')+'"><td><button class="qos-link" data-action="action-open" data-id="'+a.id+'">'+esc(a.description||'(sans description)')+'</button></td><td class="tiny">'+esc(srcLbl)+'</td>'+
+    '<td>'+(a.responsable? esc(a.responsable) : '<span class="tiny" style="color:var(--danger);">À désigner</span>')+'</td>'+
+    '<td>'+(a.echeance? fmtDate(a.echeance) : '<span class="tiny" style="color:var(--danger);">À fixer</span>')+'</td>'+
+    '<td>'+(cat==='late'? badge('danger','En retard') : badge(meta.level, meta.label))+'</td>'+
+    '<td class="qos-noprint" style="text-align:right;"><button class="btn small" data-action="qos-edit" data-id="'+a.id+'">Mettre à jour</button></td></tr>';
+}
+function qosSectorHtml(s, y, m){
+  return withSecteur(s.id, function(){
+    var h = '';
+    (s.lignes||[]).forEach(function(l){
+      var st = qosLineStats(l, y, m);
+      if(!st.hasData){ h += '<div class="card qos-line qos-line-empty"><div class="eyebrow">'+esc(s.nom)+' · '+esc(l)+'</div><span class="tiny">Aucune saisie CHOKKO ni coût rebut pour '+esc(qosMonthName(m))+' '+y+'.</span></div>'; return; }
+      h += '<div class="card qos-line"><div class="qos-line-head"><div><div class="eyebrow">'+esc(s.nom)+' · '+esc(l)+'</div></div>'+
+        '<div class="qos-line-kpis">'+
+          '<div><i>CHOKKO</i>'+(st.pct===null? '<b>-</b>' : '<b class="qos-lv-'+st.level+'">'+pct2(st.pct).replace('.',',')+' %</b>')+'<span class="tiny">obj. '+String(st.obj).replace('.',',')+' % '+qosDelta(st.pct, st.prevPct, ' pt', true)+'</span></div>'+
+          '<div><i>Pièces NC</i><b>'+qosNum(st.nc)+'</b><span class="tiny">prod. '+qosNum(st.prod)+'</span></div>'+
+          '<div><i>Coût rebut</i><b class="qos-eur">'+(st.rebutTotal? qosEur(st.rebutTotal) : '-')+'</b><span class="tiny">'+(st.rebutTotal? qosDelta(st.rebutTotal, st.rebutPrev||0, ' €', false) : '')+'</span></div>'+
+          '<div><i>Coût / pièce</i><b class="qos-eur">'+qosCpp(st.cpp)+'</b><span class="tiny">obj. '+qosCpp(st.cppObj)+'</span></div>'+
+        '</div></div>';
+      if(!st.hasData){ h += '<p class="tiny" style="margin:6px 0 0;">Aucune saisie CHOKKO ni coût rebut pour '+esc(qosMonthName(m))+' '+y+'.</p></div>'; return; }
+      h += '<div class="qos-cols">';
+      // Top défauts CHOKKO
+      h += '<div><div class="qos-sub">Principaux défauts CHOKKO</div>'+(st.top.length? '<table class="qos-mini"><thead><tr><th>Poste / défaut</th><th>NC</th><th>Part</th><th>vs M-1</th><th>Actions</th><th class="qos-noprint"></th></tr></thead><tbody>'+
+        st.top.slice(0, QOS_TOP).map(function(t){
+          var linked = actionsLinkedTo('chokko', l+'|'+t.id), open = qosOpenCount(linked), late = linked.filter(isActionLate).length;
+          var note = chokkoNote(l, t.id, y, m);
+          return '<tr><td><b>'+esc(t.id)+'</b>'+(t.nom? ' - '+esc(t.nom) : '')+(note && (note.texte||'').trim()? '<div class="tiny qos-note" title="Actions menées saisies dans le CHOKKO">↳ '+esc(note.texte.trim().split('\n')[0].slice(0,140))+'</div>' : '')+'</td>'+
+            '<td><b>'+qosNum(t.nc)+'</b></td><td>'+qosTrunc(t.part,1).toString().replace('.',',')+' %</td><td>'+qosDelta(t.nc, t.prev, '', false)+'</td>'+
+            '<td>'+(linked.length? (open? open+' en cours' : 'closes')+(late? ' · <b style="color:var(--danger);">'+late+' retard</b>' : '') : '<span class="tiny" style="color:var(--text-faint);">aucune</span>')+'</td>'+
+            '<td class="qos-noprint"><button class="btn small" data-action="qos-act" data-type="chokko" data-sid="'+esc(s.id)+'" data-ligne="'+esc(l)+'" data-ref="'+esc(t.id)+'" data-label="'+esc(t.id+(t.nom? ' - '+t.nom : ''))+'">+ Action</button></td></tr>';
+        }).join('')+'</tbody></table>' : '<p class="tiny">Aucun défaut saisi.</p>')+'</div>';
+      // Top coût rebut
+      var rr = st.rebut.rows.slice(0, QOS_TOP);
+      h += '<div><div class="qos-sub">Principaux coûts rebut</div>'+(rr.length? '<table class="qos-mini"><thead><tr><th>Code défaut</th><th>Montant</th><th>Part</th><th>Actions</th><th class="qos-noprint"></th></tr></thead><tbody>'+
+        rr.map(function(r){
+          var linked = actionsLinkedTo('rebut', l+'|'+r.key), open = qosOpenCount(linked), late = linked.filter(isActionLate).length;
+          return '<tr><td>'+esc(r.label)+'</td><td class="qos-eur"><b>'+qosEur(r.value)+'</b></td><td>'+qosTrunc(r.pct,1).toString().replace('.',',')+' %</td>'+
+            '<td>'+(linked.length? (open? open+' en cours' : 'closes')+(late? ' · <b style="color:var(--danger);">'+late+' retard</b>' : '') : '<span class="tiny" style="color:var(--text-faint);">aucune</span>')+'</td>'+
+            '<td class="qos-noprint"><button class="btn small" data-action="qos-act" data-type="rebut" data-sid="'+esc(s.id)+'" data-ligne="'+esc(l)+'" data-ref="'+esc(r.key)+'" data-label="'+esc(r.label)+'">+ Action</button></td></tr>';
+        }).join('')+'</tbody></table>' : '<p class="tiny">Aucun coût rebut saisi.</p>')+'</div>';
+      h += '</div></div>';
+    });
+    // Actions du secteur liées aux défauts
+    var acts = qosSectorActions(s.id);
+    var mk = y+'-'+String(m+1).padStart(2,'0');
+    var enCours = acts.filter(function(a){ return a.statut==='planifiee' || a.statut==='realisee'; })   // à réaliser, ou réalisée en attente de vérification
+      .sort(function(a,b){ var la = isActionLate(a)?0:1, lb = isActionLate(b)?0:1; if(la!==lb) return la-lb; return (a.echeance||'9999').localeCompare(b.echeance||'9999'); });
+    var closes = acts.filter(function(a){ return (a.dateRealisation||'').slice(0,7)===mk || (a.dateVerification||'').slice(0,7)===mk; }).length;
+    h += '<div class="card qos-actions"><div class="qos-act-head"><div class="eyebrow">Actions liées aux défauts · '+esc(s.nom)+' ('+enCours.length+')</div><span class="tiny">'+closes+' réalisée(s) ou vérifiée(s) en '+esc(qosMonthName(m).toLowerCase())+'</span></div>'+
+      (enCours.length? '<div class="table-wrap"><table class="qos-table"><thead><tr><th>Action</th><th>Origine</th><th>Responsable</th><th>Échéance</th><th>Statut</th><th class="qos-noprint"></th></tr></thead><tbody>'+enCours.map(qosActionRowHtml).join('')+'</tbody></table></div>'
+        : emptyState('Aucune action en cours liée aux défauts CHOKKO ou au coût rebut.'))+
+      '</div>';
+    return h;
+  });
+}
+RENDERERS.qos = function(){
+  qosInitPeriod();
+  var secs = qosSecteurs();
+  if(!secs.length) return emptyState('Aucun secteur avec le suivi CHOKKO.');
+  if(qosView!=='all' && !secs.some(function(s){ return s.id===qosView; })) qosView = 'all';
+  var y = qosY, m = qosM;
   var h = '<div class="section">';
-  if(ctManageEdit) return h + ctDefFormHtml() + '</div>';
-  h += '<div class="toolbar"><div><div class="eyebrow">Mes onglets · '+esc((getSecteur(currentSecteur)||{}).nom||currentSecteur)+'</div><div class="tiny" style="max-width:640px; margin-top:4px;">Créez les onglets dont votre secteur a besoin. Ils apparaissent dans le menu, groupe « Mes onglets », pour toutes les personnes du secteur.</div></div>'+
-    '<button class="btn primary" data-action="ct-new">+ Nouvel onglet</button></div>';
-  if(!list.length) h += '<div class="ct-types">'+CT_TYPES.map(function(t){ return '<button class="ct-type-card" data-action="ct-new" data-type="'+t[0]+'"><span class="ct-type-ic">'+CT_ICONS[t[0]]+'</span><b>'+esc(t[1])+'</b><span class="tiny">'+esc(t[2])+'</span></button>'; }).join('')+'</div>';
-  else h += '<div class="table-wrap"><table><thead><tr><th>Onglet</th><th>Type</th><th>Saisies</th><th></th></tr></thead><tbody>'+list.map(function(t){
-    var n = customRows(t.id).length;
-    return '<tr><td><b>'+esc(t.nom)+'</b>'+(t.description? '<div class="tiny">'+esc(t.description)+'</div>' : '')+'</td><td>'+esc(customTypeLabel(t.type))+'</td><td>'+n+'</td>'+
-      '<td style="white-space:nowrap; text-align:right;"><button class="btn small" data-action="ct-open" data-id="'+t.id+'">Ouvrir</button> <button class="btn small" data-action="ct-edit" data-id="'+t.id+'">Modifier</button> '+
-      (customCanDelete(t)? '<button class="btn small danger-outline" data-action="ct-delete" data-id="'+t.id+'">Supprimer</button>' : '')+'</td></tr>';
-  }).join('')+'</tbody></table></div>';
+  h += '<div class="toolbar"><div><div class="eyebrow">Réunion QOS</div><div class="tiny" style="margin-top:4px;">Le point qualité mensuel : principaux défauts CHOKKO et coût rebut, et les actions qui y répondent.</div></div>'+
+    '<div style="display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;"><label class="field">Mois<select id="qos-m">'+MONTHS_FR.map(function(mn, i){ return '<option value="'+i+'"'+(i===m?' selected':'')+'>'+qosMonthName(i)+'</option>'; }).join('')+'</select></label>'+
+    '<label class="field">Année<input type="number" id="qos-y" value="'+y+'" style="width:90px;"></label>'+
+    '<button class="btn primary" data-action="qos-print">🖨️ Imprimer le support</button></div></div>';
+  h += '<div class="subtabs qos-pills"><button class="'+(qosView==='all'?'active':'')+'" data-action="qos-view" data-sid="all">Vue d\'ensemble</button>'+
+    secs.map(function(s){ return '<button class="'+(qosView===s.id?'active':'')+'" data-action="qos-view" data-sid="'+esc(s.id)+'">'+esc(s.nom)+'</button>'; }).join('')+'</div>';
+  if(qosView==='all') h += qosOverviewHtml(secs, y, m);
+  else h += qosSectorHtml(secs.find(function(s){ return s.id===qosView; }), y, m);
   return h+'</div>';
 };
-function ctDefFormHtml(){
-  var d = ctDraft.def, isNew = ctManageEdit==='new';
-  var h = '<div class="card ct-def"><div class="eyebrow" style="margin-bottom:12px;">'+(isNew?'Nouvel onglet':'Modifier l\'onglet « '+esc(d.nom)+' »')+'</div>';
-  if(isNew) h += '<div class="ct-types">'+CT_TYPES.map(function(t){ return '<button type="button" class="ct-type-card'+(d.type===t[0]?' on':'')+'" data-action="ct-def-type" data-type="'+t[0]+'"><span class="ct-type-ic">'+CT_ICONS[t[0]]+'</span><b>'+esc(t[1])+'</b><span class="tiny">'+esc(t[2])+'</span></button>'; }).join('')+'</div>';
-  else h += '<p class="tiny" style="margin:0 0 10px;">Type : <b>'+esc(customTypeLabel(d.type))+'</b></p>';
-  h += '<div class="wz-grid" style="margin-top:12px;"><label class="field">Nom de l\'onglet'+ctIn('def.nom', ' id="ct-nom" placeholder="Ex. Suivi des réclamations"')+'</label><label class="field" style="grid-column:span 2;">Description (facultatif)'+ctIn('def.description', ' placeholder="À quoi sert cet onglet"')+'</label></div>';
-  if(d.type==='suivi'){
-    var dateCols = d.cols.filter(function(c){ return c.type==='date'; }), boolCols = d.cols.filter(function(c){ return c.type==='ouinon'; });
-    h += wzBlock('Colonnes', '<div class="wz-list">'+d.cols.map(function(c, i){
-      return '<div class="ct-col"><div class="wz-row">'+ctIn('def.cols.'+i+'.label', ' style="flex:1; min-width:150px;" placeholder="Nom de la colonne"')+
-        '<select data-cf="def.cols.'+i+'.type">'+CT_COL_TYPES.map(function(t){ return '<option value="'+t[0]+'"'+(c.type===t[0]?' selected':'')+'>'+t[1]+'</option>'; }).join('')+'</select>'+
-        '<button class="btn small" data-action="ct-move" data-path="def.cols" data-i="'+i+'" data-dir="-1" '+(i===0?'disabled':'')+'>▲</button><button class="btn small" data-action="ct-move" data-path="def.cols" data-i="'+i+'" data-dir="1" '+(i===d.cols.length-1?'disabled':'')+'>▼</button>'+
-        '<button class="btn small danger-outline" data-action="ct-del" data-path="def.cols" data-i="'+i+'">✕</button></div>'+
-        (c.type==='liste'? '<div class="wz-row ct-sub"><span class="tiny">Choix (séparés par des virgules)</span>'+ctIn('def.cols.'+i+'.optionsTxt', ' style="flex:1; min-width:180px;" placeholder="Ex. Ouvert, En cours, Clos"')+'</div>' : '')+
-        (c.type==='date'? '<div class="wz-row ct-sub"><label class="tiny" style="display:flex; gap:6px; align-items:center;"><input type="checkbox" data-cf-bool="def.cols.'+i+'.echeance"'+(c.echeance?' checked':'')+'> C\'est une échéance (alerte)</label>'+(c.echeance? '<span class="tiny">orange</span>'+ctIn('def.cols.'+i+'.alerteJours', ' style="width:60px;" inputmode="numeric"')+'<span class="tiny">jours avant</span>' : '')+'</div>' : '')+
-        '</div>';
-    }).join('')+'</div><button class="btn small" data-action="ct-add-col">+ Ajouter une colonne</button>');
-    if(dateCols.some(function(c){ return c.echeance; })) h += wzBlock('Clôture', '<label class="field" style="max-width:360px;">Une ligne n\'est plus en alerte quand cette colonne est cochée<select data-cf="def.clotureCol"><option value="">- Aucune -</option>'+boolCols.map(function(c){ return '<option value="'+c.id+'"'+(d.clotureCol===c.id?' selected':'')+'>'+esc(c.label||'(sans nom)')+'</option>'; }).join('')+'</select></label><p class="tiny" style="margin-top:6px;">Les échéances dépassées remontent dans la carte « À traiter » du tableau de bord.</p>');
-  }
-  if(d.type==='checklist'){
-    h += wzBlock('Questions', '<div class="wz-list">'+d.questions.map(function(q, i){
-      return '<div class="wz-row"><span class="wz-n">'+(i+1)+'</span>'+ctIn('def.questions.'+i+'.texte', ' style="flex:1; min-width:200px;" placeholder="Ex. Le poste est rangé"')+
-        '<button class="btn small" data-action="ct-move" data-path="def.questions" data-i="'+i+'" data-dir="-1" '+(i===0?'disabled':'')+'>▲</button><button class="btn small" data-action="ct-move" data-path="def.questions" data-i="'+i+'" data-dir="1" '+(i===d.questions.length-1?'disabled':'')+'>▼</button>'+
-        '<button class="btn small danger-outline" data-action="ct-del" data-path="def.questions" data-i="'+i+'">✕</button></div>';
-    }).join('')+'</div><button class="btn small" data-action="ct-add-q">+ Ajouter une question</button>');
-    h += wzBlock('Options', '<label class="tiny" style="display:flex; gap:6px; align-items:center; margin-bottom:6px;"><input type="checkbox" data-cf-bool="def.parLigne"'+(d.parLigne?' checked':'')+'> Un audit par ligne de production</label>'+
-      '<label class="tiny" style="display:flex; gap:6px; align-items:center;"><input type="checkbox" data-cf-bool="def.actionsNok"'+(d.actionsNok?' checked':'')+'> Créer une action dans le plan d\'actions pour chaque « non conforme »</label>');
-  }
-  if(d.type==='indicateur'){
-    h += wzBlock('Indicateur', '<div class="wz-grid"><label class="field">Saisie<select data-cf="def.freq"><option value="jour"'+(d.freq==='jour'?' selected':'')+'>Chaque jour</option><option value="semaine"'+(d.freq==='semaine'?' selected':'')+'>Chaque semaine</option><option value="mois"'+(d.freq==='mois'?' selected':'')+'>Chaque mois</option></select></label>'+
-      '<label class="field">Unité'+ctIn('def.unite', ' placeholder="Ex. %, pièces, €, ppm"')+'</label>'+
-      '<label class="field">Objectif'+ctIn('def.objectif', ' inputmode="decimal" placeholder="Ex. 95"')+'</label>'+
-      '<label class="field">Bon quand la valeur est<select data-cf="def.sens"><option value="max"'+(d.sens==='max'?' selected':'')+'>au-dessus de l\'objectif</option><option value="min"'+(d.sens==='min'?' selected':'')+'>en dessous de l\'objectif</option></select></label></div>'+
-      '<label class="tiny" style="display:flex; gap:6px; align-items:center; margin-top:10px;"><input type="checkbox" data-cf-bool="def.parLigne"'+(d.parLigne?' checked':'')+'> Une valeur par ligne de production</label>');
-  }
-  h += '<div class="actions-row" style="margin-top:14px;"><button class="btn" data-action="ct-def-cancel">Annuler</button><button class="btn primary" data-action="ct-def-save">'+(isNew?'Créer l\'onglet':'Enregistrer')+'</button></div></div>';
-  return h;
-}
-async function ctDefSave(){
-  var d = ctDraft.def;
-  d.nom = String(d.nom||'').trim();
-  if(!d.nom){ toast('Donnez un nom à l\'onglet.', 'error'); return; }
-  if(customTabsSect().some(function(t){ return t.id!==d.id && t.nom.toLowerCase()===d.nom.toLowerCase(); })){ toast('Un onglet porte déjà ce nom dans le secteur.', 'error'); return; }
-  var out = {id:d.id, type:d.type, nom:d.nom, description:String(d.description||'').trim(), secteur:d.secteur, createdBy:d.createdBy || (currentUser&&currentUser.id), createdAt:d.createdAt || todayStr()};
-  if(d.type==='suivi'){
-    out.cols = d.cols.map(function(c){ var o = {id:c.id, label:String(c.label||'').trim(), type:c.type}; if(c.type==='liste') o.options = String(c.optionsTxt||'').split(',').map(function(x){ return x.trim(); }).filter(Boolean); if(c.type==='date' && c.echeance){ o.echeance = true; o.alerteJours = Math.max(0, Math.floor(wzNum(c.alerteJours))||0); } return o; }).filter(function(c){ return c.label; });
-    if(!out.cols.length){ toast('Ajoutez au moins une colonne.', 'error'); return; }
-    if(out.cols.some(function(c){ return c.type==='liste' && !c.options.length; })){ toast('Une colonne « liste » doit avoir au moins un choix.', 'error'); return; }
-    out.clotureCol = out.cols.some(function(c){ return c.id===d.clotureCol && c.type==='ouinon'; }) ? d.clotureCol : '';
-  }
-  if(d.type==='checklist'){
-    out.questions = d.questions.map(function(q){ return {id:q.id, texte:String(q.texte||'').trim()}; }).filter(function(q){ return q.texte; });
-    if(!out.questions.length){ toast('Ajoutez au moins une question.', 'error'); return; }
-    out.parLigne = !!d.parLigne; out.actionsNok = !!d.actionsNok;
-  }
-  if(d.type==='indicateur'){
-    out.freq = d.freq; out.unite = String(d.unite||'').trim(); out.parLigne = !!d.parLigne; out.sens = d.sens==='min' ? 'min' : 'max';
-    var ob = String(d.objectif||'').trim(); out.objectif = ob==='' ? null : wzNum(ob);
-    if(out.objectif!==null && isNaN(out.objectif)){ toast('Objectif : un nombre.', 'error'); return; }
-  }
-  DATA.customTabs = DATA.customTabs || [];
-  var i = DATA.customTabs.map(function(t){ return t.id; }).indexOf(out.id);
-  if(i>=0) DATA.customTabs[i] = out; else DATA.customTabs.push(out);
-  await save('customTabs');
-  logChange('Mes onglets', i>=0?'Modification':'Création', currentSecteur+' · '+out.nom+' ('+customTypeLabel(out.type)+')');
-  ctManageEdit = null; ctDraft = null;
-  currentTab = out.id; renderNav(); render();
-  toast(i>=0 ? 'Onglet enregistré.' : 'Onglet « '+out.nom+' » créé.');
-}
-function ctEditDraft(t){
-  var d = cfgClone(t);
-  if(d.type==='suivi'){ d.cols.forEach(function(c){ if(c.type==='liste') c.optionsTxt = (c.options||[]).join(', '); if(c.echeance) c.alerteJours = String(c.alerteJours||0); }); d.questions = []; }
-  if(d.type==='checklist'){ d.cols = []; }
-  if(d.type==='indicateur'){ d.cols = []; d.questions = []; d.objectif = d.objectif==null ? '' : String(d.objectif).replace('.',','); }
-  return d;
-}
-
-// ---------- Affichage d'un onglet personnalisé ----------
-var ctSearch = {}, ctFilter = {}, ctIndPeriod = {};
-RENDERERS.__custom = function(){
-  var t = customTabFor(currentTab);
-  if(!t) return emptyState('Onglet introuvable.');
-  var h = '<div class="section"><div class="toolbar"><div><div class="eyebrow">'+esc(t.nom)+'</div>'+(t.description? '<div class="tiny" style="margin-top:4px;">'+esc(t.description)+'</div>' : '')+'</div>'+
-    '<div style="display:flex; gap:8px; flex-wrap:wrap;" class="chokko-noprint"><button class="btn small" data-action="ct-edit" data-id="'+t.id+'">⚙️ Modifier l\'onglet</button>'+
-    (t.type==='suivi'? '<button class="btn small" data-action="ct-xlsx">📊 Export Excel</button>' : '')+'<button class="btn small" data-action="ct-print">🖨️ Imprimer</button></div></div>';
-  if(t.type==='suivi') h += ctSuiviHtml(t);
-  else if(t.type==='checklist') h += ctChecklistHtml(t);
-  else h += ctIndicateurHtml(t);
-  return h+'</div>';
-};
-function ctCellTxt(c, v){
-  if(v===undefined || v===null || v==='') return '';
-  if(c.type==='date') return fmtDate(v);
-  if(c.type==='ouinon') return v ? 'Oui' : 'Non';
-  if(c.type==='nombre') return String(v).replace('.',',');
-  return String(v);
-}
-function ctRowAlert(t, r){
-  if(t.clotureCol && r.v && r.v[t.clotureCol]) return null;
-  var worst = null, today = todayStr();
-  (t.cols||[]).forEach(function(c){
-    if(!c.echeance) return;
-    var v = r.v && r.v[c.id]; if(!v) return;
-    if(v<today){ worst = {level:'danger', col:c, date:v}; }
-    else if(!worst && daysBetween(today, v)<=(Number(c.alerteJours)||0)) worst = {level:'warn', col:c, date:v};
-  });
-  return worst;
-}
-function ctInputFor(c, path, v){
-  if(c.type==='date') return '<input type="date" data-cf="'+esc(path)+'" value="'+esc(v||'')+'">';
-  if(c.type==='nombre') return '<input type="text" inputmode="decimal" data-cf="'+esc(path)+'" value="'+esc(v==null?'':String(v).replace('.',','))+'">';
-  if(c.type==='ouinon') return '<label style="display:flex; gap:6px; align-items:center; font-size:13px;"><input type="checkbox" data-cf-bool="'+esc(path)+'"'+(v?' checked':'')+'> Oui</label>';
-  if(c.type==='liste') return '<select data-cf="'+esc(path)+'"><option value="">-</option>'+(c.options||[]).map(function(o){ return '<option'+(o===v?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+'</select>';
-  if(c.type==='personne'){ var ps = ctPersons(); if(v && ps.indexOf(v)<0) ps.push(v); return '<input type="text" list="ct-persons" data-cf="'+esc(path)+'" value="'+esc(v||'')+'"><datalist id="ct-persons">'+ps.map(function(p){ return '<option value="'+esc(p)+'">'; }).join('')+'</datalist>'; }
-  return '<input type="text" data-cf="'+esc(path)+'" value="'+esc(v||'')+'">';
-}
-function ctSuiviHtml(t){
-  var rows = customRows(t.id).slice(), q = (ctSearch[t.id]||'').toLowerCase(), flt = ctFilter[t.id]||{};
-  var listeCols = t.cols.filter(function(c){ return c.type==='liste'; });
-  var nLate = rows.filter(function(r){ var a = ctRowAlert(t, r); return a && a.level==='danger'; }).length;
-  var h = '';
-  if(ctDraft && ctDraft.kind==='row' && ctDraft.tab===t.id){
-    h += '<div class="card ct-form chokko-noprint"><div class="eyebrow" style="margin-bottom:10px;">'+(ctDraft.rowId? 'Modifier la ligne' : 'Nouvelle ligne')+'</div><div class="ct-form-grid">'+
-      t.cols.map(function(c){ return '<label class="field">'+esc(c.label)+ctInputFor(c, 'v.'+c.id, ctDraft.v[c.id])+'</label>'; }).join('')+
-      '</div><div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="ct-row-cancel">Annuler</button><button class="btn primary" data-action="ct-row-save">Enregistrer</button></div></div>';
-  }
-  h += '<div class="toolbar chokko-noprint" style="margin-top:4px;"><div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;"><input type="search" id="ct-search" placeholder="Rechercher" value="'+esc(ctSearch[t.id]||'')+'" style="min-width:200px;">'+
-    listeCols.map(function(c){ return '<select class="ct-filter" data-col="'+c.id+'"><option value="">'+esc(c.label)+' : tous</option>'+(c.options||[]).map(function(o){ return '<option'+(flt[c.id]===o?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+'</select>'; }).join('')+
-    (nLate? '<span class="badge danger">'+nLate+' en retard</span>' : '')+'</div><button class="btn primary" data-action="ct-row-new">+ Ajouter</button></div>';
-  rows = rows.filter(function(r){
-    if(q && !t.cols.some(function(c){ return ctCellTxt(c, r.v && r.v[c.id]).toLowerCase().indexOf(q)>=0; })) return false;
-    return Object.keys(flt).every(function(k){ return !flt[k] || (r.v && r.v[k])===flt[k]; });
-  });
-  var ech = t.cols.filter(function(c){ return c.echeance; })[0];
-  rows.sort(function(a,b){
-    var la = ctRowAlert(t,a), lb = ctRowAlert(t,b), ra = la? (la.level==='danger'?0:1) : 2, rb = lb? (lb.level==='danger'?0:1) : 2;
-    if(ra!==rb) return ra-rb;
-    if(ech){ var va = (a.v||{})[ech.id]||'9999', vb = (b.v||{})[ech.id]||'9999'; if(va!==vb) return va<vb?-1:1; }
-    return (b.createdAt||'').localeCompare(a.createdAt||'');
-  });
-  if(!customRows(t.id).length) return h + emptyState('Aucune ligne pour l\'instant. Cliquez sur « + Ajouter ».');
-  h += '<div class="table-wrap"><table class="ct-table"><thead><tr>'+t.cols.map(function(c){ return '<th>'+esc(c.label)+'</th>'; }).join('')+'<th class="chokko-noprint"></th></tr></thead><tbody>'+
-    rows.map(function(r){
-      var al = ctRowAlert(t, r);
-      return '<tr class="'+(al? 'ct-'+al.level : '')+'">'+t.cols.map(function(c){
-        var v = r.v && r.v[c.id], txt = esc(ctCellTxt(c, v));
-        if(al && al.col===c) txt += ' '+badge(al.level, al.level==='danger' ? 'En retard' : 'Bientôt');
-        return '<td>'+txt+'</td>';
-      }).join('')+'<td class="chokko-noprint" style="white-space:nowrap; text-align:right;"><button class="btn small" data-action="ct-row-edit" data-id="'+r.id+'">Modifier</button> <button class="btn small danger-outline" data-action="ct-row-del" data-id="'+r.id+'">Suppr.</button></td></tr>';
-    }).join('')+'</tbody></table></div><p class="tiny" style="margin-top:6px;">'+rows.length+' ligne(s) affichée(s) sur '+customRows(t.id).length+'.</p>';
-  return h;
-}
-async function ctRowSave(){
-  var t = customTabFor(ctDraft.tab), rows = customRows(t.id), v = {};
-  t.cols.forEach(function(c){
-    var x = ctDraft.v[c.id];
-    if(c.type==='nombre'){ x = String(x==null?'':x).trim(); x = x==='' ? null : wzNum(x); if(x!==null && isNaN(x)){ v.__err = c.label; } }
-    else if(c.type==='ouinon') x = !!x;
-    else x = x==null ? '' : String(x).trim();
-    v[c.id] = x;
-  });
-  if(v.__err){ toast('« '+v.__err+' » : un nombre est attendu.', 'error'); return; }
-  if(!t.cols.some(function(c){ return c.type!=='ouinon' && v[c.id]!=='' && v[c.id]!==null; })){ toast('La ligne est vide.', 'error'); return; }
-  if(ctDraft.rowId){ var r = rows.filter(function(x){ return x.id===ctDraft.rowId; })[0]; if(r){ r.v = v; r.updatedAt = todayStr(); r.updatedBy = currentUser && currentUser.displayName; } }
-  else rows.push({id:uid('ctr'), v:v, createdAt:new Date().toISOString(), by:currentUser && currentUser.displayName});
-  await save('customData');
-  logChange(t.nom, ctDraft.rowId?'Modification':'Ajout', ctCellTxt(t.cols[0], v[t.cols[0].id]));
-  ctDraft = null; render();
-}
-// ---- Checklist / audit ----
-function ctChecklistHtml(t){
-  var rows = customRows(t.id).slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
-  var h = '';
-  if(ctDraft && ctDraft.kind==='audit' && ctDraft.tab===t.id){
-    h += '<div class="card ct-form chokko-noprint"><div class="eyebrow" style="margin-bottom:10px;">Nouvel audit</div><div class="ct-form-grid">'+
-      '<label class="field">Date<input type="date" data-cf="date" value="'+esc(ctDraft.date)+'"></label>'+
-      (t.parLigne? '<label class="field">Ligne<select data-cf="ligne">'+secteurLines().map(function(l){ return '<option'+(l===ctDraft.ligne?' selected':'')+'>'+esc(l)+'</option>'; }).join('')+'</select></label>' : '')+
-      '<label class="field">Auditeur'+ctIn('auditeur')+'</label></div>'+
-      '<div class="table-wrap" style="margin-top:12px;"><table><thead><tr><th style="width:36px;">N°</th><th>Question</th><th style="width:260px;">Réponse</th></tr></thead><tbody>'+
-      t.questions.map(function(qq, i){
-        var cur = ctDraft.rep[qq.id]||'';
-        return '<tr><td>'+(i+1)+'</td><td>'+esc(qq.texte)+'</td><td><div class="ct-rep">'+[['ok','Conforme'],['nok','Non conforme'],['na','Sans objet']].map(function(o){ return '<button type="button" class="ct-rep-b ct-rep-'+o[0]+(cur===o[0]?' on':'')+'" data-action="ct-rep" data-q="'+qq.id+'" data-v="'+o[0]+'">'+o[1]+'</button>'; }).join('')+'</div></td></tr>';
-      }).join('')+'</tbody></table></div>'+
-      '<label class="field" style="margin-top:10px;">Remarque (facultatif)'+ctIn('remarque')+'</label>'+
-      (t.actionsNok? '<p class="tiny" style="margin-top:6px;">Chaque « non conforme » créera une action dans le plan d\'actions.</p>' : '')+
-      '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="ct-row-cancel">Annuler</button><button class="btn primary" data-action="ct-audit-save">Enregistrer l\'audit</button></div></div>';
-  }
-  h += '<div class="toolbar chokko-noprint"><div></div><button class="btn primary" data-action="ct-audit-new">+ Nouvel audit</button></div>';
-  if(!rows.length) return h + emptyState('Aucun audit pour l\'instant.');
-  // Moyenne par mois (12 derniers mois) et par ligne
-  var months = []; var d0 = new Date(); d0.setDate(1);
-  for(var i=11;i>=0;i--){ var dd = new Date(d0.getFullYear(), d0.getMonth()-i, 1); months.push(dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')); }
-  var keys = t.parLigne ? secteurLines() : ['Score'];
-  h += '<div class="card" style="margin-bottom:14px;"><div class="eyebrow" style="margin-bottom:8px;">Score moyen par mois</div><div class="table-wrap"><table class="annual-table"><thead><tr><th></th>'+months.map(function(m){ return '<th>'+esc(CHOKKO_MONTH_ABBR[Number(m.slice(5))-1])+'</th>'; }).join('')+'</tr></thead><tbody>'+
-    keys.map(function(k){
-      return '<tr><td><b>'+esc(k)+'</b></td>'+months.map(function(m){
-        var rs = rows.filter(function(r){ return (r.date||'').slice(0,7)===m && (!t.parLigne || r.ligne===k) && r.score!=null; });
-        if(!rs.length) return '<td class="c-empty">-</td>';
-        var avg = Math.floor(rs.reduce(function(s,r){ return s+r.score; },0)/rs.length*100)/100;
-        return '<td class="score-cell '+scoreCellClass(avg)+'">'+String(avg).replace('.',',')+'%</td>';
-      }).join('')+'</tr>';
-    }).join('')+'</tbody></table></div></div>';
-  h += '<div class="eyebrow" style="margin-bottom:8px;">Historique des audits</div><div class="table-wrap"><table><thead><tr><th>Date</th>'+(t.parLigne?'<th>Ligne</th>':'')+'<th>Auditeur</th><th>Score</th><th>Non conformes</th><th class="chokko-noprint"></th></tr></thead><tbody>'+
-    rows.map(function(r){
-      var noks = t.questions.filter(function(qq){ return (r.rep||{})[qq.id]==='nok'; }).map(function(qq){ return qq.texte; });
-      var open = ctDraft && ctDraft.kind==='detail' && ctDraft.id===r.id;
-      return '<tr><td>'+fmtDate(r.date)+'</td>'+(t.parLigne?'<td>'+esc(r.ligne||'')+'</td>':'')+'<td>'+esc(r.auditeur||'')+'</td><td>'+(r.score==null?'-':badge(scoreLevel(r.score), String(r.score).replace('.',',')+'%'))+'</td>'+
-        '<td class="tiny">'+(noks.length? esc(noks.join(' · ')) : '-')+(r.remarque? '<div style="color:var(--text-faint);">'+esc(r.remarque)+'</div>' : '')+'</td>'+
-        '<td class="chokko-noprint" style="text-align:right;"><button class="btn small danger-outline" data-action="ct-row-del" data-id="'+r.id+'">Suppr.</button></td></tr>';
-    }).join('')+'</tbody></table></div>';
-  return h;
-}
-async function ctAuditSave(){
-  var t = customTabFor(ctDraft.tab), d = ctDraft;
-  var miss = t.questions.filter(function(qq){ return !d.rep[qq.id]; }).length;
-  if(miss){ toast(miss+' question(s) sans réponse.', 'error'); return; }
-  if(!d.date){ toast('Date requise.', 'error'); return; }
-  var ok = 0, nok = 0;
-  t.questions.forEach(function(qq){ if(d.rep[qq.id]==='ok') ok++; if(d.rep[qq.id]==='nok') nok++; });
-  var rec = {id:uid('cta'), date:d.date, ligne:t.parLigne? d.ligne : '', auditeur:String(d.auditeur||'').trim(), rep:cfgClone(d.rep), remarque:String(d.remarque||'').trim(), score:(ok+nok)? Math.floor(ok/(ok+nok)*10000)/100 : null, createdAt:new Date().toISOString()};
-  customRows(t.id).push(rec);
-  await save('customData');
-  if(t.actionsNok && nok){
-    t.questions.forEach(function(qq){
-      if(d.rep[qq.id]!=='nok') return;
-      DATA.actions.push({id:uid('act'), origine:t.nom, secteur:currentSecteur, description:qq.texte+(rec.remarque? ' - '+rec.remarque : ''), ligne:rec.ligne||'', responsable:'', echeance:null, statut:'planifiee', dateCreation:todayStr(), suivi:[]});
-    });
-    await save('actions');
-  }
-  logChange(t.nom, 'Audit', (rec.ligne? rec.ligne+' · ' : '')+(rec.score==null?'-':rec.score+'%')+(nok? ' · '+nok+' NC' : ''));
-  ctDraft = null; render();
-  toast('Audit enregistré'+(t.actionsNok && nok? ' · '+nok+' action(s) créée(s) dans le plan d\'actions' : '')+'.');
-}
-// ---- Indicateur chiffré ----
-function ctPeriods(t, y, m){
-  if(t.freq==='mois') return MONTHS_FR.map(function(mn, i){ return {k:y+'-'+String(i+1).padStart(2,'0'), label:mn.charAt(0).toUpperCase()+mn.slice(1)}; });
-  if(t.freq==='semaine'){
-    var out = [], seen = {}, d = new Date(y, 0, 1);
-    while(d.getFullYear()===y){ var s = fmtISOLocal(d), w = isoWeekInfo(s), k = w.year+'-S'+String(w.week).padStart(2,'0'); if(!seen[k] && w.year===y){ seen[k] = 1; out.push({k:k, label:'S'+String(w.week).padStart(2,'0')}); } d.setDate(d.getDate()+1); }
-    return out;
-  }
-  var n = new Date(y, m+1, 0).getDate(), res = [];
-  for(var i=1;i<=n;i++){ var dt = new Date(y, m, i), ds = fmtISOLocal(dt); res.push({k:ds, label:DAY_LABELS[(dt.getDay()+6)%7]+' '+String(i).padStart(2,'0')}); }
-  return res;
-}
-function ctIndLevel(t, v){
-  if(v===null || v===undefined || t.objectif===null || t.objectif===undefined) return '';
-  return (t.sens==='min' ? v<=t.objectif : v>=t.objectif) ? 'sc-ok' : 'sc-danger';
-}
-function ctIndValue(t, k, ligne){ var r = customRows(t.id).filter(function(x){ return x.p===k && (x.l||'')===(ligne||''); })[0]; return r ? r.val : null; }
-function ctIndicateurHtml(t){
-  var per = ctIndPeriod[t.id] || (ctIndPeriod[t.id] = {y:Number(todayStr().slice(0,4)), m:Number(todayStr().slice(5,7))-1});
-  var periods = ctPeriods(t, per.y, per.m), cols = t.parLigne ? secteurLines() : [''];
-  var h = '<div class="toolbar chokko-noprint"><div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">'+
-    (t.freq==='jour'? '<select id="ct-ind-m">'+MONTHS_FR.map(function(mn, i){ return '<option value="'+i+'"'+(i===per.m?' selected':'')+'>'+mn.charAt(0).toUpperCase()+mn.slice(1)+'</option>'; }).join('')+'</select>' : '')+
-    '<input type="number" id="ct-ind-y" value="'+per.y+'" style="width:80px;">'+
-    '<span class="tiny">'+(t.objectif!=null? 'Objectif : '+(t.sens==='min'?'≤ ':'≥ ')+String(t.objectif).replace('.',',')+(t.unite? ' '+esc(t.unite) : '') : 'Pas d\'objectif')+'</span></div></div>';
-  h += '<div class="card" style="margin-bottom:14px;"><div class="chart-box" style="height:260px;"><canvas id="ct-ind-chart"></canvas></div></div>';
-  h += '<div class="table-wrap"><table class="ct-ind-table"><thead><tr><th>'+(t.freq==='jour'?'Jour':t.freq==='semaine'?'Semaine':'Mois')+'</th>'+cols.map(function(c){ return '<th>'+esc(c||('Valeur'+(t.unite? ' ('+t.unite+')' : '')))+'</th>'; }).join('')+'</tr></thead><tbody>'+
-    periods.map(function(p){
-      return '<tr><td>'+esc(p.label)+'</td>'+cols.map(function(c){
-        var v = ctIndValue(t, p.k, c);
-        return '<td class="'+ctIndLevel(t, v)+'"><input type="text" inputmode="decimal" class="ct-ind-in" data-p="'+esc(p.k)+'" data-l="'+esc(c)+'" value="'+(v==null?'':String(v).replace('.',','))+'"></td>';
-      }).join('')+'</tr>';
-    }).join('')+'</tbody></table></div><p class="tiny" style="margin-top:6px;">La valeur s\'enregistre quand vous quittez la case (Tab ou clic ailleurs). Videz la case pour effacer.</p>';
-  return h;
-}
-var ctIndChart = null;
-function ctRenderIndChart(){
-  var t = customTabFor(currentTab); if(!t || t.type!=='indicateur' || typeof Chart==='undefined') return;
-  var ctx = document.getElementById('ct-ind-chart'); if(!ctx) return;
-  if(ctIndChart){ try{ ctIndChart.destroy(); }catch(e){} }
-  var per = ctIndPeriod[t.id], periods = ctPeriods(t, per.y, per.m), cols = t.parLigne ? secteurLines() : [''];
-  var pal = ['#1F3864','#B2764A','#2E7D4F','#8A4FB5','#2F6FB0','#B23B2E','#6E6A60'];
-  var ds = cols.map(function(c, i){ return {label:c||t.nom, data:periods.map(function(p){ return ctIndValue(t, p.k, c); }), borderColor:pal[i%pal.length], backgroundColor:pal[i%pal.length], spanGaps:true, tension:0.2, pointRadius:3}; });
-  if(t.objectif!=null) ds.push({label:'Objectif', data:periods.map(function(){ return t.objectif; }), borderColor:'#B8730A', borderDash:[6,4], pointRadius:0, borderWidth:1.5});
-  ctIndChart = new Chart(ctx, {type:'line', data:{labels:periods.map(function(p){ return p.label; }), datasets:ds}, options:{responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{position:'bottom'}}}});
-}
-async function ctIndSave(input){
-  var t = customTabFor(currentTab); if(!t) return;
-  var raw = String(input.value||'').trim(), rows = customRows(t.id), k = input.dataset.p, l = input.dataset.l||'';
-  var idx = rows.map(function(r){ return r.p+'|'+(r.l||''); }).indexOf(k+'|'+l);
-  if(raw===''){ if(idx<0) return; rows.splice(idx,1); }
-  else {
-    var v = wzNum(raw);
-    if(isNaN(v)){ toast('Un nombre est attendu.', 'error'); input.value = idx>=0 ? String(rows[idx].val).replace('.',',') : ''; return; }
-    if(idx>=0){ if(rows[idx].val===v) return; rows[idx].val = v; } else rows.push({id:uid('cti'), p:k, l:l, val:v, by:currentUser && currentUser.displayName});
-  }
-  await save('customData');
-  render();
-}
-// Échéances des tableaux de suivi : remontent dans les priorités du secteur
-function customPriorityItems(add){
-  customTabsSect().forEach(function(t){
-    if(t.type!=='suivi') return;
-    customRows(t.id).forEach(function(r){
-      var a = ctRowAlert(t, r); if(!a) return;
-      add(t.id, a.level, ctCellTxt(t.cols[0], r.v && r.v[t.cols[0].id]) || t.nom, t.nom+' · '+a.col.label, a.date);
-    });
-  });
-}
-async function ctExportXlsx(){
-  var t = customTabFor(currentTab); if(!t) return;
-  if(typeof ExcelJS==='undefined'){ uiAlert('La librairie Excel n\'a pas pu être chargée (connexion internet requise). Réessayez.'); return; }
-  var wb = new ExcelJS.Workbook(), ws = wb.addWorksheet(t.nom.slice(0,30).replace(/[\\\/\?\*\[\]:]/g,' '));
-  ws.addRow(t.cols.map(function(c){ return c.label; }).concat(['Alerte']));
-  ws.getRow(1).font = {bold:true};
-  customRows(t.id).forEach(function(r){ var a = ctRowAlert(t, r); ws.addRow(t.cols.map(function(c){ var v = r.v && r.v[c.id]; return c.type==='nombre' ? v : ctCellTxt(c, v); }).concat([a ? (a.level==='danger'?'En retard':'Bientôt') : ''])); });
-  ws.columns.forEach(function(col){ col.width = 22; });
-  var buf = await wb.xlsx.writeBuffer();
-  downloadBlob(new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), t.nom.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w\-]+/g,'_')+'_'+currentSecteur+'_'+todayStr()+'.xlsx');
-  toast('Export Excel prêt.');
-}
-async function ctHandleClick(e){
-  var b = e.target.closest('[data-action^="ct-"]');
+async function qosHandleClick(e){
+  var b = e.target.closest('[data-action^="qos-"]');
   if(!b) return false;
-  var a = b.dataset.action, t = customTabFor(currentTab);
-  if(a==='ct-new'){ ctManageEdit = 'new'; ctDraft = {kind:'def', def:ctNewDef(b.dataset.type)}; currentTab = 'mesonglets'; renderNav(); render(); var n = document.getElementById('ct-nom'); if(n) n.focus(); return true; }
-  if(a==='ct-def-type'){ ctDraft.def.type = b.dataset.type; render(); return true; }
-  if(a==='ct-edit'){ var tt = customTabFor(b.dataset.id); ctManageEdit = tt.id; ctDraft = {kind:'def', def:ctEditDraft(tt)}; currentTab = 'mesonglets'; renderNav(); render(); return true; }
-  if(a==='ct-open'){ currentTab = b.dataset.id; renderNav(); render(); return true; }
-  if(a==='ct-def-cancel'){ var back = ctManageEdit!=='new' ? ctManageEdit : null; ctManageEdit = null; ctDraft = null; if(back){ currentTab = back; renderNav(); } render(); return true; }
-  if(a==='ct-def-save'){ await ctDefSave(); return true; }
-  if(a==='ct-delete'){
-    var td = customTabFor(b.dataset.id), n2 = customRows(td.id).length;
-    if(!await uiConfirm('Supprimer l\'onglet « '+td.nom+' »'+(n2? ' et ses '+n2+' saisie(s)' : '')+' ?\n\nCette suppression est définitive (sauf restauration d\'une sauvegarde).', {okLabel:'Supprimer', danger:true})) return true;
-    DATA.customTabs = DATA.customTabs.filter(function(x){ return x.id!==td.id; }); delete DATA.customData[td.id];
-    await save('customTabs'); await save('customData');
-    logChange('Mes onglets', 'Suppression', td.nom);
-    renderNav(); render(); return true;
+  var a = b.dataset.action;
+  if(a==='qos-view'){ qosView = b.dataset.sid; qosEditId = null; render(); window.scrollTo(0,0); return true; }
+  if(a==='qos-act'){
+    var sid = b.dataset.sid, l = b.dataset.ligne, ref = b.dataset.ref, type = b.dataset.type;
+    var per = qosMonthName(qosM)+' '+qosY;
+    openActionFromSource({type:type, ref:l+'|'+ref, secteur:sid, ligne:l, annee:qosY, mois:qosM,
+      label:(type==='chokko'?'CHOKKO':'Coût rebut')+' · '+l+' · '+b.dataset.label+' (QOS '+per+')', typeLabel:type==='chokko'?'CHOKKO':'Coût rebut'}, l, '');
+    if(actionDraft) actionDraft.secteur = sid;
+    return true;
   }
-  if(a==='ct-add-col'){ var cols = ctDraft.def.cols; cols.push({id:'c'+Date.now().toString(36), label:'', type:'texte'}); render(); return true; }
-  if(a==='ct-add-q'){ ctDraft.def.questions.push({id:'q'+Date.now().toString(36), texte:''}); render(); var qs = document.querySelectorAll('[data-cf^="def.questions."]'); if(qs.length) qs[qs.length-1].focus(); return true; }
-  if(a==='ct-del'){ var arr = ctGet(b.dataset.path); arr.splice(Number(b.dataset.i),1); render(); return true; }
-  if(a==='ct-move'){ var arr2 = ctGet(b.dataset.path), i = Number(b.dataset.i), j = i+Number(b.dataset.dir); var tmp = arr2[i]; arr2[i] = arr2[j]; arr2[j] = tmp; render(); return true; }
-  if(a==='ct-row-new'){ ctDraft = {kind:'row', tab:t.id, rowId:null, v:{}}; render(); return true; }
-  if(a==='ct-row-edit'){ var r = customRows(t.id).filter(function(x){ return x.id===b.dataset.id; })[0]; ctDraft = {kind:'row', tab:t.id, rowId:r.id, v:cfgClone(r.v||{})}; render(); window.scrollTo(0,0); return true; }
-  if(a==='ct-row-cancel'){ ctDraft = null; render(); return true; }
-  if(a==='ct-row-save'){ await ctRowSave(); return true; }
-  if(a==='ct-row-del'){
-    if(!await uiConfirm('Supprimer cette saisie ?', {okLabel:'Supprimer', danger:true})) return true;
-    DATA.customData[t.id] = customRows(t.id).filter(function(x){ return x.id!==b.dataset.id; });
-    await save('customData'); logChange(t.nom, 'Suppression', ''); render(); return true;
+  if(a==='qos-edit'){
+    var act = DATA.actions.find(function(x){ return x.id===b.dataset.id; });
+    if(!act) return true;
+    qosEditId = act.id; qosEditDraft = {statut:act.statut, echeance:act.echeance||'', responsable:act.responsable||''};
+    render(); return true;
   }
-  if(a==='ct-audit-new'){ ctDraft = {kind:'audit', tab:t.id, date:todayStr(), ligne:secteurLines()[0], auditeur:currentUser? currentUser.displayName : '', rep:{}, remarque:''}; render(); return true; }
-  if(a==='ct-rep'){ ctDraft.rep[b.dataset.q] = b.dataset.v; render(); return true; }
-  if(a==='ct-audit-save'){ await ctAuditSave(); return true; }
-  if(a==='ct-xlsx'){ await ctExportXlsx(); return true; }
-  if(a==='ct-print'){ window.print(); return true; }
+  if(a==='qos-edit-cancel'){ qosEditId = null; qosEditDraft = null; render(); return true; }
+  if(a==='qos-edit-save'){
+    var ac = DATA.actions.find(function(x){ return x.id===qosEditId; });
+    if(!ac){ qosEditId = null; render(); return true; }
+    var resp = document.getElementById('qos-ed-resp').value.trim(), ech = document.getElementById('qos-ed-ech').value || null, stt = document.getElementById('qos-ed-statut').value;
+    var old = ac.statut, chg = [];
+    if((ac.responsable||'')!==resp){ chg.push('responsable : '+(resp||'-')); ac.responsable = resp; }
+    if((ac.echeance||null)!==ech){ chg.push('échéance : '+(ech? fmtDate(ech) : '-')); ac.echeance = ech; }
+    ac.statut = stt;
+    withSecteur(ac.secteur||'MCU', function(){ applyActionStatusTransition(ac, old, stt); });
+    if(chg.length){ ac.suivi = ac.suivi || []; ac.suivi.push({date:todayStr(), auteur:currentUser?currentUser.displayName:'', texte:'Réunion QOS '+qosMonthName(qosM)+' '+qosY+' · '+chg.join(', ')}); }
+    await save('actions');
+    logChange('Réunion QOS', 'Mise à jour action', (ac.secteur||'')+' · '+(ac.description||'').slice(0,60));
+    qosEditId = null; qosEditDraft = null;
+    toast('Action mise à jour.');
+    render(); return true;
+  }
+  if(a==='qos-print'){ await printQos(); return true; }
   return false;
 }
-document.addEventListener('input', function(e){
-  var t = e.target; if(!t) return;
-  if(t.id==='ct-search'){ ctSearch[currentTab] = t.value; render(); var s = document.getElementById('ct-search'); if(s){ s.focus(); try{ s.setSelectionRange(t.value.length, t.value.length); }catch(x){} } return; }
-  var el = t.closest && t.closest('[data-cf]');
-  if(el && ctDraft && el.type!=='checkbox') ctSet(el.dataset.cf, el.value);
-});
 document.addEventListener('change', function(e){
   var t = e.target; if(!t) return;
-  if(t.dataset && t.dataset.cfBool && ctDraft){ ctSet(t.dataset.cfBool, t.checked); render(); return; }
-  if(t.matches && t.matches('select[data-cf]') && ctDraft){ ctSet(t.dataset.cf, t.value); if(/\.type$|^def\.freq$/.test(t.dataset.cf)) render(); return; }
-  if(t.classList && t.classList.contains('ct-filter')){ (ctFilter[currentTab] = ctFilter[currentTab]||{})[t.dataset.col] = t.value; render(); return; }
-  if(t.classList && t.classList.contains('ct-ind-in')){ ctIndSave(t); return; }
-  if(t.id==='ct-ind-m' || t.id==='ct-ind-y'){ var p = ctIndPeriod[currentTab]; if(t.id==='ct-ind-m') p.m = Number(t.value); else p.y = Number(t.value)||p.y; render(); return; }
+  if(t.id==='qos-m'){ qosM = Number(t.value); render(); }
+  if(t.id==='qos-y'){ var v = Number(t.value); if(v>2000 && v<2100){ qosY = v; render(); } }
 });
+// ---------- Support imprimable : vue d'ensemble puis une page par secteur ----------
+async function printQos(){
+  qosInitPeriod();
+  var secs = qosSecteurs(), y = qosY, m = qosM;
+  var logoEl = document.querySelector('.sidebar-logo-full');
+  var head = function(sub){ return '<div class="qp-head">'+(logoEl && logoEl.src ? '<img src="'+logoEl.src+'" alt="Acurion">' : '<span></span>')+'<div><b>Réunion QOS · '+esc(qosMonthName(m))+' '+y+'</b><span>'+esc(sub)+' · édité le '+fmtDate(todayStr())+'</span></div></div>'; };
+  var editSave = qosEditId; qosEditId = null;
+  var pages = '<section class="qp-page">'+head('Vue d\'ensemble')+qosOverviewHtml(secs, y, m)+'</section>';
+  secs.forEach(function(s){ pages += '<section class="qp-page">'+head('Secteur '+s.nom)+qosSectorHtml(s, y, m)+'</section>'; });
+  qosEditId = editSave;
+  var old = document.getElementById('qos-print'); if(old) old.remove();
+  var sheet = document.createElement('div'); sheet.id = 'qos-print'; sheet.innerHTML = pages;
+  document.body.appendChild(sheet);
+  document.body.classList.add('print-qos');
+  await waitImages(sheet);
+  var fin = false;
+  var cleanup = function(){ if(fin) return; fin = true; window.removeEventListener('afterprint', cleanup); document.body.classList.remove('print-qos'); var sh = document.getElementById('qos-print'); if(sh) sh.remove(); };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(cleanup, 5000);
+  logChange('Réunion QOS', 'Impression du support', qosMonthName(m)+' '+y);
+  setTimeout(function(){ printWithPageSize('A4 landscape'); }, 60);
+}
 
 // ==================== AIDE « ? » ====================
 // Un bouton rond en bas à droite ouvre l'aide de l'onglet affiché : à quoi il sert, comment s'en servir,
@@ -10876,8 +10734,7 @@ var HELP = [
     etapes:['Choisissez votre secteur en haut du menu (si vous en avez plusieurs).', 'Ouvrez « Configurer le secteur » dans Réglages pour régler lignes, onglets, postes, objectifs, références…', 'Saisissez au fil de l\'eau dans chaque onglet : le tableau de bord se remplit tout seul.'],
     faq:[['Mes saisies sont-elles enregistrées ?', 'Oui, dès que vous validez une saisie. Les données sont partagées : un collègue connecté voit vos modifications en quelques secondes.'],
       ['Deux personnes modifient en même temps, que se passe-t-il ?', 'Les modifications des deux personnes sont fusionnées. Si vous modifiez exactement la même valeur, c\'est la dernière saisie qui est gardée.'],
-      ['Je ne vois pas un onglet dont j\'ai besoin.', 'Il n\'est pas activé pour votre secteur (« Configurer le secteur », étape 1) ou votre profil n\'y a pas accès (à demander à l\'administrateur).'],
-      ['Comment créer mon propre onglet ?', 'Dans le menu Réglages, « Mes onglets » : choisissez un tableau de suivi, une checklist / audit ou un indicateur chiffré, puis ses colonnes ou ses questions.']]},
+      ['Je ne vois pas un onglet dont j\'ai besoin.', 'Il n\'est pas activé pour votre secteur (« Configurer le secteur », étape 1) ou votre profil n\'y a pas accès (à demander à l\'administrateur).']]},
   {id:'dashboard', tab:'dashboard', titre:'Tableau de bord', quoi:'La vue d\'ensemble du secteur : score de conformité, retards, indicateurs. Rien n\'est à saisir ici : tout vient des autres onglets.',
     etapes:['Lisez le score de conformité et son détail par module.', 'Cliquez sur une carte ou une alerte pour ouvrir l\'onglet concerné.', '« Rapport mensuel » prépare la synthèse du mois à imprimer.', '« Personnaliser mon tableau de bord » réorganise vos cartes (MCU).'],
     faq:[['Comment est calculé le score ?', 'C\'est la moyenne des modules comptés (propreté, métrologie, CHOKKO, actions…). Le bouton de réglage du score indique les modules pris en compte.'],
@@ -10902,6 +10759,12 @@ var HELP = [
   {id:'metro', tab:'metro', titre:'Métrologie', quoi:'La liste des instruments de mesure avec leur date de validité.',
     etapes:['Ajoutez un instrument : désignation, ligne, lieu, n° de moyen, échéance, pièce jointe (PV).', 'Le statut passe en orange avant l\'échéance et en rouge une fois dépassée.', 'Export CSV pour la traçabilité.'],
     faq:[['Où modifier un instrument ?', 'Directement dans la liste de l\'onglet.']]},
+  {id:'qos', tab:'qos', titre:'Réunion QOS', quoi:'Le point qualité mensuel avec les techniciens : les principaux défauts CHOKKO et coûts rebut de chaque secteur, et les actions qui y répondent.',
+    etapes:['Choisissez le mois (par défaut, le mois écoulé jusqu\'au 20, puis le mois en cours).', '« Vue d\'ensemble » : CHOKKO, pièces NC, 1er défaut, coût rebut et coût par pièce de chaque ligne, comparés au mois précédent.', 'Cliquez sur un secteur : le technicien présente ses lignes, top 3 défauts CHOKKO et top 3 coûts rebut.', '« + Action » à côté d\'un défaut crée une action liée, visible ensuite dans le plan d\'actions.', '« Mettre à jour » sur une action : responsable, échéance, statut, sans quitter la réunion.', '« Imprimer le support » : vue d\'ensemble puis une page par secteur (A4 paysage).'],
+    faq:[['D\'où viennent les chiffres ?', 'Des saisies du suivi CHOKKO (production, défauts par poste, coût par pièce) et du coût rebut du mois. Rien n\'est à ressaisir.'],
+      ['Quelles actions apparaissent ?', 'Les actions du secteur nées d\'un défaut CHOKKO, du coût rebut ou de la QOS, à réaliser ou réalisées en attente de vérification.'],
+      ['Que signifie « ↳ » sous un défaut ?', 'Ce sont les actions menées saisies dans le CHOKKO pour ce poste et ce mois.'],
+      ['Un secteur n\'apparaît pas.', 'La QOS reprend les secteurs qui suivent le CHOKKO et auxquels votre compte a accès.']]},
   {id:'actions', tab:'actions', titre:'Plan d\'actions', quoi:'Toutes les actions du secteur, de leur création à la vérification d\'efficacité.',
     etapes:['Une action naît d\'un défaut CHOKKO, d\'un NG d\'audit, d\'une contamination… ou d\'une saisie directe.', 'Renseignez responsable, échéance, puis passez-la en « Réalisée ».', 'Une date de vérification d\'efficacité est alors proposée ; une fois vérifiée, l\'action est close.'],
     faq:[['Quand une action est-elle en retard ?', 'Échéance dépassée sans réalisation, ou vérification d\'efficacité dépassée.'],
@@ -10934,14 +10797,10 @@ var HELP = [
     etapes:['Choisissez le secteur (si vous en avez plusieurs).', 'Parcourez les étapes : rien n\'est enregistré avant « Enregistrer » ou « Enregistrer et continuer ».', 'Les pastilles orange signalent ce qui reste à compléter.', 'Terminez par « Valider la configuration » dans le récapitulatif.'],
     faq:[['Pourquoi certaines étapes n\'apparaissent pas ?', 'Elles suivent les onglets cochés à l\'étape 1.'],
       ['Qu\'est-ce que « Réglages communs » ?', 'Les réglages valables pour tous les secteurs, réservés à l\'administrateur.']]},
-  {id:'mesonglets', tab:'mesonglets', titre:'Mes onglets', quoi:'Créez vos propres onglets pour votre secteur, sans passer par un développeur.',
-    etapes:['« + Nouvel onglet » : choisissez le type.', 'Tableau de suivi : vos colonnes (texte, nombre, date, liste, oui/non, personne). Une colonne date peut servir d\'échéance avec alerte.', 'Checklist / audit : vos questions ; chaque audit donne un score par ligne.', 'Indicateur chiffré : une valeur par jour, semaine ou mois, avec objectif et graphique.', 'L\'onglet apparaît dans le menu, groupe « Mes onglets ».'],
-    faq:[['Qui voit mon onglet ?', 'Toutes les personnes de votre secteur.'],
-      ['Puis-je modifier les colonnes après coup ?', 'Oui, avec « Modifier l\'onglet ». Une colonne supprimée garde ses valeurs passées en mémoire mais ne s\'affiche plus.']]},
   {id:'parametres', tab:'parametres', titre:'Paramètres', quoi:'Réservé à l\'administrateur : comptes et profils, secteurs, sauvegardes et apparence.', etapes:['Comptes : créer un compte, choisir son profil et ses secteurs.', 'Sauvegardes : télécharger ou restaurer une sauvegarde.'], faq:[]}
 ];
 var helpOpen = false, helpQuery = '';
-function helpEntryForTab(tab){ return HELP.filter(function(h){ return h.tab===tab; })[0] || (customTabFor(tab) ? HELP.filter(function(h){ return h.id==='mesonglets'; })[0] : null); }
+function helpEntryForTab(tab){ return HELP.filter(function(h){ return h.tab===tab; })[0] || null; }
 function helpEntryHtml(h, open){
   return '<details class="help-entry"'+(open?' open':'')+'><summary>'+esc(h.titre)+'</summary>'+
     '<p>'+esc(h.quoi)+'</p>'+
@@ -10950,7 +10809,7 @@ function helpEntryHtml(h, open){
   '</details>';
 }
 function helpPanelHtml(){
-  var cur = helpEntryForTab(currentTab), ct = customTabFor(currentTab);
+  var cur = helpEntryForTab(currentTab);
   var q = helpQuery.trim().toLowerCase();
   var h = '<div class="help-head"><b>Aide</b><button class="btn small" data-help="close" title="Fermer">✕</button></div>'+
     '<input type="search" id="help-search" placeholder="Rechercher dans l\'aide (ex. objectif, équipe, SAP)" value="'+esc(helpQuery)+'">';
@@ -10960,9 +10819,8 @@ function helpPanelHtml(){
     h += '<div class="help-body">'+(hits.length? hits.map(function(e){ return helpEntryHtml(e, true); }).join('') : '<p class="tiny">Rien trouvé. Essayez un autre mot.</p>')+'</div>';
   } else {
     h += '<div class="help-body">';
-    if(ct) h += '<div class="help-cur">Onglet « '+esc(ct.nom)+' »</div><p class="tiny" style="margin:0 0 8px;">'+esc(ct.description || customTypeLabel(ct.type))+'</p>';
     if(cur) h += helpEntryHtml(cur, true);
-    h += '<div class="help-h" style="margin-top:14px;">Autres sujets</div>'+HELP.filter(function(e){ return e!==cur && (!e.tab || e.tab==='mesonglets' || tabAllowedForHelp(e.tab)); }).map(function(e){ return helpEntryHtml(e, false); }).join('');
+    h += '<div class="help-h" style="margin-top:14px;">Autres sujets</div>'+HELP.filter(function(e){ return e!==cur && (!e.tab || tabAllowedForHelp(e.tab)); }).map(function(e){ return helpEntryHtml(e, false); }).join('');
     h += '</div>';
   }
   return h;
@@ -11144,12 +11002,11 @@ function render(){
   }
   // Préserver la position de défilement des tableaux larges et des fenêtres (sinon retour à gauche à chaque mise à jour)
   var scrollSnap = captureScrollPositions();
-  var fn = (String(currentTab).indexOf('ct_')===0 ? RENDERERS.__custom : RENDERERS[currentTab]) || RENDERERS.dashboard;
+  var fn = RENDERERS[currentTab] || RENDERERS.dashboard;
   view.innerHTML = fn() + (actionDetailId ? actionDetailModalHtml() : '') + (czModal ? czModalHtml() : '');
   try{ hydrateBlobThumbs(); }catch(e){}
   try{ czApplyTexts(view); }catch(e){ console.error('textes', e); }
   try{ helpRender(); }catch(e){ console.error('aide', e); }
-  if(String(currentTab).indexOf('ct_')===0){ try{ ctRenderIndChart(); }catch(e){} }
   restoreScrollPositions(scrollSnap);
   if(focusInfo){
     var el = document.getElementById(focusInfo.id);
@@ -11566,8 +11423,6 @@ function computePriorities(){
       else if(isActionOpen(a) && !isActionDone(a) && a.echeance && a.echeance>=today && daysBetween(today, a.echeance)<=alerteActionsJours()) add('actions', 'warn', a.description||'Action', who+(a.ligne? ' · '+a.ligne : ''), a.echeance, {id:a.id});
     });
   }
-  // --- Mes onglets : échéances des tableaux de suivi
-  try{ customPriorityItems(add); }catch(e){}
   // --- Métrologie
   if(has('metro')){
     bySecteur(DATA.metro).forEach(function(e){
@@ -11672,7 +11527,7 @@ function prioritiesForSecteur(sid){
   try{ currentSecteur = sid; return computePriorities(); }
   finally{ currentSecteur = saved; }
 }
-function prioModuleMeta(id){ var ctm = customTabFor(id); if(ctm) return {id:id, label:ctm.nom, tab:ctm.id}; return PRIO_MODULES.filter(function(m){ return m.id===id; })[0] || {id:id, label:id, tab:'dashboard'}; }
+function prioModuleMeta(id){ return PRIO_MODULES.filter(function(m){ return m.id===id; })[0] || {id:id, label:id, tab:'dashboard'}; }
 function renderPrioritiesDashboard(){
   var items = computePriorities();
   var late = items.filter(function(i){ return i.level==='danger'; }), soon = items.filter(function(i){ return i.level==='warn'; });
@@ -13145,6 +13000,8 @@ function tabAllowed(tabKey){
   if(!role) return false;
   // Analyses Pareto : accessibles dès que le rôle voit au moins un module qui les alimente
   if(tabKey==='pareto' && ['chokko','proprete','prison','actions'].some(function(k){ return role.tabs.indexOf(k)>=0; })) return true;
+  // Réunion QOS : ouverte dès que le rôle voit le suivi CHOKKO
+  if(tabKey==='qos' && role.tabs.indexOf('chokko')>=0) return true;
   return role.tabs.indexOf(tabKey)>=0;
 }
 function canAudit(){
@@ -13162,6 +13019,7 @@ function canSub(key){
 // ===== Navigation en sidebar avec groupes rétractables =====
 var SVG_ICONS = {
   parametres: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>',
+  qos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15 14.5c.6-.3 1.3-.5 2-.5 2.5 0 4 1.8 4 4.5"/></svg>',
   pareto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><rect x="4" y="8" width="3.5" height="13"/><rect x="10" y="13" width="3.5" height="8"/><rect x="16" y="17" width="3.5" height="4"/><path d="M5.7 6 12 4.5 18 3.5"/></svg>',
   prison: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
   bibliotheque: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
@@ -13180,29 +13038,25 @@ var SVG_ICONS = {
   comptes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
   production: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>',
   qualite: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 6.5 7 1-5 5 1.2 7L12 18l-6.2 3.5L7 14.5l-5-5 7-1z"/></svg>',
-  mesonglets: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>',
-  perso: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 6.5 7 1-5 5 1.2 7L12 18l-6.2 3.5L7 14.5l-5-5 7-1z"/></svg>',
   assistant: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>',
   admin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
 };
 var EMOJI_ICONS = {
   dashboard:'📊', proprete:'🧼', metro:'📏', ateq:'⚠️', chokko:'🏭', perf:'📈',
-  actions:'✅', pareto:'📶', planning:'🗓️', prison:'🔒', bibliotheque:'📚', archives:'🗄️',
-  esd:'🎓', cicl:'🔧', formations:'🎓', comptes:'⚙️', parametres:'🛠️', assistant:'🧭', mesonglets:'➕', perso:'⭐',
+  actions:'✅', qos:'👥', pareto:'📶', planning:'🗓️', prison:'🔒', bibliotheque:'📚', archives:'🗄️',
+  esd:'🎓', cicl:'🔧', formations:'🎓', comptes:'⚙️', parametres:'🛠️', assistant:'🧭',
   production:'📦', qualite:'📋', admin:'⚙️'
 };
 function currentIconSet(){ return (DATA.uiSettings && DATA.uiSettings.iconStyle==='emoji') ? EMOJI_ICONS : SVG_ICONS; }
 var TAB_GROUPS_DEF = [
   {id:'production', label:'Production', tabs:['proprete','metro','chokko','perf']},
-  {id:'qualite',    label:'Qualité',    tabs:['actions','pareto','planning','prison','bibliotheque','archives']},
+  {id:'qualite',    label:'Qualité',    tabs:['qos','actions','pareto','planning','prison','bibliotheque','archives']},
   {id:'formations', label:'Formations', tabs:['esd','cicl','formations']},
-  {id:'admin',      label:'Réglages',   tabs:['assistant','mesonglets','parametres']}
+  {id:'admin',      label:'Réglages',   tabs:['assistant','parametres']}
 ];
 Object.defineProperty(window, 'TAB_GROUPS', {get:function(){
   var icons = currentIconSet();
   var gs = TAB_GROUPS_DEF.map(function(g){ return {id:g.id, label:g.label, icon:icons[g.id], tabs:g.tabs}; });
-  var perso = (typeof customTabsSect==='function' && currentUser) ? customTabsSect().map(function(t){ return t.id; }) : [];
-  if(perso.length) gs.splice(gs.length-1, 0, {id:'perso', label:'Mes onglets', icon:icons.perso||'', tabs:perso});
   return gs;
 }});
 Object.defineProperty(window, 'TAB_ICONS', {get:function(){ return currentIconSet(); }});
@@ -13317,13 +13171,11 @@ function renderNav(){
   var allowedTabsIds = ALL_TABS.filter(function(tb){ return sTabs.indexOf(tb[0])>=0 && tabAllowed(tb[0]); }).map(function(tb){return tb[0];});
   var isAdmin = currentUser && currentUser.roleId===ADMIN_ROLE_ID;
   if(currentUser) allowedTabsIds.push('assistant');   // chacun configure ses secteurs
-  if(currentUser){ allowedTabsIds.push('mesonglets'); customTabsSect().forEach(function(ct){ allowedTabsIds.push(ct.id); }); }
   if(isAdmin){ allowedTabsIds.push('parametres'); }   // comptes, secteurs, sauvegardes : administrateur
 
   function tabLabel(id){
     var found = ALL_TABS.find(function(tb){return tb[0]===id;});
-    var ctl = customTabFor(id); if(ctl) return ctl.nom;
-    return t('tab_'+id, found?found[1]:(id==='comptes'?'Comptes':id==='parametres'?'Paramètres':id==='assistant'?'Configurer le secteur':id==='mesonglets'?'Gérer mes onglets':id));
+    return t('tab_'+id, found?found[1]:(id==='comptes'?'Comptes':id==='parametres'?'Paramètres':id==='assistant'?'Configurer le secteur':id));
   }
 
   var sidebar = document.getElementById('sidebar');
@@ -13359,7 +13211,7 @@ function renderNav(){
     html += '<div class="sidebar-group-items">';
     html += visibleTabs.map(function(tid){
       return '<button class="sidebar-item'+(currentTab===tid?' active':'')+'" data-tab="'+tid+'">'+
-        '<span class="sidebar-icon">'+(TAB_ICONS[tid]||customTabIcon(tid))+'</span><span class="sidebar-label-text">'+esc(tabLabel(tid))+'</span></button>';
+        '<span class="sidebar-icon">'+(TAB_ICONS[tid]||'')+'</span><span class="sidebar-label-text">'+esc(tabLabel(tid))+'</span></button>';
     }).join('');
     html += '</div></div>';
     if(hasActive) sidebarGroupsOpen[group.id] = true;
@@ -14436,7 +14288,7 @@ app.addEventListener('click', async function(e){
   if(e.target.closest('[data-action="close-contam-detail"]')){ openContamDetailId = null; render(); return; }
 
   if(await wzHandleClick(e)) return;
-  if(await ctHandleClick(e)) return;
+  if(await qosHandleClick(e)) return;
   var czB = e.target.closest('[data-action^="cz-"],[data-action^="pset-"]');
   if(czB){
     var ca = czB.dataset.action;
