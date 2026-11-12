@@ -1010,6 +1010,11 @@ body.cz-admin .cz-mini{display:inline-block; margin-left:5px; font-size:11px; co
 .chokko-grid input.chokko-cost-cell{font-size:10.5px; font-weight:700; padding-left:1px; padding-right:1px;}
 .chokko-grid input.chokko-cost-cell::-webkit-outer-spin-button, .chokko-grid input.chokko-cost-cell::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
 .chokko-grid .lvl-ok{color:var(--ok);} .chokko-grid .lvl-warn{color:var(--warn);} .chokko-grid .lvl-danger{color:var(--danger);}
+/* Lignes TOTAL NC et COÛT / PIÈCE : fond saumon, écriture marron (les cases colorées à la main gardent leur couleur) */
+.chokko-grid.chokko-grid.chokko-grid tbody tr.chk-nc-row td:not(.chk-sticky), .chokko-grid.chokko-grid.chokko-grid tbody tr.chk-cost-row td:not(.chk-sticky){background:#FCDCCB; color:#6B3A1F;}
+.chokko-grid.chokko-grid.chokko-grid tbody tr.chk-nc-row td.chk-sticky, .chokko-grid.chokko-grid.chokko-grid tbody tr.chk-cost-row td.chk-sticky, .chokko-grid.chokko-grid.chokko-grid td.chk-cost-label{background:#F8C4AA !important; color:#6B3A1F !important;}
+.chokko-grid.chokko-grid.chokko-grid tr.chk-cost-row .lvl-danger, .chokko-grid.chokko-grid.chokko-grid tr.chk-cost-row input.chk-cell, .chokko-grid.chokko-grid.chokko-grid tr.chk-nc-row .lvl-danger{color:#6B3A1F;}
+@media print{ .chokko-grid.chokko-grid.chokko-grid tbody tr.chk-nc-row td.chk-sticky, .chokko-grid.chokko-grid.chokko-grid td.chk-cost-label{color:#6B3A1F !important;} }
 #chokko-month-cost-row{font-family:var(--mono); font-weight:700; text-align:center;}
 .sort-toggle{display:inline-flex; align-items:center; gap:6px; margin-left:10px;}
 @media print{ .sort-toggle{display:none !important;} }
@@ -8550,8 +8555,37 @@ function chokkoSaisieView(){
     (chokkoColorsPanelOpen? chokkoColorsPanel(ligne) : '')+
   '</div>';
   html += chokkoActionsTableHtml(ligne, postes, days);
+  // Pareto général du mois : total des défauts de la ligne, tout en bas de l'onglet
+  html += '<div class="card" style="margin-top:18px;" id="chokko-pareto-card">'+
+    '<div class="eyebrow" style="margin-bottom:8px;">Pareto des défauts - '+esc(ligne)+' - '+esc(MONTHS_FR[chokkoMonth].charAt(0).toUpperCase()+MONTHS_FR[chokkoMonth].slice(1))+' '+chokkoYear+'</div>'+
+    '<div id="chokko-pareto-body"></div></div>';
 
   return html;
+}
+// Pareto du mois pour la ligne affichée : NC par poste, du plus fréquent au moins fréquent, avec le cumul
+function chokkoParetoMonthRes(ligne, y, m){
+  var names = {}; chokkoPostes(ligne).forEach(function(p){ names[p[0]] = p[1]; });
+  var st = chokkoPeriodStats(ligne, chokkoMonthDays(ligne, y, m).map(function(d){ return d.date; }));
+  var rows = Object.keys(st.nc).map(function(k){ return {key:k, label:k+(names[k]? ' - '+names[k] : ''), value:st.nc[k]}; }).filter(function(r){ return r.value>0; })
+    .sort(function(a,b){ return b.value-a.value; });
+  var total = rows.reduce(function(s,r){ return s+r.value; },0), cum = 0;
+  rows.forEach(function(r){ var before = total? cum/total*100 : 0; cum += r.value; r.pct = total? r.value/total*100 : 0; r.cum = total? cum/total*100 : 0; r.cls = before<80 ? 'A' : 'B'; });
+  return {rows:rows, total:total, nA:rows.filter(function(r){ return r.cls==='A'; }).length};
+}
+var chartChokkoPareto = null;
+function renderChokkoParetoMonth(){
+  var body = document.getElementById('chokko-pareto-body'); if(!body) return;
+  if(chartChokkoPareto){ try{ chartChokkoPareto.destroy(); }catch(e){} chartChokkoPareto = null; }
+  var res = chokkoParetoMonthRes(chokkoLigne, chokkoYear, chokkoMonth);
+  if(!res.total){ body.innerHTML = '<p class="tiny" style="margin:0;">Aucun défaut saisi ce mois-ci.</p>'; return; }
+  var tr = function(v){ return (Math.floor(v*10+1e-9)/10).toFixed(1).replace('.',','); };
+  body.innerHTML = '<p class="tiny" style="margin:0 0 10px;"><b>'+res.nA+' poste'+(res.nA>1?'s':'')+'</b> sur '+res.rows.length+' font 80 % des '+res.total.toLocaleString('fr-FR')+' pièces NC du mois (barres foncées).</p>'+
+    '<div class="chart-box" style="height:360px;"><canvas id="chart-chokko-pareto"></canvas></div>'+
+    '<div class="table-wrap" style="margin-top:12px;"><table><thead><tr><th>Poste / défaut</th><th>NC</th><th>Part</th><th>Cumul</th><th>Classe</th></tr></thead><tbody>'+
+    res.rows.map(function(r){ return '<tr><td>'+esc(r.label)+'</td><td><b>'+r.value.toLocaleString('fr-FR')+'</b></td><td>'+tr(r.pct)+' %</td><td>'+tr(r.cum)+' %</td><td>'+(r.cls==='A'? badge('warn','A') : '<span class="tiny">B</span>')+'</td></tr>'; }).join('')+
+    '</tbody></table></div>';
+  if(typeof Chart==='undefined') return;
+  try{ chartChokkoPareto = new Chart(document.getElementById('chart-chokko-pareto'), paretoChartConfig(res, {unit:'pièces'}, false)); }catch(err){ console.error('pareto chokko', err); }
 }
 // Tableau des actions CHOKKO du mois (remplace l'ancienne colonne ACTIONS de la grille)
 function chokkoActionsTableHtml(ligne, postes, days){
@@ -8999,6 +9033,7 @@ function buildChokkoPostesChartConfig(ligne, year, monthIdx){
   };
 }
 function renderChokkoPostesChart(){
+  try{ renderChokkoParetoMonth(); }catch(e){ console.error(e); }
   if(typeof Chart==='undefined') return;
   var ctx = document.getElementById('chart-chokko-postes');
   if(!ctx) return;
