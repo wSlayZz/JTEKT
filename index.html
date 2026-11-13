@@ -799,25 +799,25 @@ div.entryform.cols3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
 .qos-zone-head b{display:block; font-size:15px; letter-spacing:.06em;}
 .qos-zone-head span{font-size:12px; opacity:.9;}
 .qos-zone-num{flex:0 0 28px; height:28px; border-radius:50%; background:rgba(255,255,255,.25); display:inline-flex; align-items:center; justify-content:center; font-weight:700;}
-.qos-zone-chk{border-color:#9CC9A4;} .qos-zone-chk .qos-zone-head{background:#2E6B45;}
-.qos-zone-reb{border-color:#F0B596;} .qos-zone-reb .qos-zone-head{background:#9A4E2A;}
+.qos-zone-chk{border-color:#9FB0DA;} .qos-zone-chk .qos-zone-head{background:#17368A;}
+.qos-zone-reb{border-color:#9ED3D4;} .qos-zone-reb .qos-zone-head{background:#2E8B8D;}
 .qos-zone .qos-line{padding:12px 16px; margin:0; border-bottom:1px solid var(--border);}
-.qos-zone-chk .qos-line:nth-of-type(even){background:#F7FBF6;}
-.qos-zone-reb .qos-line:nth-of-type(even){background:#FFF8F4;}
+.qos-zone-chk .qos-line:nth-of-type(even){background:#F4F6FC;}
+.qos-zone-reb .qos-line:nth-of-type(even){background:#F0F8F8;}
 .qos-line-name{font-weight:700; font-size:15px; min-width:70px;}
 .qos-line-head{align-items:center;}
 .qos-zone-acts{padding:12px 16px;}
-.qos-zone-chk .qos-zone-acts{background:#EEF7EF;} .qos-zone-reb .qos-zone-acts{background:#FDEEE6;}
+.qos-zone-chk .qos-zone-acts{background:#E9EEF8;} .qos-zone-reb .qos-zone-acts{background:#E4F3F3;}
 .qos-none{margin:4px 0 0; color:var(--text-faint);}
 .qos-ov .qos-band th{text-align:center; font-size:11px; letter-spacing:.08em; color:#fff; padding:4px;}
-.qos-ov .qos-band th.qos-band-chk{background:#2E6B45;} .qos-ov .qos-band th.qos-band-reb{background:#9A4E2A;}
+.qos-ov .qos-band th.qos-band-chk{background:#17368A;} .qos-ov .qos-band th.qos-band-reb{background:#2E8B8D;}
 .qos-ov .qos-band th:first-child{background:transparent; border:none;}
-.qos-ov td.qos-c1, .qos-ov th.qos-c1{border-left:3px solid #2E6B45;}
-.qos-ov td.qos-r1, .qos-ov th.qos-r1{border-left:3px solid #9A4E2A;}
-.qos-ov td.qos-c, .qos-ov td.qos-c1{background:#F7FBF6;}
+.qos-ov td.qos-c1, .qos-ov th.qos-c1{border-left:3px solid #17368A;}
+.qos-ov td.qos-r1, .qos-ov th.qos-r1{border-left:3px solid #2E8B8D;}
+.qos-ov td.qos-c, .qos-ov td.qos-c1{background:#F4F6FC;}
 .qos-ov td.qos-c1{white-space:nowrap;}
-.qos-ov td.qos-r, .qos-ov td.qos-r1{background:#FFF8F4;}
-.qos-kpis .qos-k-chk{border-left:4px solid #2E6B45;} .qos-kpis .qos-k-reb{border-left:4px solid #9A4E2A;}
+.qos-ov td.qos-r, .qos-ov td.qos-r1{background:#F0F8F8;}
+.qos-kpis .qos-k-chk{border-left:4px solid #17368A;} .qos-kpis .qos-k-reb{border-left:4px solid #2E8B8D;}
 @media print{
   #qos-print .qos-zone{break-inside:auto; margin-bottom:8px; border-radius:6px;}
   #qos-print .qos-zone-break{break-before:page; page-break-before:always;}
@@ -837,20 +837,20 @@ div.entryform.cols3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
 .qos-half{min-width:0;}
 .qos-band-h{color:#fff; font-size:11px; font-weight:700; letter-spacing:.08em; text-align:center; padding:4px 8px;}
 .qos-band-h span{font-weight:400; letter-spacing:0; opacity:.85; margin-left:8px;}
-.qos-half-chk .qos-band-h{background:#2E6B45;} .qos-half-reb .qos-band-h{background:#9A4E2A;}
+.qos-half-chk .qos-band-h{background:#17368A;} .qos-half-reb .qos-band-h{background:#2E8B8D;}
 .qos-half-body{padding:10px 14px; overflow-x:auto;}
-.qos-half-chk .qos-half-body{background:#F7FBF6;}
-.qos-half-reb .qos-half-body{background:#FFF8F4;}
-.qos-split .qos-half-reb{border-left:3px solid #9A4E2A;}
-.qos-split .qos-half-chk{border-left:3px solid #2E6B45;}
+.qos-half-chk .qos-half-body{background:#F4F6FC;}
+.qos-half-reb .qos-half-body{background:#F0F8F8;}
+.qos-split .qos-half-reb{border-left:3px solid #2E8B8D;}
+.qos-split .qos-half-chk{border-left:3px solid #17368A;}
 .qos-half .qos-line-kpis{margin-bottom:8px;}
 .qos-acts-card .qos-half + .qos-half{border-top:1px solid var(--border);}
-@media (max-width:1000px){ .qos-split{grid-template-columns:1fr;} .qos-split .qos-half-reb{border-left:none; border-top:3px solid #9A4E2A;} }
+@media (max-width:1000px){ .qos-split{grid-template-columns:1fr;} .qos-split .qos-half-reb{border-left:none; border-top:3px solid #2E8B8D;} }
 @media print{
   #qos-print .qos-lcard{break-inside:avoid; margin-bottom:6px; border-radius:6px;}
   #qos-print .qos-lcard-name{padding:3px 8px; font-size:11px;}
   #qos-print .qos-split{grid-template-columns:3fr 2fr !important;}
-  #qos-print .qos-split .qos-half-reb{border-left:3px solid #9A4E2A; border-top:none;}
+  #qos-print .qos-split .qos-half-reb{border-left:3px solid #2E8B8D; border-top:none;}
   #qos-print .qos-band-h, #qos-print .qos-half-body{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
   #qos-print .qos-band-h{padding:2px 6px; font-size:8.5px; color:#fff !important;}
   #qos-print .qos-half-body{padding:4px 8px; overflow:visible;}
@@ -4381,7 +4381,7 @@ function renderParticulesCharts(){
 
 var RELEVES_BAINS = ['Bain 1','Bain 2'];
 // Couleur propre à chaque bain (onglets de saisie, en-têtes de colonnes) : on voit tout de suite sur quel bain on travaille
-var BAIN_COLORS = {'Bain 1':'#2F6FB0', 'Bain 2':'#8A4FB5'};
+var BAIN_COLORS = {'Bain 1':'#17368A', 'Bain 2':'#45A0A2'};   // couleurs du logo Acurion
 function bainColor(b){ return BAIN_COLORS[b] || '#5A6B7B'; }
 function bainHeader(b){ return '<th style="text-align:center;"><span class="bain-chip" style="--bain:'+bainColor(b)+';">'+esc(b)+'</span></th>'; }
 function chlorureConcentrationRange(bain){
@@ -5257,9 +5257,10 @@ var REF_CICL_POSTES = {
 var REF_CICL_LABELS = { '143X-144P': '143X / 144P' }; // libellé d'affichage si différent de la clé
 function ciclRefLabel(ref){ return REF_CICL_LABELS[ref] || ref; }
 var POSTE_BADGE_PALETTE = [
-  {bg:'#E6EFEE', fg:'#1F5C5C'}, {bg:'#FBEEDC', fg:'#B8730A'}, {bg:'#FBE7E3', fg:'#B23B2E'},
-  {bg:'#E5F3E9', fg:'#2E7D4F'}, {bg:'#EFE6F7', fg:'#7B4FA3'}, {bg:'#E7EEFB', fg:'#3A5FA3'},
-  {bg:'#FDECD6', fg:'#C25A00'}, {bg:'#F0EAE0', fg:'#8A6642'}
+  // nuances du bleu et du turquoise Acurion
+  {bg:'#E4E9F5', fg:'#17368A'}, {bg:'#E1F1F1', fg:'#2E8B8D'}, {bg:'#E9EDF8', fg:'#5B76C0'},
+  {bg:'#DDF0F0', fg:'#1F6E70'}, {bg:'#EEF1F9', fg:'#8EA3D6'}, {bg:'#E6F5F5', fg:'#6CC0C2'},
+  {bg:'#E3E6EE', fg:'#0E2259'}, {bg:'#EDEFF2', fg:'#5A6B7B'}
 ];
 function posteBadgeColor(posteId){
   var hash = 0;
@@ -8292,7 +8293,7 @@ function buildChokkoWeekChartConfig(ligne, year, monthIdx){
   });
   var pcts = stats.map(function(st){ return st.pct; });
   datasets.push({type:'line', label:'CHOKKO DE LA SEMAINE', yAxisID:'y1', order:1, data:pcts,
-    borderColor:'#3A7CA5', backgroundColor:'#3A7CA5', borderWidth:2.5, pointRadius:4, spanGaps:true, tension:0.15});
+    borderColor:'#0E2259', backgroundColor:'#0E2259', borderWidth:2.5, pointRadius:4, spanGaps:true, tension:0.15});
   var minP = pcts.filter(function(v){ return v!==null; }).reduce(function(a,b){ return Math.min(a,b); }, 100);
   return {type:'bar', data:{labels:labels, datasets:datasets},
     options:{responsive:true, maintainAspectRatio:false, animation:false,
@@ -9250,7 +9251,7 @@ function buildChokkoDefChartConfig(forPrint, posteId){
   var ds = [{type:'bar', label:'Défauts', data:series.map(function(b){ return b.days? b.n : null; }), backgroundColor:series.map(function(b){ return b.inProgress ? ACURION_TURQ+'66' : ACURION_TURQ; }), borderColor:'#B2764A', borderWidth:1, borderRadius:3, order:2}];
   if(trend){
     ds.push({type:'line', label:'Tendance', data:series.map(function(b, i){ return (i>=trend.first && i<=trend.last) ? Math.max(0, Math.round((trend.a*i+trend.b)*10)/10) : null; }),
-      borderColor:'#1F3864', borderDash:[7,5], borderWidth:2, pointRadius:0, spanGaps:true, order:1});
+      borderColor:ACURION_BLUE, borderDash:[7,5], borderWidth:2, pointRadius:0, spanGaps:true, order:1});
   }
   var fs = forPrint ? 22 : undefined;
   return {data:{labels:series.map(function(b){ return b.label; }), datasets:ds},
@@ -9334,7 +9335,7 @@ function renderChokkoChart(){
       type:'bar',
       data:{labels:MONTHS_FR.map(function(m){return m.slice(0,3);}), datasets:[
         {label:'% Chokko', data:data, backgroundColor:barColors.map(function(c){ return c+'CC'; }), borderColor:barColors, borderWidth:1.5, borderRadius:3},
-        {label:'Objectif '+chokkoLigne, type:'line', data:Array(12).fill(chokkoObjectif(chokkoLigne)), borderColor:'#1F3864', backgroundColor:'#1F3864', borderWidth:2, borderDash:[6,4], pointRadius:0}
+        {label:'Objectif '+chokkoLigne, type:'line', data:Array(12).fill(chokkoObjectif(chokkoLigne)), borderColor:ACURION_BLUE, backgroundColor:ACURION_BLUE, borderWidth:2, borderDash:[6,4], pointRadius:0}
       ]},
       options:{responsive:true, maintainAspectRatio:false, plugins:{tooltip:{callbacks:{label:function(c){ return ' '+c.dataset.label+' : '+(c.raw===null?'-':pct2(c.raw).replace('.',','))+' %'; }}}}, scales:{y:{min:(function(){ var v = data.filter(function(x){ return x!==null; }); var lo = v.length? Math.min.apply(null, v) : 100; return lo<95 ? Math.floor(lo*2)/2 : 95; })(), max:100, ticks:{stepSize:0.5, callback:function(v){ return v.toLocaleString('fr-FR',{minimumFractionDigits:1, maximumFractionDigits:1})+' %'; }}}}}
     });
@@ -9348,7 +9349,8 @@ var APP_PALETTE = [
   ['#E8D4F5','Lilas'],['#F3D1EC','Mauve'],['#E6DCCF','Sable'],['#DDE3E8','Gris bleuté'],['#EEEEEE','Gris perle'],['#FFFFFF','Blanc'],
   ['#E8877F','Corail'],['#F2B35E','Orange doux'],['#E6CF5C','Moutarde'],['#8FCB9B','Vert sauge'],['#6FB8C9','Bleu canard'],['#7FA7E0','Bleu moyen'],
   ['#A98BD6','Violet'],['#D48FB8','Framboise'],
-  ['#B23B2E','Rouge'],['#B8730A','Ambre'],['#2E7D4F','Vert'],['#1F5C5C','Pétrole'],['#1F3864','Marine'],['#3A3A36','Anthracite']
+  ['#B23B2E','Rouge'],['#B8730A','Ambre'],['#2E7D4F','Vert'],['#1F5C5C','Pétrole'],['#1F3864','Marine'],['#3A3A36','Anthracite'],
+  ['#17368A','Bleu Acurion'],['#45A0A2','Turquoise Acurion']
 ];
 var CHOKKO_PRESET_COLORS = APP_PALETTE.map(function(c){ return c[0]; });
 function contrastTextColor(hex){
@@ -9456,7 +9458,7 @@ function buildChokkoPostesChartConfig(ligne, year, monthIdx){
   datasets.push({
     type:'line', label:'CHOKKO DU JOUR', yAxisID:'y1', order:1,
     data:days.map(function(d){ return d.totals.pct; }),
-    borderColor:'#3A7CA5', backgroundColor:'#3A7CA5', borderWidth:2.5, pointRadius:0, spanGaps:true, tension:0.15
+    borderColor:'#0E2259', backgroundColor:'#0E2259', borderWidth:2.5, pointRadius:0, spanGaps:true, tension:0.15
   });
   return {
     type:'bar',
@@ -10029,7 +10031,8 @@ function applyAppConfig(force){
   CHOKKO_TEAMS = c('chokkoTeams');
   var bains = c('bains');
   RELEVES_BAINS = bains.map(function(b){ return b.nom; });
-  BAIN_COLORS = {}; bains.forEach(function(b){ BAIN_COLORS[b.nom] = b.couleur; });
+  var OLD_BAIN = {'#2F6FB0':'#17368A', '#8A4FB5':'#45A0A2'};   // anciennes couleurs par défaut → couleurs Acurion
+  BAIN_COLORS = {}; bains.forEach(function(b){ BAIN_COLORS[b.nom] = OLD_BAIN[String(b.couleur).toUpperCase()] || b.couleur; });
   var ss = c('scoreSeuils'); SCORE_ATTENTION = Number(ss.attention); SCORE_DANGER = Number(ss.danger);
   VIDANGE_INTERVALLE = Number(c('vidange').intervalle) || 90;
   var stl = {}; (c('actionStatuts')||[]).forEach(function(x){ stl[x[0]] = x[1]; });
@@ -12406,7 +12409,7 @@ RENDERERS.dashboard = function(){
   html += '<button class="btn" data-action="monthly-report" title="Rapport de revue de direction sur 3-4 pages A4">📄 Rapport mensuel</button>';
   html += '</div><div id="digest-box"></div>';
 
-  var WIDGET_COLORS = ['', '#1F5C5C', '#B8730A', '#B23B2E', '#2E7D4F', '#7B4FA3'];
+  var WIDGET_COLORS = ['', '#17368A', '#45A0A2', '#B23B2E', '#2E7D4F', '#7B4FA3'];
 
   if(dashboardCustomizing){
     html += '<div class="customize-banner"><span>Vos cartes s\'empilent verticalement. ↑↓ pour les réordonner, une pastille pour l\'accent de couleur, 🗑 pour retirer une carte.</span>'+
@@ -14261,7 +14264,7 @@ function renderChokkoTrendChart(){
     }
     chartChokkoTrend = new Chart(ctx, {
       type:'line',
-      data:{labels:weeks.map(function(w){return w.label;}), datasets:[{label:'% Chokko', data:weeks.map(function(w){return w.avg;}), borderColor:'#1F5C5C', backgroundColor:'#1F5C5C22', fill:true, tension:0.3, spanGaps:true, pointRadius:3}]},
+      data:{labels:weeks.map(function(w){return w.label;}), datasets:[{label:'% Chokko', data:weeks.map(function(w){return w.avg;}), borderColor:ACURION_BLUE, backgroundColor:ACURION_BLUE+'22', fill:true, tension:0.3, spanGaps:true, pointRadius:3}]},
       options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{min:80, max:100, ticks:{callback:function(v){return v+'%';}}}}}
     });
   }catch(err){ console.error('chokko trend error', err); }
@@ -14323,7 +14326,7 @@ function renderTrendChart(){
     chartTrend = new Chart(ctx, {
       data:{labels:months.map(function(m){return m.label;}),
         datasets:[
-          {type:'line', label:'Score propreté moyen (%)', data:proprScores, borderColor:'#1F5C5C', backgroundColor:'#1F5C5C22', borderWidth:2, pointRadius:3, yAxisID:'y', spanGaps:true},
+          {type:'line', label:'Score propreté moyen (%)', data:proprScores, borderColor:ACURION_BLUE, backgroundColor:ACURION_BLUE+'22', borderWidth:2, pointRadius:3, yAxisID:'y', spanGaps:true},
           {type:'bar', label:'Pièces NC CHOKKO (total mensuel)', data:ateqDefauts, backgroundColor:ACURION_TURQ+'88', borderColor:ACURION_TURQ, borderWidth:1, yAxisID:'y1'}
         ]},
       options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
@@ -14347,7 +14350,7 @@ function renderScoreHistoryChart(){
       type:'line',
       data:{labels:hist.map(function(h){ return fmtDate(h.date); }),
         datasets:[
-          {label:'Score global', data:hist.map(function(h){return h.score;}), borderColor:'#1F5C5C', backgroundColor:'#1F5C5C22', borderWidth:2, pointRadius:2, tension:0.2},
+          {label:'Score global', data:hist.map(function(h){return h.score;}), borderColor:ACURION_BLUE, backgroundColor:ACURION_BLUE+'22', borderWidth:2, pointRadius:2, tension:0.2},
           {label:'Seuil attention (85%)', data:hist.map(function(){return 85;}), borderColor:'#E0922A99', borderDash:[6,3], borderWidth:1, pointRadius:0},
           {label:'Seuil danger (50%)', data:hist.map(function(){return 50;}), borderColor:'#D6483A99', borderDash:[6,3], borderWidth:1, pointRadius:0}
         ]},
