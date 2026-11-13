@@ -714,6 +714,50 @@ div.entryform.cols3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
 .wz-issues{margin:4px 0 0; padding-left:18px; font-size:12px; color:#7A5418;}
 .wz-banner{display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; padding:12px 16px; margin-bottom:16px; border:1px solid #E8C58A; background:#FFF9EF; border-radius:var(--radius);}
 @media (max-width:760px){ .wz-body{grid-template-columns:1fr;} .wz-steps{position:static; flex-direction:row; overflow-x:auto; padding-bottom:4px;} .wz-steps button{flex:0 0 auto;} .wz-step-l{white-space:nowrap;} .wz-main{padding:14px;} .wz-row{flex-wrap:nowrap;} .wz-row input, .wz-row select{min-width:0 !important; flex:1 1 auto; width:auto;} .wz-row select{flex:0 1 120px;} }
+/* ---- Chantiers : besoins, étapes, traçabilité ---- */
+.ch-stepper{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:10px 0 4px; font-size:12px;}
+.ch-st{display:inline-flex; align-items:center; gap:6px; padding:4px 10px 4px 4px; border-radius:999px; background:var(--neutral-bg, #EEE); color:var(--text-muted);}
+.ch-st b{width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:#fff; font-size:11px;}
+.ch-st i{font-style:normal; font-size:10.5px; opacity:.8;}
+.ch-st.done{background:#E3F2E8; color:#1F5C38;} .ch-st.done b{background:#2E7D4F; color:#fff;}
+.ch-st.cur{background:var(--accent); color:#fff; font-weight:600;} .ch-st.cur b{color:var(--accent);}
+.ch-st.cancelled{background:#EEECE6; color:#6E6A60; padding:4px 12px;}
+.ch-st-sep{width:14px; height:2px; background:var(--border-strong);}
+.ch-mat{display:flex; flex-direction:column; gap:6px;}
+.ch-mat-row{display:flex; gap:6px; align-items:center;}
+.ch-mat-row .ch-mat-q{width:70px;} .ch-mat-row .ch-mat-d{flex:1; min-width:0;}
+.ch-mat-sugg{display:flex; gap:5px; flex-wrap:wrap; align-items:center; margin-top:8px;}
+.ch-chip{border:1px dashed var(--border-strong); background:#fff; border-radius:999px; padding:3px 9px; font:inherit; font-size:12px; cursor:pointer; color:var(--text-muted);}
+.ch-chip:hover{border-color:var(--accent); color:var(--accent);}
+.ch-valid{margin-top:14px; padding:10px 12px; border-radius:var(--radius-sm); background:#E3F2E8; color:#1F5C38; font-size:13px;}
+.ch-step{padding:4px 2px;} .ch-step h4{margin:0 0 6px; font-size:16px;}
+.ch-checkline{display:flex; gap:8px; align-items:center; margin-top:12px; font-size:13px; padding:8px 10px; background:#FFF8EC; border:1px solid #F0D9A8; border-radius:var(--radius-sm);}
+.ch-fin-sum{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:10px;}
+.ch-fin-sum div{border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 10px; display:flex; flex-direction:column;}
+.ch-fin-sum i{font-style:normal; font-size:11px; color:var(--text-faint);} .ch-fin-sum b{font-size:20px; font-family:var(--mono);}
+.ch-fin-sum b.ok{color:var(--ok, #2E7D4F);} .ch-fin-sum b.nc{color:var(--danger);}
+.ch-trace{display:flex; flex-direction:column; border-left:2px solid var(--border-strong); margin-left:6px;}
+.ch-trace-row{display:flex; gap:12px; padding:6px 0 6px 12px; position:relative; font-size:13px;}
+.ch-trace-row::before{content:''; position:absolute; left:-6px; top:11px; width:10px; height:10px; border-radius:50%; background:var(--accent);}
+.ch-trace-d{font-family:var(--mono); font-size:11.5px; color:var(--text-faint); white-space:nowrap; min-width:118px;}
+.ch-list-head{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px;}
+.ch-dem-banner{display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:6px 10px; background:#FFF4E0; border:1px solid #F0C98A; border-radius:var(--radius-sm); font-size:13px;}
+#chd-print{display:none;}
+@media (max-width:700px){ .ch-fin-sum{grid-template-columns:repeat(2,1fr);} .ch-st-sep{display:none;} }
+@media print{
+  body.print-chd > *:not(#chd-print){display:none !important;}
+  body.print-chd #chd-print{display:block !important; font-family:Arial, Helvetica, sans-serif; color:#111;}
+  #chd-print .cd-table{width:100%; border-collapse:collapse; font-size:9.5px;}
+  #chd-print .cd-table th, #chd-print .cd-table td{border:1px solid #999; padding:4px 5px; text-align:left; vertical-align:top;}
+  #chd-print .cd-table th{background:#D9E1F2; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  #chd-print .cd-table tr{break-inside:avoid;}
+  #chd-print .n{text-align:center;} #chd-print .cd-sub{font-size:8.5px; color:#555; margin-top:2px;}
+  #chd-print .cd-dec{width:110px; font-size:9px; line-height:1.7;}
+  #chd-print .cd-sign{display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:14px; font-size:11px;}
+  #chd-print .cd-sign div{border:1px solid #999; height:50px; padding:4px 6px;}
+  .pc-res th{background:#FCE9DC !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .pc-trace{font-size:8.5px !important;}
+}
 /* ---- Réunion QOS ---- */
 .qos-pills{margin-bottom:14px;}
 .qos-kpis{display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:14px;}
@@ -749,6 +793,43 @@ div.entryform.cols3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
 .qos-table tr.qos-late td{background:#FDF1EF;}
 .qos-table tr.qos-editing td{background:#FFF9EF;}
 .qos-table tr.qos-editing input, .qos-table tr.qos-editing select{width:100%; min-width:120px; box-sizing:border-box;}
+/* Zones CHOKKO (vert) et COÛT REBUT (saumon) bien séparées */
+.qos-zone{border:1px solid var(--border); border-radius:var(--radius); background:#fff; margin-bottom:18px; overflow:hidden;}
+.qos-zone-head{display:flex; align-items:center; gap:12px; padding:10px 16px; color:#fff;}
+.qos-zone-head b{display:block; font-size:15px; letter-spacing:.06em;}
+.qos-zone-head span{font-size:12px; opacity:.9;}
+.qos-zone-num{flex:0 0 28px; height:28px; border-radius:50%; background:rgba(255,255,255,.25); display:inline-flex; align-items:center; justify-content:center; font-weight:700;}
+.qos-zone-chk{border-color:#9CC9A4;} .qos-zone-chk .qos-zone-head{background:#2E6B45;}
+.qos-zone-reb{border-color:#F0B596;} .qos-zone-reb .qos-zone-head{background:#9A4E2A;}
+.qos-zone .qos-line{padding:12px 16px; margin:0; border-bottom:1px solid var(--border);}
+.qos-zone-chk .qos-line:nth-of-type(even){background:#F7FBF6;}
+.qos-zone-reb .qos-line:nth-of-type(even){background:#FFF8F4;}
+.qos-line-name{font-weight:700; font-size:15px; min-width:70px;}
+.qos-line-head{align-items:center;}
+.qos-zone-acts{padding:12px 16px;}
+.qos-zone-chk .qos-zone-acts{background:#EEF7EF;} .qos-zone-reb .qos-zone-acts{background:#FDEEE6;}
+.qos-none{margin:4px 0 0; color:var(--text-faint);}
+.qos-ov .qos-band th{text-align:center; font-size:11px; letter-spacing:.08em; color:#fff; padding:4px;}
+.qos-ov .qos-band th.qos-band-chk{background:#2E6B45;} .qos-ov .qos-band th.qos-band-reb{background:#9A4E2A;}
+.qos-ov .qos-band th:first-child{background:transparent; border:none;}
+.qos-ov td.qos-c1, .qos-ov th.qos-c1{border-left:3px solid #2E6B45;}
+.qos-ov td.qos-r1, .qos-ov th.qos-r1{border-left:3px solid #9A4E2A;}
+.qos-ov td.qos-c, .qos-ov td.qos-c1{background:#F7FBF6;}
+.qos-ov td.qos-c1{white-space:nowrap;}
+.qos-ov td.qos-r, .qos-ov td.qos-r1{background:#FFF8F4;}
+.qos-kpis .qos-k-chk{border-left:4px solid #2E6B45;} .qos-kpis .qos-k-reb{border-left:4px solid #9A4E2A;}
+@media print{
+  #qos-print .qos-zone{break-inside:auto; margin-bottom:8px; border-radius:6px;}
+  #qos-print .qos-zone-break{break-before:page; page-break-before:always;}
+  #qos-print .qos-zone-head{break-after:avoid; page-break-after:avoid;}
+  #qos-print .qos-zone-head{padding:4px 8px; -webkit-print-color-adjust:exact; print-color-adjust:exact;} #qos-print .qos-zone-head b{font-size:11px;} #qos-print .qos-zone-head span{font-size:8.5px;}
+  #qos-print .qos-zone-num{flex-basis:18px; height:18px; font-size:10px;}
+  #qos-print .qos-zone .qos-line{padding:4px 8px !important; break-inside:avoid;}
+  #qos-print .qos-line-name{font-size:11px;}
+  #qos-print .qos-zone-acts{padding:4px 8px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  #qos-print .qos-ov .qos-band th, #qos-print .qos-ov td{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  #qos-print .qos-ov .qos-band th{color:#fff !important;}
+}
 #qos-print{display:none;}
 @media (max-width:900px){ .qos-cols{grid-template-columns:1fr;} .qos-kpis{grid-template-columns:repeat(2,1fr);} }
 @media print{
@@ -1345,7 +1426,7 @@ var KEYS = {
 };
 var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[], checklist:{MCU1_MCU2:[],MCU3:[]}, propAudits:[], contamination:[], vidange:[], accounts:[], roles:[], changelog:[], scoreHistory:[], particules:[], esd:[], perf:[], secteurs:[], formations:[], postits:[], labelOverrides:{}, cicl:[], chokko:[], chokkoNotes:[], ciclPersons:[], chokkoColors:{}, chokkoHighlights:{}, chokkoRecentColors:[], chokkoPosteLabels:{}, chokkoUnitCost:{}, chokkoPosteConfig:{}, bibliotheque:[], prisonLots:[], prisonSnapshots:[], prisonChantiers:[], prisonMoves:[], rebutCouts:{}, rebutCodes:{}, sapBom:{}, actionsSnapshots:[], appConfig:{}, uiSettings:{sidebarColor:null, iconStyle:'svg'}};
 var RENDERERS = {};
-var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['chokko','Suivi CHOKKO'],['qos','Réunion QOS'],['actions',"Plan d'actions"],['pareto','Analyses Pareto'],['planning','Planning échéances'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['prison','Prison qualité'],['bibliotheque','Bibliothèque'],['archives','Archives']];
+var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['chokko','Suivi CHOKKO'],['qos','Réunion QOS'],['actions',"Plan d'actions"],['pareto','Analyses Pareto'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['prison','Prison qualité'],['bibliotheque','Bibliothèque'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
 
 // ============ LABELS PERSONNALISABLES ============
@@ -1518,6 +1599,7 @@ function secteurTabs(){
   if(currentSecteur==='MCU' && !(s && s.tabsManual) && tabs.indexOf('formations')<0) tabs.push('formations');
   if(currentSecteur==='MCU' && !(s && s.tabsManual) && tabs.indexOf('perf')<0) tabs.push('perf');
   if(tabs.indexOf('bibliotheque')<0) tabs.push('bibliotheque');
+  tabs = tabs.filter(function(t){ return t!=='planning'; });   // onglet Planning échéances retiré
   if(tabs.indexOf('pareto')<0) tabs.push('pareto');
   if(tabs.indexOf('chokko')>=0 && tabs.indexOf('qos')<0) tabs.push('qos');   // réunion QOS : secteurs qui suivent le CHOKKO
   tabs = tabs.filter(function(t){ return t!=='ateq'; });   // onglet ATEQ retiré : le suivi des défauts se fait dans CHOKKO
@@ -5896,7 +5978,7 @@ function prisonPrintView(lots){
 // La saisie se fait dans un brouillon (chantierDraft) : changer d'onglet ne perd rien, rien n'est écrit avant « Enregistrer ».
 // À la clôture, les pièces remises en état et rebutées sortent de la prison (et sont tracées).
 // ====================================================================
-var PRISON_CHANTIER_STATUTS = [['planifie','Planifié','neutral'],['en_cours','En cours','warn'],['termine','Terminé','ok'],['annule','Annulé','neutral']];
+var PRISON_CHANTIER_STATUTS = [['demande','Ressources demandées','warn'],['valide','Ressources validées','neutral'],['en_cours','En cours','warn'],['termine','Terminé','ok'],['annule','Annulé','neutral']];
 var CHANTIER_LIEUX = ['Réception technique','Stock composant','Sur ligne (ne pas oublier les bridges)','Stock reliquat paletier','Stock fini','Zone de départ marchandise','En transit vers le client','Chez le client','Pièce hatsumono','Laboratoire','Métrologie','Zone de recyclage','Zone prison','Opération externalisée'];
 var CHANTIER_RISQUES_PRODUIT = [['r1','Défaillance produit en garantie (retour réseau)','Risques systématiques'],['r2','Défaut de montabilité client (0 km)','Risques systématiques'],['r3','Détérioration / dégradation du produit','Risques systématiques'],['r4','Perte de traçabilité','Autres risques'],['r5','Sécurité opérateur','Autres risques']];
 var CHANTIER_KAKOTORA = [['k1','Contrôle carter : utiliser uniquement les moyens de contrôle de ligne de production, interdiction d\'utiliser des moyens non dédiés de type colonne, pied à coulisse'],['k2','MCU : recyclage interdit pour des moteurs tombés et reflashage ECU']];
@@ -5926,11 +6008,11 @@ var CHANTIER_HSE = [
     ['h19','Le chantier se déroule dans une zone logistique','Porter le gilet haute visibilité et la casquette coquée'],
     ['h20','Le chantier présente des risques respiratoires','Porter une protection respiratoire adaptée']]]
 ];
-var CHANTIER_TABS = [['general','Général'],['pieces','Pièces'],['risques','Risques & mode opératoire'],['hse','HSE']];
+var CHANTIER_TABS = [['general','Général'],['ressources','Besoins en ressources'],['pieces','Pièces'],['risques','Risques & mode opératoire'],['hse','HSE'],['trace','Traçabilité']];
 var prisonChantierOpenId = null;     // id de la fiche ouverte | 'new:<lotId>'
 var chantierDraft = null, chantierTab = 'general';
 
-function chantierStatutMeta(s){ var m = PRISON_CHANTIER_STATUTS.filter(function(x){ return x[0]===s; })[0] || PRISON_CHANTIER_STATUTS[0]; return {label:m[1], level:m[2]}; }
+function chantierStatutMeta(s){ if(s==='planifie') s = 'demande'; var m = PRISON_CHANTIER_STATUTS.filter(function(x){ return x[0]===s; })[0] || PRISON_CHANTIER_STATUTS[0]; return {label:m[1], level:m[2]}; }
 function chantiersSect(){ return (DATA.prisonChantiers||[]).filter(function(c){ return (c.secteur||'MCU')===currentSecteur; }); }
 function chantiersForLot(lotId){ return chantiersSect().filter(function(c){ return c.lotId===lotId; }).sort(function(a,b){ return (b.dateCreation||'').localeCompare(a.dateCreation||''); }); }
 function chantierActiveForLot(lotId){ return chantiersForLot(lotId).filter(function(c){ return c.statut!=='termine' && c.statut!=='annule'; })[0] || null; }
@@ -5938,8 +6020,8 @@ function chantierTotals(c){
   var t = {prevu:0, traite:0, ok:0, rebut:0};
   (c.lignes||[]).forEach(function(r){ t.prevu += Number(r.prevu)||0; t.traite += Number(r.traite)||0; t.ok += Number(r.ok)||0; t.rebut += Number(r.rebut)||0; });
   t.reste = Math.max(0, t.prevu - t.ok - t.rebut);
-  t.pct = t.prevu ? Math.round((t.ok+t.rebut)/t.prevu*100) : 0;
-  t.pctNc = (t.ok+t.rebut) ? Math.round(t.rebut/(t.ok+t.rebut)*1000)/10 : 0;
+  t.pct = t.prevu ? Math.floor((t.ok+t.rebut)/t.prevu*100) : 0;   // tronqué, jamais arrondi au-dessus
+  t.pctNc = (t.ok+t.rebut) ? Math.floor(t.rebut/(t.ok+t.rebut)*1000)/10 : 0;
   return t;
 }
 function chantierLinesFromLot(lot){
@@ -5965,7 +6047,7 @@ function chantierOpen(idOrNew){
   if(idOrNew.indexOf('new:')===0){
     var lot = DATA.prisonLots.find(function(l){ return l.id===idOrNew.slice(4); });
     if(!lot){ prisonChantierOpenId = null; return; }
-    chantierDraft = {numero:'', titre:'', demandeur: currentUser? currentUser.displayName : '', responsable:lot.responsable||'', equipe:'', dateDebut:todayStr(), dateFin:'', statut:'planifie', tempsH:'',
+    chantierDraft = {numero:'', titre:'', demandeur: currentUser? currentUser.displayName : '', responsable:lot.responsable||'', equipe:'', dateDebut:todayStr(), dateFin:'', statut:'demande', besoins:{operateurs:'', duree:'', horaire:'', lieu:lot.stockage||'', materiel:[], remarques:''}, historique:[], tempsH:'',
       operation:'', critere:'', lieux:{}, risques:{}, risqueMaitrise:'', kakotora:{}, hse:{batiment:'', zone:lot.stockage||'', nature:'', items:{}},
       validProcess:false, validFormation:false, lignes:chantierLinesFromLot(lot), commentaires:[], lotId:lot.id};
   } else {
@@ -5974,9 +6056,11 @@ function chantierOpen(idOrNew){
     chantierDraft = JSON.parse(JSON.stringify(c));
     chantierDraft.lieux = chantierDraft.lieux||{}; chantierDraft.risques = chantierDraft.risques||{}; chantierDraft.kakotora = chantierDraft.kakotora||{};
     chantierDraft.hse = chantierDraft.hse||{batiment:'', zone:'', nature:'', items:{}}; chantierDraft.hse.items = chantierDraft.hse.items||{};
+    chantierNormalize(chantierDraft);
   }
+  chantierStep = null;
 }
-function chantierClose(){ prisonChantierOpenId = null; chantierDraft = null; }
+function chantierClose(){ prisonChantierOpenId = null; chantierDraft = null; chantierStep = null; }
 // Applique la saisie d'un champ du brouillon (data-chf="chemin.vers.champ", data-type="num|bool")
 function chantierDraftSet(el){
   if(!chantierDraft) return;
@@ -6007,16 +6091,17 @@ function chantierModalHtml(){
   var h = '<div class="modal-overlay chantier-backdrop"><div class="modal-box chantier-modal">'+
     '<div class="chantier-head"><div><div class="eyebrow">Fiche de chantier · '+esc(lot? lot.defaut : 'défaut supprimé')+(lot && lot.type? ' ('+esc(lot.type)+')' : '')+'</div>'+czPin('chantier','Listes de la fiche')+
       '<h3 style="margin:2px 0 0;">'+(isNew? 'Nouveau chantier' : (c.numero? esc(c.numero)+' · ' : '')+esc(c.titre||'Chantier'))+'</h3></div>'+
-      (isNew? '' : badge(chantierStatutMeta(c.statut).level, chantierStatutMeta(c.statut).label))+'</div>'+
+      '</div>'+(isNew? '' : chantierStepperHtml(c))+
     (locked && c.applique ? '<div class="chantier-applied">✓ Clôturé le '+fmtDate(c.applique.date)+' : '+c.applique.ok+' pièce(s) remise(s) en état et '+c.applique.rebut+' rebutée(s) sorties de la prison.</div>' : '')+
+    (chantierStep? '<div class="chantier-body">'+chantierStepHtml(c)+'</div><div class="actions-row" style="margin-top:14px; flex-wrap:wrap;">'+chantierFooterHtml(c, isNew, locked)+'</div></div></div>' : '')+
     '<div class="chantier-tabs">'+CHANTIER_TABS.map(function(tb){
       var extra = tb[0]==='pieces' ? ' · '+t.pct+' %' : tb[0]==='hse' && hseCount ? ' · '+hseCount : '';
       return '<button type="button" class="'+(chantierTab===tb[0]?'active':'')+'" data-action="chantier-tab" data-t="'+tb[0]+'">'+tb[1]+'<span class="tiny">'+extra+'</span></button>';
     }).join('')+'</div><div class="chantier-body">';
+  if(chantierStep) return h.slice(0, h.indexOf('<div class="chantier-tabs">'));   // étape (validation, fin, annulation) : panneau seul
   if(chantierTab==='general'){
     h += '<div class="ch-grid">'+
       '<label class="field">N° de chantier <span class="tiny">(à reporter sur le 4M)</span>'+inp('numero', c.numero, ' type="text" placeholder="Ex. C10-26"')+'</label>'+
-      '<label class="field">Statut<select data-chf="statut"'+(c.statut==='termine'?' disabled':'')+'>'+PRISON_CHANTIER_STATUTS.filter(function(s){ return s[0]!=='termine' || c.statut==='termine'; }).map(function(s){ return '<option value="'+s[0]+'"'+(s[0]===c.statut?' selected':'')+'>'+s[1]+'</option>'; }).join('')+'</select></label>'+
       '<label class="field ch-span2">Objet du chantier'+inp('titre', c.titre, ' type="text" placeholder="Ex. Mesurer la dureté de la denture crémaillère"')+'</label>'+
       '<label class="field">Demandeur'+inp('demandeur', c.demandeur, ' type="text" list="ch-acc-list"')+'</label>'+
       '<label class="field">Pilote'+inp('responsable', c.responsable, ' type="text" list="ch-acc-list"')+'</label>'+
@@ -6032,8 +6117,12 @@ function chantierModalHtml(){
     '<div class="eyebrow" style="margin:16px 0 6px;">Suivi / commentaires</div>'+
     (locked? '' : '<textarea data-chf="_note" rows="2" style="width:100%;" placeholder="Ajouter un point (sera daté et signé à l\'enregistrement)…">'+esc(c._note||'')+'</textarea>')+
     ((c.commentaires||[]).length? '<div class="ad-history">'+c.commentaires.slice().reverse().map(function(n){ return '<div class="ad-note"><div class="ad-note-meta">'+fmtDate(n.date)+' · '+esc(n.auteur||'')+'</div><div class="ad-note-text">'+esc(n.texte)+'</div></div>'; }).join('')+'</div>' : '');
+  } else if(chantierTab==='ressources'){
+    h += chantierRessourcesHtml(c, locked);
+  } else if(chantierTab==='trace'){
+    h += chantierTraceHtml(c);
   } else if(chantierTab==='pieces'){
-    h += '<div class="table-wrap"><table class="chantier-table"><thead><tr><th>Réf.</th><th>État</th><th>N° de lot</th><th class="num">Prévu</th><th class="num">Traitées</th><th class="num">Conformes</th><th class="num">NC (rebut)</th><th class="num">Reste</th><th>Observation</th></tr></thead><tbody>'+
+    h += '<div class="table-wrap"><table class="chantier-table"><thead><tr><th>Réf.</th><th>État</th><th>N° de lot</th><th class="num">Prévu</th><th class="num">Contrôlées</th><th class="num">Conformes</th><th class="num">NC (rebut)</th><th class="num">Reste</th><th>Observation</th></tr></thead><tbody>'+
       ((c.lignes||[]).map(function(r, i){
         var cur = null;
         if(lot){ var ll = (lot.lignes||[]).find(function(x){ return x.id===r.lineId; }); cur = ll ? (Number(ll[r.etat])||0) : 0; }
@@ -6074,13 +6163,7 @@ function chantierModalHtml(){
         }).join('');
       }).join('');
   }
-  h += '</div><div class="actions-row" style="margin-top:14px; flex-wrap:wrap;">'+
-      (!isNew? '<button class="btn danger-outline" data-action="chantier-delete" data-id="'+prisonChantierOpenId+'">Supprimer</button>' : '')+
-      (!isNew? '<button class="btn" data-action="chantier-print" data-id="'+prisonChantierOpenId+'">🖨️ Imprimer la fiche</button>' : '')+
-      '<button class="btn" data-action="chantier-close">Fermer</button>'+
-      (locked? '' : '<button class="btn primary" data-action="chantier-save">Enregistrer</button>')+
-      (!isNew && !locked? '<button class="btn chantier-finish" data-action="chantier-finish" title="Clôturer le chantier et retirer de la prison les pièces conformes et NC">✓ Clôturer et sortir de la prison</button>' : '')+
-    '</div></div></div>';
+  h += '</div><div class="actions-row" style="margin-top:14px; flex-wrap:wrap;">'+chantierFooterHtml(c, isNew, locked)+'</div></div></div>';
   return h;
 }
 function chantierCheck(c){
@@ -6107,12 +6190,16 @@ async function handleChantierSave(){
   if(!chantierDraft) return;
   if(!(chantierDraft.titre||'').trim()){ toast('Merci de renseigner l\'objet du chantier (onglet Général).', 'error'); chantierTab = 'general'; render(); return; }
   if(!chantierCheck(chantierDraft)){ chantierTab = 'pieces'; render(); return; }
+  var b0 = chantierDraft.besoins || {};
+  if(b0.operateurs==='' || b0.operateurs===undefined || b0.operateurs===null){ toast('Indiquez le nombre d\'opérateurs demandés (onglet Besoins en ressources), même 0.', 'error'); chantierTab = 'ressources'; render(); return; }
   var isNew = prisonChantierOpenId.indexOf('new:')===0;
+  if(isNew) chantierHisto(chantierDraft, 'Fiche créée · ressources demandées', chantierBesoinsTxt(chantierDraft)+(chantierMaterielTxt(chantierDraft)? ' · '+chantierMaterielTxt(chantierDraft) : ''));
+  else chantierHisto(chantierDraft, 'Fiche modifiée', '');
   var c = chantierCommitDraft();
   chantierClose();
   await save('prisonChantiers');
   logChange('Prison qualité', isNew? 'Chantier créé' : 'Chantier mis à jour', (c.numero? c.numero+' · ' : '')+c.titre);
-  toast(isNew? 'Fiche de chantier créée.' : 'Chantier enregistré.');
+  toast(isNew? 'Fiche créée : la demande de ressources est en attente de validation.' : 'Chantier enregistré.');
   render();
 }
 async function handleChantierFinish(){
@@ -6168,28 +6255,271 @@ function chantierLiveTotals(){
   var nc = modal.querySelector('.ch-tot[data-f="pctnc"] b'); if(nc) nc.textContent = t.pctNc+' %';
   var p = document.getElementById('ch-pct'); if(p) p.textContent = t.pct+' %';
 }
+// ----- Chantiers : besoins en ressources, validation, fin de chantier, traçabilité -----
+// Parcours : Ressources demandées (fiche créée et remontée au responsable qualité) → Ressources validées
+// (besoins transmis à la production) → En cours → Terminé (bouton « Fin de chantier »). Chaque étape est datée et signée.
+var CHANTIER_HORAIRES = ['Journée', 'Matin', 'Après-midi', 'Nuit', 'Week-end'];
+var CHANTIER_MATERIEL = ['Table / poste de travail', 'Bac rouge (NC)', 'Bac vert (OK)', 'Étiquettes de statut', 'Chariot / transpalette', 'Moyen de contrôle', 'Loupe / lampe', 'EPI (gants, lunettes)', 'Gabarit / posage', 'Scanner / ordinateur'];
+var CHANTIER_STEPS = [['demande','Ressources demandées'],['valide','Ressources validées'],['en_cours','En cours'],['termine','Terminé']];
+var chantierStep = null;   // null | 'valider' | 'fin' | 'annuler'
+function chantierNormalize(c){
+  if(c.statut==='planifie') c.statut = 'demande';
+  c.besoins = c.besoins || {operateurs:'', duree:'', horaire:'', lieu:'', materiel:[], remarques:''};
+  c.besoins.materiel = c.besoins.materiel || [];
+  c.historique = c.historique || [];
+  return c;
+}
+function chantierHisto(c, action, detail){
+  c.historique = c.historique || [];
+  c.historique.push({d:new Date().toISOString(), par:currentUser? currentUser.displayName : '', action:action, detail:detail||''});
+}
+function chantierBesoinsTxt(c){
+  var b = c.besoins || {}, parts = [];
+  if(b.operateurs!=='' && b.operateurs!==undefined && b.operateurs!==null) parts.push(b.operateurs+' opérateur'+(Number(b.operateurs)>1?'s':''));
+  if(b.duree) parts.push(String(b.duree).replace('.',',')+' h');
+  if(b.horaire) parts.push(b.horaire);
+  return parts.join(' · ');
+}
+function chantierMaterielTxt(c){ return ((c.besoins||{}).materiel||[]).filter(function(m){ return String(m[0]||'').trim(); }).map(function(m){ return (m[1]? m[1]+' × ' : '')+m[0]; }).join(', '); }
+function chantierStepperHtml(c){
+  if(c.statut==='annule') return '<div class="ch-stepper"><span class="ch-st cancelled">Chantier annulé'+(c.annulation? ' le '+fmtDate(c.annulation.date)+(c.annulation.par? ' par '+esc(c.annulation.par) : '') : '')+'</span></div>';
+  var idx = CHANTIER_STEPS.map(function(s){ return s[0]; }).indexOf(c.statut);
+  var dateOf = function(k){
+    if(k==='demande') return c.dateCreation;
+    if(k==='valide') return c.validation && c.validation.date;
+    if(k==='en_cours') return c.demarrage && c.demarrage.date;
+    if(k==='termine') return c.fin && c.fin.date || (c.applique && c.applique.date);
+  };
+  return '<div class="ch-stepper">'+CHANTIER_STEPS.map(function(s, i){
+    var st = i<idx ? 'done' : i===idx ? 'cur' : '';
+    var d = i<=idx ? dateOf(s[0]) : null;
+    return '<span class="ch-st '+st+'"><b>'+(i<idx || (i===idx && s[0]==='termine')? '✓' : i+1)+'</b>'+esc(s[1])+(d? '<i>'+fmtDate(d)+'</i>' : '')+'</span>';
+  }).join('<span class="ch-st-sep"></span>')+'</div>';
+}
+function chantierRessourcesHtml(c, locked){
+  var dis = locked ? ' disabled' : '', b = c.besoins;
+  var inp = function(path, val, attrs){ return '<input data-chf="'+path+'" value="'+esc(val===undefined||val===null?'':val)+'"'+(attrs||'')+dis+'>'; };
+  var h = '<p class="tiny" style="margin:0 0 10px; color:var(--text-faint);">Ce que le chantier demande à la production : la fiche est remontée au responsable qualité, qui transmet les besoins à la réunion de production.</p>'+
+    '<div class="ch-grid">'+
+      '<label class="field">Opérateurs demandés *'+inp('besoins.operateurs', b.operateurs, ' type="number" min="0" step="1" data-type="int" placeholder="Ex. 2"')+'</label>'+
+      '<label class="field">Durée estimée (heures)'+inp('besoins.duree', b.duree, ' type="number" min="0" step="0.5" data-type="num" placeholder="Ex. 7"')+'</label>'+
+      '<label class="field">Horaire souhaité<select data-chf="besoins.horaire"'+dis+'><option value="">-</option>'+CHANTIER_HORAIRES.map(function(x){ return '<option'+(b.horaire===x?' selected':'')+'>'+esc(x)+'</option>'; }).join('')+'</select></label>'+
+      '<label class="field">Démarrage souhaité'+inp('dateDebut', c.dateDebut, ' type="date"')+'</label>'+
+      '<label class="field ch-span2">Lieu du chantier'+inp('besoins.lieu', b.lieu, ' type="text" placeholder="Ex. Zone prison bâtiment B, poste de reprise"')+'</label>'+
+    '</div>'+
+    '<div class="eyebrow" style="margin:16px 0 6px;">Matériel demandé</div>'+
+    '<div class="ch-mat">'+(b.materiel.length? b.materiel.map(function(m, i){
+      return '<div class="ch-mat-row">'+inp('besoins.materiel.'+i+'.1', m[1], ' type="number" min="0" step="1" class="ch-mat-q" placeholder="Qté"')+inp('besoins.materiel.'+i+'.0', m[0], ' type="text" class="ch-mat-d" placeholder="Désignation (préciser le moyen de contrôle…)"')+
+        (locked? '' : '<button type="button" class="btn small danger-outline" data-action="chantier-mat-del" data-i="'+i+'" title="Retirer">✕</button>')+'</div>';
+    }).join('') : '<p class="tiny" style="margin:0 0 6px;">Aucun matériel demandé.</p>')+'</div>'+
+    (locked? '' : '<div class="ch-mat-sugg"><span class="tiny">Ajouter :</span>'+CHANTIER_MATERIEL.map(function(x){ return '<button type="button" class="ch-chip" data-action="chantier-mat-add" data-v="'+esc(x)+'">+ '+esc(x)+'</button>'; }).join('')+'<button type="button" class="ch-chip" data-action="chantier-mat-add" data-v="">+ Autre</button></div>')+
+    '<label class="field" style="margin-top:12px;">Autres besoins / remarques<textarea data-chf="besoins.remarques" rows="2"'+dis+' placeholder="Ex. besoin d\'un régleur 1 h au démarrage, priorité avant expédition du 20/11…">'+esc(b.remarques||'')+'</textarea></label>';
+  if(c.validation){
+    var v = c.validation;
+    h += '<div class="ch-valid"><b>✓ Ressources validées</b> le '+fmtDate(v.date)+' par '+esc(v.par||'')+' : '+esc(String(v.operateurs))+' opérateur(s) accordé(s)'+(v.dateDebut? ', démarrage le '+fmtDate(v.dateDebut) : '')+(v.horaire? ' ('+esc(v.horaire)+')' : '')+(v.commentaire? '<div class="tiny">'+esc(v.commentaire)+'</div>' : '')+'</div>';
+  }
+  return h;
+}
+function chantierTraceHtml(c){
+  var hs = (c.historique||[]).slice().reverse();
+  var h = '';
+  if(c.fin){
+    var f = c.fin;
+    h += '<div class="ch-fin-sum"><div><i>Contrôlées</i><b>'+f.controlees+'</b></div><div><i>Conformes (OK)</i><b class="ok">'+f.ok+'</b></div><div><i>Non conformes</i><b class="nc">'+f.nc+'</b></div><div><i>% NC</i><b>'+(f.controlees? (Math.floor(f.nc/f.controlees*1000)/10).toString().replace('.',',') : '0')+' %</b></div><div><i>Temps passé</i><b>'+(f.tempsH!==''&&f.tempsH!=null? String(f.tempsH).replace('.',',')+' h' : '-')+'</b></div></div>'+
+      (f.remarques? '<p style="margin:6px 0 12px;"><b>Remarques :</b> '+esc(f.remarques)+'</p>' : '');
+  }
+  h += hs.length ? '<div class="ch-trace">'+hs.map(function(x){ var d = new Date(x.d);
+      return '<div class="ch-trace-row"><span class="ch-trace-d">'+fmtDate(x.d.slice(0,10))+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+'</span><span><b>'+esc(x.action)+'</b>'+(x.detail? ' · '+esc(x.detail) : '')+'<span class="tiny"> - '+esc(x.par||'')+'</span></span></div>'; }).join('')+'</div>'
+    : '<p class="tiny">Aucun événement enregistré.</p>';
+  return h;
+}
+function chantierStepHtml(c){
+  var b = c.besoins;
+  if(chantierStep==='valider'){
+    var v = c._val || (c._val = {operateurs:b.operateurs===''? '' : b.operateurs, dateDebut:c.dateDebut||todayStr(), horaire:b.horaire||'', commentaire:''});
+    return '<div class="ch-step"><h4>Valider les ressources</h4><p class="tiny">Demandé : <b>'+esc(chantierBesoinsTxt(c)||'-')+'</b>'+(chantierMaterielTxt(c)? ' · Matériel : '+esc(chantierMaterielTxt(c)) : '')+'</p>'+
+      '<div class="ch-grid"><label class="field">Opérateurs accordés<input type="number" min="0" step="1" data-type="int" data-chf="_val.operateurs" value="'+esc(v.operateurs)+'"></label>'+
+      '<label class="field">Démarrage prévu<input type="date" data-chf="_val.dateDebut" value="'+esc(v.dateDebut||'')+'"></label>'+
+      '<label class="field">Horaire<select data-chf="_val.horaire"><option value="">-</option>'+CHANTIER_HORAIRES.map(function(x){ return '<option'+(v.horaire===x?' selected':'')+'>'+esc(x)+'</option>'; }).join('')+'</select></label>'+
+      '<label class="field ch-span2">Commentaire (réunion de production)<input type="text" data-chf="_val.commentaire" value="'+esc(v.commentaire||'')+'" placeholder="Ex. 2 opérateurs de l\'équipe B, matériel fourni par la logistique"></label></div>'+
+      '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="chantier-step-cancel">Retour</button><button class="btn primary" data-action="chantier-validate">✓ Valider les ressources</button></div></div>';
+  }
+  if(chantierStep==='fin'){
+    var f = c._fin;
+    var lot = DATA.prisonLots.find(function(l){ return l.id===c.lotId; });
+    return '<div class="ch-step"><h4>Fin de chantier</h4><p class="tiny">Saisissez, pour chaque référence, les pièces contrôlées et le résultat. Conformes + non conformes = contrôlées.</p>'+
+      '<div class="table-wrap"><table class="chantier-table"><thead><tr><th>Réf.</th><th>État</th><th class="num">En prison</th><th class="num">Contrôlées</th><th class="num">Conformes (OK)</th><th class="num">Non conformes</th></tr></thead><tbody>'+
+      (c.lignes||[]).map(function(r, i){
+        var cur = r.prevu; if(lot){ var ll = (lot.lignes||[]).find(function(x){ return x.id===r.lineId; }); if(ll) cur = Number(ll[r.etat])||0; }
+        var fr = f.rows[i];
+        return '<tr><td><b>'+esc(r.ref)+'</b>'+(r.ligne? '<div class="tiny">'+esc(r.ligne)+'</div>' : '')+'</td><td>'+esc(prisonEtatLabel(r.etat))+'</td><td class="num">'+cur+'</td>'+
+          ['controlees','ok','nc'].map(function(k){ return '<td class="num"><input type="number" min="0" class="ch-qty ch-fin-in" data-type="int" data-chf="_fin.rows.'+i+'.'+k+'" value="'+(fr[k]===''||fr[k]==null? '' : fr[k])+'"></td>'; }).join('')+'</tr>';
+      }).join('')+'</tbody></table></div>'+
+      '<div class="ch-grid" style="margin-top:10px;"><label class="field">Date de fin<input type="date" data-chf="_fin.date" value="'+esc(f.date||'')+'"></label>'+
+      '<label class="field">Temps passé total (heures)<input type="number" min="0" step="0.5" data-type="num" data-chf="_fin.tempsH" value="'+esc(f.tempsH==null?'':f.tempsH)+'"></label>'+
+      '<label class="field ch-span2">Remarques<textarea data-chf="_fin.remarques" rows="2" placeholder="Ex. 12 pièces rayées sur la face A, cause identifiée : posage abîmé">'+esc(f.remarques||'')+'</textarea></label></div>'+
+      '<label class="ch-checkline"><input type="checkbox" data-chf="_fin.sortie"'+(f.sortie?' checked':'')+'> Sortir ces pièces de la prison : conformes → remise en état, non conformes → rebut</label>'+
+      '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="chantier-step-cancel">Retour</button><button class="btn primary" data-action="chantier-fin-confirm">■ Terminer le chantier</button></div></div>';
+  }
+  if(chantierStep==='annuler'){
+    var a = c._ann || (c._ann = {motif:''});
+    return '<div class="ch-step"><h4>Annuler le chantier</h4><label class="field">Motif<input type="text" data-chf="_ann.motif" value="'+esc(a.motif)+'" placeholder="Ex. lot dérogé par le client"></label>'+
+      '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="chantier-step-cancel">Retour</button><button class="btn danger-outline" data-action="chantier-cancel-confirm">Annuler le chantier</button></div></div>';
+  }
+  return '';
+}
+function chantierFooterHtml(c, isNew, locked){
+  var b = [];
+  if(!isNew) b.push('<button class="btn danger-outline" data-action="chantier-delete" data-id="'+prisonChantierOpenId+'">Supprimer</button>');
+  if(!isNew) b.push('<button class="btn" data-action="chantier-print" data-id="'+prisonChantierOpenId+'">🖨️ Imprimer la fiche</button>');
+  b.push('<button class="btn" data-action="chantier-close">Fermer</button>');
+  if(chantierStep) return b.join('');
+  if(!locked) b.push('<button class="btn'+(isNew?' primary':'')+'" data-action="chantier-save">'+(isNew? 'Créer la fiche et demander les ressources' : 'Enregistrer')+'</button>');
+  if(!isNew && !locked){
+    if(c.statut!=='termine') b.push('<button class="btn" data-action="chantier-step" data-s="annuler">Annuler le chantier</button>');
+    if(c.statut==='demande') b.push('<button class="btn primary" data-action="chantier-step" data-s="valider">✓ Valider les ressources</button>');
+    if(c.statut==='valide') b.push('<button class="btn primary" data-action="chantier-start">▶ Démarrer le chantier</button>');
+    if(c.statut==='valide' || c.statut==='en_cours') b.push('<button class="btn chantier-finish" data-action="chantier-step" data-s="fin">■ Fin de chantier</button>');
+  }
+  return b.join('');
+}
+async function chantierPersist(label, detail){
+  var c = chantierCommitDraft();
+  await save('prisonChantiers');
+  logChange('Prison qualité', label, (c.numero? c.numero+' · ' : '')+(c.titre||'')+(detail? ' · '+detail : ''));
+  return c;
+}
+async function handleChantierValidate(){
+  var d = chantierDraft, v = d._val || {};
+  if(v.operateurs==='' || v.operateurs==null){ toast('Indiquez le nombre d\'opérateurs accordés.', 'error'); return; }
+  d.validation = {date:todayStr(), par:currentUser? currentUser.displayName : '', operateurs:Number(v.operateurs)||0, dateDebut:v.dateDebut||'', horaire:v.horaire||'', commentaire:String(v.commentaire||'').trim()};
+  if(v.dateDebut) d.dateDebut = v.dateDebut;
+  d.statut = 'valide'; delete d._val;
+  chantierHisto(d, 'Ressources validées', d.validation.operateurs+' opérateur(s)'+(d.validation.dateDebut? ', démarrage '+fmtDate(d.validation.dateDebut) : '')+(d.validation.commentaire? ' - '+d.validation.commentaire : ''));
+  chantierStep = null;
+  await chantierPersist('Chantier : ressources validées', d.validation.operateurs+' opérateur(s)');
+  toast('Ressources validées.'); render();
+}
+async function handleChantierStart(){
+  var d = chantierDraft;
+  d.statut = 'en_cours'; d.demarrage = {date:todayStr(), par:currentUser? currentUser.displayName : ''};
+  chantierHisto(d, 'Chantier démarré', '');
+  await chantierPersist('Chantier démarré', '');
+  toast('Chantier démarré.'); render();
+}
+function chantierOpenFin(){
+  var d = chantierDraft;
+  d._fin = {date:todayStr(), tempsH:d.tempsH===undefined? '' : d.tempsH, remarques:'', sortie:true,
+    rows:(d.lignes||[]).map(function(r){ var ok = Number(r.ok)||0, nc = Number(r.rebut)||0; return {controlees:(ok+nc)||'', ok:ok||'', nc:nc||''}; })};
+}
+async function handleChantierFinConfirm(){
+  var d = chantierDraft, f = d._fin;
+  var lot = DATA.prisonLots.find(function(l){ return l.id===d.lotId; });
+  var tot = {controlees:0, ok:0, nc:0}, err = null;
+  (d.lignes||[]).forEach(function(r, i){
+    var fr = f.rows[i], ctl = Number(fr.controlees)||0, ok = Number(fr.ok)||0, nc = Number(fr.nc)||0;
+    if(ok+nc!==ctl) err = err || 'Réf. '+r.ref+' : conformes + non conformes ('+(ok+nc)+') ≠ contrôlées ('+ctl+').';
+    var cur = r.prevu; if(lot){ var ll = (lot.lignes||[]).find(function(x){ return x.id===r.lineId; }); if(ll) cur = Number(ll[r.etat])||0; }
+    if(f.sortie && ctl>cur) err = err || 'Réf. '+r.ref+' : '+ctl+' pièces contrôlées pour '+cur+' en prison.';
+    tot.controlees += ctl; tot.ok += ok; tot.nc += nc;
+  });
+  if(err){ toast(err, 'error'); return; }
+  if(!tot.controlees && !await uiConfirm('Aucune pièce contrôlée n\'est saisie. Terminer quand même le chantier ?', {okLabel:'Terminer'})) return;
+  // résultats reportés sur les lignes de la fiche
+  (d.lignes||[]).forEach(function(r, i){ var fr = f.rows[i]; r.traite = Number(fr.controlees)||0; r.ok = Number(fr.ok)||0; r.rebut = Number(fr.nc)||0; });
+  var removed = 0;
+  if(f.sortie && lot){
+    (d.lignes||[]).forEach(function(r){
+      var ll = (lot.lignes||[]).find(function(x){ return x.id===r.lineId; });
+      if(!ll) return;
+      var before = Number(ll[r.etat])||0;
+      var okOut = Math.min(before, r.ok), ncOut = Math.min(before-okOut, r.rebut);
+      ll[r.etat] = before - okOut - ncOut; removed += okOut + ncOut;
+      if(okOut) prisonRecordMove(lot, ll, r.etat, okOut, 'chantier_ok', {chantier:d.titre, numero:d.numero, destination:'Remise en état'});
+      if(ncOut) prisonRecordMove(lot, ll, r.etat, ncOut, 'chantier_rebut', {chantier:d.titre, numero:d.numero, destination:'Rebut'});
+    });
+    d.applique = {date:f.date||todayStr(), ok:tot.ok, rebut:tot.nc, retire:removed, par:currentUser? currentUser.displayName : ''};
+  }
+  d.fin = {date:f.date||todayStr(), par:currentUser? currentUser.displayName : '', controlees:tot.controlees, ok:tot.ok, nc:tot.nc, remarques:String(f.remarques||'').trim(), tempsH:f.tempsH, sortiePrison:!!f.sortie, retire:removed};
+  d.tempsH = f.tempsH; d.dateFin = d.fin.date;
+  d.statut = 'termine'; delete d._fin;
+  chantierHisto(d, 'Fin de chantier', tot.controlees+' contrôlée(s) : '+tot.ok+' OK, '+tot.nc+' NC'+(f.sortie? ' · '+removed+' sortie(s) de la prison' : ' · stock prison inchangé')+(d.fin.remarques? ' - '+d.fin.remarques : ''));
+  chantierStep = null;
+  await chantierPersist('Fin de chantier', tot.controlees+' contrôlées, '+tot.ok+' OK, '+tot.nc+' NC');
+  if(f.sortie && lot){ await prisonCommit('Chantier terminé', (lot.defaut||'')+' · '+(d.titre||'')+' : -'+removed+' pcs'); await save('prisonMoves'); }
+  chantierTab = 'trace';
+  toast('Chantier terminé'+(f.sortie? ' : '+removed+' pièce(s) sorties de la prison.' : '.'));
+  render();
+}
+async function handleChantierCancelConfirm(){
+  var d = chantierDraft, motif = String((d._ann||{}).motif||'').trim();
+  if(!motif){ toast('Indiquez le motif d\'annulation.', 'error'); return; }
+  d.statut = 'annule'; d.annulation = {date:todayStr(), par:currentUser? currentUser.displayName : '', motif:motif}; delete d._ann;
+  chantierHisto(d, 'Chantier annulé', motif);
+  chantierStep = null;
+  await chantierPersist('Chantier annulé', motif);
+  toast('Chantier annulé.'); render();
+}
+// Demandes de ressources en attente : la feuille que le responsable qualité apporte à la réunion de production
+function chantiersDemandesAll(){
+  var secs = userSecteurs();
+  return (DATA.prisonChantiers||[]).map(chantierNormalize).filter(function(c){ return c.statut==='demande' && secs.indexOf(c.secteur||'MCU')>=0; })
+    .sort(function(a,b){ return (a.dateDebut||'9999').localeCompare(b.dateDebut||'9999'); });
+}
+async function printChantierDemandes(){
+  var list = chantiersDemandesAll();
+  if(!list.length){ toast('Aucune demande de ressources en attente.'); return; }
+  var logoEl = document.querySelector('.sidebar-logo-full');
+  var tot = list.reduce(function(s, c){ return s+(Number(c.besoins.operateurs)||0); }, 0);
+  var rows = list.map(function(c){
+    var lot = DATA.prisonLots.find(function(l){ return l.id===c.lotId; }), t = chantierTotals(c);
+    return '<tr><td>'+esc(c.secteur||'MCU')+'</td><td><b>'+esc(c.numero||'-')+'</b></td><td><b>'+esc(c.titre||'')+'</b><div class="cd-sub">'+esc(lot? lot.defaut+(lot.type? ' ('+lot.type+')' : '') : '')+'</div></td>'+
+      '<td class="n">'+t.prevu+'</td><td class="n"><b>'+esc(String(c.besoins.operateurs===''?'-':c.besoins.operateurs))+'</b></td><td class="n">'+(c.besoins.duree? String(c.besoins.duree).replace('.',',')+' h' : '-')+'</td><td>'+esc(c.besoins.horaire||'-')+'</td><td>'+fmtDate(c.dateDebut)+'</td>'+
+      '<td>'+esc(chantierMaterielTxt(c)||'-')+(c.besoins.remarques? '<div class="cd-sub">'+esc(c.besoins.remarques)+'</div>' : '')+'</td><td>'+esc(c.demandeur||'')+'<div class="cd-sub">le '+fmtDate(c.dateCreation)+'</div></td>'+
+      '<td class="cd-dec">☐ Accordé &nbsp; ☐ Refusé<br>Opérateurs : ____<br>Date : ________</td></tr>';
+  }).join('');
+  var html = '<div class="qp-head">'+(logoEl && logoEl.src ? '<img src="'+logoEl.src+'" alt="Acurion">' : '<span></span>')+'<div><b>Demandes de ressources · chantiers prison qualité</b><span>Réunion de production du '+fmtDate(todayStr())+' · '+list.length+' demande(s) · '+tot+' opérateur(s) demandé(s)</span></div></div>'+
+    '<table class="cd-table"><thead><tr><th>Secteur</th><th>N°</th><th>Chantier / défaut</th><th>Pièces</th><th>Opérateurs</th><th>Durée</th><th>Horaire</th><th>Démarrage souhaité</th><th>Matériel / remarques</th><th>Demandeur</th><th>Décision</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="cd-sign"><div>Responsable qualité :</div><div>Responsable production :</div></div>';
+  var old = document.getElementById('chd-print'); if(old) old.remove();
+  var sheet = document.createElement('div'); sheet.id = 'chd-print'; sheet.innerHTML = html;
+  document.body.appendChild(sheet); document.body.classList.add('print-chd');
+  onPrintDone(function(){ document.body.classList.remove('print-chd'); var s = document.getElementById('chd-print'); if(s) s.remove(); });
+  logChange('Prison qualité', 'Impression des demandes de ressources', list.length+' demande(s)');
+  await waitImages(sheet);
+  setTimeout(function(){ printWithPageSize('A4 landscape'); }, 60);
+}
+
 function chantiersSectionHtml(){
-  var list = chantiersSect().slice().sort(function(a,b){
-    var o = {en_cours:0, planifie:1, termine:2, annule:3};
+  var list = chantiersSect().map(chantierNormalize).slice().sort(function(a,b){
+    var o = {demande:0, valide:1, en_cours:2, termine:3, annule:4};
     return (o[a.statut]-o[b.statut]) || (b.dateCreation||'').localeCompare(a.dateCreation||'');
   });
-  if(!list.length) return '';
-  return '<div class="card" style="margin-bottom:20px;"><div class="eyebrow" style="margin-bottom:8px;">Chantiers de remise en état ('+list.length+')</div>'+czPin('chantier','Listes de la fiche de chantier')+
-    '<div class="table-wrap"><table><thead><tr><th>N°</th><th>Chantier</th><th>Défaut</th><th>Statut</th><th>Pilote</th><th>Début</th><th>Fin prévue</th><th style="min-width:160px;">Avancement</th><th class="num">Conformes</th><th class="num">NC</th></tr></thead><tbody>'+
+  var dem = chantiersDemandesAll();
+  if(!list.length && !dem.length) return '';
+  var h = '<div class="card" style="margin-bottom:20px;"><div class="ch-list-head"><div class="eyebrow">Chantiers de remise en état ('+list.length+')</div>'+
+    (dem.length? '<div class="ch-dem-banner"><span><b>'+dem.length+' demande'+(dem.length>1?'s':'')+' de ressources</b> en attente de validation'+(userSecteurs().length>1? ' (tous vos secteurs)' : '')+' · '+dem.reduce(function(s,c){ return s+(Number(c.besoins.operateurs)||0); },0)+' opérateur(s)</span><button class="btn small" data-action="chantier-demandes-print">🖨️ Imprimer pour la réunion de production</button></div>' : '')+'</div>';
+  if(!list.length) return h+'</div>';
+  h += '<div class="table-wrap"><table><thead><tr><th>N°</th><th>Chantier</th><th>Défaut</th><th>Statut</th><th>Besoins</th><th>Pilote</th><th>Démarrage</th><th style="min-width:150px;">Avancement</th><th class="num">OK</th><th class="num">NC</th></tr></thead><tbody>'+
     list.map(function(c){
       var lot = DATA.prisonLots.find(function(l){ return l.id===c.lotId; });
       var m = chantierStatutMeta(c.statut), t = chantierTotals(c);
-      var late = c.dateFin && c.dateFin<todayStr() && (c.statut==='planifie' || c.statut==='en_cours');
-      return '<tr class="chantier-row" data-action="chantier-open" data-id="'+c.id+'" style="cursor:pointer;"><td class="tiny">'+esc(c.numero||'-')+'</td><td><b>'+esc(c.titre||'Chantier')+'</b></td><td>'+esc(lot? lot.defaut : '(défaut sorti)')+'</td><td>'+badge(late?'danger':m.level, late? 'En retard' : m.label)+'</td>'+
-        '<td>'+esc(c.responsable||'-')+'</td><td class="num">'+fmtDate(c.dateDebut)+'</td><td class="num">'+fmtDate(c.dateFin)+'</td>'+
+      var late = c.dateFin && c.dateFin<todayStr() && ['demande','valide','en_cours'].indexOf(c.statut)>=0;
+      var stInfo = c.statut==='valide' && c.validation ? '<div class="tiny">le '+fmtDate(c.validation.date)+' · '+c.validation.operateurs+' op.</div>' : c.statut==='demande' ? '<div class="tiny">depuis le '+fmtDate(c.dateCreation)+'</div>' : c.statut==='termine' && c.fin ? '<div class="tiny">le '+fmtDate(c.fin.date)+'</div>' : '';
+      return '<tr class="chantier-row" data-action="chantier-open" data-id="'+c.id+'" style="cursor:pointer;"><td class="tiny">'+esc(c.numero||'-')+'</td><td><b>'+esc(c.titre||'Chantier')+'</b></td><td>'+esc(lot? lot.defaut : '(défaut sorti)')+'</td>'+
+        '<td>'+badge(late? 'danger' : m.level, late? m.label+' · en retard' : m.label)+stInfo+'</td>'+
+        '<td class="tiny">'+esc(chantierBesoinsTxt(c)||'-')+(chantierMaterielTxt(c)? '<div style="color:var(--text-faint);">'+esc(chantierMaterielTxt(c)).slice(0,80)+'</div>' : '')+'</td>'+
+        '<td>'+esc(c.responsable||'-')+'</td><td class="num">'+fmtDate(c.dateDebut)+'</td>'+
         '<td><div class="ch-bar"><div style="width:'+t.pct+'%;"></div></div><span class="tiny">'+t.pct+' % · '+(t.ok+t.rebut)+' / '+t.prevu+'</span></td>'+
         '<td class="num">'+t.ok+'</td><td class="num">'+t.rebut+'</td></tr>';
     }).join('')+'</tbody></table></div></div>';
+  return h;
 }
 // ----- Impression : page 1 suivi des lots bloqués, page 2 mode opératoire + risques + HSE -----
 function printChantier(id){
   var c = (chantierDraft && prisonChantierOpenId===id) ? chantierDraft : DATA.prisonChantiers.find(function(x){ return x.id===id; });
   if(!c) return;
+  chantierNormalize(c);
   var lot = DATA.prisonLots.find(function(l){ return l.id===c.lotId; });
   var t = chantierTotals(c), m = chantierStatutMeta(c.statut);
   var yn = function(v){ return '<span class="pc-yn">'+(v==='oui'?'☒ Oui ☐ Non':v==='non'?'☐ Oui ☒ Non':'☐ Oui ☐ Non')+'</span>'; };
@@ -6201,13 +6531,23 @@ function printChantier(id){
     '<table class="aps-table" style="margin-top:6px;"><tbody><tr><th style="width:30%;">Défaut en prison</th><td>'+esc(lot? lot.defaut+(lot.type?' ('+lot.type+')':'') : '-')+'</td><th style="width:14%;">Statut</th><td>'+esc(m.label)+'</td></tr>'+
     '<tr><th>Validation du processus (visa pilote)</th><td>'+(c.validProcess?'☒ Validé':'☐')+'</td><th>Fin prévue</th><td>'+fmtDate(c.dateFin)+'</td></tr>'+
     '<tr><th>Validation de la formation du personnel</th><td>'+(c.validFormation?'☒ Validée':'☐')+'</td><th>Opérateur(s)</th><td>'+esc(c.equipe||'')+'</td></tr></tbody></table>'+
+    (function(){ var bb = c.besoins || {}, mat = (bb.materiel||[]).filter(function(x){ return String(x[0]||'').trim(); });
+      return '<div class="aps-meta" style="margin-top:8px;"><b>BESOINS EN RESSOURCES</b> (à transmettre à la production)</div>'+
+      '<table class="aps-table pc-res"><tbody><tr><th style="width:18%;">Opérateurs demandés</th><td style="width:15%;"><b>'+esc(String(bb.operateurs===''||bb.operateurs==null? '____' : bb.operateurs))+'</b></td><th style="width:15%;">Durée estimée</th><td style="width:15%;">'+(bb.duree? String(bb.duree).replace('.',',')+' h' : '____ h')+'</td><th style="width:12%;">Horaire</th><td>'+esc(bb.horaire||'')+'</td></tr>'+
+      '<tr><th>Démarrage souhaité</th><td>'+fmtDate(c.dateDebut)+'</td><th>Lieu</th><td colspan="3">'+esc(bb.lieu||'')+'</td></tr>'+
+      '<tr><th>Matériel</th><td colspan="5">'+(mat.length? mat.map(function(x){ return (x[1]? esc(String(x[1]))+' × ' : '')+esc(x[0]); }).join(' · ') : '-')+'</td></tr>'+
+      (bb.remarques? '<tr><th>Remarques</th><td colspan="5">'+esc(bb.remarques)+'</td></tr>' : '')+
+      '<tr><th>Validation des ressources</th><td colspan="5">'+(c.validation? '☒ Validé le '+fmtDate(c.validation.date)+' par '+esc(c.validation.par||'')+' · '+c.validation.operateurs+' opérateur(s) accordé(s)'+(c.validation.dateDebut? ' · démarrage '+fmtDate(c.validation.dateDebut) : '')+(c.validation.commentaire? ' · '+esc(c.validation.commentaire) : '') : '☐ Accordé &nbsp; ☐ Refusé &nbsp;&nbsp; Opérateurs accordés : ______ &nbsp;&nbsp; Visa responsable qualité : ______________')+'</td></tr></tbody></table>'; })()+
     '<div class="aps-meta" style="margin-top:6px;"><i>Rappel : les pièces produites entre la dernière pièce contrôlée conforme et l\'incident sont considérées comme suspectes et traitées selon la JALY_I_Q_017 « Gestion des pièces non conformes ».</i></div>'+
     '<div class="aps-meta"><b>Présence de pièces suspectes aux emplacements :</b></div><div class="pc-lieux">'+CHANTIER_LIEUX.map(function(l,i){ return '<div>'+(i+1)+'- '+esc(l[1])+' '+yn(c.lieux && c.lieux[l[0]])+'</div>'; }).join('')+'</div>'+
     '<table class="aps-table" style="margin-top:8px;"><thead><tr><th>Référence pièce</th><th>État</th><th>N° de lot</th><th>Quantité</th><th>N° blocage SAP</th><th>Conformes</th><th>NC</th><th>Observation(s)</th></tr></thead><tbody>'+
       (c.lignes||[]).map(function(r){ return '<tr><td><b>'+esc(r.ref)+'</b></td><td>'+esc(prisonEtatLabel(r.etat))+'</td><td>'+esc(r.lot||'')+'</td><td>'+r.prevu+'</td><td>'+esc(lot && lot.blocageSap || '-')+'</td><td>'+(r.ok||'')+'</td><td>'+(r.rebut||'')+'</td><td>'+esc(r.observation||'')+'</td></tr>'; }).join('')+
       '<tr style="font-weight:700;"><td colspan="3">TOTAUX</td><td>'+t.prevu+'</td><td></td><td>'+t.ok+'</td><td>'+t.rebut+'</td><td>% de pièces NC : '+t.pctNc+' %</td></tr></tbody></table>'+
     '<div class="aps-meta" style="margin-top:6px;">Temps passé : '+(c.tempsH!==''&&c.tempsH!==undefined? c.tempsH+' h' : '_______ h')+(c.applique? ' · Clôturé le '+fmtDate(c.applique.date)+' par '+esc(c.applique.par||'')+' ('+c.applique.retire+' pièce(s) sorties de la prison)' : ' · Validation clôture : nom ____________ date ________ visa ________')+'</div>'+
-    ((c.commentaires||[]).length? '<div class="aps-meta"><b>Suivi :</b> '+c.commentaires.map(function(n){ return fmtDate(n.date)+' ('+esc(n.auteur||'')+') '+esc(n.texte); }).join(' · ')+'</div>' : '')+emarg;
+    ((c.commentaires||[]).length? '<div class="aps-meta"><b>Suivi :</b> '+c.commentaires.map(function(n){ return fmtDate(n.date)+' ('+esc(n.auteur||'')+') '+esc(n.texte); }).join(' · ')+'</div>' : '')+
+    (c.fin? '<div class="aps-meta" style="margin-top:8px;"><b>FIN DE CHANTIER</b> le '+fmtDate(c.fin.date)+' par '+esc(c.fin.par||'')+' : <b>'+c.fin.controlees+'</b> pièce(s) contrôlée(s), <b>'+c.fin.ok+'</b> conforme(s), <b>'+c.fin.nc+'</b> non conforme(s)'+(c.fin.tempsH!==''&&c.fin.tempsH!=null? ' · '+String(c.fin.tempsH).replace('.',',')+' h' : '')+(c.fin.remarques? '<br>Remarques : '+esc(c.fin.remarques) : '')+'</div>'
+      : '<div class="aps-meta" style="margin-top:8px;"><b>FIN DE CHANTIER</b> · Date : ________ · Pièces contrôlées : ______ · Conformes : ______ · Non conformes : ______ · Remarques : ______________________________</div>')+
+    ((c.historique||[]).length? '<div class="aps-meta pc-trace"><b>Traçabilité :</b> '+c.historique.map(function(x){ return fmtDate(x.d.slice(0,10))+' '+esc(x.action)+(x.par? ' ('+esc(x.par)+')' : ''); }).join(' → ')+'</div>' : '')+emarg;
   var hseRows = CHANTIER_HSE.map(function(g){
     return '<tr><th colspan="3" style="text-align:left;">'+esc(g[0])+'</th></tr>'+g[1].map(function(it){
       var cur = (c.hse && c.hse.items && c.hse.items[it[0]]) || {};
@@ -9442,7 +9782,6 @@ RENDERERS.archives = function(){
   html += '<p class="tiny" style="max-width:660px; margin-bottom:16px;">Pour la traçabilité IATF, exportez régulièrement un instantané daté de chaque module (équivalent à un onglet mensuel sur Excel) et classez-le dans votre système documentaire. Les données restent disponibles en continu dans l\'application - l\'export ci-dessous crée une copie figée pour archivage.</p>';
   html += '<div class="toolbar"><div class="left"><label class="field" style="flex-direction:row; align-items:center; gap:8px;">Mois à exporter <input type="month" id="archive-month" value="'+month+'"></label></div></div>';
   html += '<div class="grid grid-2">';
-  html += archiveCard('Planning échéances', 'Échéances du mois sélectionné, toutes lignes et types.', 'planning');
   html += archiveCard('Métrologie', 'État actuel complet de la base instruments (photo à la date d\'export, indépendant du mois choisi).', 'metro');
   if(currentSecteur==='MCU') html += archiveCard('Propreté - résultats audits', 'Résultats (%) du mois sélectionné.', 'resultats');
   html += archiveCard('Plan d\'actions', 'Actions créées ou échéant ce mois.', 'actions');
@@ -10089,7 +10428,7 @@ var wzDraft = null, wzDraftKey = null, wzDirty = false;
 var wzLigne = null;          // ligne dont on modifie les codes rebut (étape CHOKKO)
 var wzBomOpen = null;        // index de la référence dont on modifie les composants (étape prison)
 var wzBomSearch = '';
-var WZ_TABS = [['chokko','Suivi CHOKKO','Production, défauts par poste, coût rebut'],['proprete','Propreté','Audits propreté, entretien des équipements'],['perf','Audits de perf','Résultat mensuel par ligne'],['metro','Métrologie','Instruments et échéances'],['actions','Plan d\'actions','Actions issues des défauts et audits'],['planning','Planning échéances','Audits et relevés planifiés'],['prison','Prison qualité','Pièces bloquées, chantiers, export SAP'],['formations','Formations SREM','Échéances par personne'],['esd','Formations ESD','Réservé à MCU'],['cicl','Formations CI/CL','Réservé à MCU'],['archives','Archives','Exports et rapport mensuel']];
+var WZ_TABS = [['chokko','Suivi CHOKKO','Production, défauts par poste, coût rebut'],['proprete','Propreté','Audits propreté, entretien des équipements'],['perf','Audits de perf','Résultat mensuel par ligne'],['metro','Métrologie','Instruments et échéances'],['actions','Plan d\'actions','Actions issues des défauts et audits'],['prison','Prison qualité','Pièces bloquées, chantiers, export SAP'],['formations','Formations SREM','Échéances par personne'],['esd','Formations ESD','Réservé à MCU'],['cicl','Formations CI/CL','Réservé à MCU'],['archives','Archives','Exports et rapport mensuel']];
 var WZ_WIDGET_TAB = {w_chokko_trend:'chokko', w_causes_bar:'chokko', w_chokko:'chokko', w_production:'chokko', w_cicl:'cicl', w_ciclcoverage:'cicl', w_esd:'esd', w_srem:'formations', w_particules:'proprete', w_contamination:'proprete', w_vidange:'proprete', w_planning:'planning', w_actions:'actions', w_my_actions:'actions'};
 var WZ_COMMUNS = [
   ['seuils', 'Seuils du score par défaut', 'Score « attention » et « danger » des secteurs qui n\'ont pas réglé les leurs.'],
@@ -10102,7 +10441,6 @@ var WZ_COMMUNS = [
   ['bains', 'Relevés des bains (MCU)', 'Liste des bains et couleurs des courbes.'],
   ['ciclRefs,ciclPostes', 'Formations CI/CL (MCU)', 'Références par ligne et postes à habiliter.'],
   ['actionStatuts', 'Plan d\'actions : statuts', 'Nom affiché de chaque statut d\'action.'],
-  ['planTypes', 'Planning : types d\'échéances', 'Nom des types d\'échéances communs à tous les secteurs.'],
   ['particules', 'Relevés particules (MCU)', 'Postes suivis sur chaque ligne.']
 ];
 function wzSecteurObj(){ return getSecteur(currentSecteur) || {id:currentSecteur, nom:currentSecteur, lignes:[], tabs:[]}; }
@@ -10114,7 +10452,7 @@ function wzSteps(){
   if(wzHas('prison')) st.push({id:'prison', label:'Prison qualité'});
   if(wzHas('esd') || wzHas('formations') || wzHas('cicl')) st.push({id:'formations', label:'Formations'});
   if(wzHas('perf')) st.push({id:'perf', label:'Audits de perf'});
-  if(wzHas('actions') || wzHas('planning')) st.push({id:'actplan', label:'Actions et planning'});
+  if(wzHas('actions')) st.push({id:'actplan', label:'Plan d\'actions'});
   st.push({id:'tableau', label:'Tableau de bord'});
   if(isAdminUser()) st.push({id:'communs', label:'Réglages communs'});
   st.push({id:'recap', label:'Récapitulatif'});
@@ -10418,13 +10756,10 @@ function wzPerfHtml(){
 }
 function wzActplanHtml(){
   var d = wzDraft;
-  var h = wzStepHead('Actions et planning', 'Les délais du plan d\'actions et les types d\'échéances propres à votre secteur.');
+  var h = wzStepHead('Plan d\'actions', 'Les délais du plan d\'actions de votre secteur.');
   if(wzHas('actions')) h += wzBlock('Plan d\'actions', '<div class="wz-grid"><label class="field">Vérification d\'efficacité prévue après (jours)'+wzInput('verif', ' class="wz-num" inputmode="numeric"')+'</label>'+
     '<label class="field">Alerte avant l\'échéance d\'une action (jours)'+wzInput('alerte', ' class="wz-num" inputmode="numeric" placeholder="'+esc(String(Number(cfg('prioDelais').actionsJours)||7))+' (commun)"')+'</label></div>'+
     '<p class="tiny" style="margin-top:6px;">La date de vérification est proposée automatiquement quand une action passe en « réalisée ». Les noms des statuts sont communs'+(isAdminUser()? ' (« Réglages communs »)' : '')+'.</p>');
-  if(wzHas('planning')) h += wzBlock('Types d\'échéances du planning', '<p class="tiny" style="margin:0 0 8px;">Types communs : '+esc((PLAN_TYPES_COMMUNS||[]).map(function(t){ return t[1]; }).join(', '))+'. Ajoutez ceux de votre secteur (ex. « Audit produit », « Revue 5S »).</p>'+
-    '<div class="wz-list">'+d.planExtra.map(function(t, i){ return '<div class="wz-row">'+wzInput('planExtra.'+i+'.1', ' style="max-width:280px;" placeholder="Ex. Audit produit"')+'<button class="btn small danger-outline" data-action="wz-del" data-path="planExtra" data-i="'+i+'">✕</button></div>'; }).join('')+'</div>'+
-    '<button class="btn small" data-action="wz-add" data-path="planExtra" data-tpl="'+esc(JSON.stringify(['p'+Date.now().toString(36),'']))+'">+ Ajouter un type</button>');
   return h;
 }
 function wzTableauHtml(){
@@ -10641,17 +10976,17 @@ function qosOverviewHtml(secs, y, m){
         var t1 = st.top[0];
         rows += '<tr'+(i===0?' class="qos-sec-first"':'')+'>'+(i===0? '<td rowspan="'+s.lignes.length+'" class="qos-sec-cell"><button class="qos-link" data-action="qos-view" data-sid="'+esc(s.id)+'">'+esc(s.nom)+'</button><div class="tiny">'+open+' action(s) en cours'+(late? ' · <b style="color:var(--danger);">'+late+' en retard</b>' : '')+'</div></td>' : '')+
           '<td><b>'+esc(l)+'</b></td>'+
-          (st.pct===null ? '<td class="c-empty">Pas de saisie</td><td></td>' : '<td>'+badge(st.level==='ok'?'ok':st.level==='warn'?'warn':'danger', pct2(st.pct).replace('.',',')+' %')+' <span class="tiny">obj. '+String(st.obj).replace('.',',')+' %</span></td><td>'+qosDelta(st.pct, st.prevPct, ' pt', true)+'</td>')+
-          '<td>'+(st.nc? qosNum(st.nc) : '-')+'</td>'+
-          '<td>'+(t1? '<b>'+esc(t1.id)+'</b>'+(t1.nom? ' - '+esc(t1.nom) : '')+' <span class="tiny">('+qosNum(t1.nc)+')</span>' : '-')+'</td>'+
-          '<td class="qos-eur">'+(st.rebutTotal? qosEur(st.rebutTotal) : '-')+'</td>'+
-          '<td>'+(st.rebutTotal? qosDelta(st.rebutTotal, st.rebutPrev||0, ' €', false) : '')+'</td>'+
-          '<td class="qos-eur">'+qosCpp(st.cpp)+'</td></tr>';
+          (st.pct===null ? '<td class="c-empty qos-c1">Pas de saisie</td><td class="qos-c"></td>' : '<td class="qos-c1">'+badge(st.level==='ok'?'ok':st.level==='warn'?'warn':'danger', pct2(st.pct).replace('.',',')+' %')+' <span class="tiny">obj. '+String(st.obj).replace('.',',')+' %</span></td><td class="qos-c">'+qosDelta(st.pct, st.prevPct, ' pt', true)+'</td>')+
+          '<td class="qos-c">'+(st.nc? qosNum(st.nc) : '-')+'</td>'+
+          '<td class="qos-c">'+(t1? '<b>'+esc(t1.id)+'</b>'+(t1.nom? ' - '+esc(t1.nom) : '')+' <span class="tiny">('+qosNum(t1.nc)+')</span>' : '-')+'</td>'+
+          '<td class="qos-eur qos-r qos-r1">'+(st.rebutTotal? qosEur(st.rebutTotal) : '-')+'</td>'+
+          '<td class="qos-r">'+(st.rebutTotal? qosDelta(st.rebutTotal, st.rebutPrev||0, ' €', false) : '')+'</td>'+
+          '<td class="qos-eur qos-r">'+qosCpp(st.cpp)+'</td></tr>';
       });
     });
   });
-  var h = '<div class="qos-kpis"><div><span>'+secs.length+'</span><i>secteur(s)</i></div><div><span>'+qosNum(totNc)+'</span><i>pièces NC sur le mois</i></div><div><span class="qos-eur">'+qosEur(totReb)+'</span><i>coût rebut du mois</i></div><div><span>'+totOpen+'</span><i>actions en cours</i></div><div><span'+(totLate?' style="color:var(--danger);"':'')+'>'+totLate+'</span><i>actions en retard</i></div></div>';
-  h += '<div class="card"><div class="eyebrow" style="margin-bottom:10px;">Vue d\'ensemble · '+esc(qosMonthName(m))+' '+y+'</div><div class="table-wrap"><table class="qos-table"><thead><tr><th>Secteur</th><th>Ligne</th><th>CHOKKO du mois</th><th>vs mois préc.</th><th>Pièces NC</th><th>1er défaut</th><th>Coût rebut</th><th>vs mois préc.</th><th>Coût / pièce</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+  var h = '<div class="qos-kpis"><div><span>'+secs.length+'</span><i>secteur(s)</i></div><div class="qos-k-chk"><span>'+qosNum(totNc)+'</span><i>CHOKKO · pièces NC du mois</i></div><div class="qos-k-reb"><span class="qos-eur">'+qosEur(totReb)+'</span><i>Coût rebut du mois</i></div><div><span>'+totOpen+'</span><i>actions en cours</i></div><div><span'+(totLate?' style="color:var(--danger);"':'')+'>'+totLate+'</span><i>actions en retard</i></div></div>';
+  h += '<div class="card"><div class="eyebrow" style="margin-bottom:10px;">Vue d\'ensemble · '+esc(qosMonthName(m))+' '+y+'</div><div class="table-wrap"><table class="qos-table qos-ov"><thead><tr class="qos-band"><th colspan="2"></th><th colspan="4" class="qos-band-chk">CHOKKO</th><th colspan="3" class="qos-band-reb">COÛT REBUT</th></tr><tr><th>Secteur</th><th>Ligne</th><th class="qos-c1">CHOKKO du mois</th><th>vs mois préc.</th><th>Pièces NC</th><th>1er défaut</th><th class="qos-r1">Coût rebut</th><th>vs mois préc.</th><th>Coût / pièce</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
     '<p class="tiny qos-noprint" style="margin-top:8px;">Cliquez sur un secteur pour ouvrir sa page. Valeurs tronquées, jamais arrondies au-dessus.</p></div>';
   return h;
 }
@@ -10676,50 +11011,63 @@ function qosActionRowHtml(a){
 }
 function qosSectorHtml(s, y, m){
   return withSecteur(s.id, function(){
+    var stats = (s.lignes||[]).map(function(l){ return qosLineStats(l, y, m); });
+    var acts = qosSectorActions(s.id), mk = y+'-'+String(m+1).padStart(2,'0');
+    var isRebut = function(a){ return (a.source && a.source.type==='rebut') || a.origine==='Coût rebut'; };
+    var enCours = function(list){ return list.filter(function(a){ return a.statut==='planifiee' || a.statut==='realisee'; })
+      .sort(function(a,b){ var la = isActionLate(a)?0:1, lb = isActionLate(b)?0:1; if(la!==lb) return la-lb; return (a.echeance||'9999').localeCompare(b.echeance||'9999'); }); };
+    var closesTxt = function(list){ var n = list.filter(function(a){ return (a.dateRealisation||'').slice(0,7)===mk || (a.dateVerification||'').slice(0,7)===mk; }).length; return n+' réalisée(s) ou vérifiée(s) en '+qosMonthName(m).toLowerCase(); };
+    var actTable = function(list, emptyTxt){
+      var rows = enCours(list);
+      return rows.length ? '<div class="table-wrap"><table class="qos-table"><thead><tr><th>Action</th><th>Origine</th><th>Responsable</th><th>Échéance</th><th>Statut</th><th class="qos-noprint"></th></tr></thead><tbody>'+rows.map(qosActionRowHtml).join('')+'</tbody></table></div>'
+        : '<p class="tiny qos-none">'+emptyTxt+'</p>';
+    };
+    var linkedTxt = function(linked){ var open = qosOpenCount(linked), late = linked.filter(isActionLate).length;
+      return linked.length ? (open? open+' en cours' : 'closes')+(late? ' · <b style="color:var(--danger);">'+late+' retard</b>' : '') : '<span class="tiny" style="color:var(--text-faint);">aucune</span>'; };
     var h = '';
-    (s.lignes||[]).forEach(function(l){
-      var st = qosLineStats(l, y, m);
-      if(!st.hasData){ h += '<div class="card qos-line qos-line-empty"><div class="eyebrow">'+esc(s.nom)+' · '+esc(l)+'</div><span class="tiny">Aucune saisie CHOKKO ni coût rebut pour '+esc(qosMonthName(m))+' '+y+'.</span></div>'; return; }
-      h += '<div class="card qos-line"><div class="qos-line-head"><div><div class="eyebrow">'+esc(s.nom)+' · '+esc(l)+'</div></div>'+
-        '<div class="qos-line-kpis">'+
-          '<div><i>CHOKKO</i>'+(st.pct===null? '<b>-</b>' : '<b class="qos-lv-'+st.level+'">'+pct2(st.pct).replace('.',',')+' %</b>')+'<span class="tiny">obj. '+String(st.obj).replace('.',',')+' % '+qosDelta(st.pct, st.prevPct, ' pt', true)+'</span></div>'+
-          '<div><i>Pièces NC</i><b>'+qosNum(st.nc)+'</b><span class="tiny">prod. '+qosNum(st.prod)+'</span></div>'+
+    // ===== Zone 1 : CHOKKO =====
+    var chkActs = acts.filter(function(a){ return !isRebut(a); });
+    h += '<section class="qos-zone qos-zone-chk"><div class="qos-zone-head"><span class="qos-zone-num">1</span><div><b>CHOKKO · '+esc(s.nom)+'</b><span>Production, pièces non conformes et principaux défauts par poste</span></div></div>';
+    stats.forEach(function(st){
+      var l = st.ligne;
+      var hasChk = st.prod>0 || st.nc>0;
+      h += '<div class="qos-line"><div class="qos-line-head"><div class="qos-line-name">'+esc(l)+'</div>';
+      if(!hasChk){ h += '<span class="tiny">Aucune saisie CHOKKO pour '+esc(qosMonthName(m))+' '+y+'.</span></div></div>'; return; }
+      h += '<div class="qos-line-kpis">'+
+          '<div><i>CHOKKO du mois</i>'+(st.pct===null? '<b>-</b>' : '<b class="qos-lv-'+st.level+'">'+pct2(st.pct).replace('.',',')+' %</b>')+'<span class="tiny">obj. '+String(st.obj).replace('.',',')+' % '+qosDelta(st.pct, st.prevPct, ' pt', true)+'</span></div>'+
+          '<div><i>Pièces NC</i><b>'+qosNum(st.nc)+'</b><span class="tiny">'+qosDelta(st.nc, st.prevNc, '', false)+'</span></div>'+
+          '<div><i>Production</i><b>'+qosNum(st.prod)+'</b><span class="tiny">pièces</span></div>'+
+        '</div></div>';
+      h += st.top.length ? '<table class="qos-mini"><thead><tr><th>Poste / défaut</th><th>NC</th><th>Part</th><th>vs M-1</th><th>Actions</th><th class="qos-noprint"></th></tr></thead><tbody>'+
+        st.top.slice(0, QOS_TOP).map(function(t){
+          var note = chokkoNote(l, t.id, y, m);
+          return '<tr><td><b>'+esc(t.id)+'</b>'+(t.nom? ' - '+esc(t.nom) : '')+(note && (note.texte||'').trim()? '<div class="tiny qos-note" title="Actions menées saisies dans le CHOKKO">↳ '+esc(note.texte.trim().split('\n')[0].slice(0,140))+'</div>' : '')+'</td>'+
+            '<td><b>'+qosNum(t.nc)+'</b></td><td>'+qosTrunc(t.part,1).toString().replace('.',',')+' %</td><td>'+qosDelta(t.nc, t.prev, '', false)+'</td><td>'+linkedTxt(actionsLinkedTo('chokko', l+'|'+t.id))+'</td>'+
+            '<td class="qos-noprint"><button class="btn small" data-action="qos-act" data-type="chokko" data-sid="'+esc(s.id)+'" data-ligne="'+esc(l)+'" data-ref="'+esc(t.id)+'" data-label="'+esc(t.id+(t.nom? ' - '+t.nom : ''))+'">+ Action</button></td></tr>';
+        }).join('')+'</tbody></table>' : '<p class="tiny">Aucun défaut saisi.</p>';
+      h += '</div>';
+    });
+    h += '<div class="qos-zone-acts"><div class="qos-act-head"><b>Actions CHOKKO en cours ('+enCours(chkActs).length+')</b><span class="tiny">'+closesTxt(chkActs)+'</span></div>'+actTable(chkActs, 'Aucune action CHOKKO en cours.')+'</div></section>';
+    // ===== Zone 2 : COÛT REBUT =====
+    var rebActs = acts.filter(isRebut);
+    h += '<section class="qos-zone qos-zone-reb'+(stats.length>=3? ' qos-zone-break' : '')+'"><div class="qos-zone-head"><span class="qos-zone-num">2</span><div><b>COÛT REBUT · '+esc(s.nom)+'</b><span>Montants rebutés par code défaut et coût par pièce</span></div></div>';
+    stats.forEach(function(st){
+      var l = st.ligne, hasReb = st.rebutTotal>0 || st.cpp;
+      h += '<div class="qos-line"><div class="qos-line-head"><div class="qos-line-name">'+esc(l)+'</div>';
+      if(!hasReb){ h += '<span class="tiny">Aucun coût rebut saisi pour '+esc(qosMonthName(m))+' '+y+'.</span></div></div>'; return; }
+      h += '<div class="qos-line-kpis">'+
           '<div><i>Coût rebut</i><b class="qos-eur">'+(st.rebutTotal? qosEur(st.rebutTotal) : '-')+'</b><span class="tiny">'+(st.rebutTotal? qosDelta(st.rebutTotal, st.rebutPrev||0, ' €', false) : '')+'</span></div>'+
           '<div><i>Coût / pièce</i><b class="qos-eur">'+qosCpp(st.cpp)+'</b><span class="tiny">obj. '+qosCpp(st.cppObj)+'</span></div>'+
         '</div></div>';
-      if(!st.hasData){ h += '<p class="tiny" style="margin:6px 0 0;">Aucune saisie CHOKKO ni coût rebut pour '+esc(qosMonthName(m))+' '+y+'.</p></div>'; return; }
-      h += '<div class="qos-cols">';
-      // Top défauts CHOKKO
-      h += '<div><div class="qos-sub">Principaux défauts CHOKKO</div>'+(st.top.length? '<table class="qos-mini"><thead><tr><th>Poste / défaut</th><th>NC</th><th>Part</th><th>vs M-1</th><th>Actions</th><th class="qos-noprint"></th></tr></thead><tbody>'+
-        st.top.slice(0, QOS_TOP).map(function(t){
-          var linked = actionsLinkedTo('chokko', l+'|'+t.id), open = qosOpenCount(linked), late = linked.filter(isActionLate).length;
-          var note = chokkoNote(l, t.id, y, m);
-          return '<tr><td><b>'+esc(t.id)+'</b>'+(t.nom? ' - '+esc(t.nom) : '')+(note && (note.texte||'').trim()? '<div class="tiny qos-note" title="Actions menées saisies dans le CHOKKO">↳ '+esc(note.texte.trim().split('\n')[0].slice(0,140))+'</div>' : '')+'</td>'+
-            '<td><b>'+qosNum(t.nc)+'</b></td><td>'+qosTrunc(t.part,1).toString().replace('.',',')+' %</td><td>'+qosDelta(t.nc, t.prev, '', false)+'</td>'+
-            '<td>'+(linked.length? (open? open+' en cours' : 'closes')+(late? ' · <b style="color:var(--danger);">'+late+' retard</b>' : '') : '<span class="tiny" style="color:var(--text-faint);">aucune</span>')+'</td>'+
-            '<td class="qos-noprint"><button class="btn small" data-action="qos-act" data-type="chokko" data-sid="'+esc(s.id)+'" data-ligne="'+esc(l)+'" data-ref="'+esc(t.id)+'" data-label="'+esc(t.id+(t.nom? ' - '+t.nom : ''))+'">+ Action</button></td></tr>';
-        }).join('')+'</tbody></table>' : '<p class="tiny">Aucun défaut saisi.</p>')+'</div>';
-      // Top coût rebut
       var rr = st.rebut.rows.slice(0, QOS_TOP);
-      h += '<div><div class="qos-sub">Principaux coûts rebut</div>'+(rr.length? '<table class="qos-mini"><thead><tr><th>Code défaut</th><th>Montant</th><th>Part</th><th>Actions</th><th class="qos-noprint"></th></tr></thead><tbody>'+
+      h += rr.length ? '<table class="qos-mini"><thead><tr><th>Code défaut</th><th>Montant</th><th>Part</th><th>Actions</th><th class="qos-noprint"></th></tr></thead><tbody>'+
         rr.map(function(r){
-          var linked = actionsLinkedTo('rebut', l+'|'+r.key), open = qosOpenCount(linked), late = linked.filter(isActionLate).length;
-          return '<tr><td>'+esc(r.label)+'</td><td class="qos-eur"><b>'+qosEur(r.value)+'</b></td><td>'+qosTrunc(r.pct,1).toString().replace('.',',')+' %</td>'+
-            '<td>'+(linked.length? (open? open+' en cours' : 'closes')+(late? ' · <b style="color:var(--danger);">'+late+' retard</b>' : '') : '<span class="tiny" style="color:var(--text-faint);">aucune</span>')+'</td>'+
+          return '<tr><td>'+esc(r.label)+'</td><td class="qos-eur"><b>'+qosEur(r.value)+'</b></td><td>'+qosTrunc(r.pct,1).toString().replace('.',',')+' %</td><td>'+linkedTxt(actionsLinkedTo('rebut', l+'|'+r.key))+'</td>'+
             '<td class="qos-noprint"><button class="btn small" data-action="qos-act" data-type="rebut" data-sid="'+esc(s.id)+'" data-ligne="'+esc(l)+'" data-ref="'+esc(r.key)+'" data-label="'+esc(r.label)+'">+ Action</button></td></tr>';
-        }).join('')+'</tbody></table>' : '<p class="tiny">Aucun coût rebut saisi.</p>')+'</div>';
-      h += '</div></div>';
+        }).join('')+'</tbody></table>' : '<p class="tiny">Aucun code défaut saisi.</p>';
+      h += '</div>';
     });
-    // Actions du secteur liées aux défauts
-    var acts = qosSectorActions(s.id);
-    var mk = y+'-'+String(m+1).padStart(2,'0');
-    var enCours = acts.filter(function(a){ return a.statut==='planifiee' || a.statut==='realisee'; })   // à réaliser, ou réalisée en attente de vérification
-      .sort(function(a,b){ var la = isActionLate(a)?0:1, lb = isActionLate(b)?0:1; if(la!==lb) return la-lb; return (a.echeance||'9999').localeCompare(b.echeance||'9999'); });
-    var closes = acts.filter(function(a){ return (a.dateRealisation||'').slice(0,7)===mk || (a.dateVerification||'').slice(0,7)===mk; }).length;
-    h += '<div class="card qos-actions"><div class="qos-act-head"><div class="eyebrow">Actions liées aux défauts · '+esc(s.nom)+' ('+enCours.length+')</div><span class="tiny">'+closes+' réalisée(s) ou vérifiée(s) en '+esc(qosMonthName(m).toLowerCase())+'</span></div>'+
-      (enCours.length? '<div class="table-wrap"><table class="qos-table"><thead><tr><th>Action</th><th>Origine</th><th>Responsable</th><th>Échéance</th><th>Statut</th><th class="qos-noprint"></th></tr></thead><tbody>'+enCours.map(qosActionRowHtml).join('')+'</tbody></table></div>'
-        : emptyState('Aucune action en cours liée aux défauts CHOKKO ou au coût rebut.'))+
-      '</div>';
+    h += '<div class="qos-zone-acts"><div class="qos-act-head"><b>Actions coût rebut en cours ('+enCours(rebActs).length+')</b><span class="tiny">'+closesTxt(rebActs)+'</span></div>'+actTable(rebActs, 'Aucune action coût rebut en cours.')+'</div></section>';
     return h;
   });
 }
@@ -10849,17 +11197,15 @@ var HELP = [
   {id:'actions', tab:'actions', titre:'Plan d\'actions', quoi:'Toutes les actions du secteur, de leur création à la vérification d\'efficacité.',
     etapes:['Une action naît d\'un défaut CHOKKO, d\'un NG d\'audit, d\'une contamination… ou d\'une saisie directe.', 'Renseignez responsable, échéance, puis passez-la en « Réalisée ».', 'Une date de vérification d\'efficacité est alors proposée ; une fois vérifiée, l\'action est close.'],
     faq:[['Quand une action est-elle en retard ?', 'Échéance dépassée sans réalisation, ou vérification d\'efficacité dépassée.'],
-      ['Changer le délai de vérification ?', '« Configurer le secteur » > Actions et planning.'],
+      ['Changer le délai de vérification ?', '« Configurer le secteur » > Plan d\'actions.'],
       ['Renommer les statuts ?', 'Administrateur : « Configurer le secteur » > Réglages communs.']]},
   {id:'pareto', tab:'pareto', titre:'Analyses Pareto', quoi:'Les 20 % de causes qui font 80 % des problèmes : défauts CHOKKO, coût rebut, prison, actions, propreté.',
     etapes:['Choisissez la source et la période.', 'Les barres foncées forment le groupe A (80 % du total), la courbe le cumul.'],
     faq:[['Une source n\'apparaît pas.', 'L\'onglet correspondant n\'est pas activé pour votre secteur.']]},
-  {id:'planning', tab:'planning', titre:'Planning échéances', quoi:'Les audits et relevés à faire, avec leur date et leur responsable.',
-    etapes:['Ajoutez une échéance : type, ligne, date, responsable.', 'Les échéances dépassées remontent sur le tableau de bord.'],
-    faq:[['Ajouter un type d\'échéance ?', '« Configurer le secteur » > Actions et planning > Types d\'échéances.']]},
   {id:'prison', tab:'prison', titre:'Prison qualité', quoi:'Les pièces bloquées du secteur : par défaut, référence et état, avec la zone de stockage, les sorties et les chantiers de remise en état.',
-    etapes:['« + Nouveau défaut » : le défaut, puis une ligne par référence avec les quantités par état (complet, sans capot…).', 'Chaque sortie (rebut, réintroduction…) est tracée.', 'PDF : synthèse au format de la feuille papier. Excel blocage SAP : composants à bloquer.', 'Chantiers : fiche de remise en état (lieux, risques, HSE).'],
+    etapes:['« + Nouveau défaut » : le défaut, puis une ligne par référence avec les quantités par état (complet, sans capot…).', 'Chaque sortie (rebut, réintroduction…) est tracée.', 'PDF : synthèse au format de la feuille papier. Excel blocage SAP : composants à bloquer.', '🛠 + Chantier sur un défaut : la fiche de chantier, avec les besoins en ressources (opérateurs, durée, horaire, matériel).', 'La demande attend la validation du responsable qualité : « Imprimer pour la réunion de production » rassemble toutes les demandes en attente.', '« Valider les ressources » (opérateurs accordés, date), puis « Démarrer le chantier ».', '« Fin de chantier » : pièces contrôlées, conformes, non conformes, remarques ; les pièces peuvent sortir de la prison automatiquement.', 'Onglet Traçabilité : chaque étape datée et signée.'],
     faq:[['L\'export SAP liste une pièce « inconnue ».', 'Sa référence n\'est pas décrite : ajoutez-la avec ses composants dans « Configurer le secteur » > Prison qualité.'],
+      ['Qui valide les ressources d\'un chantier ?', 'Le responsable qualité, après la réunion de production. Le nom et la date de validation sont enregistrés et imprimés sur la fiche.'],
       ['Pourquoi le capot n\'est pas compté pour une pièce « sans capot » ?', 'Les composants absents par état se règlent dans « Configurer le secteur » > Prison qualité.']]},
   {id:'esd', tab:'esd', titre:'Formations ESD', quoi:'Qui est formé à l\'ESD et quand renouveler.',
     etapes:['Ajoutez une personne et sa date de formation : l\'échéance se calcule.', 'Quatre compteurs : expirées, expire ce mois, à renouveler, à jour.', 'Renouveler = saisir la nouvelle date avec Modifier.'],
@@ -11110,7 +11456,7 @@ function render(){
     renderParetoWidgetChart();
   }
   if(currentTab==='pareto'){ renderParetoChart(); }
-  if(currentTab==='planning'){ applyPlanningFilter(); }
+
   if(currentTab==='ateq'){ renderAteqCharts(); }
   if(currentTab==='perf'){ renderPerfChart(); }
   if(currentTab==='chokko' && chokkoView==='recap'){ renderChokkoChart(); }
@@ -11589,7 +11935,7 @@ function computePriorities(){
   // --- Prison : chantiers dont la fin prévue est dépassée
   if(has('prison')){
     chantiersSect().forEach(function(c){
-      if(c.dateFin && c.dateFin<today && (c.statut==='planifie' || c.statut==='en_cours')){
+      if(c.dateFin && c.dateFin<today && ['planifie','demande','valide','en_cours'].indexOf(c.statut)>=0){
         var t = chantierTotals(c);
         add('prison', 'danger', (c.numero? c.numero+' · ' : '')+(c.titre||'Chantier'), 'Pilote : '+(c.responsable||'-')+' · '+t.pct+' % traité', c.dateFin, {chantierId:c.id});
       }
@@ -11987,7 +12333,7 @@ RENDERERS.dashboard = function(){
   W.w_alerts = '<h2>'+esc(t('title_alerts','Alertes'))+'</h2><div id="alerts-section">'+renderAlertsSection()+'</div>';
 
   // ===== Assemblage avec disposition personnalisable =====
-  var secHid = (getSecteur(currentSecteur)||{}).dashHidden || [];   // cartes masquées pour ce secteur dans l'assistant
+  var secHid = ((getSecteur(currentSecteur)||{}).dashHidden || []).concat(['w_planning']);   // cartes masquées pour ce secteur dans l'assistant
   var layout = getDashboardLayout().filter(function(w){ return !w.hidden && secHid.indexOf(w.id)<0; }); // "hidden" = supprimé du modèle
   var html = '';
   if(userSecteurs().length>1) html += renderMultiSecteurBanner()+renderPerfAuditProgress()+sectorDetailHeading();
@@ -13131,7 +13477,7 @@ var EMOJI_ICONS = {
 function currentIconSet(){ return (DATA.uiSettings && DATA.uiSettings.iconStyle==='emoji') ? EMOJI_ICONS : SVG_ICONS; }
 var TAB_GROUPS_DEF = [
   {id:'production', label:'Production', tabs:['proprete','metro','chokko','perf']},
-  {id:'qualite',    label:'Qualité',    tabs:['qos','actions','pareto','planning','prison','bibliotheque','archives']},
+  {id:'qualite',    label:'Qualité',    tabs:['qos','actions','pareto','prison','bibliotheque','archives']},
   {id:'formations', label:'Formations', tabs:['esd','cicl','formations']},
   {id:'admin',      label:'Réglages',   tabs:['assistant','parametres']}
 ];
@@ -13491,7 +13837,7 @@ RENDERERS.comptes = function(){
   html += '<div class="toolbar"><div></div><button class="btn primary" data-action="new-secteur">+ Ajouter un secteur</button></div>';
   if(secteurFormState) html += secteurForm();
   var allSecteursList = (DATA.secteurs && DATA.secteurs.length? DATA.secteurs : SECTEURS_DEFAULT);
-  var CONFIGURABLE_TABS = [['perf','Audits perf'],['proprete','Propreté'],['metro','Métrologie'],['chokko','CHOKKO'],['actions','Actions'],['planning','Planning'],['prison','Prison qualité'],['esd','ESD'],['cicl','CI/CL'],['formations','SREM']];
+  var CONFIGURABLE_TABS = [['perf','Audits perf'],['proprete','Propreté'],['metro','Métrologie'],['chokko','CHOKKO'],['actions','Actions'],['prison','Prison qualité'],['esd','ESD'],['cicl','CI/CL'],['formations','SREM']];
   html += '<div class="table-wrap" style="overflow-x:auto;"><table class="perm-table"><thead><tr><th style="min-width:80px;">Secteur</th><th style="min-width:180px;">Lignes</th>'+
     CONFIGURABLE_TABS.map(function(t){return '<th style="font-size:10px;">'+t[1]+'</th>';}).join('')+'<th></th></tr></thead><tbody>';
   html += allSecteursList.map(function(sec){
@@ -14505,6 +14851,18 @@ app.addEventListener('click', async function(e){
   if(e.target.closest('[data-action="chantier-close"]') || (e.target.classList && e.target.classList.contains('chantier-backdrop'))){ chantierClose(); render(); return; }
   if(e.target.closest('[data-action="chantier-save"]')){ await handleChantierSave(); return; }
   if(e.target.closest('[data-action="chantier-finish"]')){ await handleChantierFinish(); return; }
+  var chStep = e.target.closest('[data-action="chantier-step"]');
+  if(chStep && chantierDraft){ chantierStep = chStep.dataset.s; if(chantierStep==='fin') chantierOpenFin(); render(); return; }
+  if(e.target.closest('[data-action="chantier-step-cancel"]')){ chantierStep = null; if(chantierDraft){ delete chantierDraft._val; delete chantierDraft._fin; delete chantierDraft._ann; } render(); return; }
+  if(e.target.closest('[data-action="chantier-validate"]')){ await handleChantierValidate(); return; }
+  if(e.target.closest('[data-action="chantier-start"]')){ await handleChantierStart(); return; }
+  if(e.target.closest('[data-action="chantier-fin-confirm"]')){ await handleChantierFinConfirm(); return; }
+  if(e.target.closest('[data-action="chantier-cancel-confirm"]')){ await handleChantierCancelConfirm(); return; }
+  if(e.target.closest('[data-action="chantier-demandes-print"]')){ await printChantierDemandes(); return; }
+  var chMatAdd = e.target.closest('[data-action="chantier-mat-add"]');
+  if(chMatAdd && chantierDraft){ chantierDraft.besoins.materiel.push([chMatAdd.dataset.v, '1']); var bs = document.querySelector('.chantier-body'), bt = bs? bs.scrollTop : 0; render(); var bs2 = document.querySelector('.chantier-body'); if(bs2) bs2.scrollTop = bt; if(!chMatAdd.dataset.v){ var ds = document.querySelectorAll('.ch-mat-d'); if(ds.length) ds[ds.length-1].focus(); } return; }
+  var chMatDel = e.target.closest('[data-action="chantier-mat-del"]');
+  if(chMatDel && chantierDraft){ chantierDraft.besoins.materiel.splice(Number(chMatDel.dataset.i), 1); render(); return; }
   var chDel = e.target.closest('[data-action="chantier-delete"]');
   if(chDel){ await handleChantierDelete(chDel.dataset.id); return; }
   var chPrint = e.target.closest('[data-action="chantier-print"]');
