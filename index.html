@@ -830,6 +830,34 @@ div.entryform.cols3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
   #qos-print .qos-ov .qos-band th, #qos-print .qos-ov td{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
   #qos-print .qos-ov .qos-band th{color:#fff !important;}
 }
+/* Détail par ligne : CHOKKO | COÛT REBUT côte à côte, comme la vue d'ensemble */
+.qos-lcard{background:#fff; border:1px solid var(--border); border-radius:var(--radius); margin-bottom:14px; overflow:hidden;}
+.qos-lcard-name{padding:9px 14px; font-weight:700; font-size:15px; border-bottom:1px solid var(--border);}
+.qos-split{display:grid; grid-template-columns:3fr 2fr;}
+.qos-half{min-width:0;}
+.qos-band-h{color:#fff; font-size:11px; font-weight:700; letter-spacing:.08em; text-align:center; padding:4px 8px;}
+.qos-band-h span{font-weight:400; letter-spacing:0; opacity:.85; margin-left:8px;}
+.qos-half-chk .qos-band-h{background:#2E6B45;} .qos-half-reb .qos-band-h{background:#9A4E2A;}
+.qos-half-body{padding:10px 14px; overflow-x:auto;}
+.qos-half-chk .qos-half-body{background:#F7FBF6;}
+.qos-half-reb .qos-half-body{background:#FFF8F4;}
+.qos-split .qos-half-reb{border-left:3px solid #9A4E2A;}
+.qos-split .qos-half-chk{border-left:3px solid #2E6B45;}
+.qos-half .qos-line-kpis{margin-bottom:8px;}
+.qos-acts-card .qos-half + .qos-half{border-top:1px solid var(--border);}
+@media (max-width:1000px){ .qos-split{grid-template-columns:1fr;} .qos-split .qos-half-reb{border-left:none; border-top:3px solid #9A4E2A;} }
+@media print{
+  #qos-print .qos-lcard{break-inside:avoid; margin-bottom:6px; border-radius:6px;}
+  #qos-print .qos-lcard-name{padding:3px 8px; font-size:11px;}
+  #qos-print .qos-split{grid-template-columns:3fr 2fr !important;}
+  #qos-print .qos-split .qos-half-reb{border-left:3px solid #9A4E2A; border-top:none;}
+  #qos-print .qos-band-h, #qos-print .qos-half-body{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  #qos-print .qos-band-h{padding:2px 6px; font-size:8.5px; color:#fff !important;}
+  #qos-print .qos-half-body{padding:4px 8px; overflow:visible;}
+  #qos-print .qos-acts-card{break-inside:auto; border:none;}
+  #qos-print .qos-acts-card .qos-half{break-inside:avoid; page-break-inside:avoid; border:1px solid #ccc; margin-top:4px;}
+  #qos-print .qos-acts-card .qos-lcard-name{break-after:avoid; page-break-after:avoid;}
+}
 #qos-print{display:none;}
 @media (max-width:900px){ .qos-cols{grid-template-columns:1fr;} .qos-kpis{grid-template-columns:repeat(2,1fr);} }
 @media print{
@@ -11017,57 +11045,56 @@ function qosSectorHtml(s, y, m){
     var enCours = function(list){ return list.filter(function(a){ return a.statut==='planifiee' || a.statut==='realisee'; })
       .sort(function(a,b){ var la = isActionLate(a)?0:1, lb = isActionLate(b)?0:1; if(la!==lb) return la-lb; return (a.echeance||'9999').localeCompare(b.echeance||'9999'); }); };
     var closesTxt = function(list){ var n = list.filter(function(a){ return (a.dateRealisation||'').slice(0,7)===mk || (a.dateVerification||'').slice(0,7)===mk; }).length; return n+' réalisée(s) ou vérifiée(s) en '+qosMonthName(m).toLowerCase(); };
+    var linkedTxt = function(linked){ var open = qosOpenCount(linked), late = linked.filter(isActionLate).length;
+      return linked.length ? (open? open+' en cours' : 'closes')+(late? ' · <b style="color:var(--danger);">'+late+' retard</b>' : '') : '<span class="tiny" style="color:var(--text-faint);">aucune</span>'; };
+    var h = '';
+    // Une carte par ligne : CHOKKO à gauche (bandeau vert), coût rebut à droite (bandeau brique), comme la vue d'ensemble
+    stats.forEach(function(st){
+      var l = st.ligne, hasChk = st.prod>0 || st.nc>0, hasReb = st.rebutTotal>0 || st.cpp;
+      h += '<div class="qos-lcard"><div class="qos-lcard-name">'+esc(s.nom)+' · '+esc(l)+'</div><div class="qos-split">';
+      // --- CHOKKO
+      h += '<div class="qos-half qos-half-chk"><div class="qos-band-h">CHOKKO</div><div class="qos-half-body">';
+      if(!hasChk) h += '<p class="tiny qos-none">Aucune saisie CHOKKO pour '+esc(qosMonthName(m))+' '+y+'.</p>';
+      else {
+        h += '<div class="qos-line-kpis">'+
+          '<div><i>CHOKKO du mois</i>'+(st.pct===null? '<b>-</b>' : '<b class="qos-lv-'+st.level+'">'+pct2(st.pct).replace('.',',')+' %</b>')+'<span class="tiny">obj. '+String(st.obj).replace('.',',')+' % '+qosDelta(st.pct, st.prevPct, ' pt', true)+'</span></div>'+
+          '<div><i>Pièces NC</i><b>'+qosNum(st.nc)+'</b><span class="tiny">'+qosDelta(st.nc, st.prevNc, '', false)+'</span></div>'+
+          '<div><i>Production</i><b>'+qosNum(st.prod)+'</b><span class="tiny">pièces</span></div></div>';
+        h += st.top.length ? '<table class="qos-mini"><thead><tr><th>Poste / défaut</th><th>NC</th><th>Part</th><th>vs M-1</th><th>Actions</th><th class="qos-noprint"></th></tr></thead><tbody>'+
+          st.top.slice(0, QOS_TOP).map(function(t){
+            var note = chokkoNote(l, t.id, y, m);
+            return '<tr><td><b>'+esc(t.id)+'</b>'+(t.nom? ' - '+esc(t.nom) : '')+(note && (note.texte||'').trim()? '<div class="tiny qos-note" title="Actions menées saisies dans le CHOKKO">↳ '+esc(note.texte.trim().split('\n')[0].slice(0,140))+'</div>' : '')+'</td>'+
+              '<td><b>'+qosNum(t.nc)+'</b></td><td>'+qosTrunc(t.part,1).toString().replace('.',',')+' %</td><td>'+qosDelta(t.nc, t.prev, '', false)+'</td><td>'+linkedTxt(actionsLinkedTo('chokko', l+'|'+t.id))+'</td>'+
+              '<td class="qos-noprint"><button class="btn small" data-action="qos-act" data-type="chokko" data-sid="'+esc(s.id)+'" data-ligne="'+esc(l)+'" data-ref="'+esc(t.id)+'" data-label="'+esc(t.id+(t.nom? ' - '+t.nom : ''))+'">+ Action</button></td></tr>';
+          }).join('')+'</tbody></table>' : '<p class="tiny">Aucun défaut saisi.</p>';
+      }
+      h += '</div></div>';
+      // --- COÛT REBUT
+      h += '<div class="qos-half qos-half-reb"><div class="qos-band-h">COÛT REBUT</div><div class="qos-half-body">';
+      if(!hasReb) h += '<p class="tiny qos-none">Aucun coût rebut saisi pour '+esc(qosMonthName(m))+' '+y+'.</p>';
+      else {
+        h += '<div class="qos-line-kpis">'+
+          '<div><i>Coût rebut</i><b class="qos-eur">'+(st.rebutTotal? qosEur(st.rebutTotal) : '-')+'</b><span class="tiny">'+(st.rebutTotal? qosDelta(st.rebutTotal, st.rebutPrev||0, ' €', false) : '')+'</span></div>'+
+          '<div><i>Coût / pièce</i><b class="qos-eur">'+qosCpp(st.cpp)+'</b><span class="tiny">obj. '+qosCpp(st.cppObj)+'</span></div></div>';
+        var rr = st.rebut.rows.slice(0, QOS_TOP);
+        h += rr.length ? '<table class="qos-mini"><thead><tr><th>Code défaut</th><th>Montant</th><th>Part</th><th>Actions</th><th class="qos-noprint"></th></tr></thead><tbody>'+
+          rr.map(function(r){
+            return '<tr><td>'+esc(r.label)+'</td><td class="qos-eur"><b>'+qosEur(r.value)+'</b></td><td>'+qosTrunc(r.pct,1).toString().replace('.',',')+' %</td><td>'+linkedTxt(actionsLinkedTo('rebut', l+'|'+r.key))+'</td>'+
+              '<td class="qos-noprint"><button class="btn small" data-action="qos-act" data-type="rebut" data-sid="'+esc(s.id)+'" data-ligne="'+esc(l)+'" data-ref="'+esc(r.key)+'" data-label="'+esc(r.label)+'">+ Action</button></td></tr>';
+          }).join('')+'</tbody></table>' : '<p class="tiny">Aucun code défaut saisi.</p>';
+      }
+      h += '</div></div></div></div>';
+    });
+    // Actions en cours du secteur : même découpage
     var actTable = function(list, emptyTxt){
       var rows = enCours(list);
       return rows.length ? '<div class="table-wrap"><table class="qos-table"><thead><tr><th>Action</th><th>Origine</th><th>Responsable</th><th>Échéance</th><th>Statut</th><th class="qos-noprint"></th></tr></thead><tbody>'+rows.map(qosActionRowHtml).join('')+'</tbody></table></div>'
         : '<p class="tiny qos-none">'+emptyTxt+'</p>';
     };
-    var linkedTxt = function(linked){ var open = qosOpenCount(linked), late = linked.filter(isActionLate).length;
-      return linked.length ? (open? open+' en cours' : 'closes')+(late? ' · <b style="color:var(--danger);">'+late+' retard</b>' : '') : '<span class="tiny" style="color:var(--text-faint);">aucune</span>'; };
-    var h = '';
-    // ===== Zone 1 : CHOKKO =====
-    var chkActs = acts.filter(function(a){ return !isRebut(a); });
-    h += '<section class="qos-zone qos-zone-chk"><div class="qos-zone-head"><span class="qos-zone-num">1</span><div><b>CHOKKO · '+esc(s.nom)+'</b><span>Production, pièces non conformes et principaux défauts par poste</span></div></div>';
-    stats.forEach(function(st){
-      var l = st.ligne;
-      var hasChk = st.prod>0 || st.nc>0;
-      h += '<div class="qos-line"><div class="qos-line-head"><div class="qos-line-name">'+esc(l)+'</div>';
-      if(!hasChk){ h += '<span class="tiny">Aucune saisie CHOKKO pour '+esc(qosMonthName(m))+' '+y+'.</span></div></div>'; return; }
-      h += '<div class="qos-line-kpis">'+
-          '<div><i>CHOKKO du mois</i>'+(st.pct===null? '<b>-</b>' : '<b class="qos-lv-'+st.level+'">'+pct2(st.pct).replace('.',',')+' %</b>')+'<span class="tiny">obj. '+String(st.obj).replace('.',',')+' % '+qosDelta(st.pct, st.prevPct, ' pt', true)+'</span></div>'+
-          '<div><i>Pièces NC</i><b>'+qosNum(st.nc)+'</b><span class="tiny">'+qosDelta(st.nc, st.prevNc, '', false)+'</span></div>'+
-          '<div><i>Production</i><b>'+qosNum(st.prod)+'</b><span class="tiny">pièces</span></div>'+
-        '</div></div>';
-      h += st.top.length ? '<table class="qos-mini"><thead><tr><th>Poste / défaut</th><th>NC</th><th>Part</th><th>vs M-1</th><th>Actions</th><th class="qos-noprint"></th></tr></thead><tbody>'+
-        st.top.slice(0, QOS_TOP).map(function(t){
-          var note = chokkoNote(l, t.id, y, m);
-          return '<tr><td><b>'+esc(t.id)+'</b>'+(t.nom? ' - '+esc(t.nom) : '')+(note && (note.texte||'').trim()? '<div class="tiny qos-note" title="Actions menées saisies dans le CHOKKO">↳ '+esc(note.texte.trim().split('\n')[0].slice(0,140))+'</div>' : '')+'</td>'+
-            '<td><b>'+qosNum(t.nc)+'</b></td><td>'+qosTrunc(t.part,1).toString().replace('.',',')+' %</td><td>'+qosDelta(t.nc, t.prev, '', false)+'</td><td>'+linkedTxt(actionsLinkedTo('chokko', l+'|'+t.id))+'</td>'+
-            '<td class="qos-noprint"><button class="btn small" data-action="qos-act" data-type="chokko" data-sid="'+esc(s.id)+'" data-ligne="'+esc(l)+'" data-ref="'+esc(t.id)+'" data-label="'+esc(t.id+(t.nom? ' - '+t.nom : ''))+'">+ Action</button></td></tr>';
-        }).join('')+'</tbody></table>' : '<p class="tiny">Aucun défaut saisi.</p>';
-      h += '</div>';
-    });
-    h += '<div class="qos-zone-acts"><div class="qos-act-head"><b>Actions CHOKKO en cours ('+enCours(chkActs).length+')</b><span class="tiny">'+closesTxt(chkActs)+'</span></div>'+actTable(chkActs, 'Aucune action CHOKKO en cours.')+'</div></section>';
-    // ===== Zone 2 : COÛT REBUT =====
-    var rebActs = acts.filter(isRebut);
-    h += '<section class="qos-zone qos-zone-reb'+(stats.length>=3? ' qos-zone-break' : '')+'"><div class="qos-zone-head"><span class="qos-zone-num">2</span><div><b>COÛT REBUT · '+esc(s.nom)+'</b><span>Montants rebutés par code défaut et coût par pièce</span></div></div>';
-    stats.forEach(function(st){
-      var l = st.ligne, hasReb = st.rebutTotal>0 || st.cpp;
-      h += '<div class="qos-line"><div class="qos-line-head"><div class="qos-line-name">'+esc(l)+'</div>';
-      if(!hasReb){ h += '<span class="tiny">Aucun coût rebut saisi pour '+esc(qosMonthName(m))+' '+y+'.</span></div></div>'; return; }
-      h += '<div class="qos-line-kpis">'+
-          '<div><i>Coût rebut</i><b class="qos-eur">'+(st.rebutTotal? qosEur(st.rebutTotal) : '-')+'</b><span class="tiny">'+(st.rebutTotal? qosDelta(st.rebutTotal, st.rebutPrev||0, ' €', false) : '')+'</span></div>'+
-          '<div><i>Coût / pièce</i><b class="qos-eur">'+qosCpp(st.cpp)+'</b><span class="tiny">obj. '+qosCpp(st.cppObj)+'</span></div>'+
-        '</div></div>';
-      var rr = st.rebut.rows.slice(0, QOS_TOP);
-      h += rr.length ? '<table class="qos-mini"><thead><tr><th>Code défaut</th><th>Montant</th><th>Part</th><th>Actions</th><th class="qos-noprint"></th></tr></thead><tbody>'+
-        rr.map(function(r){
-          return '<tr><td>'+esc(r.label)+'</td><td class="qos-eur"><b>'+qosEur(r.value)+'</b></td><td>'+qosTrunc(r.pct,1).toString().replace('.',',')+' %</td><td>'+linkedTxt(actionsLinkedTo('rebut', l+'|'+r.key))+'</td>'+
-            '<td class="qos-noprint"><button class="btn small" data-action="qos-act" data-type="rebut" data-sid="'+esc(s.id)+'" data-ligne="'+esc(l)+'" data-ref="'+esc(r.key)+'" data-label="'+esc(r.label)+'">+ Action</button></td></tr>';
-        }).join('')+'</tbody></table>' : '<p class="tiny">Aucun code défaut saisi.</p>';
-      h += '</div>';
-    });
-    h += '<div class="qos-zone-acts"><div class="qos-act-head"><b>Actions coût rebut en cours ('+enCours(rebActs).length+')</b><span class="tiny">'+closesTxt(rebActs)+'</span></div>'+actTable(rebActs, 'Aucune action coût rebut en cours.')+'</div></section>';
+    var chkActs = acts.filter(function(a){ return !isRebut(a); }), rebActs = acts.filter(isRebut);
+    h += '<div class="qos-lcard qos-acts-card"><div class="qos-lcard-name">'+esc(s.nom)+' · Actions en cours</div>'+
+      '<div class="qos-half qos-half-chk"><div class="qos-band-h">CHOKKO · '+enCours(chkActs).length+' action(s) <span>'+closesTxt(chkActs)+'</span></div><div class="qos-half-body">'+actTable(chkActs, 'Aucune action CHOKKO en cours.')+'</div></div>'+
+      '<div class="qos-half qos-half-reb"><div class="qos-band-h">COÛT REBUT · '+enCours(rebActs).length+' action(s) <span>'+closesTxt(rebActs)+'</span></div><div class="qos-half-body">'+actTable(rebActs, 'Aucune action coût rebut en cours.')+'</div></div></div>';
     return h;
   });
 }
