@@ -289,7 +289,7 @@ tr.alert-row.expanded .chev{transform:rotate(90deg);}
   .chokko-synth-table th{background:#D9E1F2; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
   .chokko-synth-table .n{text-align:right; white-space:nowrap;}
   .chokko-synth-table td.n b{color:#B23B2E;}
-  .chokko-synth-table tr.a td{background:#F3E7DC; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .chokko-synth-table tr.a td{background:#DCE4F4; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
   .chokko-synth-table tr.t td{font-weight:700; border-top:2px solid #555;}
 }
 
@@ -521,7 +521,7 @@ tr.releve-recap-sel td:first-child{font-weight:700; box-shadow:inset 4px 0 0 #1F
   .mr-table th{background:#D9E1F2; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
   .mr-table .n{text-align:right; white-space:nowrap;}
   .mr-table tr{break-inside:avoid;}
-  .mr-a td{background:#F3E7DC; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .mr-a td{background:#DCE4F4; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
   .mr-chart{width:100%; height:auto; border:1px solid #ddd; margin:4px 0;}
   .mr-reading{background:#F2F2F2; padding:6px 9px; border-radius:4px; margin:6px 0; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
   .mr-dim{color:#666;} .mr-small{font-size:9.5px;}
@@ -1183,7 +1183,7 @@ tr.releve-cur-week td:first-child{font-weight:700;}
 .pareto-table td{padding:6px 6px; border-bottom:1px solid var(--border);}
 .pareto-table .num{text-align:right; font-family:var(--mono); white-space:nowrap;}
 .pareto-row-A td{background:rgba(178,118,74,.08);}
-.pareto-a{display:inline-block; min-width:16px; padding:0 4px; border-radius:4px; background:#B2764A; color:#fff; font-size:10.5px; font-weight:700; text-align:center;}
+.pareto-a{display:inline-block; min-width:16px; padding:0 4px; border-radius:4px; background:#17368A; color:#fff; font-size:10.5px; font-weight:700; text-align:center;}
 @media (max-width:1100px){ .pareto-layout{grid-template-columns:1fr;} .pareto-table-wrap{max-height:none;} }
 #pareto-card:fullscreen{background:#fff; padding:28px 36px; overflow:auto;}
 #pareto-card:fullscreen .pareto-chart{height:62vh !important;}
@@ -1195,10 +1195,15 @@ tr.releve-cur-week td:first-child{font-weight:700;}
 @media print{
   body.print-pareto-sheet > *:not(#pareto-print-sheet){display:none !important;}
   body.print-pareto-sheet #pareto-print-sheet{display:block !important; font-family:Arial, Helvetica, sans-serif; color:#000;}
-  .pps-body{display:grid; grid-template-columns:62% 1fr; gap:10px; align-items:start;}
+  .pps-body{display:grid; grid-template-columns:58% minmax(0,1fr); gap:10px; align-items:start;}
+  .pps-body > *{min-width:0;}
+  .pps-table{width:100%; table-layout:fixed; border-collapse:collapse;}
+  .pps-table th:nth-child(1), .pps-table td:nth-child(1){width:18px;}
+  .pps-table th:nth-child(n+3), .pps-table td:nth-child(n+3){width:40px; text-align:right; white-space:nowrap;}
+  .pps-table td:nth-child(2){word-break:break-word;}
   .pps-img{width:100%; height:auto; border:1px solid #ccc;}
   .pps-table td, .pps-table th{font-size:9.5px; padding:2px 4px;}
-  .pps-a td{background:#F3E7DC; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .pps-a td{background:#DCE4F4; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
 }
 .ad-verif{margin-top:16px; padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm, 8px); background:var(--card, #fff);}
 .ad-linked{margin-top:14px; padding-top:12px; border-top:1px solid var(--border);}
@@ -3470,7 +3475,7 @@ function renderResultatsCharts(){
   if(!ctxEvol || !ctxComp) return;
   if(chartProprEvol){ chartProprEvol.destroy(); chartProprEvol=null; }
   if(chartProprComp){ chartProprComp.destroy(); chartProprComp=null; }
-  var lineColors = {MCU1:'#1F5C5C', MCU2:'#2E7D4F', MCU3:'#B8730A'};
+  var lineColors = {MCU1:ACURION_BLUE, MCU2:ACURION_TURQ, MCU3:'#7A8FC4'};
   var rs = DATA.resultats.filter(function(r){ return r.annee===resultsYear || (r.annee===undefined && resultsYear===Number(todayStr().slice(0,4))); });
   var lignes = proprLines().filter(function(l){ return chartProprLigneFilter.indexOf(l)>=0; });
   try{
@@ -4044,7 +4049,7 @@ function renderContaminationCharts(){
   if(chartContam){ chartContam.destroy(); chartContam=null; }
   try{
     var months = MONTHS_FR.map(function(m){return m.slice(0,3);});
-    var palette = ['#1F5C5C','#2E7D4F','#B8730A','#B23B2E','#6E6A60','#7B4FA3','#3B6FA0','#A0527A'];
+    var palette = [ACURION_BLUE, ACURION_TURQ, '#7A8FC4', '#1F5C5C', '#6E6A60','#7B4FA3','#A0527A','#B23B2E'];
     var rs = DATA.contamination.filter(function(c){ return c.annee===resultsYear; });
     var combos = CONTAM_COMBOS.filter(function(c){
       var lOk = !chartContamFilters.lignes.length || chartContamFilters.lignes.indexOf(c.ligne)>=0;
@@ -4360,7 +4365,7 @@ function renderParticulesCharts(){
         .sort(function(a,b){ return (a.datePose||'').localeCompare(b.datePose||''); });
       if(!items.length){ return; }
       var weeks = items.map(function(p){ return 'S'+isoWeekInfo(p.datePose||p.dateRetrait||todayStr()).week; });
-      var palette = ['#1F5C5C','#B8730A','#7B4FA3','#2E7D4F','#B23B2E'];
+      var palette = [ACURION_BLUE, ACURION_TURQ, '#7A8FC4', '#1F5C5C', '#7B4FA3'];
       var datasets = particulePostesForLigne(l).map(function(poste, i){
         return {label:poste, data:items.map(function(p){ return p.poste===poste? p.nbParticules : null; }),
           borderColor: palette[i%palette.length], backgroundColor:'transparent', borderWidth:2, pointRadius:4, spanGaps:true};
@@ -5811,7 +5816,7 @@ function renderPerfChart(){
   try{
     var lines = secteurLines();
     var rs = bySecteur(DATA.perf).filter(function(r){ return r.annee===perfYear; });
-    var palette = ['#1F5C5C','#2E7D4F','#B8730A','#B23B2E','#7B4FA3','#3B6FA0','#A0527A','#6E6A60'];
+    var palette = [ACURION_BLUE, ACURION_TURQ, '#7A8FC4', '#1F5C5C', '#7B4FA3','#A0527A','#6E6A60','#B23B2E'];
     var datasets = lines.map(function(l,i){
       return {label:l, data:MONTHS_FR.map(function(m,mi){
           var r = rs.find(function(x){return x.ligne===l && x.mois===mi;});
@@ -7104,7 +7109,9 @@ var PARETO_SOURCES = [
   {id:'actions_late',    group:'Qualité',    label:"Plan d'actions · actions en retard par responsable", unit:'actions', tab:'actions', period:false, lines:'secteur'}
 ];
 var PARETO_PERIODS = [['mois','Mois'],['3m','3 mois glissants'],['annee','Année']];
-var PARETO_COLOR_A = '#B2764A', PARETO_COLOR_B = '#E6D5C6', PARETO_COLOR_OTHER = '#CFCAC2', PARETO_COLOR_CUM = '#1F3864';
+// Couleurs du logo Acurion
+var ACURION_BLUE = '#17368A', ACURION_TURQ = '#45A0A2';
+var PARETO_COLOR_A = ACURION_BLUE, PARETO_COLOR_B = '#A9D7D8', PARETO_COLOR_OTHER = '#CFCAC2', PARETO_COLOR_CUM = ACURION_TURQ;
 var paretoState = {src:null, ligne:'', period:'mois', month:null};
 var paretoWidgetSrc = null;
 var chartPareto = null, chartParetoWidget = null;
@@ -8348,6 +8355,28 @@ function chokkoSynthRebutHtml(){
     '<tr class="t"><td></td><td>Total</td><td class="n"><b>'+fmtEur(res.total)+'</b></td><td class="n">100 %</td><td></td></tr></tbody></table></div>';
   return h+evo+'</div>';
 }
+// Page 4 de l'impression CHOKKO : Pareto général des défauts du mois pour la ligne
+function chokkoSynthParetoHtml(){
+  var l = chokkoLigne, y = chokkoYear, m = chokkoMonth;
+  var moisNom = MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1);
+  var res = chokkoParetoMonthRes(l, y, m);
+  var h = '<div class="print-only print-page-break chokko-synth chokko-synth-pareto">'+
+    '<div class="chokko-synth-title">Pareto des défauts - '+esc(l)+' - '+esc(moisNom)+' '+y+'</div>';
+  if(!res.total) return h+'<p>Aucun défaut saisi pour ce mois.</p></div>';
+  var tr = function(v){ return (Math.floor(v*10+1e-9)/10).toFixed(1).replace('.',',')+' %'; };
+  var partA = res.rows.filter(function(r){ return r.cls==='A'; }).reduce(function(s,r){ return s+r.value; },0);
+  h += '<div class="chokko-synth-kpis">'+
+      '<div><span>Pièces NC du mois</span><b>'+res.total.toLocaleString('fr-FR')+'</b></div>'+
+      '<div><span>Postes avec des défauts</span><b>'+res.rows.length+'</b></div>'+
+      '<div><span>Postes du groupe A (80 %)</span><b>'+res.nA+'</b></div>'+
+    '</div>'+
+    '<p class="chokko-synth-reading">'+res.nA+' poste(s) sur '+res.rows.length+' représentent '+tr(partA/res.total*100)+' des pièces NC du mois. Priorité n°1 : <b>'+esc(res.rows[0].label)+'</b> ('+res.rows[0].value.toLocaleString('fr-FR')+' pièces).</p>';
+  h += '<div class="chokko-synth-body"><div class="chokko-synth-chart">'+rptChartImage(paretoChartConfig(res, {unit:'pièces'}, false), 1300, 560)+'</div>'+
+    '<table class="chokko-synth-table"><thead><tr><th>#</th><th>Poste / défaut</th><th class="n">NC</th><th class="n">%</th><th class="n">Cumul</th></tr></thead><tbody>'+
+    res.rows.map(function(r, i){ return '<tr'+(r.cls==='A'?' class="a"':'')+'><td>'+(i+1)+'</td><td>'+esc(r.label)+'</td><td class="n"><b>'+r.value.toLocaleString('fr-FR')+'</b></td><td class="n">'+tr(r.pct)+'</td><td class="n">'+tr(r.cum)+'</td></tr>'; }).join('')+
+    '<tr class="t"><td></td><td>Total</td><td class="n"><b>'+res.total.toLocaleString('fr-FR')+'</b></td><td class="n">100 %</td><td></td></tr></tbody></table></div>';
+  return h+'</div>';
+}
 var chokkoPrintRestore = null;
 // Attend que les images (graphiques convertis) soient prêtes : sinon le navigateur imprime des cadres vides
 function waitImages(root){
@@ -8384,8 +8413,8 @@ async function printChokkoSynthese(){
   }
   var host = document.querySelector('#view .section') || document.getElementById('view');
   var div = document.createElement('div'); div.id = 'chokko-synth-print';
-  // Page 3 : coût rebut puis actions menées
-  div.innerHTML = chokkoSynthRebutHtml() + chokkoSynthActionsHtml();
+  // Page 3 : coût rebut puis actions menées ; page 4 : Pareto des défauts du mois
+  div.innerHTML = chokkoSynthRebutHtml() + chokkoSynthActionsHtml() + chokkoSynthParetoHtml();
   host.appendChild(div);
   // En-tête imprimé avec le logo Acurion ; la colonne ACTIONS des tableaux est masquée (reprise dans un tableau à part)
   var head = document.createElement('div'); head.id = 'chokko-print-head'; head.className = 'print-only';
@@ -9218,7 +9247,7 @@ function renderChokkoDefChart(){
 function buildChokkoDefChartConfig(forPrint, posteId){
   var series = chokkoDefFill(chokkoLigne, posteId || chokkoDefPoste, chokkoDefBucketsFor(chokkoDefRange()));
   var trend = chokkoDefTrendLine(series);
-  var ds = [{type:'bar', label:'Défauts', data:series.map(function(b){ return b.days? b.n : null; }), backgroundColor:series.map(function(b){ return b.inProgress ? '#B2764A55' : '#B2764ACC'; }), borderColor:'#B2764A', borderWidth:1, borderRadius:3, order:2}];
+  var ds = [{type:'bar', label:'Défauts', data:series.map(function(b){ return b.days? b.n : null; }), backgroundColor:series.map(function(b){ return b.inProgress ? ACURION_TURQ+'66' : ACURION_TURQ; }), borderColor:'#B2764A', borderWidth:1, borderRadius:3, order:2}];
   if(trend){
     ds.push({type:'line', label:'Tendance', data:series.map(function(b, i){ return (i>=trend.first && i<=trend.last) ? Math.max(0, Math.round((trend.a*i+trend.b)*10)/10) : null; }),
       borderColor:'#1F3864', borderDash:[7,5], borderWidth:2, pointRadius:0, spanGaps:true, order:1});
@@ -12735,7 +12764,7 @@ RENDERERS.ateq = function(){
       '<div style="display:flex; align-items:baseline; gap:10px; margin:8px 0;"><div class="val" style="font-size:26px;">'+totalCur+'</div><div class="tiny">défauts cumulés</div></div>'+
       '<div class="tiny" style="margin-bottom:4px;">Moyenne : '+avg+' / jour · Taux 2nd passage : <b style="color:var(--'+(tauxCur>20?'danger':tauxCur>10?'warn':'ok')+');">'+tauxCur+'%</b></div>'+
       trendBadge(totalCur, totalPrev)+
-      '<div style="margin-top:14px;">'+svgBarChart(weeklySeries(l,8), l==='MCU1'?'#1F5C5C':'#B8730A')+'</div>'+
+      '<div style="margin-top:14px;">'+svgBarChart(weeklySeries(l,8), l==='MCU1'?ACURION_BLUE:ACURION_TURQ)+'</div>'+
       '<div class="tiny" style="text-align:center;">Total par semaine (8 dernières semaines)</div>'+
       '</div>';
   });
@@ -12933,10 +12962,10 @@ function renderAteqCharts(){
         type:'line',
         data:{labels:labels, datasets:[
           {label:'MCU1', data:s1.map(function(s){return s.total;}),
-            borderColor:'#1F5C5C', backgroundColor:'#1F5C5C18', borderWidth:2,
+            borderColor:ACURION_BLUE, backgroundColor:ACURION_BLUE+'18', borderWidth:2,
             pointRadius:2, pointHoverRadius:4, fill:true, tension:0.2, order:2},
           {label:'MCU2', data:s2.map(function(s){return s.total;}),
-            borderColor:'#B8730A', backgroundColor:'#B8730A18', borderWidth:2,
+            borderColor:ACURION_TURQ, backgroundColor:ACURION_TURQ+'18', borderWidth:2,
             pointRadius:2, pointHoverRadius:4, fill:true, tension:0.2, order:2},
           Object.assign(criseDataset(s1,'MCU1','#B23B2E'), {order:1}),
           Object.assign(criseDataset(s2,'MCU2','#E05020'), {order:1})
@@ -12994,10 +13023,10 @@ function renderAteqCharts(){
         type:'line',
         data:{labels:labels, datasets:[
           {label:'MCU1 - 2nd %', data:s1.map(function(s){return s.taux;}),
-            borderColor:'#1F5C5C', backgroundColor:'#1F5C5C15', borderWidth:2,
+            borderColor:ACURION_BLUE, backgroundColor:ACURION_BLUE+'15', borderWidth:2,
             pointRadius:2, spanGaps:true, fill:true, tension:0.25},
           {label:'MCU2 - 2nd %', data:s2.map(function(s){return s.taux;}),
-            borderColor:'#B8730A', backgroundColor:'#B8730A15', borderWidth:2,
+            borderColor:ACURION_TURQ, backgroundColor:ACURION_TURQ+'15', borderWidth:2,
             pointRadius:2, spanGaps:true, fill:true, tension:0.25},
           {label:'Seuil 20%', data:Array(pd.days).fill(20),
             borderColor:'#B23B2E88', borderWidth:1.5, borderDash:[5,4], pointRadius:0}
@@ -14264,7 +14293,7 @@ function renderCausesBarChart(){
     }
     chartCausesBar = new Chart(ctx, {
       type:'bar',
-      data:{labels:sorted.map(function(s){return s.label;}), datasets:[{data:sorted.map(function(s){return s.count;}), backgroundColor:'#B2764A'}]},
+      data:{labels:sorted.map(function(s){return s.label;}), datasets:[{data:sorted.map(function(s){return s.count;}), backgroundColor:ACURION_BLUE}]},
       options:{indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, title:{display:true, text:'Nombre de défauts'}}}}
     });
   }catch(err){ console.error('causes bar error', err); }
@@ -14295,7 +14324,7 @@ function renderTrendChart(){
       data:{labels:months.map(function(m){return m.label;}),
         datasets:[
           {type:'line', label:'Score propreté moyen (%)', data:proprScores, borderColor:'#1F5C5C', backgroundColor:'#1F5C5C22', borderWidth:2, pointRadius:3, yAxisID:'y', spanGaps:true},
-          {type:'bar', label:'Pièces NC CHOKKO (total mensuel)', data:ateqDefauts, backgroundColor:'#B8730A66', borderColor:'#B8730A', borderWidth:1, yAxisID:'y1'}
+          {type:'bar', label:'Pièces NC CHOKKO (total mensuel)', data:ateqDefauts, backgroundColor:ACURION_TURQ+'88', borderColor:ACURION_TURQ, borderWidth:1, yAxisID:'y1'}
         ]},
       options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
         scales:{
