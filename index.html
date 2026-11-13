@@ -1264,6 +1264,8 @@ tr.releve-cur-week td:first-child{font-weight:700;}
 .refs-table th{position:sticky; top:0; background:#17368A; color:#fff; text-align:left; padding:7px 8px; z-index:1;}
 .refs-table td{padding:6px 8px; border-top:1px solid var(--border); vertical-align:top;}
 .refs-table tr:nth-child(even) td{background:#F4F7FB;}
+.refs-table tr.refs-grp td{background:#C9D3EE !important; color:#2F4A8C; font-weight:700; padding:5px 8px;}
+.refs-table tr.refs-grp td span{font-weight:400; font-size:11.5px;}
 .refs-chip{display:inline-block; margin:1px 6px 1px 0; padding:1px 7px; border-radius:10px; background:#E3F1F1; color:#1D4F50; font-size:11.5px; white-space:nowrap;}
 .refs-chip b{font-weight:600; color:#17368A; margin-right:3px;}
 .refs-empty{padding:24px; text-align:center; border:1px dashed var(--border-strong); border-radius:var(--radius-sm); margin-top:8px;}
@@ -6795,6 +6797,18 @@ var SAP_BOM = (function(){
   ['E800017445','E800018493','E800018667','E800018525','E800018245','E800019852','E800019722','E800020294','E800019732'].forEach(function(r){ add(r,'162R SPEC B', c162('6800015738')); });
   add('SPEC A','162R SPEC A', c162('6800015584'));
   add('SPEC B','162R SPEC B', c162('6800015738'));
+  // N° PGR (programme) et tableau de rattachement, relevés sur la liste papier des références MCU
+  var PGR = {'6900004161':11,'6900004162':12,'6900004164':13,'6900004163':14,'6900004778':22,'6900004779':23,'6900004810':24,'E800018199':71,
+    'E800017578':36,'E800017579':37,'E800017580':38,'E800018344':51,'E800018342':52,'E800018343':53,'E800018331':54,'E800018334':55,'E800018338':56,'E800019083':57,'E800019085':58,'E800019087':59,
+    'E800020374':41,'E800020372':42,'E800020373':43,'E800019174':44,'E800019172':45,'E800019173':46,'E800019406':47,'E800019407':48,'E800019408':49,'E800019835':61,'E800019833':62,'E800019834':63,
+    'E800019934':64,'E800019932':65,'E800019933':66,'E800020125':67,'E800020127':68,'E800020126':69,
+    'E800017671':31,'E800018666':45,'E800018590':48,'E800017673':36,'E800019745':54,'E800020381':57,
+    'E800017445':33,'E800018493':47,'E800018667':49,'E800018525':50,'E800018245':37,'E800019852':53,'E800019722':55,'E800020294':56};
+  B.forEach(function(b){
+    if(PGR[b.ref]!==undefined) b.pgr = String(PGR[b.ref]);
+    var fam = String(b.desig).split(/[\s-]+/)[0];
+    b.groupe = (fam==='144P' || fam==='143EE') ? '144P / 143EE' : fam;
+  });
   return B;
 })();
 // Nomenclatures par secteur : celles réglées dans l'assistant ; MCU repart de la liste d'origine tant que rien n'a été modifié
@@ -6833,22 +6847,67 @@ var refsUi = {open:false, q:'', preview:null, busy:false};
 function refsNorm(s){ return String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,''); }
 function refsKey(r){ return String(r==null?'':r).trim().toUpperCase(); }
 var REFS_TYPE_ALIASES = {pcb:['pcb','pwb','carte','cartepcb','cartepwb'], carterMoteur:['cartermoteur','cartermoteurass','cartermoteurassemble']};
-// Colonnes : types utilisés (ordre SAP_COMP_TYPES) × nombre max d'occurrences par réf.
-function refsColumns(list, template){
-  var cols = [];
+// Métadonnées : PGR et tableau (groupe). Repli sur la liste d'origine MCU pour les listes déjà enregistrées sans ces champs.
+function refsSeedFor(ref, sid){
+  if((sid||currentSecteur)!=='MCU') return null;
+  var k = refsKey(ref);
+  return SAP_BOM.filter(function(b){ return refsKey(b.ref)===k; })[0] || null;
+}
+function refsFamily(desig){ return String(desig||'').trim().split(/[\s-]+/)[0] || ''; }
+function refsPgr(b, sid){ if(b.pgr!=null && b.pgr!=='') return String(b.pgr); var sd = refsSeedFor(b.ref, sid); return sd && sd.pgr ? String(sd.pgr) : ''; }
+function refsGroupe(b, sid){ if(b.groupe) return b.groupe; var sd = refsSeedFor(b.ref, sid); if(sd && sd.groupe && refsFamily(sd.desig)===refsFamily(b.desig)) return sd.groupe; return refsFamily(b.desig) || 'Autres'; }
+function refsGroups(list){
+  var order = [], by = {};
+  list.forEach(function(b){ var g = refsGroupe(b); if(!by[g]){ by[g] = []; order.push(g); } by[g].push(b); });
+  return order.map(function(g){ return {name:g, rows:by[g]}; });
+}
+function refsSplitVal(v){ var m = String(v||'').match(/^(.*?)\s*\((.+)\)\s*$/); return m ? {code:m[1].trim(), suf:m[2].trim()} : {code:String(v||'').trim(), suf:''}; }
+var REFS_XLS_LABELS = {carter:'CARTER', moteur:'MOTEUR', carterMoteur:'CARTER MOTEUR ASS', bague:'BAGUE', relais:'RELAIS', pcb:'PCB', ecu:'ECU', capot:'CAPOT', heatsink:'HEATSINK', vis:'VIS', etiquette:'ETIQUETTE', silicone:'SILICONE', pt:'PT'};
+function refsXlsLabel(t){ return REFS_XLS_LABELS[t] || String(sapTypeLabel(t)).normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase(); }
+// Colonnes d'un tableau : ordre des types de SAP_COMP_TYPES ; les vis ont une colonne par dimension (« VIS M3 x 13,5 »)
+function refsTableCols(rows, template){
   var types = SAP_COMP_TYPES.map(function(t){ return t[0]; });
-  (list||[]).forEach(function(b){ (b.comps||[]).forEach(function(c){ if(types.indexOf(c[0])<0) types.push(c[0]); }); });
+  rows.forEach(function(b){ (b.comps||[]).forEach(function(c){ if(types.indexOf(c[0])<0) types.push(c[0]); }); });
+  var cols = [];
   types.forEach(function(t){
-    var n = 0;
-    (list||[]).forEach(function(b){ var k = (b.comps||[]).filter(function(c){ return c[0]===t; }).length; if(k>n) n = k; });
-    if(template){
-      var base = {carter:1, moteur:1, bague:1, relais:1, pcb:1, capot:1, vis:3};
-      if(base[t]) n = Math.max(n, base[t]);
-      else if(SAP_COMP_TYPES_BASE && !SAP_COMP_TYPES_BASE.some(function(x){ return x[0]===t; })) n = Math.max(n, 1); // types propres au secteur
+    var label = refsXlsLabel(t);
+    if(t==='pcb'){
+      var pv = []; rows.forEach(function(b){ (b.comps||[]).forEach(function(c){ if(c[0]==='pcb') pv.push(refsSplitVal(c[1]).suf); }); });
+      if(pv.length && pv.every(function(x){ return /^D\s?\d/i.test(x); })) label = 'PWB';
     }
-    for(var i=0;i<n;i++) cols.push({type:t, idx:i, label:sapTypeLabel(t)+(n>1? ' '+(i+1) : '')});
+    if(t==='vis'){
+      var specs = [], nPlain = 0;
+      rows.forEach(function(b){
+        var plain = 0, seen = {};
+        (b.comps||[]).forEach(function(c){ if(c[0]!=='vis') return; var sp = refsSplitVal(c[1]).suf;
+          if(sp){ seen[sp] = (seen[sp]||0)+1; var have = specs.filter(function(x){ return x.spec===sp; }).length; if(seen[sp]>have) specs.push({spec:sp, idx:seen[sp]-1}); }
+          else plain++; });
+        if(plain>nPlain) nPlain = plain;
+      });
+      if(template && !specs.length) nPlain = Math.max(nPlain, 3);
+      specs.forEach(function(x){ cols.push({type:'vis', spec:x.spec, idx:x.idx, label:'VIS '+x.spec}); });
+      for(var v=0; v<nPlain; v++) cols.push({type:'vis', spec:'', idx:v, label: nPlain>1? 'VIS '+(v+1) : 'VIS'});
+      return;
+    }
+    var n = 0;
+    rows.forEach(function(b){ var k = (b.comps||[]).filter(function(c){ return c[0]===t; }).length; if(k>n) n = k; });
+    if(template){
+      if({carter:1, moteur:1, bague:1, relais:1, pcb:1, capot:1}[t]) n = Math.max(n, 1);
+      else if(SAP_COMP_TYPES_BASE && !SAP_COMP_TYPES_BASE.some(function(x){ return x[0]===t; })) n = Math.max(n, 1);
+    }
+    for(var i=0;i<n;i++) cols.push({type:t, spec:null, idx:i, label:label+(n>1? ' '+(i+1) : '')});
   });
   return cols;
+}
+function refsCellFor(b, col){
+  var comps = (b.comps||[]).filter(function(c){ return c[0]===col.type; });
+  if(col.type==='vis'){
+    var m = comps.filter(function(c){ return refsSplitVal(c[1]).suf===(col.spec||''); })[col.idx];
+    return m ? (col.spec ? refsSplitVal(m[1]).code : String(m[1])) : '';
+  }
+  var c = comps[col.idx]; if(!c) return '';
+  var sv = refsSplitVal(c[1]);
+  return sv.suf ? sv.code+'\n'+sv.suf : sv.code;
 }
 function refsCompsTxt(b){
   var groups = {};
@@ -6860,7 +6919,7 @@ function refsModalHtml(){
   var q = refsNorm(refsUi.q);
   var rows = list.filter(function(b){
     if(!q) return true;
-    return refsNorm(b.ref+' '+b.desig+' '+(b.comps||[]).map(function(c){ return c[1]; }).join(' ')).indexOf(q)>=0;
+    return refsNorm(b.ref+' '+b.desig+' '+refsPgr(b)+' '+(b.comps||[]).map(function(c){ return c[1]; }).join(' ')).indexOf(q)>=0;
   });
   var h = '<div class="modal-box refs-box">'+
     '<div class="refs-head"><div><h3 style="margin:0;">Références &amp; composants - '+esc(getSecteur(currentSecteur)? getSecteur(currentSecteur).nom||currentSecteur : currentSecteur)+'</h3>'+
@@ -6879,9 +6938,13 @@ function refsModalHtml(){
   if(!list.length){
     h += '<div class="refs-empty">Aucune référence pour ce secteur. Téléchargez le <b>modèle vierge</b>, remplissez-le dans Excel (une ligne par référence) puis importez-le.</div>';
   } else {
-    h += '<div class="table-wrap refs-tablewrap"><table class="refs-table"><thead><tr><th>Référence</th><th>Désignation</th><th>Composants</th></tr></thead><tbody>'+
-      rows.map(function(b){ return '<tr><td class="mono"><b>'+esc(b.ref)+'</b></td><td>'+esc(b.desig||'')+'</td><td>'+(refsCompsTxt(b)||'<span class="tiny">-</span>')+'</td></tr>'; }).join('')+
-      (rows.length? '' : '<tr><td colspan="3" class="tiny" style="text-align:center; padding:16px;">Aucune référence ne correspond.</td></tr>')+
+    var groups = refsGroups(rows);
+    h += '<div class="table-wrap refs-tablewrap"><table class="refs-table"><thead><tr><th>Désignation</th><th>Réf. JALY</th><th>PGR</th><th>Composants</th></tr></thead><tbody>'+
+      groups.map(function(g){
+        return '<tr class="refs-grp"><td colspan="4">'+esc(g.name)+' <span>· '+g.rows.length+' réf.</span></td></tr>'+
+          g.rows.map(function(b){ return '<tr><td>'+esc(b.desig||'')+'</td><td class="mono"><b>'+esc(b.ref)+'</b></td><td class="mono"><b>'+esc(refsPgr(b))+'</b></td><td>'+(refsCompsTxt(b)||'<span class="tiny">-</span>')+'</td></tr>'; }).join('');
+      }).join('')+
+      (rows.length? '' : '<tr><td colspan="4" class="tiny" style="text-align:center; padding:16px;">Aucune référence ne correspond.</td></tr>')+
     '</tbody></table></div>';
   }
   return h + '</div>';
@@ -6899,7 +6962,7 @@ function refsPreviewHtml(){
     '<div class="refs-kpi danger"><b>'+p.errors.length+'</b><span>erreur'+(p.errors.length>1?'s':'')+'</span></div>'+
   '</div>';
   if(p.errors.length) h += '<details open class="refs-det danger"><summary>Erreurs (lignes non importées ou corrigées)</summary>'+lst(p.errors, function(e){ return '<li>'+esc(e)+'</li>'; })+'</details>';
-  if(p.ignoredCols.length) h += '<details class="refs-det"><summary>Colonnes non reconnues, ignorées ('+p.ignoredCols.length+')</summary><p class="tiny" style="margin:6px 0;">'+p.ignoredCols.map(esc).join(' · ')+'</p><p class="tiny">Noms acceptés : Référence, Désignation, '+SAP_COMP_TYPES.map(function(t){ return t[1]; }).join(', ')+' (avec un numéro si plusieurs : Vis 1, Vis 2…).</p></details>';
+  if(p.ignoredCols.length) h += '<details class="refs-det"><summary>Colonnes non reconnues, ignorées ('+p.ignoredCols.length+')</summary><p class="tiny" style="margin:6px 0;">'+p.ignoredCols.map(esc).join(' · ')+'</p><p class="tiny">Titres acceptés : DESIGNATION, REF JALY, PGR, '+SAP_COMP_TYPES.map(function(t){ return refsXlsLabel(t[0]); }).join(', ')+', PWB (vis : « VIS M3 x 13,5 » ou VIS 1, VIS 2…).</p></details>';
   if(p.added.length) h += '<details class="refs-det"><summary>Nouvelles références ('+p.added.length+')</summary>'+lst(p.added, function(b){ return '<li><b class="mono">'+esc(b.ref)+'</b> '+esc(b.desig||'')+' · '+(b.comps||[]).length+' composant(s)</li>'; })+'</details>';
   if(p.modified.length) h += '<details class="refs-det"><summary>Références modifiées ('+p.modified.length+')</summary>'+lst(p.modified, function(m){ return '<li><b class="mono">'+esc(m.ref)+'</b> '+esc(m.what)+'</li>'; })+'</details>';
   if(p.removed.length) h += '<details class="refs-det"><summary>Absentes du fichier ('+p.removed.length+') - supprimées seulement avec « Remplacer toute la liste »</summary>'+lst(p.removed, function(b){ return '<li><b class="mono">'+esc(b.ref)+'</b> '+esc(b.desig||'')+'</li>'; })+'</details>';
@@ -6928,34 +6991,72 @@ function refsClose(){ refsUi.open = false; refsUi.preview = null; refsRender(); 
 async function refsExportExcel(template){
   if(typeof ExcelJS==='undefined'){ uiAlert('La librairie Excel n\'a pas pu être chargée (connexion internet requise). Réessayez.'); return; }
   var list = template? [] : sapBomList(currentSecteur);
-  var cols = template? refsColumns([], true) : refsColumns(list, false);
+  var groups = template? [{name:'', rows:[]}] : refsGroups(list);
   var wb = new ExcelJS.Workbook();
-  var head = {font:{bold:true, color:{argb:'FFFFFFFF'}}, fill:{type:'pattern', pattern:'solid', fgColor:{argb:'FF17368A'}}};
-  var border = {top:{style:'thin', color:{argb:'FFB7B7B7'}}, left:{style:'thin', color:{argb:'FFB7B7B7'}}, bottom:{style:'thin', color:{argb:'FFB7B7B7'}}, right:{style:'thin', color:{argb:'FFB7B7B7'}}};
-  var ws = wb.addWorksheet('Références', {views:[{state:'frozen', ySplit:1, xSplit:1}]});
-  var headers = ['Référence','Désignation'].concat(cols.map(function(c){ return c.label; }));
-  ws.columns = headers.map(function(hd, i){ return {header:hd, width: i===0? 18 : i===1? 22 : 20, style:{numFmt:'@'}}; });
-  ws.getRow(1).eachCell(function(cell){ cell.font = head.font; cell.fill = head.fill; cell.border = border; cell.alignment = {vertical:'middle'}; });
-  list.forEach(function(b){
-    var row = [String(b.ref||''), String(b.desig||'')];
-    cols.forEach(function(c){ var m = (b.comps||[]).filter(function(x){ return x[0]===c.type; })[c.idx]; row.push(m? String(m[1]) : ''); });
-    var r = ws.addRow(row); r.eachCell({includeEmpty:true}, function(cell){ cell.border = border; });
+  var ws = wb.addWorksheet('Références', {pageSetup:{orientation:'landscape', paperSize:9, fitToPage:true, fitToWidth:1, fitToHeight:0, margins:{left:0.4, right:0.4, top:0.5, bottom:0.5, header:0.2, footer:0.2}}});
+  var line = {style:'thin', color:{argb:'FF3F3F3F'}};
+  var border = {top:line, left:line, bottom:line, right:line};
+  var headFill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFC9D3EE'}};
+  var headFont = {name:'Calibri', size:10, color:{argb:'FF2F4A8C'}};
+  var widths = [16, 14, 7];
+  var r = 1;
+  groups.forEach(function(g, gi){
+    if(gi>0) r += 2;   // deux lignes vides entre les tableaux
+    var cols = refsTableCols(g.rows, template);
+    var heads = ['DESIGNATION','REF JALY','PGR'].concat(cols.map(function(c){ return c.label; }));
+    heads.forEach(function(hd, ci){
+      var cell = ws.getCell(r, ci+1); cell.value = hd; cell.font = headFont; cell.fill = headFill; cell.border = border;
+      cell.alignment = {horizontal:'center', vertical:'middle', wrapText:true};
+      if(ci>=3) widths[ci] = Math.max(widths[ci]||14, Math.min(22, hd.length+2));
+    });
+    ws.getRow(r).height = 20;
+    var first = r+1;
+    var rows = template? new Array(30).fill(null) : g.rows;
+    rows.forEach(function(b, ri){
+      var rr = first+ri;
+      var vals = b ? [String(b.desig||''), String(b.ref||''), refsPgr(b)].concat(cols.map(function(c){ return refsCellFor(b, c); })) : heads.map(function(){ return ''; });
+      var multi = false;
+      vals.forEach(function(v, ci){
+        var cell = ws.getCell(rr, ci+1);
+        cell.value = v; cell.numFmt = '@'; cell.border = border;
+        cell.font = {name:'Calibri', size:10, bold: ci===1 || ci===2};
+        cell.alignment = {horizontal:'center', vertical:'middle', wrapText:true};
+        if(String(v).indexOf('\n')>=0) multi = true;
+      });
+      ws.getRow(rr).height = multi? 27 : 16;
+    });
+    // Fusion verticale des valeurs identiques qui se suivent (désignation et composants), comme sur la liste papier
+    if(!template){
+      for(var ci=0; ci<heads.length; ci++){
+        if(ci===1 || ci===2) continue;
+        var start = 0;
+        for(var k=1; k<=rows.length; k++){
+          var prev = String(ws.getCell(first+start, ci+1).value||''), cur = k<rows.length? String(ws.getCell(first+k, ci+1).value||'') : null;
+          if(cur!==prev || !prev){
+            if(prev && k-1>start) ws.mergeCells(first+start, ci+1, first+k-1, ci+1);
+            start = k;
+          }
+        }
+      }
+    }
+    r = first + rows.length - 1;
   });
-  if(template){ for(var i=0;i<100;i++){ var r2 = ws.addRow(headers.map(function(){ return ''; })); r2.eachCell({includeEmpty:true}, function(cell){ cell.border = border; }); } }
+  widths.forEach(function(w, i){ ws.getColumn(i+1).width = w || 14; });
   var wi = wb.addWorksheet('Mode d\'emploi');
   wi.getColumn(1).width = 110;
   [
     ['Références & composants SAP - secteur '+currentSecteur, {bold:true, size:13}],
     [(template? 'Modèle vierge' : 'Extrait')+' le '+fmtDate(todayStr())+(currentUser? ' par '+currentUser.displayName : ''), {italic:true, size:9, color:{argb:'FF555555'}}],
     ['', null],
-    ['• Une ligne par référence, dans la feuille « Références ». La 1re ligne (titres des colonnes) ne doit pas être modifiée.', null],
-    ['• Référence : telle qu\'elle est saisie en prison (ex. 6900004161, E800018199, SPEC A). Obligatoire.', null],
-    ['• Une colonne par composant : le n° SAP du composant. Laisser vide si la référence n\'a pas ce composant.', null],
-    ['• Plusieurs composants du même type (ex. 3 vis) : utiliser Vis 1, Vis 2, Vis 3… On peut ajouter des colonnes (Vis 4…) en gardant le même nom suivi d\'un numéro.', null],
-    ['• Exemple : 6900004161 | 141P LP | 6800006783 | 68JALY6796 | 6800006798 | 6800006793 | 6800007863 (D020) | 6800006795', null],
-    ['• Noms de colonnes reconnus : Référence, Désignation, '+SAP_COMP_TYPES.map(function(t){ return t[1]; }).join(', ')+'.', null],
+    ['• Feuille « Références » : un ou plusieurs tableaux (un par famille de produit), chacun avec sa ligne de titres DESIGNATION | REF JALY | PGR | composants.', null],
+    ['• REF JALY : la référence telle qu\'elle est saisie en prison (ex. 6900004161, E800018199). Obligatoire. PGR : n° de programme (facultatif).', null],
+    ['• Une colonne par composant, avec le n° SAP. Laisser vide si la référence n\'a pas ce composant. Les cellules fusionnées s\'appliquent à toutes les lignes qu\'elles couvrent.', null],
+    ['• Vis : une colonne par dimension, la dimension dans le titre (ex. « VIS M3 x 13,5 »). Sans dimension : VIS 1, VIS 2…', null],
+    ['• PCB / PWB : le n° puis, à la ligne (Alt+Entrée), la version (ex. 6800018201 puis VC 3.2).', null],
+    ['• Pour ajouter une famille : laisser deux lignes vides sous le dernier tableau, recopier une ligne de titres et remplir dessous.', null],
+    ['• Titres reconnus : DESIGNATION, REF JALY (ou Référence), PGR, '+SAP_COMP_TYPES.map(function(t){ return refsXlsLabel(t); }).join(', ')+', PWB.', null],
     ['• À l\'import, l\'outil affiche un aperçu (nouvelles réf., réf. modifiées, erreurs) puis propose de fusionner ou de remplacer toute la liste.', null],
-    ['• Une colonne absente du fichier ne touche pas aux composants déjà enregistrés de ce type.', null]
+    ['• Une colonne absente d\'un tableau ne touche pas aux composants déjà enregistrés de ce type pour les réf. de ce tableau.', null]
   ].forEach(function(l, i){ var c = wi.getCell('A'+(i+1)); c.value = l[0]; if(l[1]) c.font = l[1]; c.alignment = {wrapText:true}; });
   var buf = await wb.xlsx.writeBuffer();
   var name = (template? 'Modele_references_SAP_' : 'References_SAP_')+currentSecteur+'_'+todayStr()+'.xlsx';
@@ -6965,82 +7066,126 @@ async function refsExportExcel(template){
 }
 
 // ---------- Import ----------
+function refsTypeNames(t){
+  var n = [refsNorm(t[0]), refsNorm(t[1]), refsNorm(refsXlsLabel(t[0]))].concat(REFS_TYPE_ALIASES[t[0]]||[]);
+  return n;
+}
 function refsHeaderKind(h){
-  var n = refsNorm(h);
+  var raw = String(h==null?'':h).replace(/\s+/g,' ').trim(), n = refsNorm(raw);
   if(!n) return null;
-  if(n==='ref' || n.indexOf('reference')===0 || n==='refprison' || n==='refsaisie' || n==='refmcu') return {kind:'ref'};
+  if(['ref','refs','refjaly','reference','references','refprison','refsaisie','refmcu','referencejaly','referencesaisieenprison'].indexOf(n)>=0) return {kind:'ref'};
   if(n.indexOf('designation')===0 || n==='desig' || n==='libelle' || n==='description') return {kind:'desig'};
-  var base = n.replace(/\d+$/,'');
-  for(var i=0;i<SAP_COMP_TYPES.length;i++){
-    var t = SAP_COMP_TYPES[i];
-    if(refsNorm(t[0])===base || refsNorm(t[1])===base || (REFS_TYPE_ALIASES[t[0]]||[]).indexOf(base)>=0) return {kind:'comp', type:t[0]};
+  if(n==='pgr' || n==='programme' || n==='prog') return {kind:'pgr'};
+  var words = raw.split(' ');
+  for(var k=Math.min(4, words.length); k>=1; k--){
+    var lab = refsNorm(words.slice(0,k).join(' '));
+    for(var i=0;i<SAP_COMP_TYPES.length;i++){
+      var t = SAP_COMP_TYPES[i];
+      if(refsTypeNames(t).indexOf(lab)>=0){
+        var rest = words.slice(k).join(' ').trim();
+        return {kind:'comp', type:t[0], spec: (/^\d*$/.test(rest) ? '' : rest)};
+      }
+    }
   }
   return {kind:'unknown'};
 }
-function refsCompsSig(comps){ return (comps||[]).map(function(c){ return c[0]+'='+refsKey(c[1]); }).sort().join('|'); }
+function refsCompsSig(comps){ return (comps||[]).map(function(c){ return c[0]+'='+refsKey(c[1]).replace(/\s+/g,' '); }).sort().join('|'); }
+function refsCellToVals(v, spec){
+  return String(v||'').split(/\s*;\s*/).map(function(part){
+    var lines = part.split(/\r?\n/).map(function(x){ return x.trim(); }).filter(Boolean);
+    if(!lines.length) return '';
+    var val = lines[0] + (lines.length>1 ? ' ('+lines.slice(1).join(' ')+')' : '');
+    if(spec && !/\(.+\)\s*$/.test(val)) val += ' ('+spec+')';
+    return val;
+  }).filter(Boolean);
+}
+function refsFillMerges(ws){
+  (ws['!merges']||[]).forEach(function(m){
+    var src = ws[XLSX.utils.encode_cell(m.s)];
+    if(!src) return;
+    for(var R=m.s.r; R<=m.e.r; R++) for(var C=m.s.c; C<=m.e.c; C++){
+      if(R===m.s.r && C===m.s.c) continue;
+      ws[XLSX.utils.encode_cell({r:R, c:C})] = {t:src.t, v:src.v, w:src.w};
+    }
+  });
+}
 async function refsReadFile(file){
   if(typeof XLSX==='undefined'){ uiAlert('La librairie de lecture Excel n\'a pas pu être chargée (connexion internet requise). Réessayez.'); return; }
   var wb;
-  try{ wb = XLSX.read(new Uint8Array(await file.arrayBuffer()), {type:'array', cellDates:false, raw:false}); }
+  try{ wb = XLSX.read(new Uint8Array(await file.arrayBuffer()), {type:'array', cellDates:false}); }
   catch(e){ uiAlert('Impossible de lire ce fichier : '+e.message); return; }
-  // Feuille et ligne d'en-tête : la première qui contient une colonne « Référence »
-  var aoa = null, hr = -1;
-  for(var s=0; s<wb.SheetNames.length && hr<0; s++){
-    var a = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[s]], {header:1, raw:false, defval:''});
-    for(var r=0; r<Math.min(a.length, 15); r++){
-      if((a[r]||[]).some(function(c){ var k = refsHeaderKind(c); return k && k.kind==='ref'; })){ aoa = a; hr = r; break; }
-    }
-  }
-  if(hr<0){ uiAlert('Aucune colonne « Référence » trouvée dans le fichier. Utilisez le modèle vierge pour avoir les bonnes colonnes.'); return; }
-  var headers = aoa[hr].map(function(c){ return String(c==null?'':c).trim(); });
-  var kinds = headers.map(refsHeaderKind);
-  var refCol = kinds.findIndex(function(k){ return k && k.kind==='ref'; });
-  var desigCol = kinds.findIndex(function(k){ return k && k.kind==='desig'; });
-  var fileTypes = [];
-  kinds.forEach(function(k){ if(k && k.kind==='comp' && fileTypes.indexOf(k.type)<0) fileTypes.push(k.type); });
-  var ignoredCols = headers.filter(function(h, i){ return kinds[i] && kinds[i].kind==='unknown'; });
-  var errors = [], byRef = {}, rows = [];
-  for(var i=hr+1; i<aoa.length; i++){
-    var line = aoa[i]||[];
-    var cells = line.map(function(c){ return String(c==null?'':c).trim(); });
-    if(!cells.some(function(c){ return c; })) continue;
-    var ref = cells[refCol]||'';
-    if(!ref){ errors.push('Ligne '+(i+1)+' : référence vide, ligne ignorée.'); continue; }
-    var comps = [];
-    kinds.forEach(function(k, ci){
-      if(!k || k.kind!=='comp' || !cells[ci]) return;
-      cells[ci].split(/\s*[;\n]\s*/).forEach(function(v){ if(v) comps.push([k.type, v]); });
+  // Toutes les feuilles ; chaque ligne contenant un titre « REF » ouvre un nouveau tableau
+  var tables = [], errors = [], ignored = [];
+  wb.SheetNames.forEach(function(sn){
+    if(/mode d.emploi/i.test(sn)) return;
+    var ws = wb.Sheets[sn]; refsFillMerges(ws);
+    var aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:''});
+    var cur = null;
+    aoa.forEach(function(line, i){
+      var cells = (line||[]).map(function(c){ return String(c==null?'':c).trim(); });
+      if(!cells.some(function(c){ return c; })) return;
+      var kinds = cells.map(refsHeaderKind);
+      if(kinds.some(function(k){ return k && k.kind==='ref'; })){
+        cur = {sheet:sn, kinds:kinds, rows:[]}; tables.push(cur);
+        cells.forEach(function(c, ci){ if(kinds[ci] && kinds[ci].kind==='unknown' && ignored.indexOf(c)<0) ignored.push(c); });
+        return;
+      }
+      if(cur) cur.rows.push({line:i+1, cells:cells});
     });
-    var item = {ref:ref, desig: desigCol>=0? (cells[desigCol]||'') : null, comps:comps, line:i+1};
-    var key = refsKey(ref);
-    if(byRef[key]){
-      errors.push('Réf. '+ref+' en double (lignes '+byRef[key].line+' et '+(i+1)+') : la ligne '+(i+1)+' est retenue.');
-      rows[rows.indexOf(byRef[key])] = item;
-    } else rows.push(item);
-    byRef[key] = item;
-  }
-  if(!rows.length){ uiAlert('Aucune référence trouvée sous la ligne d\'en-tête.'+(errors.length? ' '+errors[0] : '')); return; }
+  });
+  if(!tables.length){ uiAlert('Aucune colonne « REF JALY » (ou « Référence ») trouvée dans le fichier. Utilisez le modèle vierge pour avoir les bonnes colonnes.'); return; }
+  var byRef = {}, rows = [];
+  tables.forEach(function(tb){
+    var kinds = tb.kinds;
+    var refCol = kinds.findIndex(function(k){ return k && k.kind==='ref'; });
+    var desigCol = kinds.findIndex(function(k){ return k && k.kind==='desig'; });
+    var pgrCol = kinds.findIndex(function(k){ return k && k.kind==='pgr'; });
+    var types = []; kinds.forEach(function(k){ if(k && k.kind==='comp' && types.indexOf(k.type)<0) types.push(k.type); });
+    var items = [];
+    tb.rows.forEach(function(rw){
+      var cells = rw.cells, ref = cells[refCol]||'';
+      if(!ref){ errors.push('Ligne '+rw.line+(wb.SheetNames.length>2? ' (feuille '+tb.sheet+')' : '')+' : REF JALY vide, ligne ignorée.'); return; }
+      var comps = [];
+      kinds.forEach(function(k, ci){ if(k && k.kind==='comp' && cells[ci]) refsCellToVals(cells[ci], k.spec).forEach(function(v){ comps.push([k.type, v]); }); });
+      var item = {ref:ref, desig: desigCol>=0? (cells[desigCol]||'') : null, pgr: pgrCol>=0? (cells[pgrCol]||'') : null, comps:comps, line:rw.line, types:types};
+      var key = refsKey(ref);
+      if(byRef[key]){ errors.push('REF '+ref+' en double (lignes '+byRef[key].line+' et '+rw.line+') : la ligne '+rw.line+' est retenue.'); rows[rows.indexOf(byRef[key])] = item; }
+      else rows.push(item);
+      byRef[key] = item; items.push(item);
+    });
+    // Nom du tableau : familles de produit qu'il contient (ex. « 144P / 143EE »)
+    var fams = []; items.forEach(function(it){ var f = refsFamily(it.desig); if(f && fams.indexOf(f)<0) fams.push(f); });
+    var gname = fams.join(' / ');
+    items.forEach(function(it){ it.groupe = gname; });
+  });
+  if(!rows.length){ uiAlert('Aucune référence trouvée sous les lignes de titres.'+(errors.length? ' '+errors[0] : '')); return; }
   // Comparaison avec la liste actuelle
   var cur = sapBomList(currentSecteur), curBy = {};
   cur.forEach(function(b){ curBy[refsKey(b.ref)] = b; });
   var added = [], modified = [], same = [], merged = {};
   rows.forEach(function(it){
     var old = curBy[refsKey(it.ref)];
-    var keep = old? (old.comps||[]).filter(function(c){ return fileTypes.indexOf(c[0])<0; }) : [];
-    var nb = {ref: old? old.ref : it.ref, desig: it.desig!==null? it.desig : (old? old.desig||'' : ''), comps: cfgClone(keep).concat(it.comps)};
+    var keep = old? (old.comps||[]).filter(function(c){ return it.types.indexOf(c[0])<0; }) : [];
+    var nb = {ref: old? old.ref : it.ref,
+      desig: it.desig!==null? it.desig : (old? old.desig||'' : ''),
+      pgr: it.pgr!==null? it.pgr : (old? refsPgr(old) : ''),
+      comps: cfgClone(keep).concat(it.comps)};
+    nb.groupe = it.groupe || refsFamily(nb.desig);
     merged[refsKey(it.ref)] = nb;
     if(!old){ added.push(nb); return; }
     var what = [];
     if((old.desig||'')!==nb.desig) what.push('désignation « '+(old.desig||'-')+' » → « '+(nb.desig||'-')+' »');
+    if(refsPgr(old)!==nb.pgr) what.push('PGR '+(refsPgr(old)||'-')+' → '+(nb.pgr||'-'));
+    if(refsGroupe(old)!==nb.groupe) what.push('tableau « '+refsGroupe(old)+' » → « '+nb.groupe+' »');
     if(refsCompsSig(old.comps)!==refsCompsSig(nb.comps)){
-      var o = (old.comps||[]).map(function(c){ return c[0]+'='+refsKey(c[1]); }), n2 = nb.comps.map(function(c){ return c[0]+'='+refsKey(c[1]); });
+      var o = (old.comps||[]).map(function(c){ return c[0]+'='+refsKey(c[1]).replace(/\s+/g,' '); }), n2 = nb.comps.map(function(c){ return c[0]+'='+refsKey(c[1]).replace(/\s+/g,' '); });
       var plus = n2.filter(function(x){ return o.indexOf(x)<0; }).length, minus = o.filter(function(x){ return n2.indexOf(x)<0; }).length;
       what.push('composants'+(plus? ' +'+plus : '')+(minus? ' −'+minus : ''));
     }
     if(what.length) modified.push({ref:old.ref, what:what.join(', ')}); else same.push(nb);
   });
   var removed = cur.filter(function(b){ return !merged[refsKey(b.ref)]; });
-  refsUi.preview = {fileName:file.name, rows:rows, merged:merged, added:added, modified:modified, same:same, removed:removed, errors:errors, ignoredCols:ignoredCols};
+  refsUi.preview = {fileName:file.name, rows:rows, merged:merged, added:added, modified:modified, same:same, removed:removed, errors:errors, ignoredCols:ignored};
   refsRender();
 }
 async function refsApply(mode){
@@ -7053,7 +7198,7 @@ async function refsApply(mode){
     list = cur.map(function(b){ return p.merged[refsKey(b.ref)] || b; });
     p.added.forEach(function(b){ list.push(b); });
   }
-  list = list.map(function(b){ return {ref:String(b.ref).trim(), desig:String(b.desig||'').trim(), comps:(b.comps||[]).map(function(c){ return [c[0], String(c[1]).trim()]; })}; });
+  list = list.map(function(b){ return {ref:String(b.ref).trim(), desig:String(b.desig||'').trim(), pgr:refsPgr(b), groupe:refsGroupe(b), comps:(b.comps||[]).map(function(c){ return [c[0], String(c[1]).trim()]; })}; });
   DATA.sapBom = DATA.sapBom || {};
   DATA.sapBom[currentSecteur] = list;
   await save('sapBom');
@@ -10912,7 +11057,7 @@ async function wzCommit(){
   }
   else if(wzStep==='prison'){
     var refs = {}, err = null;
-    var list = d.bom.map(function(b){ return {ref:String(b.ref||'').trim(), desig:String(b.desig||'').trim(), comps:(b.comps||[]).map(function(c){ return [String(c[0]||'').trim() || 'autre', String(c[1]||'').trim()]; }).filter(function(c){ return c[1]; })}; })
+    var list = d.bom.map(function(b){ return {ref:String(b.ref||'').trim(), desig:String(b.desig||'').trim(), pgr:String(b.pgr==null?'':b.pgr).trim(), groupe:String(b.groupe||'').trim(), comps:(b.comps||[]).map(function(c){ return [String(c[0]||'').trim() || 'autre', String(c[1]||'').trim()]; }).filter(function(c){ return c[1]; })}; })
       .filter(function(b){ return b.ref || b.desig || b.comps.length; });
     list.forEach(function(b){ var k = b.ref.toUpperCase(); if(!b.ref) err = err || 'Une référence sans numéro : renseignez-le ou supprimez la ligne.'; else if(refs[k]) err = err || 'La référence '+b.ref+' est en double.'; refs[k] = 1; });
     if(err){ toast(err, 'error'); return false; }
@@ -11052,14 +11197,14 @@ function wzPrisonHtml(){
     return typesDraft.map(function(t){ return '<option value="'+t[0]+'"'+(t[0]===cur?' selected':'')+'>'+esc(t[1])+'</option>'; }).join('')+(!known && cur? '<option value="'+esc(cur)+'" selected>'+esc(cur)+'</option>' : '');
   };
   var body = '<div class="wz-row" style="margin-bottom:8px;"><input type="search" id="wz-bom-search" placeholder="Rechercher une référence ou une désignation" value="'+esc(wzBomSearch)+'" style="flex:1; min-width:200px;"><button class="btn small primary" data-action="wz-bom-add">+ Nouvelle référence</button></div>';
-  body += bom.length ? '<div class="table-wrap"><table class="wz-table"><thead><tr><th>Référence (saisie en prison)</th><th>Désignation</th><th>Composants</th><th></th></tr></thead><tbody>'+
+  body += bom.length ? '<div class="table-wrap"><table class="wz-table"><thead><tr><th>Référence (saisie en prison)</th><th>PGR</th><th>Désignation</th><th>Composants</th><th></th></tr></thead><tbody>'+
     idx.map(function(i){
       var b = bom[i], open = wzBomOpen===i, comps = b.comps||[];
-      var row = '<tr class="'+(open?'wz-open':'')+'"><td>'+wzInput('bom.'+i+'.ref', ' placeholder="Ex. 6900004161"')+'</td><td>'+wzInput('bom.'+i+'.desig', ' placeholder="Ex. 141P LP"')+'</td>'+
+      var row = '<tr class="'+(open?'wz-open':'')+'"><td>'+wzInput('bom.'+i+'.ref', ' placeholder="Ex. 6900004161"')+'</td><td>'+wzInput('bom.'+i+'.pgr', ' placeholder="Ex. 11" style="width:60px;"')+'</td><td>'+wzInput('bom.'+i+'.desig', ' placeholder="Ex. 141P LP"')+'</td>'+
         '<td>'+comps.length+' composant'+(comps.length>1?'s':'')+' <button class="btn small'+(open?' primary':'')+'" data-action="wz-bom-open" data-i="'+i+'">'+(open?'Fermer':'Détail')+'</button></td>'+
         '<td style="text-align:right;"><button class="btn small danger-outline" data-action="wz-del" data-path="bom" data-i="'+i+'" title="Supprimer cette référence">✕</button></td></tr>';
       if(open){
-        row += '<tr class="wz-open"><td colspan="4"><div class="wz-list">'+comps.map(function(c, j){
+        row += '<tr class="wz-open"><td colspan="5"><div class="wz-list">'+comps.map(function(c, j){
           return '<div class="wz-row"><select data-wz="bom.'+i+'.comps.'+j+'.0">'+typeOpts(c[0])+'</select>'+wzInput('bom.'+i+'.comps.'+j+'.1', ' style="flex:1; min-width:160px;" placeholder="N° du composant dans SAP"')+
             '<button class="btn small danger-outline" data-action="wz-del" data-path="bom.'+i+'.comps" data-i="'+j+'" title="Retirer">✕</button></div>';
         }).join('')+'</div><button class="btn small" data-action="wz-add" data-path="bom.'+i+'.comps" data-tpl="[&quot;carter&quot;,&quot;&quot;]">+ Ajouter un composant</button></td></tr>';
