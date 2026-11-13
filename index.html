@@ -3497,7 +3497,7 @@ function renderResultatsCharts(){
       data:{labels:MONTHS_FR.map(function(m){return m.slice(0,3);}), datasets:datasets},
       options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
         plugins:{legend:{labels:{font:{size:11}}}},
-        scales:{y:{min:0,max:100,ticks:{callback:function(v){return v+'%';}}}}}
+        scales:{y:{min:50,max:100,ticks:{callback:function(v){return v+'%';}}}}}
     });
     var curMonthIdx = Number(todayStr().split('-')[1])-1;
     var curMois = MONTHS_FR[curMonthIdx].charAt(0).toUpperCase()+MONTHS_FR[curMonthIdx].slice(1);
@@ -3508,7 +3508,7 @@ function renderResultatsCharts(){
         backgroundColor:scores.map(function(s){return s>=SCORE_ATTENTION?'#2E7D4F44':s>=SCORE_DANGER?'#B8730A44':'#B23B2E44';}),
         borderColor:scores.map(function(s){return s>=SCORE_ATTENTION?'#2E7D4F':s>=SCORE_DANGER?'#B8730A':'#B23B2E';}),
         borderWidth:1, borderRadius:5}]},
-      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{min:0,max:100,ticks:{callback:function(v){return v+'%';}}}}}
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{min:50,max:100,ticks:{callback:function(v){return v+'%';}}}}}
     });
   }catch(err){ console.error('chart error', err); }
 }
@@ -5832,7 +5832,7 @@ function renderPerfChart(){
       data:{labels:MONTHS_FR.map(function(m){return m.slice(0,3);}), datasets:datasets},
       options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
         plugins:{legend:{labels:{font:{size:10}}}},
-        scales:{y:{min:0,max:100,ticks:{callback:function(v){return v+'%';}}}}}
+        scales:{y:{min:50,max:100,ticks:{callback:function(v){return v+'%';}}}}}
     });
   }catch(err){ console.error('perf chart error', err); }
 }
@@ -14331,7 +14331,7 @@ function renderTrendChart(){
         ]},
       options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
         scales:{
-          y:{type:'linear', position:'left', min:0, max:100, title:{display:true,text:'Score propreté (%)'}},
+          y:{type:'linear', position:'left', min:50, max:100, title:{display:true,text:"Score propreté (%)"}},
           y1:{type:'linear', position:'right', beginAtZero:true, grid:{drawOnChartArea:false}, title:{display:true,text:'Pièces NC'}}
         }}
     });
