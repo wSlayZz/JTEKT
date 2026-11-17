@@ -971,7 +971,7 @@ body.cz-admin .cz-mini{display:inline-block; margin-left:5px; font-size:11px; co
   body.print-chokko-synth .card{padding:8px 12px !important; margin-bottom:6px !important;}
   .chokko-synth-rebut{margin-top:0;}
   .chokko-synth-evo{margin-top:10px;} .chokko-synth-evo img{width:100%; height:auto; border:1px solid #ddd;} .chokko-synth-subtitle{font-size:12px; font-weight:700; margin-bottom:4px;}
-  .chokko-synth-rebut + .chokko-actions-print{margin-top:18px;}
+  .chokko-synth-pareto + .chokko-actions-print{margin-top:14px;}
   .chokko-synth-rebut .chokko-synth-title{font-size:15px; margin-bottom:6px;}
   .chokko-synth-rebut .chokko-synth-kpis{margin-bottom:6px;}
   .chokko-synth-rebut .chokko-synth-kpis div{padding:4px 10px; flex-direction:row; justify-content:space-between; align-items:baseline;}
@@ -1284,6 +1284,63 @@ tr.releve-cur-week td:first-child{font-weight:700;}
 .refs-mode p{margin:3px 0 0;}
 @media (max-width:640px){ .refs-chip{white-space:normal;} .refs-kpis{grid-template-columns:repeat(3,1fr);} .refs-modes{grid-template-columns:1fr;} }
 @media print{ #refs-modal{display:none !important;} }
+
+/* Vue site (multi-secteurs) */
+.site-kpis{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:10px; margin-bottom:14px;}
+.site-kpis div{background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; display:flex; flex-direction:column; gap:2px; border-top:3px solid #17368A;}
+.site-kpis div.is-danger{border-top-color:var(--danger);} .site-kpis div.is-danger span{color:var(--danger);}
+.site-kpis div.is-ok{border-top-color:#45A0A2;}
+.site-kpis span{font-size:24px; font-weight:700; font-family:var(--mono);}
+.site-kpis i{font-style:normal; font-size:12px; color:var(--text-faint);}
+.site-table{width:100%; border-collapse:collapse; font-size:13px;}
+.site-table th{background:#17368A; color:#fff; text-align:left; padding:7px 8px; font-weight:600; vertical-align:bottom;}
+.site-table th span{font-weight:400; font-size:11px; opacity:.85;}
+.site-table tr.site-band th{background:transparent; color:var(--text); padding:0 8px 4px; font-size:11px; text-transform:uppercase; letter-spacing:.04em;}
+.site-table tr.site-band th.site-band-m{border-bottom:3px solid #45A0A2;} .site-table tr.site-band th.site-band-t{border-bottom:3px solid #17368A;}
+.site-table td{padding:8px; border-top:1px solid var(--border); vertical-align:middle;}
+.site-table tbody tr:nth-child(even) td{background:#F4F7FB;}
+.site-sec{white-space:nowrap; font-size:14px;}
+.site-score{font-family:var(--mono); font-size:18px;}
+.site-lines{min-width:180px;}
+.site-line{display:inline-flex; align-items:center; gap:4px; margin:2px 10px 2px 0; white-space:nowrap;}
+.site-eur{white-space:nowrap; font-family:var(--mono);}
+.site-n{font-family:var(--mono); font-size:15px;} .site-danger{color:var(--danger);} .site-info{color:#17368A;}
+.site-zero{color:var(--text-faint);}
+.site-na{color:var(--text-faint); text-align:center; background:repeating-linear-gradient(45deg, transparent 0 6px, rgba(0,0,0,.03) 6px 12px) !important;}
+.site-late-btn{border:1px solid #45A0A2; background:#E3F1F1; color:#1D4F50; border-radius:12px; padding:3px 10px; font-weight:600; cursor:pointer; white-space:nowrap;}
+.site-late-btn.is-late{border-color:var(--danger); background:#FBE6E3; color:var(--danger);}
+#site-print{display:none;}
+@media print{
+  body.print-site > *:not(#site-print){display:none !important;}
+  body.print-site #site-print{display:block !important; font-family:Arial, Helvetica, sans-serif; color:#111; font-size:10px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  #site-print .qp-head{display:flex; align-items:center; justify-content:space-between; padding-bottom:6px; margin-bottom:10px; border-bottom:2px solid #1F3864;}
+  #site-print .qp-head img{height:28px; width:auto;}
+  #site-print .qp-head div{text-align:right; font-size:14px;} #site-print .qp-head div span{display:block; font-size:10px; color:#555;}
+  #site-print{width:100%; max-width:100%; box-sizing:border-box;}
+  #site-print .site-kpis{grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; margin-bottom:8px;}
+  #site-print .site-kpis div{padding:6px 10px;} #site-print .site-kpis span{font-size:16px;}
+  #site-print .site-table{font-size:10px; table-layout:fixed; width:100%;}
+  #site-print .site-table th:nth-child(1){width:11%;} #site-print .site-table th:nth-child(2){width:8%;} #site-print .site-table tr:not(.site-band) th:nth-child(3){width:22%;}
+  #site-print .site-sec, #site-print .site-eur, #site-print .site-line{white-space:normal;} #site-print .site-table td{padding:4px 6px;} #site-print .site-table th{padding:4px 6px;}
+  #site-print .table-wrap{overflow:visible !important;}
+  #site-print tr{break-inside:avoid;}
+  .site-print-chart{margin-top:10px; break-inside:avoid;} .site-print-chart img{width:100%; height:auto;}
+  .site-print-title{font-size:12px; font-weight:700; margin-bottom:4px;}
+}
+@media (max-width:640px){ .site-table{font-size:12px;} }
+
+/* Mon travail */
+.tr-block-title{font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#17368A; margin:18px 0 8px; padding-bottom:4px; border-bottom:2px solid #45A0A2;}
+.tr-sec{display:inline-block; font-size:10.5px; font-weight:700; color:#1D4F50; background:#E3F1F1; border-radius:8px; padding:0 6px; margin-right:4px; vertical-align:1px;}
+.tr-det{margin-bottom:10px;}
+.tr-det > summary{cursor:pointer; padding:4px 0; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.tr-det[open] > summary{margin-bottom:10px;}
+.tr-link{display:flex; justify-content:space-between; align-items:center; gap:10px; background:#EEF2FA; border:1px solid #C9D3EE; border-left:4px solid #45A0A2; border-radius:var(--radius-sm); padding:9px 14px; margin-bottom:14px; cursor:pointer; font-size:13.5px;}
+.tr-link.is-late{border-left-color:var(--danger);}
+.tr-link:hover{background:#E3E9F6;}
+.tr-link-go{font-weight:600; color:#17368A; white-space:nowrap;}
+.home-toggle.is-on{background:#E3F1F1; border-color:#45A0A2; color:#1D4F50;}
+@media print{ .home-toggle, .tr-link{display:none !important;} }
 </style>
 </head>
 <body>
@@ -8765,7 +8822,8 @@ function chokkoSynthActionsHtml(){
   var rows = chokkoPostes(l).map(function(p){ var n = chokkoNote(l, p[0], y, m); return {p:p, t:n ? (n.texte||'').trim() : ''}; }).filter(function(r){ return r.t; });
   var moisNom = MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1);
   // Plus de 3 actions : le tableau démarre sur une nouvelle page pour tenir entier sur une seule feuille
-  var h = '<div class="chokko-actions-print'+(rows.length>3?' chokko-actions-newpage':'')+'"><div class="chokko-week-title">Actions menées - '+esc(l)+' - '+esc(moisNom)+' '+y+'</div>';
+  // Après le Pareto ; si le tableau ne tient pas sous le Pareto, il passe en entier à la page suivante
+  var h = '<div class="chokko-actions-print"><div class="chokko-week-title">Actions menées - '+esc(l)+' - '+esc(moisNom)+' '+y+'</div>';
   if(!rows.length) return h+'<p class="tiny">Aucune action renseignée pour ce mois.</p></div>';
   return h+'<table class="chokko-actions-table"><thead><tr><th style="width:260px;">Poste</th><th>Actions menées</th></tr></thead><tbody>'+
     rows.map(function(r){ return '<tr><td><b>'+esc(r.p[0])+'</b> - '+esc(r.p[1])+'</td><td style="white-space:pre-wrap;">'+esc(r.t)+'</td></tr>'; }).join('')+
@@ -8853,8 +8911,8 @@ async function printChokkoSynthese(){
   }
   var host = document.querySelector('#view .section') || document.getElementById('view');
   var div = document.createElement('div'); div.id = 'chokko-synth-print';
-  // Page 3 : coût rebut puis actions menées ; page 4 : Pareto des défauts du mois
-  div.innerHTML = chokkoSynthRebutHtml() + chokkoSynthActionsHtml() + chokkoSynthParetoHtml();
+  // Page 3 : coût rebut ; page 4 : Pareto des défauts du mois, puis les actions menées tout en bas
+  div.innerHTML = chokkoSynthRebutHtml() + chokkoSynthParetoHtml() + chokkoSynthActionsHtml();
   host.appendChild(div);
   // En-tête imprimé avec le logo Acurion ; la colonne ACTIONS des tableaux est masquée (reprise dans un tableau à part)
   var head = document.createElement('div'); head.id = 'chokko-print-head'; head.className = 'print-only';
@@ -11265,7 +11323,7 @@ function wzTableauHtml(){
   var d = wzDraft, tabs = secteurTabs();
   var h = wzStepHead('Tableau de bord', 'Les cartes et les alertes affichées sur le tableau de bord du secteur. Chacun peut ensuite réorganiser ses cartes avec « Personnaliser mon tableau de bord ».');
   var wids = currentSecteur==='MCU'
-    ? DASHBOARD_WIDGETS_DEFAULT.map(function(w){ return w.id; }).filter(function(id){ var t = WZ_WIDGET_TAB[id]; return WIDGET_TITLES[id] && (!t || tabs.indexOf(t)>=0); }).map(function(id){ return [id, WIDGET_TITLES[id]]; })
+    ? DASHBOARD_WIDGETS_DEFAULT.map(function(w){ return w.id; }).filter(function(id){ return ['w_planning','w_alerts','w_my_actions'].indexOf(id)<0; }).filter(function(id){ var t = WZ_WIDGET_TAB[id]; return WIDGET_TITLES[id] && (!t || tabs.indexOf(t)>=0); }).map(function(id){ return [id, WIDGET_TITLES[id]]; })
     : SECTEUR_DASH_CARDS.filter(function(c){ return !c[2] || tabs.indexOf(c[2])>=0; });
   var g = cfg('scoreSeuils') || {};
   h += wzBlock('Seuils du score de ce secteur', '<div class="wz-grid"><label class="field">« Attention » sous (%)'+wzInput('seuilA', ' class="wz-num" inputmode="decimal" placeholder="'+esc(String(g.attention))+' (commun)"')+'</label><label class="field">« Danger » sous (%)'+wzInput('seuilD', ' class="wz-num" inputmode="decimal" placeholder="'+esc(String(g.danger))+' (commun)"')+'</label></div><p class="tiny" style="margin-top:6px;">Servent aux couleurs du score, des audits propreté et de perf. Laisser vide pour garder les seuils communs.</p>');
@@ -11394,7 +11452,7 @@ function secteurTodoCardHtml(){
   }).join('')+'</div>'+(items.length>8? '<p class="tiny" style="margin:8px 0 0;">… et '+(items.length-8)+' autre(s).</p>' : '')+'</div>';
   return h;
 }
-var SECTEUR_DASH_CARDS = [['w_todo','À traiter (retards et échéances)'],['w_score','Score de conformité'],['w_indicateurs','Indicateurs (perf, métrologie, actions)'],['w_chokko','Suivi CHOKKO', 'chokko'],['w_actions','Suivi des actions'],['w_perf','Audits de perf par ligne', 'perf']];
+var SECTEUR_DASH_CARDS = [['w_score','Score de conformité'],['w_indicateurs','Indicateurs (perf, métrologie, actions)'],['w_chokko','Suivi CHOKKO', 'chokko'],['w_actions','Suivi des actions'],['w_perf','Audits de perf par ligne', 'perf']];
 // Rappel sur le tableau de bord tant que le secteur n'a pas été configuré
 function wzDashboardBanner(){
   var sec = getSecteur(currentSecteur);
@@ -11653,6 +11711,305 @@ async function printQos(){
   setTimeout(function(){ printWithPageSize('A4 landscape'); }, 60);
 }
 
+// ==================== MON TRAVAIL ====================
+// « Qu'est-ce que je dois faire ? » : les points en retard ou à traiter bientôt (même calcul que les Priorités),
+// sur tous les secteurs du compte. Un point sans responsable revient au qualiticien en charge du secteur.
+var travailSec = '';                 // filtre secteur ('' = tous)
+var travailShowAll = {};             // module|bloc -> liste dépliée
+function trNorm(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\s+/g,' ').trim(); }
+function trIsManager(){ return !!(currentUser && (currentUser.roleId===ADMIN_ROLE_ID || currentUser.allSecteurs)); }
+// Page d'ouverture : choisie par l'utilisateur, sinon Mon travail (technicien) / Vue site (plusieurs secteurs)
+function homeTabKey(){ return 'home_tab_v1_'+(currentUser ? currentUser.id : ''); }
+function homeTabFor(){
+  var multi = userSecteurs().length>1, v = null;
+  try{ v = localStorage.getItem(homeTabKey()); }catch(e){}
+  if(v==='travail' || v==='dashboard' || (v==='site' && multi)) return v;
+  return multi ? 'site' : 'travail';
+}
+function homeToggleHtml(tab){
+  var on = homeTabFor()===tab;
+  return '<button class="btn small home-toggle'+(on?' is-on':'')+'" data-action="home-set" data-tab="'+tab+'" title="'+(on?'Cette page s\'ouvre à la connexion':'Ouvrir l\'outil sur cette page à la connexion')+'">'+(on?'🏠 Page d\'accueil':'🏠 Définir comme page d\'accueil')+'</button>';
+}
+function travailItems(){
+  var me = currentUser ? trNorm(currentUser.displayName) : '';
+  var out = [];
+  userSecteurs().forEach(function(sid){
+    var sec = getSecteur(sid); if(!sec) return;
+    withSecteur(sid, function(){ return computePriorities(); }).forEach(function(it){
+      it.secteur = sid; it.secteurNom = sec.nom || sid;
+      var o = trNorm(it.owner);
+      it.who = !o ? 'none' : (o===me ? 'me' : 'other');
+      out.push(it);
+    });
+  });
+  return out;
+}
+function travailItemHtml(it, showSec){
+  var data = ' data-action="tr-item" data-sid="'+esc(it.secteur)+'" data-mod="'+esc(it.module)+'"'+(it.id? ' data-id="'+esc(it.id)+'"' : '')+(it.chantierId? ' data-ch="'+esc(it.chantierId)+'"' : '');
+  return '<div class="prio-item prio-'+it.level+' is-click"'+data+'><span class="prio-dot"></span>'+
+    '<div class="prio-txt"><div class="prio-t">'+(showSec? '<span class="tr-sec">'+esc(it.secteurNom)+'</span> ' : '')+esc(String(it.title).slice(0,110))+'</div>'+(it.sub? '<div class="tiny">'+esc(it.sub)+'</div>' : '')+'</div>'+
+    '<div class="prio-when">'+(it.date? '<div>'+fmtDate(it.date)+'</div>' : '')+'<div class="tiny">'+esc(prioDelayTxt(it))+'</div></div></div>';
+}
+// Une carte par module, les retards d'abord
+function travailCardsHtml(items, key, showSec){
+  if(!items.length) return '';
+  var h = '<div class="prio-grid">';
+  PRIO_MODULES.forEach(function(mod){
+    var list = items.filter(function(i){ return i.module===mod.id; });
+    if(!list.length) return;
+    var nLate = list.filter(function(i){ return i.level==='danger'; }).length, nSoon = list.length-nLate;
+    var k = key+'|'+mod.id, max = travailShowAll[k] ? list.length : 6;
+    h += '<div class="card prio-card'+(nLate?' has-late':'')+'">'+
+      '<div class="prio-card-head"><div><div class="prio-card-title">'+esc(mod.label)+'</div>'+
+        '<div class="tiny">'+(nLate? '<b class="prio-red">'+nLate+' en retard</b>' : '')+(nLate&&nSoon?' · ':'')+(nSoon? '<b class="prio-amber">'+nSoon+' bientôt</b>' : '')+'</div></div>'+
+        (showSec ? '' : '<button class="btn small" data-action="tr-module" data-sid="'+esc(list[0].secteur)+'" data-mod="'+mod.id+'">Ouvrir →</button>')+'</div>'+
+      '<div class="prio-items">'+list.slice(0, max).map(function(it){ return travailItemHtml(it, showSec); }).join('')+'</div>'+
+      (list.length>6? '<button class="btn small prio-more" data-action="tr-more" data-k="'+esc(k)+'">'+(travailShowAll[k]? 'Réduire' : 'Voir les '+list.length)+'</button>' : '')+
+    '</div>';
+  });
+  return h+'</div>';
+}
+// Rappel en haut du tableau de bord : le « à faire » est dans Mon travail
+function travailLinkHtml(){
+  if(!currentUser) return '';
+  var manager = trIsManager();
+  var mine = travailItems().filter(function(i){ return i.secteur===currentSecteur && (i.who==='me' || (!manager && i.who==='none')); });
+  var late = mine.filter(function(i){ return i.level==='danger'; }).length, soon = mine.length-late;
+  return '<div class="tr-link dash-actions-noprint'+(late?' is-late':'')+'" data-action="tr-open" role="button"><span>📋 <b>Mon travail</b> · '+(mine.length ? (late? '<b class="prio-red">'+late+' en retard</b>' : '')+(late&&soon?' · ':'')+(soon? soon+' à traiter bientôt' : '') : 'rien en retard')+'</span><span class="tr-link-go">Ouvrir →</span></div>';
+}
+RENDERERS.travail = function(){
+  if(!currentUser) return '';
+  var us = userSecteurs(), multi = us.length>1, manager = trIsManager();
+  if(travailSec && us.indexOf(travailSec)<0) travailSec = '';
+  var all = travailItems();
+  var items = travailSec ? all.filter(function(i){ return i.secteur===travailSec; }) : all;
+  var showSec = multi && !travailSec;
+  // Technicien : un point sans responsable lui revient. Compte multi-secteurs : seulement ce qui lui est assigné.
+  var mine = items.filter(function(i){ return i.who==='me' || (!manager && i.who==='none'); });
+  var rest = items.filter(function(i){ return mine.indexOf(i)<0; });
+  var late = mine.filter(function(i){ return i.level==='danger'; }).length, soon = mine.length-late;
+  var prenom = String(currentUser.displayName||'').split(' ')[0];
+  var h = '<div class="section">';
+  h += '<div class="toolbar"><div class="left"><h2 style="margin:0;">Bonjour '+esc(prenom)+'</h2><span class="tiny">Ce qui est en retard ou à traiter dans les prochains jours · situation au '+fmtDate(todayStr())+'</span></div>'+
+    '<div style="display:flex; gap:8px; flex-wrap:wrap;">'+homeToggleHtml('travail')+'</div></div>';
+  if(multi){
+    h += '<div class="prio-sectors"><button class="prio-sector'+(!travailSec?' active':'')+'" data-action="tr-sec" data-sid=""><b>Tous mes secteurs</b><span class="prio-sector-n '+(all.some(function(i){ return i.level==='danger'; })?'is-late':'is-ok')+'">'+all.filter(function(i){ return i.level==='danger'; }).length+' en retard</span></button>'+
+      us.map(function(sid){
+        var sec = getSecteur(sid); if(!sec) return '';
+        var n = all.filter(function(i){ return i.secteur===sid && i.level==='danger'; }).length;
+        return '<button class="prio-sector'+(sid===travailSec?' active':'')+'" data-action="tr-sec" data-sid="'+esc(sid)+'"><b>'+esc(sec.nom)+'</b><span class="prio-sector-n '+(n?'is-late':'is-ok')+'">'+(n? n+' en retard' : 'à jour')+'</span></button>';
+      }).join('')+'</div>';
+  }
+  h += '<div class="prio-strip">'+
+    '<div class="prio-big '+(late?'is-late':'is-ok')+'"><span class="prio-big-n">'+late+'</span><span>en retard pour moi</span></div>'+
+    '<div class="prio-big '+(soon?'is-soon':'is-ok')+'"><span class="prio-big-n">'+soon+'</span><span>à traiter bientôt</span></div>'+
+    '<div class="prio-strip-note tiny">'+(manager
+      ? '« À moi » : les points dont vous êtes le responsable. Les autres points de vos secteurs sont plus bas, par secteur.'
+      : '« À moi » : les points dont vous êtes le responsable et ceux sans responsable (ils reviennent au qualiticien du secteur).')+'</div>'+
+  '</div>';
+  h += '<div class="tr-block-title">À moi</div>';
+  h += mine.length ? travailCardsHtml(mine, 'mine', showSec) : '<div class="card prio-empty">✓ Rien en retard ni à traiter dans les prochains jours.</div>';
+  if(rest.length){
+    if(manager){
+      h += '<div class="tr-block-title">Mes secteurs</div><p class="tiny" style="margin:-4px 0 10px;">Points sans responsable ou suivis par une autre personne.</p>';
+      (travailSec ? [travailSec] : us).forEach(function(sid){
+        var list = rest.filter(function(i){ return i.secteur===sid; }); if(!list.length) return;
+        var nL = list.filter(function(i){ return i.level==='danger'; }).length;
+        h += '<details class="tr-det card"'+(travailSec?' open':'')+'><summary><b>'+esc((getSecteur(sid)||{}).nom||sid)+'</b> <span class="prio-sector-n '+(nL?'is-late':'is-ok')+'">'+(nL? nL+' en retard' : 'à jour')+'</span>'+(list.length-nL? ' <span class="tiny">· '+(list.length-nL)+' bientôt</span>' : '')+'</summary>'+travailCardsHtml(list, 'sec-'+sid, false)+'</details>';
+      });
+    } else {
+      var nL2 = rest.filter(function(i){ return i.level==='danger'; }).length;
+      h += '<details class="tr-det card"><summary><b>Suivi par d\'autres personnes</b> <span class="tiny">· '+rest.length+' point'+(rest.length>1?'s':'')+(nL2? ' dont '+nL2+' en retard' : '')+'</span></summary>'+travailCardsHtml(rest, 'other', showSec)+'</details>';
+    }
+  }
+  return h+'</div>';
+};
+async function travailHandleClick(e){
+  var b = e.target.closest('[data-action^="tr-"], [data-action="home-set"]'); if(!b) return false;
+  var a = b.dataset.action;
+  if(a==='home-set'){
+    var on = homeTabFor()===b.dataset.tab;
+    try{ if(on) localStorage.removeItem(homeTabKey()); else localStorage.setItem(homeTabKey(), b.dataset.tab); }catch(err){}
+    toast(on ? 'Page d\'accueil remise par défaut ('+(userSecteurs().length>1?'Vue site':'Mon travail')+').' : 'Cette page s\'ouvrira à la connexion.');
+    render(); return true;
+  }
+  if(a==='tr-open'){ travailSec = userSecteurs().length>1 ? currentSecteur : ''; currentTab = 'travail'; renderNav(); render(); window.scrollTo(0,0); return true; }
+  if(a==='tr-sec'){ travailSec = b.dataset.sid || ''; render(); return true; }
+  if(a==='tr-more'){ travailShowAll[b.dataset.k] = !travailShowAll[b.dataset.k]; render(); return true; }
+  if(a==='tr-module' || a==='tr-item'){
+    var sid = b.dataset.sid, mod = prioModuleMeta(b.dataset.mod);
+    if(sid && sid!==currentSecteur){ currentSecteur = sid; renderNav(); }
+    if(a==='tr-item' && b.dataset.id){ actionDraft = null; actionDetailId = b.dataset.id; render(); return true; }
+    if(a==='tr-item' && b.dataset.ch){ currentTab = 'prison'; prisonSub = 'stock'; chantierOpen(b.dataset.ch); renderNav(); render(); return true; }
+    currentTab = mod.tab || 'dashboard';
+    if(mod.sub) propreteSub = mod.sub;
+    renderNav(); render(); window.scrollTo(0,0); return true;
+  }
+  return false;
+}
+
+// ==================== VUE SITE (multi-secteurs) ====================
+// Une ligne par secteur du compte : score, CHOKKO, coût rebut, actions, prison, formations, métrologie, retards.
+// Réservée aux comptes qui voient plusieurs secteurs (responsable qualité, direction, administrateur).
+var siteY = null, siteM = null;
+var SITE_MOD_COLORS = {actions:'#17368A', metro:'#45A0A2', planning:'#7FA7E0', chokko:'#E6CF5C', perf:'#6FB8C9', contam:'#1F5C5C',
+  vidange:'#8FCB9B', esd:'#F2B35E', srem:'#E8877F', cicl:'#A98BD6', prison:'#D48FB8'};
+function siteInitPeriod(){ if(siteY===null){ var t = todayStr(); siteY = Number(t.slice(0,4)); siteM = Number(t.slice(5,7))-1; } }
+function siteSecteurs(){
+  var all = (DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT;
+  return userSecteurs().map(function(id){ return all.find(function(s){ return s.id===id; }); }).filter(Boolean);
+}
+// Tous les chiffres d'un secteur (calculés dans le contexte de ce secteur)
+function siteSectorStats(s, y, m){
+  return withSecteur(s.id, function(){
+    var tabs = secteurTabs(), has = function(t){ return tabs.indexOf(t)>=0 && tabAllowed(t); };
+    var st = {id:s.id, nom:s.nom || s.id, tabs:tabs};
+    st.score = secteurAllScore(s.id, y, m).score;
+    // CHOKKO et coût rebut du mois, ligne par ligne
+    st.lignes = [];
+    st.rebut = null; st.rebutPrev = null;
+    if(has('chokko')){
+      st.rebut = 0; st.rebutPrev = 0;
+      var p = qosPrev(y, m);
+      (s.lignes||[]).forEach(function(l){
+        var ls = chokkoPeriodStats(l, chokkoMonthDays(l, y, m).map(function(d){ return d.date; }));
+        st.lignes.push({ligne:l, pct:ls.pct, level: ls.pct===null ? 'neutral' : chokkoLevelVsObjectif(ls.pct, l), obj:chokkoObjectif(l), nc:ls.totalNC});
+        st.rebut += rebutMonthTotal(l, y, m); st.rebutPrev += rebutMonthTotal(l, p.y, p.m);
+      });
+    }
+    // Plan d'actions
+    var acts = bySecteur(DATA.actions);
+    st.actOpen = acts.filter(function(a){ return isActionOpen(a) && !isActionDone(a); }).length;
+    st.actLate = acts.filter(isActionLate).length;
+    // Prison qualité : lots encore en stock
+    st.prison = null;
+    if(has('prison')){
+      var lots = prisonLotsSect().filter(function(l){ return prisonLotTotal(l)>0; });
+      st.prison = {lots:lots.length, pieces:lots.reduce(function(sum, l){ return sum+prisonLotTotal(l); }, 0)};
+    }
+    // Retards et échéances proches, tous modules (même source que la vue « Priorités » du tableau de bord)
+    var items = computePriorities();
+    st.late = items.filter(function(i){ return i.level==='danger'; });
+    st.soon = items.filter(function(i){ return i.level==='warn'; });
+    st.lateBy = {};
+    st.late.forEach(function(i){ st.lateBy[i.module] = (st.lateBy[i.module]||0)+1; });
+    st.formLate = (st.lateBy.esd||0)+(st.lateBy.srem||0)+(st.lateBy.cicl||0);
+    st.hasForm = has('esd') || has('formations') || has('cicl');
+    st.metroLate = has('metro') ? (st.lateBy.metro||0) : null;
+    return st;
+  });
+}
+function siteNa(){ return '<td class="site-na" title="Module non utilisé dans ce secteur">-</td>'; }
+function siteCount(n, lvl){ return n ? '<b class="site-n site-'+lvl+'">'+n+'</b>' : '<span class="site-zero">0</span>'; }
+function siteTableHtml(stats, y, m, forPrint){
+  var mois = qosMonthName(m)+' '+y;
+  var h = '<div class="table-wrap"><table class="site-table"><thead>'+
+    '<tr class="site-band"><th></th><th></th><th colspan="2" class="site-band-m">'+esc(mois)+'</th><th colspan="5" class="site-band-t">À aujourd\'hui</th></tr>'+
+    '<tr><th>Secteur</th><th>Score de conformité</th><th>CHOKKO du mois (par ligne)</th><th>Coût rebut du mois</th>'+
+    '<th>Plan d\'actions<br><span>en cours · en retard</span></th><th>Prison qualité<br><span>lots · pièces</span></th><th>Formations<br><span>hors validité</span></th><th>Métrologie<br><span>hors validité</span></th><th>Points en retard<br><span>tous modules</span></th></tr></thead><tbody>';
+  stats.forEach(function(st){
+    var sc = st.score;
+    h += '<tr>'+
+      '<td class="site-sec">'+(forPrint ? '<b>'+esc(st.nom)+'</b>' : '<button class="qos-link" data-action="site-open" data-sid="'+esc(st.id)+'" title="Ouvrir le tableau de bord du secteur">'+esc(st.nom)+'</button>')+'</td>'+
+      '<td>'+(sc===null||sc===undefined ? '<span class="site-zero">Pas de données</span>' : '<b class="site-score" style="color:var(--'+scoreLevel(sc)+');">'+Math.floor(sc)+' %</b>')+'</td>';
+    if(st.tabs.indexOf('chokko')<0) h += siteNa()+siteNa();
+    else {
+      h += '<td class="site-lines">'+(st.lignes.length ? st.lignes.map(function(l){
+          return '<span class="site-line"><b>'+esc(l.ligne)+'</b> '+(l.pct===null ? '<span class="site-zero">pas de saisie</span>' : badge(l.level==='ok'?'ok':l.level==='warn'?'warn':'danger', pct2(l.pct).replace('.',',')+' %'))+'</span>';
+        }).join('') : '<span class="site-zero">Aucune ligne</span>')+'</td>'+
+        '<td class="site-eur">'+(st.rebut ? '<b>'+qosEur(st.rebut)+'</b> '+qosDelta(st.rebut, st.rebutPrev||0, ' €', false) : '<span class="site-zero">-</span>')+'</td>';
+    }
+    h += '<td>'+siteCount(st.actOpen, 'info')+' · '+siteCount(st.actLate, 'danger')+'</td>';
+    h += st.prison===null ? siteNa() : '<td>'+(st.prison.lots ? '<b>'+st.prison.lots+'</b> · '+qosNum(st.prison.pieces)+' pcs' : '<span class="site-zero">vide</span>')+'</td>';
+    h += st.hasForm ? '<td>'+siteCount(st.formLate, 'danger')+'</td>' : siteNa();
+    h += st.metroLate===null ? siteNa() : '<td>'+siteCount(st.metroLate, 'danger')+'</td>';
+    h += '<td>'+(forPrint ? siteCount(st.late.length, 'danger') : '<button class="site-late-btn'+(st.late.length?' is-late':'')+'" data-action="site-prio" data-sid="'+esc(st.id)+'" title="Voir le détail dans Mon travail">'+(st.late.length ? st.late.length+' en retard' : 'à jour')+'</button>')+
+      (st.soon.length ? '<div class="tiny">'+st.soon.length+' à traiter bientôt</div>' : '')+'</td>';
+    h += '</tr>';
+  });
+  return h+'</tbody></table></div>';
+}
+function siteKpisHtml(stats){
+  var late = 0, actLate = 0, reb = 0, pcs = 0, hasReb = false, hasPri = false;
+  stats.forEach(function(st){ late += st.late.length; actLate += st.actLate; if(st.rebut!==null){ hasReb = true; reb += st.rebut; } if(st.prison){ hasPri = true; pcs += st.prison.pieces; } });
+  return '<div class="site-kpis">'+
+    '<div><span>'+stats.length+'</span><i>secteur(s)</i></div>'+
+    '<div class="'+(late?'is-danger':'is-ok')+'"><span>'+late+'</span><i>points en retard</i></div>'+
+    '<div class="'+(actLate?'is-danger':'is-ok')+'"><span>'+actLate+'</span><i>actions en retard</i></div>'+
+    (hasReb ? '<div><span class="qos-eur">'+qosEur(reb)+'</span><i>coût rebut du mois</i></div>' : '')+
+    (hasPri ? '<div><span>'+qosNum(pcs)+'</span><i>pièces en prison qualité</i></div>' : '')+
+  '</div>';
+}
+function siteChartConfig(stats){
+  var mods = PRIO_MODULES.filter(function(md){ return stats.some(function(st){ return st.lateBy[md.id]; }); });
+  return {type:'bar', data:{labels:stats.map(function(st){ return st.nom; }),
+      datasets:mods.map(function(md){ return {label:md.label, backgroundColor:SITE_MOD_COLORS[md.id]||'#17368A', borderWidth:0, data:stats.map(function(st){ return st.lateBy[md.id]||0; })}; })},
+    options:{indexAxis:'y', responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{legend:{position:'bottom', labels:{boxWidth:11, font:{size:11}}}, title:{display:false}},
+      scales:{x:{stacked:true, beginAtZero:true, ticks:{precision:0}, title:{display:true, text:'Points en retard'}}, y:{stacked:true}}}};
+}
+function siteChartHeight(n){ return Math.max(160, 48*n+70); }
+RENDERERS.site = function(){
+  siteInitPeriod();
+  var secs = siteSecteurs();
+  if(secs.length<2) return '<div class="section card"><p>La vue site compare plusieurs secteurs : elle est réservée aux comptes qui en suivent au moins deux.</p></div>';
+  var stats = secs.map(function(s){ return siteSectorStats(s, siteY, siteM); });
+  var yrs = []; for(var yy = Number(todayStr().slice(0,4)); yy>=Number(todayStr().slice(0,4))-3; yy--) yrs.push(yy);
+  var h = '<div class="section">';
+  h += '<div class="toolbar"><div class="left"><h2 style="margin:0;">Vue site</h2><span class="tiny">Tous vos secteurs sur une page. Cliquez sur un secteur pour ouvrir son tableau de bord.</span></div>'+
+    '<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">'+
+      '<select id="site-mois">'+MONTHS_FR.map(function(mn, i){ return '<option value="'+i+'"'+(i===siteM?' selected':'')+'>'+esc(qosMonthName(i))+'</option>'; }).join('')+'</select>'+
+      '<select id="site-annee">'+yrs.map(function(v){ return '<option value="'+v+'"'+(v===siteY?' selected':'')+'>'+v+'</option>'; }).join('')+'</select>'+
+      homeToggleHtml('site')+'<button class="btn" data-action="site-print">🖨 Imprimer</button>'+
+    '</div></div>';
+  h += siteKpisHtml(stats);
+  h += '<div class="card"><div class="eyebrow" style="margin-bottom:10px;">Comparatif des secteurs</div>'+siteTableHtml(stats, siteY, siteM, false)+
+    '<p class="tiny" style="margin-top:8px;">CHOKKO et coût rebut : mois choisi (▲▼ = écart avec le mois précédent). Actions, prison, formations, métrologie et retards : situation à aujourd\'hui, mêmes règles que la vue « Priorités » du tableau de bord. Valeurs tronquées, jamais arrondies au-dessus. « - » : module non utilisé dans le secteur.</p></div>';
+  var anyLate = stats.some(function(st){ return st.late.length; });
+  h += '<div class="card"><div class="eyebrow" style="margin-bottom:10px;">Où sont les retards ? (par secteur et par module)</div>'+
+    (anyLate ? '<div class="chart-box" style="height:'+siteChartHeight(stats.length)+'px;"><canvas id="chart-site-retards"></canvas></div>' : '<p class="tiny">Aucun point en retard sur vos secteurs.</p>')+'</div>';
+  h += renderPerfAuditProgress();   // avancement des audits de perf, secteur par secteur (anciennement sur le tableau de bord)
+  return h+'</div>';
+};
+var siteChart = null;
+function renderSiteChart(){
+  var c = document.getElementById('chart-site-retards'); if(!c || typeof Chart==='undefined') return;
+  if(siteChart){ try{ siteChart.destroy(); }catch(e){} }
+  var stats = siteSecteurs().map(function(s){ return siteSectorStats(s, siteY, siteM); });
+  siteChart = new Chart(c, siteChartConfig(stats));
+}
+async function printSite(){
+  siteInitPeriod();
+  var stats = siteSecteurs().map(function(s){ return siteSectorStats(s, siteY, siteM); });
+  var logoEl = document.querySelector('.sidebar-logo-full');
+  var anyLate = stats.some(function(st){ return st.late.length; });
+  var html = '<div class="qp-head">'+(logoEl && logoEl.src ? '<img src="'+logoEl.src+'" alt="Acurion">' : '<span></span>')+'<div><b>Vue site · '+esc(qosMonthName(siteM))+' '+siteY+'</b><span>Édité le '+fmtDate(todayStr())+(currentUser? ' par '+esc(currentUser.displayName||'') : '')+'</span></div></div>'+
+    siteKpisHtml(stats)+siteTableHtml(stats, siteY, siteM, true)+
+    '<p class="tiny">CHOKKO et coût rebut : mois choisi (▲▼ = écart avec le mois précédent). Actions, prison, formations, métrologie et retards : situation au '+fmtDate(todayStr())+'. Valeurs tronquées.</p>'+
+    (anyLate ? '<div class="site-print-chart"><div class="site-print-title">Où sont les retards ? (par secteur et par module)</div>'+rptChartImage(siteChartConfig(stats), 1800, Math.min(900, siteChartHeight(stats.length)*2))+'</div>' : '');
+  var old = document.getElementById('site-print'); if(old) old.remove();
+  var sheet = document.createElement('div'); sheet.id = 'site-print'; sheet.innerHTML = html;
+  document.body.appendChild(sheet);
+  document.body.classList.add('print-site');
+  await waitImages(sheet);
+  onPrintDone(function(){ document.body.classList.remove('print-site'); var sh = document.getElementById('site-print'); if(sh) sh.remove(); });
+  logChange('Vue site', 'Impression', qosMonthName(siteM)+' '+siteY);
+  setTimeout(function(){ printWithPageSize('A4 landscape'); }, 60);
+}
+async function siteHandleClick(e){
+  var b = e.target.closest('[data-action^="site-"]'); if(!b) return false;
+  var a = b.dataset.action;
+  if(a==='site-open'){ currentSecteur = b.dataset.sid; currentTab = 'dashboard'; renderNav(); render(); return true; }
+  if(a==='site-prio'){ travailSec = b.dataset.sid; currentTab = 'travail'; renderNav(); render(); window.scrollTo(0,0); return true; }
+  if(a==='site-print'){ await printSite(); return true; }
+  return false;
+}
+document.addEventListener('change', function(e){
+  if(!e.target) return;
+  if(e.target.id==='site-mois'){ siteM = Number(e.target.value); render(); }
+  if(e.target.id==='site-annee'){ siteY = Number(e.target.value); render(); }
+});
+
 // ==================== AIDE « ? » ====================
 // Un bouton rond en bas à droite ouvre l'aide de l'onglet affiché : à quoi il sert, comment s'en servir,
 // questions fréquentes. Une recherche parcourt toute l'aide.
@@ -11662,8 +12019,13 @@ var HELP = [
     faq:[['Mes saisies sont-elles enregistrées ?', 'Oui, dès que vous validez une saisie. Les données sont partagées : un collègue connecté voit vos modifications en quelques secondes.'],
       ['Deux personnes modifient en même temps, que se passe-t-il ?', 'Les modifications des deux personnes sont fusionnées. Si vous modifiez exactement la même valeur, c\'est la dernière saisie qui est gardée.'],
       ['Je ne vois pas un onglet dont j\'ai besoin.', 'Il n\'est pas activé pour votre secteur (« Configurer le secteur », étape 1) ou votre profil n\'y a pas accès (à demander à l\'administrateur).']]},
-  {id:'dashboard', tab:'dashboard', titre:'Tableau de bord', quoi:'La vue d\'ensemble du secteur : score de conformité, retards, indicateurs. Rien n\'est à saisir ici : tout vient des autres onglets.',
-    etapes:['Lisez le score de conformité et son détail par module.', 'Cliquez sur une carte ou une alerte pour ouvrir l\'onglet concerné.', '« Rapport mensuel » prépare la synthèse du mois à imprimer.', '« Personnaliser mon tableau de bord » réorganise vos cartes (MCU).'],
+  {id:'travail', tab:'travail', titre:'Mon travail', quoi:'Ce que vous avez à faire : tout ce qui est en retard ou à traiter dans les prochains jours, sur tous vos secteurs. C\'est la page d\'accueil des techniciens.',
+    etapes:['« À moi » regroupe les points dont vous êtes le responsable, et les points sans responsable de vos secteurs (ils reviennent au qualiticien du secteur).', 'Les points sont rangés par module, les retards d\'abord. Cliquez sur un point pour l\'ouvrir (action, chantier) ou sur « Ouvrir → » pour aller dans l\'onglet.', 'Plusieurs secteurs : les puces en haut filtrent sur un secteur.', 'Plus bas : les points suivis par d\'autres personnes (comptes multi-secteurs : rangés par secteur).', '« 🏠 Définir comme page d\'accueil » choisit la page qui s\'ouvre à la connexion (Mon travail, Tableau de bord ou Vue site).'],
+    faq:[['Pourquoi un point sans responsable est « à moi » ?', 'Il y a un qualiticien par secteur : ce qui n\'est pas assigné (saisie CHOKKO, formations, métrologie…) revient à celui qui est en charge du secteur.'],
+      ['Comment un point devient-il « à moi » ?', 'Quand vous êtes le responsable de l\'action, le pilote du chantier ou le responsable de l\'audit planifié (même nom que votre compte).'],
+      ['Où sont passées les priorités du tableau de bord ?', 'Ici. Le tableau de bord ne montre plus que les résultats du secteur ; un bandeau en haut renvoie vers Mon travail.']]},
+  {id:'dashboard', tab:'dashboard', titre:'Tableau de bord', quoi:'Les résultats d\'un secteur : score de conformité, CHOKKO, Pareto, formations, propreté, perf. Ce qu\'il y a à faire est dans « Mon travail », la comparaison des secteurs dans « Vue site ». Rien n\'est à saisir ici.',
+    etapes:['Lisez le score de conformité et son détail par module.', 'Le bandeau « Mon travail » indique vos points en retard dans ce secteur et y mène en un clic.', 'Cliquez sur une carte pour ouvrir l\'onglet concerné.', '« Rapport mensuel » prépare la synthèse du mois à imprimer.', '« Personnaliser mon tableau de bord » réorganise vos cartes (MCU).'],
     faq:[['Comment est calculé le score ?', 'C\'est la moyenne des modules comptés (propreté, métrologie, CHOKKO, actions…). Le bouton de réglage du score indique les modules pris en compte.'],
       ['Comment changer les seuils vert / orange / rouge ?', 'Dans « Configurer le secteur », étape « Tableau de bord » : seuils « attention » et « danger » du secteur.'],
       ['Une carte ne m\'intéresse pas.', 'Masquez-la pour tout le secteur dans « Configurer le secteur » > « Tableau de bord ».']]},
@@ -11686,6 +12048,11 @@ var HELP = [
   {id:'metro', tab:'metro', titre:'Métrologie', quoi:'La liste des instruments de mesure avec leur date de validité.',
     etapes:['Ajoutez un instrument : désignation, ligne, lieu, n° de moyen, échéance, pièce jointe (PV).', 'Le statut passe en orange avant l\'échéance et en rouge une fois dépassée.', 'Export CSV pour la traçabilité.'],
     faq:[['Où modifier un instrument ?', 'Directement dans la liste de l\'onglet.']]},
+  {id:'site', tab:'site', titre:'Vue site', quoi:'Tous vos secteurs sur une seule page, pour repérer en un coup d\'œil où ça va et où ça coince. Visible pour les comptes qui suivent au moins deux secteurs.',
+    etapes:['Choisissez le mois en haut à droite : il s\'applique au CHOKKO et au coût rebut.', 'Le tableau compare les secteurs : score de conformité, CHOKKO de chaque ligne, coût rebut (▲▼ par rapport au mois précédent), actions en cours et en retard, stock en prison qualité, formations et métrologie hors validité, points en retard.', 'Cliquez sur le nom d\'un secteur pour ouvrir son tableau de bord, ou sur « x en retard » pour voir le détail dans ses priorités.', 'Le graphique montre de quel module viennent les retards de chaque secteur.', '« Imprimer » sort la page sur une feuille A4 paysage.'],
+    faq:[['D\'où viennent les chiffres ?', 'Des mêmes calculs que le reste de l\'outil : score du tableau de bord, saisies CHOKKO et coût rebut, plan d\'actions, prison qualité, et la vue « Priorités » pour les retards. Rien n\'est à ressaisir.'],
+      ['Pourquoi un « - » dans une case ?', 'Le module n\'est pas utilisé dans ce secteur (onglet désactivé dans « Configurer le secteur »).'],
+      ['Les retards dépendent-ils du mois choisi ?', 'Non : actions, prison, formations, métrologie et retards sont toujours la situation à aujourd\'hui. Seuls le CHOKKO et le coût rebut suivent le mois choisi.']]},
   {id:'qos', tab:'qos', titre:'Réunion QOS', quoi:'Le point qualité mensuel avec les techniciens : les principaux défauts CHOKKO et coûts rebut de chaque secteur, et les actions qui y répondent.',
     etapes:['Choisissez le mois (par défaut, le mois écoulé jusqu\'au 20, puis le mois en cours).', '« Vue d\'ensemble » : CHOKKO, pièces NC, 1er défaut, coût rebut et coût par pièce de chaque ligne, comparés au mois précédent.', 'Cliquez sur un secteur : le technicien présente ses lignes, top 3 défauts CHOKKO et top 3 coûts rebut.', '« + Action » à côté d\'un défaut crée une action liée, visible ensuite dans le plan d\'actions.', '« Mettre à jour » sur une action : responsable, échéance, statut, sans quitter la réunion.', '« Imprimer le support » : vue d\'ensemble puis une page par secteur (A4 paysage).'],
     faq:[['D\'où viennent les chiffres ?', 'Des saisies du suivi CHOKKO (production, défauts par poste, coût par pièce) et du coût rebut du mois. Rien n\'est à ressaisir.'],
@@ -11956,6 +12323,7 @@ function render(){
     renderParetoWidgetChart();
   }
   if(currentTab==='pareto'){ renderParetoChart(); }
+  if(currentTab==='site'){ renderSiteChart(); }
 
   if(currentTab==='ateq'){ renderAteqCharts(); }
   if(currentTab==='perf'){ renderPerfChart(); }
@@ -11984,20 +12352,14 @@ function renderTodayBanner(){
   var chokkoLvl = chokkoToday!==null ? chokkoLevelVsObjectif(chokkoToday, 'MCU3') : 'neutral';
 
   // Compteur d'alertes actives, tous domaines confondus
-  var nbAlerts = 0;
-  nbAlerts += bySecteur(DATA.actions).filter(function(a){ return isActionLate(a) || isVerifLate(a); }).length;
-  nbAlerts += DATA.esd.filter(function(p){ return esdStatus(p).level==='danger'; }).length;
-  nbAlerts += bySecteur(DATA.formations).filter(function(p){ return formationEcheance(p) && formationEcheance(p)<todayStr(); }).length;
-  DATA.cicl.forEach(function(rec){ if(ciclStatus(rec).level==='danger') nbAlerts++; });
-  nbAlerts += bySecteur(DATA.vidange).filter(function(v){ return vidangeStatus(v).level==='danger'; }).length;
-  nbAlerts += DATA.contamination.filter(function(c){ return c.statut==='collected'; }).length;
-  lignes.forEach(function(l){ var d = chokkoSaisieDelay(l); if(d===null || d>=2) nbAlerts++; });
+  // Même décompte que Mon travail (Priorités) : tous les points en retard du secteur
+  var nbAlerts = computePriorities().filter(function(i){ return i.level==='danger'; }).length;
 
   return '<div class="card" style="margin-bottom:16px; display:flex; align-items:center; gap:28px; flex-wrap:wrap; padding:14px 20px;">'+
     '<div class="tiny" style="font-weight:700; text-transform:uppercase; letter-spacing:0.03em; color:var(--text-faint);">Aujourd\'hui</div>'+
     '<div><span class="tiny">Production hier</span> <b style="font-family:var(--mono); font-size:16px;">'+prodYesterday.toLocaleString('fr-FR')+'</b> <span class="tiny">pièces</span></div>'+
     '<div><span class="tiny">Chokko aujourd\'hui</span> <b style="font-family:var(--mono); font-size:16px; color:var(--'+chokkoLvl+');">'+(chokkoToday!==null?pct2(chokkoToday)+'%':'—')+'</b></div>'+
-    '<div><span class="tiny">Alertes actives</span> <b style="font-family:var(--mono); font-size:16px; color:'+(nbAlerts?'var(--danger)':'var(--ok)')+';">'+nbAlerts+'</b></div>'+
+    '<div data-action="tr-open" style="cursor:pointer;" title="Voir le détail dans Mon travail"><span class="tiny">Points en retard (secteur)</span> <b style="font-family:var(--mono); font-size:16px; color:'+(nbAlerts?'var(--danger)':'var(--ok)')+';">'+nbAlerts+'</b></div>'+
   '</div>';
 }
 // Score de conformité d'un secteur hors MCU (audits perf du mois, métrologie, actions) - source unique
@@ -12033,11 +12395,11 @@ function sectorDetailHeading(){
 function renderSecteurDashboard(){
   var sec = getSecteur(currentSecteur);
   var lines = secteurLines();
-  var html = '<div class="section dash-actions-noprint prio-toolbar"><button class="btn" data-action="monthly-report">📄 Rapport mensuel</button></div>';
-  if(userSecteurs().length>1) html += renderMultiSecteurBanner()+renderPerfAuditProgress()+sectorDetailHeading();
+  var html = '<div class="section dash-actions-noprint prio-toolbar">'+homeToggleHtml('dashboard')+'<button class="btn" data-action="monthly-report">📄 Rapport mensuel</button></div>';
+  html += travailLinkHtml();
   html += wzDashboardBanner();
   var hid = (sec && sec.dashHidden) || [], show = function(id){ return hid.indexOf(id)<0; };   // cartes choisies dans l'assistant
-  if(show('w_todo')) html += secteurTodoCardHtml();
+  // « À traiter » : déplacé dans Mon travail (le tableau de bord ne montre plus que les résultats du secteur)
 
   var curM = Number(todayStr().split('-')[1])-1;
   var curY = Number(todayStr().split('-')[0]);
@@ -12345,9 +12707,9 @@ function computePriorities(){
   if(has('actions')){
     bySecteur(DATA.actions).forEach(function(a){
       var who = (a.responsable||'').trim() || 'sans responsable';
-      if(isActionLate(a)) add('actions', 'danger', a.description||'Action', who+(a.ligne? ' · '+a.ligne : '')+(a.origine? ' · '+a.origine : ''), a.echeance, {id:a.id});
-      else if(isVerifLate(a)) add('actions', 'danger', 'Vérification d\'efficacité : '+(a.description||''), who+' · vérif. prévue', a.verifPrevue, {id:a.id});
-      else if(isActionOpen(a) && !isActionDone(a) && a.echeance && a.echeance>=today && daysBetween(today, a.echeance)<=alerteActionsJours()) add('actions', 'warn', a.description||'Action', who+(a.ligne? ' · '+a.ligne : ''), a.echeance, {id:a.id});
+      if(isActionLate(a)) add('actions', 'danger', a.description||'Action', who+(a.ligne? ' · '+a.ligne : '')+(a.origine? ' · '+a.origine : ''), a.echeance, {id:a.id, owner:a.responsable});
+      else if(isVerifLate(a)) add('actions', 'danger', 'Vérification d\'efficacité : '+(a.description||''), who+' · vérif. prévue', a.verifPrevue, {id:a.id, owner:a.responsable});
+      else if(isActionOpen(a) && !isActionDone(a) && a.echeance && a.echeance>=today && daysBetween(today, a.echeance)<=alerteActionsJours()) add('actions', 'warn', a.description||'Action', who+(a.ligne? ' · '+a.ligne : ''), a.echeance, {id:a.id, owner:a.responsable});
     });
   }
   // --- Métrologie
@@ -12365,7 +12727,7 @@ function computePriorities(){
       var combos = pt[0]==='labo' ? (isMCU ? CONTAM_COMBOS.map(function(c){ return {ligne:c.ligne, ref:c.ref}; }) : []) : secteurLines().map(function(l){ return {ligne:l}; });
       combos.forEach(function(c){
         var info = planningCardInfo(pt[0], c.ligne, c.ref);
-        if(info.level==='danger') add('planning', 'danger', pt[1]+' · '+c.ligne+(c.ref? ' '+c.ref : ''), info.entry && info.entry.responsable ? 'Responsable : '+info.entry.responsable : '', info.echeance || (info.entry && info.entry.echeance));
+        if(info.level==='danger') add('planning', 'danger', pt[1]+' · '+c.ligne+(c.ref? ' '+c.ref : ''), info.entry && info.entry.responsable ? 'Responsable : '+info.entry.responsable : '', info.echeance || (info.entry && info.entry.echeance), {owner: info.entry && info.entry.responsable});
       });
     });
   }
@@ -12437,7 +12799,7 @@ function computePriorities(){
     chantiersSect().forEach(function(c){
       if(c.dateFin && c.dateFin<today && ['planifie','demande','valide','en_cours'].indexOf(c.statut)>=0){
         var t = chantierTotals(c);
-        add('prison', 'danger', (c.numero? c.numero+' · ' : '')+(c.titre||'Chantier'), 'Pilote : '+(c.responsable||'-')+' · '+t.pct+' % traité', c.dateFin, {chantierId:c.id});
+        add('prison', 'danger', (c.numero? c.numero+' · ' : '')+(c.titre||'Chantier'), 'Pilote : '+(c.responsable||'-')+' · '+t.pct+' % traité', c.dateFin, {chantierId:c.id, owner:c.responsable});
       }
     });
   }
@@ -12833,16 +13195,17 @@ RENDERERS.dashboard = function(){
   W.w_alerts = '<h2>'+esc(t('title_alerts','Alertes'))+'</h2><div id="alerts-section">'+renderAlertsSection()+'</div>';
 
   // ===== Assemblage avec disposition personnalisable =====
-  var secHid = ((getSecteur(currentSecteur)||{}).dashHidden || []).concat(['w_planning']);   // cartes masquées pour ce secteur dans l'assistant
+  var secHid = ((getSecteur(currentSecteur)||{}).dashHidden || []).concat(['w_planning','w_alerts','w_my_actions']);   // à faire : dans Mon travail   // cartes masquées pour ce secteur dans l'assistant
   var layout = getDashboardLayout().filter(function(w){ return !w.hidden && secHid.indexOf(w.id)<0; }); // "hidden" = supprimé du modèle
   var html = '';
-  if(userSecteurs().length>1) html += renderMultiSecteurBanner()+renderPerfAuditProgress()+sectorDetailHeading();
   html += wzDashboardBanner();
+  html += travailLinkHtml();
   html += renderTodayBanner();
 
   html += '<div id="dashboard-canvas">';
   html += renderPostits();
   html += '<div class="section dash-actions-noprint" style="display:flex; gap:8px; justify-content:flex-end; margin-bottom:10px; flex-wrap:wrap;">';
+  html += homeToggleHtml('dashboard');
   html += czPin('seuils','Seuils du score') + czPin('prio','Délais d\'alerte');
   html += '<button class="btn" data-action="add-postit" data-page="dashboard">+ Post-it</button>';
   html += '<button class="btn'+(dashboardCustomizing?' primary':'')+'" data-action="toggle-customize">'+(dashboardCustomizing?'Terminer la personnalisation':'Personnaliser mon tableau de bord')+'</button>';
@@ -13945,6 +14308,8 @@ function canSub(key){
 }
 // ===== Navigation en sidebar avec groupes rétractables =====
 var SVG_ICONS = {
+  travail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 11l2 2 4-4"/><path d="M9 17h6"/></svg>',
+  site: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V8l5 3V8l5 3V5h4v16"/><path d="M9 17h1M14 17h1"/></svg>',
   parametres: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>',
   qos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15 14.5c.6-.3 1.3-.5 2-.5 2.5 0 4 1.8 4 4.5"/></svg>',
   pareto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><rect x="4" y="8" width="3.5" height="13"/><rect x="10" y="13" width="3.5" height="8"/><rect x="16" y="17" width="3.5" height="4"/><path d="M5.7 6 12 4.5 18 3.5"/></svg>',
@@ -13969,6 +14334,8 @@ var SVG_ICONS = {
   admin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
 };
 var EMOJI_ICONS = {
+  travail:'📋',
+  site:'🏢',
   dashboard:'📊', proprete:'🧼', metro:'📏', ateq:'⚠️', chokko:'🏭', perf:'📈',
   actions:'✅', qos:'👥', pareto:'📶', planning:'🗓️', prison:'🔒', bibliotheque:'📚', archives:'🗄️',
   esd:'🎓', cicl:'🔧', formations:'🎓', comptes:'⚙️', parametres:'🛠️', assistant:'🧭',
@@ -14098,7 +14465,9 @@ function renderNav(){
   var allowedTabsIds = ALL_TABS.filter(function(tb){ return sTabs.indexOf(tb[0])>=0 && tabAllowed(tb[0]); }).map(function(tb){return tb[0];});
   var isAdmin = currentUser && currentUser.roleId===ADMIN_ROLE_ID;
   if(currentUser) allowedTabsIds.push('assistant');   // chacun configure ses secteurs
-  if(isAdmin){ allowedTabsIds.push('parametres'); }   // comptes, secteurs, sauvegardes : administrateur
+  if(isAdmin){ allowedTabsIds.push('parametres'); }
+  if(currentUser) allowedTabsIds.push('travail');
+  if(us0.length>1) allowedTabsIds.push('site');   // vue multi-secteurs   // comptes, secteurs, sauvegardes : administrateur
 
   function tabLabel(id){
     var found = ALL_TABS.find(function(tb){return tb[0]===id;});
@@ -14123,8 +14492,12 @@ function renderNav(){
     if(secteurBox) secteurBox.innerHTML = '';
   }
 
-  var html = '<button class="sidebar-standalone'+(currentTab==='dashboard'?' active':'')+'" data-tab="dashboard">'+
+  var html = '<button class="sidebar-standalone'+(currentTab==='travail'?' active':'')+'" data-tab="travail" title="Ce que j\'ai à faire">'+
+    '<span class="sidebar-icon">'+(TAB_ICONS.travail||'')+'</span><span class="sidebar-label-text">'+esc(t('tab_travail','Mon travail'))+'</span></button>';
+  html += '<button class="sidebar-standalone'+(currentTab==='dashboard'?' active':'')+'" data-tab="dashboard">'+
     '<span class="sidebar-icon">'+TAB_ICONS.dashboard+'</span><span class="sidebar-label-text">'+esc(tabLabel('dashboard'))+'</span></button>';
+  if(us.length>1) html += '<button class="sidebar-standalone'+(currentTab==='site'?' active':'')+'" data-tab="site" title="Tous vos secteurs sur une page">'+
+    '<span class="sidebar-icon">'+(TAB_ICONS.site||'')+'</span><span class="sidebar-label-text">'+esc(t('tab_site','Vue site'))+'</span></button>';
 
   TAB_GROUPS.forEach(function(group){
     var visibleTabs = group.tabs.filter(function(tid){ return allowedTabsIds.indexOf(tid)>=0; });
@@ -14224,6 +14597,7 @@ async function handleLogin(){
     try{ localStorage.setItem('mcu_last_username_v1', acc.username); }catch(e){}
     currentUser = acc;
     setSession(acc.id);
+    currentTab = homeTabFor();
     document.getElementById('login-overlay').classList.add('hidden');
     renderNav();
     renderUserbox();
@@ -15218,6 +15592,8 @@ app.addEventListener('click', async function(e){
   if(await wzHandleClick(e)) return;
   if(await qosHandleClick(e)) return;
   if(await refsHandleClick(e)) return;
+  if(await siteHandleClick(e)) return;
+  if(await travailHandleClick(e)) return;
   var czB = e.target.closest('[data-action^="cz-"],[data-action^="pset-"]');
   if(czB){
     var ca = czB.dataset.action;
@@ -16436,6 +16812,7 @@ async function init(){
     if(sess){ currentUser = DATA.accounts.find(function(a){ return a.id===sess.accountId; }) || null; }
     if(currentUser) setTimeout(function(){ try{ actionsSnapshotTick(); }catch(e){} }, 0);
     if(currentUser){
+      currentTab = homeTabFor();
       loginOverlayEl.classList.add('hidden');
       renderNav();
       renderUserbox();
