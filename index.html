@@ -1320,7 +1320,7 @@ tr.releve-cur-week td:first-child{font-weight:700;}
   #site-print .site-kpis{grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; margin-bottom:8px;}
   #site-print .site-kpis div{padding:6px 10px;} #site-print .site-kpis span{font-size:16px;}
   #site-print .site-table{font-size:10px; table-layout:fixed; width:100%;}
-  #site-print .site-table th:nth-child(1){width:13%;} #site-print .site-table th:nth-child(2){width:15%;} #site-print .site-table th:nth-child(3){width:9%;} #site-print .site-table th:nth-child(4){width:11%;} #site-print .site-table th:nth-child(5){width:11%;}
+  #site-print .site-table th:nth-child(1){width:15%;} #site-print .site-table th:nth-child(2){width:11%;} #site-print .site-table th:nth-child(3){width:13%;} #site-print .site-table th:nth-child(4){width:13%;}
   #site-print .site-chip{white-space:normal; font-size:9px;}
   #site-print .site-sec, #site-print .site-eur, #site-print .site-line{white-space:normal;} #site-print .site-table td{padding:4px 6px;} #site-print .site-table th{padding:4px 6px;}
   #site-print .table-wrap{overflow:visible !important;}
@@ -1354,6 +1354,14 @@ tr.releve-cur-week td:first-child{font-weight:700;}
 .nav-badge{margin-left:auto; min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:var(--danger); color:#fff; font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; font-family:var(--mono);}
 .sidebar.collapsed .nav-badge{position:absolute; top:2px; right:4px; min-width:16px; height:16px; font-size:9.5px; padding:0 4px;}
 .sidebar-standalone{position:relative;}
+
+/* Sous-onglets d'une entrée regroupée du menu (Accueil, Documents) */
+.nav-subtabs{display:flex; gap:4px; border-bottom:2px solid var(--border); margin:0 0 16px; flex-wrap:wrap;}
+.nav-subtab{border:none; background:transparent; padding:9px 16px; font-size:14px; font-weight:600; color:var(--text-muted,#666); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; display:inline-flex; align-items:center; gap:8px; font-family:inherit;}
+.nav-subtab:hover{color:#17368A;}
+.nav-subtab.active{color:#17368A; border-bottom-color:#45A0A2;}
+.nav-subtab .nav-badge{margin-left:0;}
+@media print{ .nav-subtabs{display:none !important;} }
 /* Mon travail */
 .tr-block-title{font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#17368A; margin:18px 0 8px; padding-bottom:4px; border-bottom:2px solid #45A0A2;}
 .tr-sec{display:inline-block; font-size:10.5px; font-weight:700; color:#1D4F50; background:#E3F1F1; border-radius:8px; padding:0 6px; margin-right:4px; vertical-align:1px;}
@@ -11753,7 +11761,7 @@ function homeTabFor(){
 }
 function homeToggleHtml(tab){
   var on = homeTabFor()===tab;
-  return '<button class="btn small home-toggle'+(on?' is-on':'')+'" data-action="home-set" data-tab="'+tab+'" title="'+(on?'Cette page s\'ouvre à la connexion':'Ouvrir l\'outil sur cette page à la connexion')+'">'+(on?'🏠 Page d\'accueil':'🏠 Définir comme page d\'accueil')+'</button>';
+  return '<button class="btn small home-toggle'+(on?' is-on':'')+'" data-action="home-set" data-tab="'+tab+'" title="'+(on?'Cet onglet s\'ouvre à la connexion':'Ouvrir l\'Accueil sur cet onglet à la connexion')+'">'+(on?'★ Onglet d\'ouverture':'☆ Ouvrir sur cet onglet')+'</button>';
 }
 function travailItems(){
   var me = currentUser ? trNorm(currentUser.displayName) : '';
@@ -11850,12 +11858,13 @@ RENDERERS.travail = function(){
   return h+'</div>';
 };
 async function travailHandleClick(e){
-  var b = e.target.closest('[data-action^="tr-"], [data-action="home-set"]'); if(!b) return false;
+  var b = e.target.closest('[data-action^="tr-"], [data-action="home-set"], [data-action="nav-sub"]'); if(!b) return false;
   var a = b.dataset.action;
+  if(a==='nav-sub'){ currentTab = b.dataset.tab; renderNav(); render(); window.scrollTo(0,0); return true; }
   if(a==='home-set'){
     var on = homeTabFor()===b.dataset.tab;
     try{ if(on) localStorage.removeItem(homeTabKey()); else localStorage.setItem(homeTabKey(), b.dataset.tab); }catch(err){}
-    toast(on ? 'Page d\'accueil remise par défaut ('+(canVueSite()?'Vue site':'Mon travail')+').' : 'Cette page s\'ouvrira à la connexion.');
+    toast(on ? 'Onglet d\'ouverture remis par défaut ('+(canVueSite()?'Vue site':'Mon travail')+').' : 'Cet onglet s\'ouvrira à la connexion.');
     render(); return true;
   }
   if(a==='tr-open'){ travailSec = userSecteurs().length>1 ? currentSecteur : ''; currentTab = 'travail'; renderNav(); render(); window.scrollTo(0,0); return true; }
@@ -11883,16 +11892,11 @@ function siteSecteurs(){
   var all = (DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT;
   return userSecteurs().map(function(id){ return all.find(function(s){ return s.id===id; }); }).filter(Boolean);
 }
-// Qualiticiens d'un secteur : comptes rattachés à ce secteur (hors administrateur et comptes « tous les secteurs »)
-function siteQualiticiens(sid){
-  return (DATA.accounts||[]).filter(function(a){ return a.roleId!==ADMIN_ROLE_ID && !a.allSecteurs && (a.secteurs||['MCU']).indexOf(sid)>=0; })
-    .map(function(a){ return a.displayName; }).sort(function(x,y){ return x.localeCompare(y,'fr',{sensitivity:'base'}); });
-}
 var SITE_NO_OWNER = 'Sans responsable (qualiticien du secteur)';
 function siteSectorStats(s){
   var items = withSecteur(s.id, function(){ return computePriorities(); });
   items.forEach(function(it){ it.secteur = s.id; it.secteurNom = s.nom || s.id; });
-  var st = {id:s.id, nom:s.nom || s.id, items:items, qualiticiens:siteQualiticiens(s.id)};
+  var st = {id:s.id, nom:s.nom || s.id, items:items};
   st.late = items.filter(function(i){ return i.level==='danger'; });
   st.soon = items.filter(function(i){ return i.level==='warn'; });
   st.lateBy = {};
@@ -11925,12 +11929,11 @@ function siteModChips(st){
   return mods.map(function(md){ return '<span class="site-chip"><i style="background:'+(SITE_MOD_COLORS[md.id]||'#17368A')+';"></i>'+esc(md.label)+' <b>'+st.lateBy[md.id]+'</b></span>'; }).join('');
 }
 function siteTableHtml(stats, forPrint){
-  var h = '<div class="table-wrap"><table class="site-table"><thead><tr><th>Secteur</th><th>Qualiticien(s)</th><th>En retard</th><th>À traiter bientôt</th><th>Plus ancien retard</th><th>Retards par module</th>'+(forPrint?'':'<th></th>')+'</tr></thead><tbody>';
+  var h = '<div class="table-wrap"><table class="site-table"><thead><tr><th>Secteur</th><th>En retard</th><th>À traiter bientôt</th><th>Plus ancien retard</th><th>Retards par module</th>'+(forPrint?'':'<th></th>')+'</tr></thead><tbody>';
   stats.forEach(function(st){
     var open = siteOpen===st.id;
     h += '<tr class="'+(open?'site-open':'')+'">'+
       '<td class="site-sec"><b>'+esc(st.nom)+'</b></td>'+
-      '<td class="site-q">'+(st.qualiticiens.length ? st.qualiticiens.map(esc).join('<br>') : '<span class="site-zero">Aucun compte</span>')+'</td>'+
       '<td>'+(st.late.length ? '<b class="site-n site-danger">'+st.late.length+'</b>' : '<span class="site-okv">à jour</span>')+'</td>'+
       '<td>'+(st.soon.length ? '<b class="site-n site-warn">'+st.soon.length+'</b>' : '<span class="site-zero">0</span>')+'</td>'+
       '<td>'+(st.oldest ? '<b class="site-n'+(st.oldest>30?' site-danger':'')+'">'+st.oldest+' j</b>' : '<span class="site-zero">-</span>')+'</td>'+
@@ -11977,7 +11980,6 @@ RENDERERS.site = function(){
   var anyLate = stats.some(function(st){ return st.late.length; });
   h += '<div class="card"><div class="eyebrow" style="margin-bottom:10px;">Où sont les retards ? (par secteur et par module)</div>'+
     (anyLate ? '<div class="chart-box" style="height:'+siteChartHeight(stats.length)+'px;"><canvas id="chart-site-retards"></canvas></div>' : '<p class="tiny">Aucun point en retard sur vos secteurs.</p>')+'</div>';
-  h += renderPerfAuditProgress();   // avancement des audits de perf, secteur par secteur
   return h+'</div>';
 };
 var siteChart = null;
@@ -12023,7 +12025,7 @@ var HELP = [
       ['Deux personnes modifient en même temps, que se passe-t-il ?', 'Les modifications des deux personnes sont fusionnées. Si vous modifiez exactement la même valeur, c\'est la dernière saisie qui est gardée.'],
       ['Je ne vois pas un onglet dont j\'ai besoin.', 'Il n\'est pas activé pour votre secteur (« Configurer le secteur », étape 1) ou votre profil n\'y a pas accès (à demander à l\'administrateur).']]},
   {id:'travail', tab:'travail', titre:'Mon travail', quoi:'Ce que vous avez à faire : tout ce qui est en retard ou à traiter dans les prochains jours, sur tous vos secteurs. C\'est la page d\'accueil des techniciens.',
-    etapes:['« À moi » regroupe les points dont vous êtes le responsable, et les points sans responsable de vos secteurs (ils reviennent au qualiticien du secteur).', 'Les points sont rangés par module, les retards d\'abord. Cliquez sur un point pour l\'ouvrir (action, chantier) ou sur « Ouvrir → » pour aller dans l\'onglet.', 'Plusieurs secteurs : les puces en haut filtrent sur un secteur.', 'Plus bas : les points suivis par d\'autres personnes (comptes multi-secteurs : rangés par secteur).', '« 🏠 Définir comme page d\'accueil » choisit la page qui s\'ouvre à la connexion (Mon travail, Tableau de bord ou Vue site).'],
+    etapes:['« À moi » regroupe les points dont vous êtes le responsable, et les points sans responsable de vos secteurs (ils reviennent au qualiticien du secteur).', 'Les points sont rangés par module, les retards d\'abord. Cliquez sur un point pour l\'ouvrir (action, chantier) ou sur « Ouvrir → » pour aller dans l\'onglet.', 'Plusieurs secteurs : les puces en haut filtrent sur un secteur.', 'Plus bas : les points suivis par d\'autres personnes (comptes multi-secteurs : rangés par secteur).', 'Mon travail, Tableau de bord et Vue site sont trois onglets de l\'entrée « Accueil » du menu. « ☆ Ouvrir sur cet onglet » choisit celui qui s\'ouvre à la connexion.'],
     faq:[['Pourquoi un point sans responsable est « à moi » ?', 'Il y a un qualiticien par secteur : ce qui n\'est pas assigné (saisie CHOKKO, formations, métrologie…) revient à celui qui est en charge du secteur.'],
       ['Comment un point devient-il « à moi » ?', 'Quand vous êtes le responsable de l\'action, le pilote du chantier ou le responsable de l\'audit planifié (même nom que votre compte).'],
       ['Où sont passées les priorités du tableau de bord ?', 'Ici. Le tableau de bord ne montre plus que les résultats du secteur ; un bandeau en haut renvoie vers Mon travail.']]},
@@ -12053,7 +12055,7 @@ var HELP = [
     etapes:['Ajoutez un instrument : désignation, ligne, lieu, n° de moyen, échéance, pièce jointe (PV).', 'Le statut passe en orange avant l\'échéance et en rouge une fois dépassée.', 'Export CSV pour la traçabilité.'],
     faq:[['Où modifier un instrument ?', 'Directement dans la liste de l\'onglet.']]},
   {id:'site', tab:'site', titre:'Vue site', quoi:'Pour le responsable qualité : le « Mon travail » de chaque secteur, pour voir d\'un coup d\'œil ce qui est en retard, où et chez qui. Visible pour les profils cochés « Responsable (Vue site) » dans Paramètres > profils.',
-    etapes:['Le tableau donne, secteur par secteur : le ou les qualiticiens, les points en retard, ceux à traiter bientôt, le plus ancien retard et la répartition par module.', '« Voir le détail » déplie le Mon travail du secteur : la liste par module, et le nombre de retards par personne.', 'Cliquez sur un point pour l\'ouvrir (action, chantier) ou sur « Ouvrir → » pour aller dans l\'onglet du secteur.', 'Le graphique montre de quel module viennent les retards de chaque secteur ; en bas, l\'avancement des audits de perf.', '« Imprimer » sort le tableau et le graphique sur une feuille A4 paysage.'],
+    etapes:['Le tableau donne, secteur par secteur : les points en retard, ceux à traiter bientôt, le plus ancien retard et la répartition par module.', '« Voir le détail » déplie le Mon travail du secteur : la liste par module, et le nombre de retards par personne.', 'Cliquez sur un point pour l\'ouvrir (action, chantier) ou sur « Ouvrir → » pour aller dans l\'onglet du secteur.', 'Le graphique montre de quel module viennent les retards de chaque secteur. L\'avancement des audits de perf est sur le tableau de bord.', '« Imprimer » sort le tableau et le graphique sur une feuille A4 paysage.'],
     faq:[['Pourquoi « Sans responsable (qualiticien du secteur) » ?', 'Les points sans responsable désigné (saisie CHOKKO, formations, métrologie…) reviennent au qualiticien en charge du secteur, comme dans son Mon travail.'],
       ['Où sont le score, le CHOKKO, le coût rebut ?', 'Ce sont des résultats : dans le tableau de bord (bandeau « Tous les secteurs » en haut, puis le détail du secteur) et dans la Réunion QOS.'],
       ['Qui voit cette page ?', 'L\'administrateur et les profils cochés « Responsable (Vue site) ». Si la case n\'a jamais été réglée, les comptes qui voient tous les secteurs y ont accès.']]},
@@ -12290,7 +12292,8 @@ function render(){
   if(currentTab==='comptes'){ currentTab = 'parametres'; psetSub = 'comptes'; }
   updateHeaderSubtitle();
   Array.prototype.forEach.call(document.querySelectorAll('#sidebar-nav button[data-tab]'), function(b){
-    b.classList.toggle('active', b.dataset.tab===currentTab);
+    var mgB = b.dataset.merge ? navMergeById(b.dataset.merge) : null;
+    b.classList.toggle('active', mgB ? mgB.tabs.indexOf(currentTab)>=0 : b.dataset.tab===currentTab);
   });
   // Préserver le focus + la position du curseur d'un champ texte en cours de saisie
   var activeEl = document.activeElement;
@@ -12301,7 +12304,7 @@ function render(){
   // Préserver la position de défilement des tableaux larges et des fenêtres (sinon retour à gauche à chaque mise à jour)
   var scrollSnap = captureScrollPositions();
   var fn = RENDERERS[currentTab] || RENDERERS.dashboard;
-  view.innerHTML = fn() + (actionDetailId ? actionDetailModalHtml() : '') + (czModal ? czModalHtml() : '');
+  view.innerHTML = navSubtabsHtml() + fn() + (actionDetailId ? actionDetailModalHtml() : '') + (czModal ? czModalHtml() : '');
   try{ hydrateBlobThumbs(); }catch(e){}
   try{ czApplyTexts(view); }catch(e){ console.error('textes', e); }
   try{ helpRender(); }catch(e){ console.error('aide', e); }
@@ -12398,7 +12401,7 @@ function renderSecteurDashboard(){
   var sec = getSecteur(currentSecteur);
   var lines = secteurLines();
   var html = '<div class="section dash-actions-noprint prio-toolbar">'+homeToggleHtml('dashboard')+'<button class="btn" data-action="monthly-report">📄 Rapport mensuel</button></div>';
-  if(userSecteurs().length>1) html += renderMultiSecteurBanner()+sectorDetailHeading();
+  if(userSecteurs().length>1) html += renderMultiSecteurBanner()+renderPerfAuditProgress()+sectorDetailHeading();
   html += wzDashboardBanner();
   var hid = (sec && sec.dashHidden) || [], show = function(id){ return hid.indexOf(id)<0; };   // cartes choisies dans l'assistant
   // « À traiter » : déplacé dans Mon travail (le tableau de bord ne montre plus que les résultats du secteur)
@@ -13214,7 +13217,7 @@ RENDERERS.dashboard = function(){
   var secHid = ((getSecteur(currentSecteur)||{}).dashHidden || []).concat(['w_planning','w_alerts','w_my_actions']);   // à faire : dans Mon travail   // cartes masquées pour ce secteur dans l'assistant
   var layout = getDashboardLayout().filter(function(w){ return !w.hidden && secHid.indexOf(w.id)<0; }); // "hidden" = supprimé du modèle
   var html = '';
-  if(userSecteurs().length>1) html += renderMultiSecteurBanner()+sectorDetailHeading();
+  if(userSecteurs().length>1) html += renderMultiSecteurBanner()+renderPerfAuditProgress()+sectorDetailHeading();
   html += wzDashboardBanner();
   html += renderTodayBanner();
 
@@ -14480,6 +14483,36 @@ function sidebarSettingsModal(){
     '<div class="actions-row" style="margin-top:18px;"><button class="btn primary" data-action="sidebar-settings-close">Fermer</button></div>'+
     '</div></div>';
 }
+// ===== Onglets regroupés sous une seule entrée du menu (sous-onglets en haut de page) =====
+var NAV_MERGES = [
+  {id:'accueil', label:'Accueil', tabs:['travail','dashboard','site'], icon:'dashboard'},
+  {id:'documents', label:'Documents', tabs:['bibliotheque','archives'], icon:'bibliotheque'}
+];
+var NAV_ALLOWED = [];
+var navMergeLast = {};
+function navMergeById(id){ return NAV_MERGES.filter(function(m){ return m.id===id; })[0]; }
+function navMergeOf(tab){ return NAV_MERGES.filter(function(m){ return m.tabs.indexOf(tab)>=0; })[0] || null; }
+function navMergeVisible(m){ return m.tabs.filter(function(tb){ return NAV_ALLOWED.indexOf(tb)>=0; }); }
+function navMergeTarget(m, vis){
+  if(vis.indexOf(currentTab)>=0) return currentTab;
+  if(navMergeLast[m.id] && vis.indexOf(navMergeLast[m.id])>=0) return navMergeLast[m.id];
+  if(m.id==='accueil'){ var h = homeTabFor(); if(vis.indexOf(h)>=0) return h; }
+  return vis[0] || m.tabs[0];
+}
+function navSubLabel(tab){
+  if(tab==='travail') return t('tab_travail','Mon travail');
+  if(tab==='site') return t('tab_site','Vue site');
+  var f = ALL_TABS.find(function(x){ return x[0]===tab; });
+  return t('tab_'+tab, f ? f[1] : tab);
+}
+function navSubtabsHtml(){
+  var m = navMergeOf(currentTab); if(!m) return '';
+  var vis = navMergeVisible(m); if(vis.length<2) return '';
+  navMergeLast[m.id] = currentTab;
+  return '<div class="nav-subtabs">'+vis.map(function(tb){
+    return '<button class="nav-subtab'+(tb===currentTab?' active':'')+'" data-action="nav-sub" data-tab="'+tb+'">'+esc(navSubLabel(tb))+(tb==='travail'? travailBadgeHtml() : '')+'</button>';
+  }).join('')+'</div>';
+}
 function renderNav(){
   // Ramener d'abord le secteur courant dans ceux du compte (sinon, juste après la connexion d'un technicien,
   // le menu était calculé sur le secteur par défaut MCU)
@@ -14517,12 +14550,11 @@ function renderNav(){
     if(secteurBox) secteurBox.innerHTML = '';
   }
 
-  var html = '<button class="sidebar-standalone'+(currentTab==='travail'?' active':'')+'" data-tab="travail" title="Ce que j\'ai à faire">'+
-    '<span class="sidebar-icon">'+(TAB_ICONS.travail||'')+'</span><span class="sidebar-label-text">'+esc(t('tab_travail','Mon travail'))+'</span>'+travailBadgeHtml()+'</button>';
-  html += '<button class="sidebar-standalone'+(currentTab==='dashboard'?' active':'')+'" data-tab="dashboard">'+
-    '<span class="sidebar-icon">'+TAB_ICONS.dashboard+'</span><span class="sidebar-label-text">'+esc(tabLabel('dashboard'))+'</span></button>';
-  if(canVueSite()) html += '<button class="sidebar-standalone'+(currentTab==='site'?' active':'')+'" data-tab="site" title="Les tâches et retards de tous les secteurs">'+
-    '<span class="sidebar-icon">'+(TAB_ICONS.site||'')+'</span><span class="sidebar-label-text">'+esc(t('tab_site','Vue site'))+'</span></button>';
+  NAV_ALLOWED = allowedTabsIds;
+  // Une seule entrée « Accueil » : Mon travail · Tableau de bord · Vue site, en onglets en haut de page
+  var acc = navMergeById('accueil'), accTabs = navMergeVisible(acc), accTarget = navMergeTarget(acc, accTabs);
+  var html = '<button class="sidebar-standalone'+(accTabs.indexOf(currentTab)>=0?' active':'')+'" data-tab="'+accTarget+'" data-merge="accueil" title="Mon travail, tableau de bord'+(accTabs.indexOf('site')>=0?', vue site':'')+'">'+
+    '<span class="sidebar-icon">'+(TAB_ICONS.dashboard||'')+'</span><span class="sidebar-label-text">'+esc(t('tab_accueil','Accueil'))+'</span>'+travailBadgeHtml()+'</button>';
 
   TAB_GROUPS.forEach(function(group){
     var visibleTabs = group.tabs.filter(function(tid){ return allowedTabsIds.indexOf(tid)>=0; });
@@ -14534,7 +14566,18 @@ function renderNav(){
       '<span class="sidebar-group-title-text"><span class="sidebar-icon" style="display:inline-flex; margin-right:4px;">'+group.icon+'</span>'+esc(group.label)+'</span>'+
       '<span class="sidebar-group-chevron">\u25be</span></div>';
     html += '<div class="sidebar-group-items">';
+    var mergedDone = {};
     html += visibleTabs.map(function(tid){
+      var mg = navMergeOf(tid);
+      if(mg){
+        var mTabs = navMergeVisible(mg);
+        if(mTabs.length>1){   // onglets regroupés (ex. Documents = Bibliothèque + Archives)
+          if(mergedDone[mg.id]) return '';
+          mergedDone[mg.id] = true;
+          return '<button class="sidebar-item'+(mTabs.indexOf(currentTab)>=0?' active':'')+'" data-tab="'+navMergeTarget(mg, mTabs)+'" data-merge="'+mg.id+'">'+
+            '<span class="sidebar-icon">'+(TAB_ICONS[mg.icon]||'')+'</span><span class="sidebar-label-text">'+esc(t('tab_'+mg.id, mg.label))+'</span></button>';
+        }
+      }
       return '<button class="sidebar-item'+(currentTab===tid?' active':'')+'" data-tab="'+tid+'">'+
         '<span class="sidebar-icon">'+(TAB_ICONS[tid]||'')+'</span><span class="sidebar-label-text">'+esc(tabLabel(tid))+'</span></button>';
     }).join('');
