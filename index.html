@@ -2865,9 +2865,8 @@ function chokkoLastEntry(ligne){
 function chokkoStatusForLine(ligne){
   var last = chokkoLastEntry(ligne);
   if(!last) return {level:'neutral', label:'Aucune donnée'};
-  var d = daysBetween(last.date, todayStr());
-  if(d>=3) return {level:'danger', label:'Saisie manquante depuis le '+fmtDate(last.date)};
-  if(d>=2) return {level:'warn', label:'Dernière saisie le '+fmtDate(last.date)};
+  var miss = chokkoMissingWorkdays(last.date);
+  if(miss>=CHOKKO_RETARD_JOURS) return {level:'danger', label:'En retard de saisie depuis le '+fmtDate(last.date)};
   return {level:'ok', label:'À jour'};
 }
 function chokkoNcLastDays(ligne, n){
@@ -4478,6 +4477,10 @@ async function handleSaveResultat(id){
 var chartParticules = {};
 function renderParticulesCharts(){
   if(typeof Chart==='undefined') return;
+  // Même échelle pour les graphiques de toutes les lignes
+  var pMax = 0;
+  DATA.particules.forEach(function(p){ if(p.statut==='resultat' && p.nbParticules!==null && p.nbParticules>pMax) pMax = p.nbParticules; });
+  var pStep = pMax>100 ? 50 : 10, pYMax = Math.max(pStep, Math.ceil(pMax/pStep)*pStep);
   PARTICULE_LINES.forEach(function(l){
     var ctx = document.getElementById('chart-particules-'+l);
     if(!ctx) return;
@@ -4495,7 +4498,7 @@ function renderParticulesCharts(){
       chartParticules[l] = new Chart(ctx, {
         type:'line', data:{labels:weeks, datasets:datasets},
         options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
-          scales:{y:{beginAtZero:true, title:{display:true,text:'Nb particules'}}}}
+          scales:{y:{beginAtZero:true, min:0, max:pYMax, title:{display:true,text:'Nb particules'}}}}
       });
     }catch(err){ console.error('chart error', err); }
   });
@@ -9376,10 +9379,18 @@ function chokkoLastEntryDate(ligne){
   if(!entries.length) return null;
   return entries.map(function(e){return e.date;}).sort().pop();
 }
+// Retard de saisie CHOKKO : nombre de jours travaillés (dimanche exclu) restés sans saisie entre la dernière saisie
+// et aujourd'hui (aujourd'hui non compté, la journée n'est pas finie). « En retard » à partir de 2 jours, soit 48 h non remplies.
+var CHOKKO_RETARD_JOURS = 2;
+function chokkoMissingWorkdays(last){
+  var n = 0, d = addDays(last, 1), today = todayStr();
+  while(d<today){ if(new Date(d+'T00:00:00').getDay()!==0) n++; d = addDays(d, 1); }
+  return n;
+}
 function chokkoSaisieDelay(ligne){
   var last = chokkoLastEntryDate(ligne);
   if(!last) return null;
-  return daysBetween(last, todayStr());
+  return chokkoMissingWorkdays(last);
 }
 function chokkoSaisieView(){
   var ligne = chokkoLigne;
@@ -9389,7 +9400,7 @@ function chokkoSaisieView(){
   var monthAvg = chokkoMonthAverage(ligne, chokkoYear, chokkoMonth);
 
   var staleLines = chokkoLines().map(function(l){ return {ligne:l, delay:chokkoSaisieDelay(l)}; })
-    .filter(function(s){ return s.delay===null || s.delay>=2; });
+    .filter(function(s){ return s.delay===null || s.delay>=CHOKKO_RETARD_JOURS; });
   var moisNom = MONTHS_FR[chokkoMonth].charAt(0).toUpperCase()+MONTHS_FR[chokkoMonth].slice(1);
   var html = '';
   if(!postes.length){
@@ -9402,7 +9413,7 @@ function chokkoSaisieView(){
     html += '<div class="card chokko-noprint" style="background:var(--warn-bg,#FBEEDC); border-color:var(--warn-border,#E8C088); margin-bottom:14px; display:flex; align-items:center; gap:10px;">'+
       '<span style="font-size:18px;">⚠</span><div class="tiny">'+
       staleLines.map(function(s){
-        return '<b>'+s.ligne+'</b> : '+(s.delay===null? 'aucune saisie enregistrée' : 'dernière saisie il y a '+s.delay+' jour'+(s.delay>1?'s':''));
+        return '<b>'+s.ligne+'</b> : '+(s.delay===null? 'aucune saisie enregistrée' : 'en retard de saisie · '+s.delay+' jours travaillés sans saisie (dernière le '+fmtDate(chokkoLastEntryDate(s.ligne))+')');
       }).join(' &nbsp;·&nbsp; ')+
       '</div></div>';
   }
@@ -9770,12 +9781,19 @@ function renderChokkoDefChart(){
   if(typeof Chart==='undefined') return;
   chartsChokkoDef.forEach(function(c){ try{ c.destroy(); }catch(e){} });
   chartsChokkoDef = [];
-  (chokkoDefSlotsByLigne[chokkoLigne]||[]).forEach(function(posteId, i){
+  var slotsD = chokkoDefSlotsByLigne[chokkoLigne]||[], yMaxD = chokkoDefYMax(slotsD);
+  slotsD.forEach(function(posteId, i){
     var ctx = document.getElementById('chart-chokko-def-'+i); if(!ctx) return;
-    try{ chartsChokkoDef.push(new Chart(ctx, buildChokkoDefChartConfig(false, posteId))); }catch(err){ console.error('suivi défaut', err); }
+    try{ chartsChokkoDef.push(new Chart(ctx, buildChokkoDefChartConfig(false, posteId, yMaxD))); }catch(err){ console.error('suivi défaut', err); }
   });
 }
-function buildChokkoDefChartConfig(forPrint, posteId){
+// Échelle commune aux graphiques de suivi des défauts : 0 à 100, relevée au-delà (par dizaine) si un poste dépasse 100
+function chokkoDefYMax(posteIds){
+  var buckets = chokkoDefBucketsFor(chokkoDefRange()), mx = 0;
+  (posteIds||[]).forEach(function(pid){ chokkoDefFill(chokkoLigne, pid, buckets).forEach(function(b){ if(b.days && b.n>mx) mx = b.n; }); });
+  return Math.max(100, Math.ceil(mx/10)*10);
+}
+function buildChokkoDefChartConfig(forPrint, posteId, yMax){
   var series = chokkoDefFill(chokkoLigne, posteId || chokkoDefPoste, chokkoDefBucketsFor(chokkoDefRange()));
   var trend = chokkoDefTrendLine(series);
   var ds = [{type:'bar', label:'Défauts', data:series.map(function(b){ return b.days? b.n : null; }), backgroundColor:series.map(function(b){ return b.inProgress ? ACURION_TURQ+'66' : ACURION_TURQ; }), borderColor:'#B2764A', borderWidth:1, borderRadius:3, order:2}];
@@ -9789,7 +9807,7 @@ function buildChokkoDefChartConfig(forPrint, posteId){
         plugins:{legend:{display:!forPrint, position:'bottom'}, tooltip:{filter:function(it){ return it.datasetIndex===0; }, callbacks:{
           label:function(c){ return c.raw===null ? ' Pas de saisie' : ' '+c.raw+' défaut'+(c.raw>1?'s':''); }
         }}},
-        scales:{y:{beginAtZero:true, title:{display:!forPrint, text:'Nombre de défauts'}, ticks:{precision:0, font:fs?{size:fs}:{}}}, x:{ticks:{maxRotation:50, autoSkip:true, font:fs?{size:fs-2}:{}}}}}};
+        scales:{y:{beginAtZero:true, min:0, max:(yMax || chokkoDefYMax([posteId || chokkoDefPoste])), title:{display:!forPrint, text:'Nombre de défauts'}, ticks:{precision:0, font:fs?{size:fs}:{}}}, x:{ticks:{maxRotation:50, autoSkip:true, font:fs?{size:fs-2}:{}}}}}};
 }
 // Impression des 3 défauts suivis : une page A3 paysage
 async function printChokkoDefReport(){
@@ -9797,6 +9815,7 @@ async function printChokkoDefReport(){
   var postes = chokkoDefPostesWithCounts(ligne);
   if(!postes.length){ toast('Aucun poste configuré.', 'error'); return; }
   var slots = chokkoDefSlots(ligne, postes);
+  var yMaxP = chokkoDefYMax(slots);   // même échelle sur les 3 graphiques imprimés
   var range = chokkoDefRange();
   var per = (CHOKKO_DEF_PERIODS.filter(function(pp){ return pp[0]===chokkoDefPeriod; })[0]||['',''])[1];
   var logoEl = document.querySelector('.sidebar-logo-full');
@@ -9809,7 +9828,7 @@ async function printChokkoDefReport(){
     var note = DATA.chokkoNotes.filter(function(n){ return n.ligne===ligne && n.poste===posteId && (n.texte||'').trim(); })
       .sort(function(a,b){ return (b.annee*12+b.mois)-(a.annee*12+a.mois); })[0];
     var chart = '';
-    if(st.S.days){ try{ chart = rptChartImage(buildChokkoDefChartConfig(true, posteId), 2000, 470); }catch(e){ console.error('impression suivi défaut', e); } }
+    if(st.S.days){ try{ chart = rptChartImage(buildChokkoDefChartConfig(true, posteId, yMaxP), 2000, 470); }catch(e){ console.error('impression suivi défaut', e); } }
     h += '<div class="dp-slot"><div class="dp-info">'+
         '<div class="dp-title">'+esc(poste.id+' - '+poste.label)+'</div>'+
         chokkoDefKpisHtml(st, range)+
@@ -12457,7 +12476,7 @@ function renderSecteurDashboard(){
       var lvl = chokkoLevelVsObjectif(avg, l);
       return '<div class="statcard s-'+lvl+'" style="cursor:pointer;" data-action="dash-goto-chokko" data-ligne="'+esc(l)+'"><div class="eyebrow">'+esc(l)+'</div><div class="val">'+(avg!==null?pct2(avg)+'%':'-')+'</div><div class="lbl">ce mois · objectif ≥ '+chokkoObjectif(l)+'%</div></div>';
     }).join('');
-    var stale = lines.filter(function(l){ return chokkoPostes(l).length; }).map(function(l){ return {ligne:l, delay:chokkoSaisieDelay(l)}; }).filter(function(x){ return x.delay===null || x.delay>=2; });
+    var stale = lines.filter(function(l){ return chokkoPostes(l).length; }).map(function(l){ return {ligne:l, delay:chokkoSaisieDelay(l)}; }).filter(function(x){ return x.delay===null || x.delay>=CHOKKO_RETARD_JOURS; });
     var noPostes = lines.filter(function(l){ return !chokkoPostes(l).length; });
     html += '<div class="section card" style="margin-bottom:18px;"><div class="eyebrow" style="margin-bottom:10px;">'+esc(t('title_chokko','Suivi CHOKKO'))+' - '+MONTHS_FR[curM]+' '+curY+'</div>'+
       '<div class="grid grid-4">'+cards+'</div>'+
@@ -12745,7 +12764,7 @@ function computePriorities(){
       var s = chokkoStatusForLine(l);
       if(s.level!=='danger' && s.level!=='warn') return;
       var last = chokkoLastEntry(l);
-      add('chokko', s.level, 'CHOKKO '+l+' : saisie en attente', last? 'Dernière saisie le '+fmtDate(last.date) : 'Aucune saisie', last? addDays(last.date, 1) : null);
+      add('chokko', s.level, 'CHOKKO '+l+' : en retard de saisie', last? 'Dernière saisie le '+fmtDate(last.date)+' · '+chokkoMissingWorkdays(last.date)+' jours sans saisie' : 'Aucune saisie', last? addDays(last.date, 1) : null);
     });
   }
   // --- Audits de perf du mois (secteurs sans planning dédié : à partir du 15)
@@ -13037,7 +13056,7 @@ RENDERERS.dashboard = function(){
       var lvl = chokkoLevelVsObjectif(avg, l);
       return '<div class="statcard s-'+lvl+'"><div class="eyebrow">'+l+'</div><div class="val">'+(avg!==null?pct2(avg)+'%':'-')+'</div><div class="lbl">ce mois · objectif ≥ '+chokkoObjectif(l)+'%</div></div>';
     }).join('');
-    var stale = lignes.map(function(l){ return {ligne:l, delay:chokkoSaisieDelay(l)}; }).filter(function(s){ return s.delay===null || s.delay>=2; });
+    var stale = lignes.map(function(l){ return {ligne:l, delay:chokkoSaisieDelay(l)}; }).filter(function(s){ return s.delay===null || s.delay>=CHOKKO_RETARD_JOURS; });
     var staleHtml = '';   // retards de saisie : dans Mon travail
     return '<div class="eyebrow" style="margin-bottom:8px;">'+esc(t('title_chokko','Suivi CHOKKO'))+'</div><div class="grid grid-3">'+cards+'</div>'+staleHtml;
   })();
@@ -13933,7 +13952,7 @@ function computeAlerts(){
     if(s.level==='danger' || s.level==='warn'){
       var last = chokkoLastEntry(l);
       alerts.push({id:'al-'+(n++), level:s.level, module:'CHOKKO', ligne:l, echeance:null,
-        title:'CHOKKO - saisie en attente', meta: s.label,
+        title:'CHOKKO - en retard de saisie', meta: s.label,
         detail: last? ('Dernière saisie enregistrée le '+fmtDate(last.date)+' ('+chokkoDayTotals(l, last.date).totalNC+' pièces NC).') : 'Aucune saisie enregistrée.'});
     }
   });
