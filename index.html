@@ -1374,6 +1374,16 @@ tr.releve-cur-week td:first-child{font-weight:700;}
 .tr-link-go{font-weight:600; color:#17368A; white-space:nowrap;}
 .home-toggle.is-on{background:#E3F1F1; border-color:#45A0A2; color:#1D4F50;}
 @media print{ .home-toggle, .tr-link{display:none !important;} }
+
+/* CHOKKO : survol d'une ligne bien visible, sur toute la ligne (y compris l'intitulé du défaut figé à gauche).
+   Voile sombre par-dessus le fond : les couleurs des cellules restent visibles. */
+@media screen{
+  .chokko-grid.chokko-grid tbody tr:hover > td,
+  .chokko-grid.chokko-grid tbody tr:hover > td.chk-sticky{box-shadow:inset 0 0 0 999px rgba(23,54,138,.16);}
+}
+.year-nav{display:inline-flex; align-items:center; gap:6px; text-transform:none; letter-spacing:0;}
+.year-nav b{font-family:var(--mono); font-size:13px; color:var(--text); min-width:38px; text-align:center;}
+.year-nav .btn{padding:1px 7px;}
 </style>
 </head>
 <body>
@@ -2542,7 +2552,8 @@ function globalConformityScore(){
     parts.push(m); detail.push({label:'Métrologie à jour', val:Math.round(m)});
   }
   if(on('contam')){
-    var contamYear = DATA.contamination.filter(function(c){ return c.annee===Number(todayStr().slice(0,4)) && (c.statut==='ok'||c.statut==='nc'); });
+    var fromKeyC = addDays(todayStr(), -365).slice(0,7);   // 12 derniers mois glissants : pas de trou au changement d'année
+    var contamYear = DATA.contamination.filter(function(c){ return c.annee && monthKeyOf(c.annee, c.mois)>=fromKeyC && (c.statut==='ok'||c.statut==='nc'); });
     if(contamYear.length){
       var okCount = contamYear.filter(function(c){return c.statut==='ok';}).length;
       var c = okCount/contamYear.length*100;
@@ -2668,7 +2679,7 @@ function planningRecordMonths(type, ligne, ref, secteur){
     DATA.resultats.forEach(function(r){
       if(r.ligne!==ligne || r.resultatPct===null || r.resultatPct===undefined) return;
       var mi = monthIndex(r.mois); if(mi<0) return;
-      var y = r.annee || Number(todayStr().slice(0,4));
+      var y = resAnnee(r);
       var k = monthKeyOf(y, mi); add(k, k+'-15');
     });
   }
@@ -2976,6 +2987,29 @@ function resolveResponsableFromInputs(selectId, autreId){
 // ---------- PROPRETE ----------
 var auditWizard = null;
 var resultsYear = Number(todayStr().slice(0,4));
+// Résultats d'audit propreté saisis avant l'ajout du champ « année » : ils datent de 2026 (première année de l'outil).
+// Sans cela, ils réapparaîtraient dans chaque nouvelle année (même nom de mois).
+var RES_ANNEE_HISTORIQUE = 2026;
+// Petit sélecteur d'année ◀ 2026 ▶ (tableaux annuels)
+function yearNavHtml(action, y){
+  return '<span class="year-nav"><button class="btn small" data-action="'+action+'" data-d="-1" title="Année précédente">◀</button><b>'+y+'</b>'+
+    '<button class="btn small" data-action="'+action+'" data-d="1" title="Année suivante">▶</button></span>';
+}
+var particulesYear = null;
+function yearNavHandleClick(e){
+  var b = e.target.closest('[data-action="contam-year"], [data-action="particules-year"]'); if(!b) return false;
+  var d = Number(b.dataset.d)||0;
+  if(b.dataset.action==='contam-year'){ resultsYear += d; contamHistPage = 0; }
+  else particulesYear = (particulesYear||Number(todayStr().slice(0,4))) + d;
+  render(); return true;
+}
+// Liste d'années d'un sélecteur : l'année affichée ±1, plus toutes les années qui ont des données
+function yearsWithData(y, list){
+  var set = {}; [y-1, y, y+1].forEach(function(v){ set[v] = 1; });
+  (list||[]).forEach(function(v){ if(v) set[Number(v)] = 1; });
+  return Object.keys(set).map(Number).sort();
+}
+function resAnnee(r){ return (r.annee!==undefined && r.annee!==null && r.annee!=='') ? Number(r.annee) : RES_ANNEE_HISTORIQUE; }
 var openAuditDetailId = null;
 
 RENDERERS.proprete = function(){
@@ -3379,7 +3413,7 @@ async function recomputeResultatMois(ligne, moisLabel, annee){
     var aMois = MONTHS_FR[Number(d[1])-1]; aMois = aMois.charAt(0).toUpperCase()+aMois.slice(1);
     return aMois===moisLabel && Number(d[0])===annee;
   });
-  var existing = DATA.resultats.find(function(r){ return r.ligne===ligne && r.mois===moisLabel && (r.annee===annee || r.annee===undefined); });
+  var existing = DATA.resultats.find(function(r){ return r.ligne===ligne && r.mois===moisLabel && resAnnee(r)===annee; });
   if(!audits.length){
     if(existing){ DATA.resultats = DATA.resultats.filter(function(r){ return r!==existing; }); await save('resultats'); }
     return;
@@ -3435,7 +3469,7 @@ function monthRecapValue(ligne, monthIdx, year){
   });
   // Résultats saisis manuellement (hebdo ou mensuels)
   var manual = DATA.resultats.filter(function(r){
-    return r.ligne===ligne && r.mois===moisLabel && (r.annee===year || r.annee===undefined) && r.resultatPct!==null && r.resultatPct!==undefined;
+    return r.ligne===ligne && r.mois===moisLabel && resAnnee(r)===year && r.resultatPct!==null && r.resultatPct!==undefined;
   });
   manual.forEach(function(r){ vals.push(r.resultatPct); });
   if(!vals.length) return null;
@@ -3456,7 +3490,7 @@ function weeksOfMonth(year, monthIdx){
 }
 var resultsMonthView;
 function proprResultats(){
-  var years = [resultsYear-1, resultsYear, resultsYear+1];
+  var years = yearsWithData(resultsYear, DATA.resultats.map(resAnnee));
   if(resultsMonthView===undefined) resultsMonthView = Number(todayStr().split('-')[1])-1;
   var html = '<div class="toolbar"><div class="left"><label class="field" style="flex-direction:row; align-items:center; gap:8px;">Année<select id="results-year">'+years.map(function(y){return '<option value="'+y+'"'+(y===resultsYear?' selected':'')+'>'+y+'</option>';}).join('')+'</select></label></div>'+
     '<div style="display:flex; gap:8px;"><button class="btn" data-action="export" data-module="proprete">Générer l\'export labo</button><button class="btn primary" data-toggle-form="resultats">+ Ajouter un résultat</button></div></div>';
@@ -3471,7 +3505,7 @@ function proprResultats(){
     '<div class="actions-row"><button type="button" class="btn" data-cancel-form="resultats">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'+
   '</form>';
 
-  var rs = DATA.resultats.filter(function(r){ return r.annee===resultsYear || (r.annee===undefined && resultsYear===Number(todayStr().slice(0,4))); });
+  var rs = DATA.resultats.filter(function(r){ return resAnnee(r)===resultsYear; });
   var scored = rs.filter(function(r){ return r.resultatPct!==null && r.resultatPct!==undefined; });
   var moy = scored.length ? Math.round(scored.reduce(function(s,r){return s+r.resultatPct;},0)/scored.length) : null;
   var danger = scored.filter(function(r){ return r.resultatPct<SCORE_DANGER; }).length;
@@ -3545,7 +3579,7 @@ function proprResultats(){
       var moisLabel2 = MONTHS_FR[resultsMonthView].charAt(0).toUpperCase()+MONTHS_FR[resultsMonthView].slice(1);
       var manualThisWeek = DATA.resultats.filter(function(r){
         return r.ligne===l && r.mois===moisLabel2 && r.semaine===info.week &&
-          (r.annee===resultsYear || r.annee===undefined) && r.resultatPct!==null && r.resultatPct!==undefined;
+          resAnnee(r)===resultsYear && r.resultatPct!==null && r.resultatPct!==undefined;
       });
       var allVals = auditsThisWeek.map(function(a){return a.score;}).concat(manualThisWeek.map(function(r){return r.resultatPct;}));
       if(!allVals.length){ html += '<td class="c-empty">-</td>'; return; }
@@ -3597,7 +3631,7 @@ function renderResultatsCharts(){
   if(chartProprEvol){ chartProprEvol.destroy(); chartProprEvol=null; }
   if(chartProprComp){ chartProprComp.destroy(); chartProprComp=null; }
   var lineColors = {MCU1:ACURION_BLUE, MCU2:ACURION_TURQ, MCU3:'#7A8FC4'};
-  var rs = DATA.resultats.filter(function(r){ return r.annee===resultsYear || (r.annee===undefined && resultsYear===Number(todayStr().slice(0,4))); });
+  var rs = DATA.resultats.filter(function(r){ return resAnnee(r)===resultsYear; });
   var lignes = proprLines().filter(function(l){ return chartProprLigneFilter.indexOf(l)>=0; });
   try{
     var datasets = lignes.map(function(l){
@@ -3671,7 +3705,7 @@ function pendingRetest(ligne, ref){
 }
 
 function proprContamination(){
-  var years = [resultsYear-1, resultsYear, resultsYear+1];
+  var years = yearsWithData(resultsYear, DATA.contamination.map(function(c){ return c.annee; }));
   var rs = DATA.contamination.filter(function(c){ return c.annee===resultsYear; });
   var nc = rs.filter(function(c){ return c.statut==='nc'; }).length;
   var pending = rs.filter(function(c){ return c.statut==='collected'; }).length;
@@ -3779,7 +3813,7 @@ function proprContamination(){
       '</div></div>'+
     '<div class="chart-box"><canvas id="chart-contamination"></canvas></div></div>';
 
-  html += '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;"><div class="eyebrow">Tableau annuel - '+resultsYear+'</div><button class="btn small" data-action="add-contam-direct">+ Saisie directe</button></div>';
+  html += '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;"><div class="eyebrow" style="display:flex; align-items:center; gap:10px;">Tableau annuel '+yearNavHtml('contam-year', resultsYear)+'</div><button class="btn small" data-action="add-contam-direct">+ Saisie directe</button></div>';
   if(contamDirectFormOpen) html += contamDirectForm();
 
   html += '<div class="table-wrap"><table class="annual-table"><thead><tr><th>Mois</th>'+CONTAM_COMBOS.map(function(c){return '<th>'+c.ligne+' · '+c.ref+'</th>';}).join('')+'</tr></thead><tbody>';
@@ -4288,11 +4322,15 @@ function proprParticules(){
   '</div>';
 
   // Tableau récapitulatif annuel : semaines × lignes (somme des particules des postes)
-  var yearNow = Number(todayStr().split('-')[0]);
+  if(particulesYear===null) particulesYear = Number(todayStr().slice(0,4));
+  var yearNow = particulesYear;
   var withResults = DATA.particules.filter(function(p){
     return p.statut==='resultat' && p.nbParticules!==null && p.nbParticules!==undefined && p.datePose &&
-      Number(p.datePose.split('-')[0])===yearNow;
+      isoWeekInfo(p.datePose).year===yearNow;   // année de la semaine (S1 peut commencer fin décembre)
   });
+  if(!withResults.length && DATA.particules.some(function(p){ return p.statut==='resultat'; })){
+    html += '<div class="eyebrow" style="margin-bottom:8px; display:flex; align-items:center; gap:10px;">Récapitulatif annuel '+yearNavHtml('particules-year', yearNow)+'</div><p class="tiny" style="margin-bottom:22px;">Aucun résultat en '+yearNow+'.</p>';
+  }
   if(withResults.length){
     var weekMap = {}; // week -> ligne -> {sum, n}
     withResults.forEach(function(p){
@@ -4303,7 +4341,7 @@ function proprParticules(){
       weekMap[wk][p.ligne].n++;
     });
     var sortedWeeks = Object.keys(weekMap).map(Number).sort(function(a,b){return b-a;});
-    html += '<div class="eyebrow" style="margin-bottom:8px;">Récapitulatif annuel '+yearNow+' - total particules &gt;500µm par ligne</div>';
+    html += '<div class="eyebrow" style="margin-bottom:8px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">Récapitulatif annuel '+yearNavHtml('particules-year', yearNow)+' total particules &gt;500µm par ligne</div>';
     html += '<div class="table-wrap" style="margin-bottom:22px;"><table class="annual-table"><thead><tr><th>Semaine</th>'+
       PARTICULE_LINES.map(function(l){return '<th>'+esc(l)+'</th>';}).join('')+'</tr></thead><tbody>';
     sortedWeeks.forEach(function(wk){
@@ -4489,7 +4527,9 @@ function renderParticulesCharts(){
       var items = DATA.particules.filter(function(p){ return p.ligne===l && p.statut==='resultat' && p.nbParticules!==null; })
         .sort(function(a,b){ return (a.datePose||'').localeCompare(b.datePose||''); });
       if(!items.length){ return; }
-      var weeks = items.map(function(p){ return 'S'+isoWeekInfo(p.datePose||p.dateRetrait||todayStr()).week; });
+      var wInfo = items.map(function(p){ return isoWeekInfo(p.datePose||p.dateRetrait||todayStr()); });
+      var multiY = wInfo.some(function(w){ return w.year!==wInfo[0].year; });
+      var weeks = wInfo.map(function(w){ return 'S'+w.week+(multiY? ' '+String(w.year).slice(2) : ''); });
       var palette = [ACURION_BLUE, ACURION_TURQ, '#7A8FC4', '#1F5C5C', '#7B4FA3'];
       var datasets = particulePostesForLigne(l).map(function(poste, i){
         return {label:poste, data:items.map(function(p){ return p.poste===poste? p.nbParticules : null; }),
@@ -5817,7 +5857,7 @@ var perfFormOpen = false;
 var perfYear = Number(new Date().getFullYear());
 RENDERERS.perf = function(){
   var lines = secteurLines();
-  var years = [perfYear-1, perfYear, perfYear+1];
+  var years = yearsWithData(perfYear, DATA.perf.map(function(r){ return r.annee; }));
   var rs = bySecteur(DATA.perf).filter(function(r){ return r.annee===perfYear; });
   var scored = rs.filter(function(r){ return r.resultatPct!==null && r.resultatPct!==undefined; });
   var moy = scored.length ? Math.round(scored.reduce(function(s,r){return s+r.resultatPct;},0)/scored.length) : null;
@@ -12507,7 +12547,7 @@ function secteurPropreteScore(sid, curY, curM){
   if(sid!=='MCU') return {score:null, label:'propreté'};
   var rs = DATA.resultats.filter(function(r){ return r.resultatPct!==null && r.resultatPct!==undefined; });
   var moisLabel = MONTHS_FR[curM].charAt(0).toUpperCase()+MONTHS_FR[curM].slice(1);
-  var monthScores = rs.filter(function(r){ return r.mois===moisLabel && (r.annee===curY || r.annee===undefined); });
+  var monthScores = rs.filter(function(r){ return r.mois===moisLabel && resAnnee(r)===curY; });
   if(monthScores.length){
     return {score:Math.round(monthScores.reduce(function(s,r){return s+r.resultatPct;},0)/monthScores.length), label:'propreté du mois'};
   }
@@ -15222,7 +15262,7 @@ function renderTrendChart(){
       months.push({label: MONTHS_FR[dd.getMonth()].slice(0,3)+' '+String(dd.getFullYear()).slice(2), monthIdx:dd.getMonth(), year:dd.getFullYear(), monthName: MONTHS_FR[dd.getMonth()].charAt(0).toUpperCase()+MONTHS_FR[dd.getMonth()].slice(1)});
     }
     var proprScores = months.map(function(m){
-      var rs = DATA.resultats.filter(function(r){ return r.mois===m.monthName && (r.annee===m.year || r.annee===undefined) && r.resultatPct!==null && r.resultatPct!==undefined; });
+      var rs = DATA.resultats.filter(function(r){ return r.mois===m.monthName && resAnnee(r)===m.year && r.resultatPct!==null && r.resultatPct!==undefined; });
       if(!rs.length) return null;
       return Math.round(rs.reduce(function(s,r){return s+r.resultatPct;},0)/rs.length);
     });
@@ -15685,6 +15725,7 @@ app.addEventListener('click', async function(e){
   if(await qosHandleClick(e)) return;
   if(await refsHandleClick(e)) return;
   if(await siteHandleClick(e)) return;
+  if(yearNavHandleClick(e)) return;
   if(await travailHandleClick(e)) return;
   var czB = e.target.closest('[data-action^="cz-"],[data-action^="pset-"]');
   if(czB){
