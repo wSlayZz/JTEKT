@@ -12391,6 +12391,7 @@ function render(){
   }
   if(currentTab==='pareto'){ renderParetoChart(); }
   if(currentTab==='site'){ renderSiteChart(); }
+  if(currentTab==='metro' && document.getElementById('flt-metro-ligne')) applyMetroFilter();
 
   if(currentTab==='ateq'){ renderAteqCharts(); }
   if(currentTab==='perf'){ renderPerfChart(); }
@@ -13506,7 +13507,8 @@ RENDERERS.metro = function(){
     '</div>';
   }
   html += '<div class="toolbar"><div class="left">';
-  html += '<select id="flt-metro-ligne"><option value="">Toutes les lignes</option>'+secteurLines().map(function(l){return '<option value="'+l+'">'+l+'</option>';}).join('')+'</select>';
+  if(metroFilterLigne && secteurLines().indexOf(metroFilterLigne)<0) metroFilterLigne = '';   // ligne d'un autre secteur
+  html += '<select id="flt-metro-ligne"><option value="">Toutes les lignes</option>'+secteurLines().map(function(l){return '<option value="'+l+'"'+(l===metroFilterLigne?' selected':'')+'>'+l+'</option>';}).join('')+'</select>';
   html += '</div><div style="display:flex; gap:8px;"><button class="btn" data-action="export" data-module="metro">Envoyer un mail de rappel</button><button class="btn primary" data-toggle-form="metro">+ Ajouter un instrument</button></div></div>';
 
   html += '<form class="entryform" id="form-metro" style="display:none">'+
@@ -16735,7 +16737,7 @@ app.addEventListener('change', async function(e){
     }
     return;
   }
-  if(e.target.id==='flt-metro-ligne'){ applyMetroFilter(); return; }
+  if(e.target.id==='flt-metro-ligne'){ metroFilterLigne = e.target.value; applyMetroFilter(); return; }
   if(e.target.id==='flt-alert-ligne'){ alertFilterLigne = e.target.value; applyAlertFilters(); return; }
   if(e.target.id==='flt-alert-module'){ alertFilterModule = e.target.value; applyAlertFilters(); return; }
   if(e.target.id==='alert-horizon'){ alertHorizon = Math.max(1, Number(e.target.value)||14); applyAlertFilters(); return; }
@@ -16767,8 +16769,10 @@ function applyPlanningFilter(){
     tr.style.display = show? '' : 'none';
   });
 }
+// Filtre ligne de la métrologie : gardé en mémoire pour survivre aux mises à jour de la page (modification, ajout, synchro)
+var metroFilterLigne = '';
 function applyMetroFilter(){
-  var l = document.getElementById('flt-metro-ligne').value;
+  var l = metroFilterLigne;
   Array.prototype.forEach.call(document.querySelectorAll('#metro-rows tr[data-row-ligne]'), function(tr){
     tr.style.display = (!l || tr.dataset.rowLigne===l) ? '' : 'none';
   });
