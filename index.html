@@ -1384,6 +1384,51 @@ tr.releve-cur-week td:first-child{font-weight:700;}
 .year-nav{display:inline-flex; align-items:center; gap:6px; text-transform:none; letter-spacing:0;}
 .year-nav b{font-family:var(--mono); font-size:13px; color:var(--text); min-width:38px; text-align:center;}
 .year-nav .btn{padding:1px 7px;}
+
+/* ===== Mode affichage FMDS (plein écran, lecture seule, lisible à distance) ===== */
+body.fmds-mode{background:#fff;}
+body.fmds-mode .sidebar, body.fmds-mode header.top, body.fmds-mode #help-btn, body.fmds-mode #help-panel, body.fmds-mode .nav-subtabs{display:none !important;}
+body.fmds-mode .app-content{margin-left:0 !important; width:100% !important; max-width:none !important;}
+body.fmds-mode #view{padding:8px 16px !important; max-width:none !important;}
+body.fmds-mode .app-content{padding:0 !important;}
+body.fmds-mode #view .section > .card{padding:10px 14px !important;}
+body.fmds-mode #view .section > .subtabs, body.fmds-mode #view .section > .toolbar, body.fmds-mode #view .section > .card.chokko-noprint:not(.chk-actions-card),
+body.fmds-mode #view .section > .chk-gridmode, body.fmds-mode #view .section > p.tiny, body.fmds-mode #chokko-pareto-card, body.fmds-mode #chokko-postit-canvas,
+body.fmds-mode #view .section > .print-only{display:none !important;}
+body.fmds-mode #view .section{display:flex; flex-wrap:wrap; gap:14px; align-items:flex-start;}
+body.fmds-mode #view .section > .table-wrap{flex:1 1 100%; order:1; overflow:visible;}
+body.fmds-mode #view .section > .card:not(.chk-actions-card){flex:1 1 56%; order:2; margin:0 !important;}
+body.fmds-mode #view .section > .chk-actions-card{flex:1 1 38%; order:3; margin:0 !important;}
+body.fmds-mode #view .section .chart-box{height:270px !important;}
+body.fmds-mode .chokko-grid{font-size:14px !important;}
+body.fmds-mode .chokko-grid input.chk-cell{font-size:14px !important; font-weight:600;}
+body.fmds-mode .chokko-grid td, body.fmds-mode .chokko-grid th{padding-top:1px !important; padding-bottom:1px !important; height:22px; line-height:1.15;}
+body.fmds-mode .chokko-grid input.chk-cell{padding:0 !important; height:20px;}
+body.fmds-mode .fmds-head{padding:8px 16px; margin-bottom:10px;}
+body.fmds-mode #view .section > .table-wrap, body.fmds-mode #view .section > .card{pointer-events:none;}   /* lecture seule */
+body.fmds-mode .chk-actions-card{font-size:14px;}
+body.fmds-mode .chk-actions-card button, body.fmds-mode .chokko-grid button, body.fmds-mode .chk-actions-card select, body.fmds-mode #view .section > .card:not(.chk-actions-card) button{display:none !important;}
+body.fmds-mode .chokko-grid.chk-fit th.chk-col-label{width:270px;}
+body.fmds-mode .chokko-grid td.chk-sticky{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+body.fmds-mode .chokko-grid tbody tr:hover > td{box-shadow:none !important;}
+.fmds-head{display:flex; align-items:center; gap:20px; flex-wrap:wrap; background:#17368A; color:#fff; border-radius:10px; padding:12px 18px; margin-bottom:14px;}
+.fmds-title{flex:1 1 300px;}
+.fmds-t1{font-size:26px; font-weight:300; letter-spacing:.02em;} .fmds-t1 b{font-weight:800;}
+.fmds-t2{font-size:14px; opacity:.85;}
+.fmds-kpis{display:flex; gap:12px;}
+.fmds-kpi{background:#fff; color:#17368A; border-radius:8px; padding:6px 16px; min-width:170px; display:flex; flex-direction:column; border-left:6px solid #45A0A2;}
+.fmds-kpi span{font-size:12px; text-transform:uppercase; letter-spacing:.04em; opacity:.8;}
+.fmds-kpi b{font-size:30px; font-family:var(--mono); line-height:1.1;}
+.fmds-kpi i{font-style:normal; font-size:12px; opacity:.8;}
+.fmds-kpi.fmds-ok{border-left-color:#2E7D4F;} .fmds-kpi.fmds-ok b{color:#2E7D4F;}
+.fmds-kpi.fmds-warn{border-left-color:#B8730A;} .fmds-kpi.fmds-warn b{color:#B8730A;}
+.fmds-kpi.fmds-danger{border-left-color:#C0272D;} .fmds-kpi.fmds-danger b{color:#C0272D;}
+.fmds-ctrl{display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+.fmds-line, .fmds-btn{border:1px solid rgba(255,255,255,.5); background:transparent; color:#fff; border-radius:6px; padding:7px 14px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit;}
+.fmds-line.active{background:#45A0A2; border-color:#45A0A2;}
+.fmds-btn.on{background:#45A0A2; border-color:#45A0A2;}
+.fmds-btn:hover, .fmds-line:hover{background:rgba(255,255,255,.15);}
+@media print{ .fmds-head{display:none !important;} }
 </style>
 </head>
 <body>
@@ -9070,6 +9115,7 @@ RENDERERS.chokko = function(){
     '</button>'+
     (chokkoPaintMode? '<button class="btn chokko-icon-btn" data-action="chokko-paint-stop" title="Terminer le coloriage">✅</button>' : '')+
     '<button class="btn chokko-icon-btn" data-action="chokko-print" title="PDF de synthèse du mois : grille CHOKKO + coût rebut et Pareto">🖨️</button>'+
+    '<button class="btn chokko-icon-btn" data-action="fmds-enter" title="Mode affichage FMDS : plein écran pour la réunion (télé, vidéoprojecteur ou PC)">📺</button>'+
     (chokkoPaintPickerOpen? chokkoPaintPickerPanel() : '')+
     '</div></div>';
   html += '<div id="chokko-postit-canvas" style="position:relative;">'+renderPostits('chokko')+'</div>';
@@ -12075,6 +12121,78 @@ async function siteHandleClick(e){
   return false;
 }
 
+// ==================== MODE AFFICHAGE FMDS ====================
+// Plein écran pour la réunion FMDS (télé, vidéoprojecteur ou PC) : grille CHOKKO du mois, graphique et actions de la ligne,
+// en lecture seule et en gros caractères. Se met à jour tout seul à chaque synchronisation (toutes les 10 s).
+var fmdsOn = false, fmdsRotate = false, fmdsTimer = null, fmdsFullscreen = false;
+var FMDS_ROTATE_MS = 30000;
+function fmdsLines(){ return secteurLines(); }
+function fmdsEnter(){
+  fmdsOn = true;
+  var t = todayStr();
+  chokkoYear = Number(t.slice(0,4)); chokkoMonth = Number(t.slice(5,7))-1;
+  chokkoView = 'saisie'; chokkoGridMode = 'jour';
+  document.body.classList.add('fmds-mode');
+  try{
+    if(document.documentElement.requestFullscreen && !document.fullscreenElement){
+      document.documentElement.requestFullscreen().then(function(){ fmdsFullscreen = true; }).catch(function(){});
+    }
+  }catch(e){}
+  fmdsSetRotate(fmdsRotate);
+  render(); window.scrollTo(0,0);
+}
+function fmdsExit(){
+  fmdsOn = false; fmdsSetRotate(false, true);
+  document.body.classList.remove('fmds-mode');
+  if(fmdsFullscreen && document.fullscreenElement && document.exitFullscreen){ try{ document.exitFullscreen(); }catch(e){} }
+  fmdsFullscreen = false;
+  render();
+}
+function fmdsSetRotate(on, keepFlag){
+  if(!keepFlag) fmdsRotate = on;
+  if(fmdsTimer){ clearInterval(fmdsTimer); fmdsTimer = null; }
+  if(on && fmdsOn){
+    fmdsTimer = setInterval(function(){
+      if(!fmdsOn || currentTab!=='chokko') return;
+      var ls = fmdsLines(); if(ls.length<2) return;
+      chokkoLigne = ls[(ls.indexOf(chokkoLigne)+1) % ls.length];
+      render();
+    }, FMDS_ROTATE_MS);
+  }
+}
+function fmdsHeaderHtml(){
+  var l = chokkoLigne, obj = chokkoObjectif(l);
+  var last = chokkoLastEntry(l);
+  var day = last ? chokkoPeriodStats(l, [last.date]) : null;
+  var avg = chokkoMonthAverage(l, chokkoYear, chokkoMonth);
+  function kpi(label, val, lvl, sub){ return '<div class="fmds-kpi fmds-'+lvl+'"><span>'+esc(label)+'</span><b>'+val+'</b>'+(sub? '<i>'+sub+'</i>' : '')+'</div>'; }
+  var now = new Date();
+  var jour = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'][now.getDay()];
+  var h = '<div class="fmds-head">'+
+    '<div class="fmds-title"><div class="fmds-t1">FMDS · CHOKKO <b>'+esc(l)+'</b></div><div class="fmds-t2">'+jour.charAt(0).toUpperCase()+jour.slice(1)+' '+fmtDate(todayStr())+' · '+esc(qosMonthName(chokkoMonth))+' '+chokkoYear+' · mis à jour à '+String(now.getHours()).padStart(2,'0')+'h'+String(now.getMinutes()).padStart(2,'0')+'</div></div>'+
+    '<div class="fmds-kpis">'+
+      kpi('Dernier jour saisi', day && day.pct!==null ? pct2(day.pct)+' %' : '-', day && day.pct!==null ? chokkoLevelVsObjectif(day.pct, l) : 'neutral', last ? fmtDate(last.date)+' · '+qosNum(day.totalNC)+' NC' : 'aucune saisie')+
+      kpi('CHOKKO du mois', avg!==null ? pct2(avg)+' %' : '-', avg!==null ? chokkoLevelVsObjectif(avg, l) : 'neutral', 'objectif ≥ '+obj+' %')+
+    '</div>'+
+    '<div class="fmds-ctrl">'+
+      fmdsLines().map(function(x){ return '<button class="fmds-line'+(x===l?' active':'')+'" data-action="fmds-line" data-ligne="'+esc(x)+'">'+esc(x)+'</button>'; }).join('')+
+      (fmdsLines().length>1 ? '<button class="fmds-btn'+(fmdsRotate?' on':'')+'" data-action="fmds-rotate" title="Passe d\'une ligne à l\'autre toutes les 30 secondes">⟳ Défilement '+(fmdsRotate?'activé':'désactivé')+'</button>' : '')+
+      '<button class="fmds-btn" data-action="fmds-exit" title="Quitter le mode FMDS (Échap)">✕ Quitter</button>'+
+    '</div></div>';
+  return h;
+}
+function fmdsHandleClick(e){
+  var b = e.target.closest('[data-action^="fmds-"]'); if(!b) return false;
+  var a = b.dataset.action;
+  if(a==='fmds-enter'){ fmdsEnter(); return true; }
+  if(a==='fmds-exit'){ fmdsExit(); return true; }
+  if(a==='fmds-line'){ chokkoLigne = b.dataset.ligne; if(fmdsRotate) fmdsSetRotate(true); render(); return true; }
+  if(a==='fmds-rotate'){ fmdsSetRotate(!fmdsRotate); render(); return true; }
+  return false;
+}
+document.addEventListener('keydown', function(e){ if(e.key==='Escape' && fmdsOn) fmdsExit(); });
+document.addEventListener('fullscreenchange', function(){ if(!document.fullscreenElement && fmdsFullscreen && fmdsOn){ fmdsFullscreen = false; fmdsExit(); } });
+
 // ==================== AIDE « ? » ====================
 // Un bouton rond en bas à droite ouvre l'aide de l'onglet affiché : à quoi il sert, comment s'en servir,
 // questions fréquentes. Une recherche parcourt toute l'aide.
@@ -12097,7 +12215,8 @@ var HELP = [
       ['Une carte ne m\'intéresse pas.', 'Masquez-la pour tout le secteur dans « Configurer le secteur » > « Tableau de bord ».']]},
   {id:'chokko', tab:'chokko', titre:'Suivi CHOKKO', quoi:'Le suivi quotidien de la production et des non-conformités par poste, par équipe et par ligne, avec le coût rebut et le suivi des défauts.',
     etapes:['Choisissez la ligne et le mois.', '« Saisie », affichage « Par jour » : saisissez la production de chaque équipe et le nombre de défauts par poste. Le CHOKKO (% de pièces bonnes) se calcule seul.', 'Le bouton + à côté d\'un poste crée une action CHOKKO liée à ce poste.', 'Affichage « Par semaine » : synthèse hebdomadaire, mêmes couleurs que l\'affichage par jour.', '« Suivi des défauts » : trois graphiques de défauts au choix, sur la période voulue.', '« Coût rebut » : montants par code défaut, coût par pièce, Pareto. Bouton d\'impression A3.', '🖨️ Imprimer : CHOKKO journalier, hebdomadaire, puis coût rebut et actions.'],
-    faq:[['Pourquoi une case est orange ?', 'Le CHOKKO est sous l\'objectif de la ligne mais dans la marge. En rouge, il est sous la marge.'],
+    faq:[['Afficher le CHOKKO en réunion FMDS sans imprimer ?', 'Bouton 📺 « Mode affichage FMDS » : plein écran, lecture seule, gros caractères (grille du mois, graphique, actions). Il se met à jour tout seul. Boutons de ligne en haut, « Défilement » pour passer d\'une ligne à l\'autre toutes les 30 s, Échap ou « Quitter » pour sortir.'],
+      ['Pourquoi une case est orange ?', 'Le CHOKKO est sous l\'objectif de la ligne mais dans la marge. En rouge, il est sous la marge.'],
       ['Comment ajouter ou renommer un poste ?', 'Bouton ⚙️ « Gérer les postes », ou « Configurer le secteur » > CHOKKO > Postes et défauts.'],
       ['Comment changer l\'objectif ?', 'Le ✎ à côté de l\'objectif, ou « Configurer le secteur » > CHOKKO.'],
       ['Mes équipes ne sont pas A, B, C ou D.', '« Configurer le secteur » > CHOKKO > « Équipes propres à ce secteur ».'],
@@ -12364,7 +12483,8 @@ function render(){
   // Préserver la position de défilement des tableaux larges et des fenêtres (sinon retour à gauche à chaque mise à jour)
   var scrollSnap = captureScrollPositions();
   var fn = RENDERERS[currentTab] || RENDERERS.dashboard;
-  view.innerHTML = navSubtabsHtml() + fn() + (actionDetailId ? actionDetailModalHtml() : '') + (czModal ? czModalHtml() : '');
+  if(fmdsOn && currentTab!=='chokko'){ fmdsOn = false; fmdsSetRotate(false, true); document.body.classList.remove('fmds-mode'); }
+  view.innerHTML = navSubtabsHtml() + (fmdsOn && currentTab==='chokko' ? fmdsHeaderHtml() : '') + fn() + (actionDetailId ? actionDetailModalHtml() : '') + (czModal ? czModalHtml() : '');
   try{ hydrateBlobThumbs(); }catch(e){}
   try{ czApplyTexts(view); }catch(e){ console.error('textes', e); }
   try{ helpRender(); }catch(e){ console.error('aide', e); }
@@ -15728,6 +15848,7 @@ app.addEventListener('click', async function(e){
   if(await refsHandleClick(e)) return;
   if(await siteHandleClick(e)) return;
   if(yearNavHandleClick(e)) return;
+  if(fmdsHandleClick(e)) return;
   if(await travailHandleClick(e)) return;
   var czB = e.target.closest('[data-action^="cz-"],[data-action^="pset-"]');
   if(czB){
