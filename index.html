@@ -9787,11 +9787,12 @@ function renderChokkoDefChart(){
     try{ chartsChokkoDef.push(new Chart(ctx, buildChokkoDefChartConfig(false, posteId, yMaxD))); }catch(err){ console.error('suivi défaut', err); }
   });
 }
-// Échelle commune aux graphiques de suivi des défauts : 0 à 100, relevée au-delà (par dizaine) si un poste dépasse 100
+// Échelle commune aux graphiques de suivi des défauts : calée sur la plus haute valeur des défauts affichés, arrondie au pas supérieur
 function chokkoDefYMax(posteIds){
   var buckets = chokkoDefBucketsFor(chokkoDefRange()), mx = 0;
   (posteIds||[]).forEach(function(pid){ chokkoDefFill(chokkoLigne, pid, buckets).forEach(function(b){ if(b.days && b.n>mx) mx = b.n; }); });
-  return Math.max(100, Math.ceil(mx/10)*10);
+  var step = mx>200 ? 50 : mx>50 ? 10 : mx>20 ? 5 : mx>10 ? 2 : 1;
+  return Math.max(5, Math.ceil(mx/step)*step);
 }
 function buildChokkoDefChartConfig(forPrint, posteId, yMax){
   var series = chokkoDefFill(chokkoLigne, posteId || chokkoDefPoste, chokkoDefBucketsFor(chokkoDefRange()));
