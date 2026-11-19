@@ -3826,12 +3826,16 @@ function proprContamination(){
   if(!pendingItems.length){
     html += emptyState('Aucun échantillon en attente. Les collectes déclarées apparaissent ici.');
   } else {
-    html += '<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Référence</th><th>Type</th><th>Collecté le</th><th>N° série</th><th></th></tr></thead><tbody>';
+    var limC = Number(cfg('prioDelais').contamJours)||14, todayC = todayStr();
+    html += '<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Référence</th><th>Type</th><th>Collecté le</th><th>En attente depuis</th><th>N° série</th><th></th></tr></thead><tbody>';
     html += pendingItems.map(function(c){
       if(contamAnalyseEditId === c.id) return analyseFormRow(c);
+      // Même règle que « Mon travail » : en retard au-delà du délai d'analyse (Paramètres > Priorités)
+      var dW = c.collecteDate ? daysBetween(c.collecteDate, todayC) : null;
+      var waitHtml = dW===null ? '-' : (dW>limC ? badge('danger', dW+' j · en retard') : '<span class="num">'+dW+' j</span> <span class="tiny">/ '+limC+' j max</span>');
       return '<tr><td>'+esc(c.ligne)+'</td><td>'+esc(c.ref)+'</td><td>'+
         (c.isRetest? badge('danger','Contre-analyse') : badge('neutral','1er relevé'))+'</td>'+
-        '<td class="num">'+fmtDate(c.collecteDate)+'</td><td class="num tiny">'+esc(val(c.serie,'-'))+'</td>'+
+        '<td class="num">'+fmtDate(c.collecteDate)+'</td><td>'+waitHtml+'</td><td class="num tiny">'+esc(val(c.serie,'-'))+'</td>'+
         '<td><button class="btn small primary" data-action="open-analyse-contam" data-id="'+c.id+'">Saisir mesures</button> '+
         '<button class="btn small danger-outline" data-action="delete-collecte" data-id="'+c.id+'">Supprimer</button></td></tr>';
     }).join('');
@@ -4042,7 +4046,7 @@ async function handleDeleteCollecte(id){
 function analyseFormRow(c){
   var crit = REF_CRITERIA[c.ref]||[];
   var row = '<tr style="background:var(--accent-bg);">'+
-    '<td colspan="6"><div style="padding:8px 0;">'+
+    '<td colspan="7"><div style="padding:8px 0;">'+
     badge(c.isRetest?'danger':'neutral', c.isRetest?'Contre-analyse':'1er relevé')+' '+esc(c.ligne)+' · '+esc(c.ref)+
     ' - collecté le '+fmtDate(c.collecteDate)+(c.serie?' · n° '+esc(c.serie):'')+'</div>'+
     '<div class="entryform cols2" style="margin-top:8px;">';
@@ -12940,7 +12944,7 @@ function computePriorities(){
   if(isMCU && has('proprete')){
     DATA.contamination.filter(function(c){ return c.statut==='collected' && c.collecteDate; }).forEach(function(c){
       var d = daysBetween(c.collecteDate, today), lim = Number(cfg('prioDelais').contamJours)||14;
-      if(d>lim) add('contam', 'danger', 'Analyse en attente · '+c.ligne+' '+(c.ref||''), 'Collecté le '+fmtDate(c.collecteDate)+(c.serie? ' · n° '+c.serie : ''), addDays(c.collecteDate, lim));
+      if(d>lim) add('contam', 'danger', 'Résultat labo non saisi · '+c.ligne+' '+(c.ref||'')+(c.isRetest? ' (contre-analyse)' : ''), 'Pièce collectée le '+fmtDate(c.collecteDate)+', en attente d\'analyse depuis '+d+' j (délai max '+lim+' j)'+(c.serie? ' · n° '+c.serie : ''), addDays(c.collecteDate, lim));
     });
   }
   if(has('proprete')){
