@@ -7421,7 +7421,7 @@ document.addEventListener('click', function(e){ if(e.target && e.target.id==='re
 async function exportPrisonSapExcel(lots){
   if(typeof ExcelJS==='undefined'){ uiAlert('La librairie Excel n\'a pas pu être chargée (connexion internet requise). Réessayez.'); return; }
   var etats = PRISON_QTY_COLS;
-  var detail = [], agg = {}, unknown = [];
+  var detail = [], agg = {}, unknown = [], aggDef = {}, defOrder = [], defPieces = {};
   lots.forEach(function(lot){
     (lot.lignes||[]).forEach(function(l){
       var bom = sapBomFor(l.ref, lot.secteur||'MCU');
@@ -7431,11 +7431,16 @@ async function exportPrisonSapExcel(lots){
         var excl = SAP_ETAT_EXCLUS[et[0]] || [];
         var comps = bom.comps.filter(function(c){ return excl.indexOf(c[0])<0; });
         detail.push({defaut:lot.defaut, ligne:l.ligne||'', ref:l.ref||'', refJaly:bom.ref, desig:bom.desig, etat:et[1], qty:q, comps:comps});
+        var dk = String(lot.defaut||'Sans défaut renseigné').trim() || 'Sans défaut renseigné';
+        if(!aggDef[dk]){ aggDef[dk] = {}; defOrder.push(dk); defPieces[dk] = 0; }
+        defPieces[dk] += q;
         comps.forEach(function(c){
           var k = c[0]+'|'+c[1];
-          if(!agg[k]) agg[k] = {type:c[0], ref:c[1], qty:0, from:{}};
-          agg[k].qty += q;
-          agg[k].from[bom.desig] = (agg[k].from[bom.desig]||0) + q;
+          [agg, aggDef[dk]].forEach(function(A){
+            if(!A[k]) A[k] = {type:c[0], ref:c[1], qty:0, from:{}};
+            A[k].qty += q;
+            A[k].from[bom.desig] = (A[k].from[bom.desig]||0) + q;
+          });
         });
       });
     });
@@ -7453,19 +7458,41 @@ async function exportPrisonSapExcel(lots){
     rows.forEach(function(r){ var row = ws.addRow(r); row.eachCell({includeEmpty:true}, function(cell){ cell.border = border; cell.alignment = {vertical:'top', wrapText:true}; }); });
     return ws;
   }
-  // 1. Synthèse à bloquer
-  var aggRows = Object.keys(agg).map(function(k){ return agg[k]; }).sort(function(a,b){
-    var ia = SAP_COMP_TYPES.map(function(x){return x[0];}).indexOf(a.type), ib = SAP_COMP_TYPES.map(function(x){return x[0];}).indexOf(b.type);
-    return ia-ib || a.ref.localeCompare(b.ref);
-  });
-  var ws1 = sheet('Blocage SAP', [['Composant',20],['Référence',26],['Quantité à bloquer',16],['Provenance (réf. MCU)',60]],
-    aggRows.map(function(a){ return [sapTypeLabel(a.type), a.ref, a.qty, Object.keys(a.from).map(function(d){ return d+' : '+a.from[d]; }).join(' · ')]; }),
-    'Composants à bloquer dans SAP');
-  ws1.getColumn(3).alignment = {horizontal:'center'};
+  // 1. Blocage SAP : un tableau par défaut (pour bloquer les pièces d'un seul défaut), puis le total tous défauts
+  var typeIdx = SAP_COMP_TYPES.map(function(x){ return x[0]; });
+  function sortAgg(A){ return Object.keys(A).map(function(k){ return A[k]; }).sort(function(a,b){ return typeIdx.indexOf(a.type)-typeIdx.indexOf(b.type) || a.ref.localeCompare(b.ref); }); }
+  var aggRows = sortAgg(agg);
   var totPieces = detail.reduce(function(s,d){ return s+d.qty; },0), totUnknown = unknown.reduce(function(s,u){ return s+u.qty; },0);
-  ws1.addRow([]);
-  ws1.addRow(['Pièces MCU rattachées', '', totPieces]).font = {bold:true};
-  if(unknown.length){ var wr = ws1.addRow(['Pièces non rattachées', '', totUnknown, 'Réf. absentes de la nomenclature : voir l\'onglet « Réf. non trouvées »']); wr.font = {bold:true, color:{argb:'FFB23B2E'}}; }
+  var ws1 = wb.addWorksheet('Blocage SAP');
+  [20,26,16,60].forEach(function(w, i){ ws1.getColumn(i+1).width = w; });
+  ws1.getCell('A1').value = 'Composants à bloquer dans SAP - par défaut'; ws1.getCell('A1').font = {bold:true, size:13};
+  ws1.getCell('A2').value = 'Prison qualité '+currentSecteur+(prisonZoneFilter? ' · zone '+prisonZoneFilter : '')+' · extrait le '+fmtDate(todayStr())+(currentUser? ' par '+currentUser.displayName : '')+' · '+defOrder.length+' défaut(s)';
+  ws1.getCell('A2').font = {italic:true, size:9, color:{argb:'FF555555'}};
+  var r = 4;
+  var defFill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFC9D3EE'}};
+  function writeTable(title, sub, rows, fill){
+    var tc = ws1.getCell(r, 1); tc.value = title; tc.font = {bold:true, size:12, color:{argb:'FF17368A'}};
+    ws1.mergeCells(r, 1, r, 4); tc.fill = fill; tc.alignment = {vertical:'middle'};
+    ws1.getRow(r).height = 20; r++;
+    if(sub){ var sc = ws1.getCell(r, 1); sc.value = sub; sc.font = {italic:true, size:9, color:{argb:'FF555555'}}; r++; }
+    ['Composant','Référence','Quantité à bloquer','Provenance (réf. MCU)'].forEach(function(h, i){ var c = ws1.getCell(r, i+1); c.value = h; c.font = head.font; c.fill = head.fill; c.border = border; c.alignment = {vertical:'middle', wrapText:true}; });
+    r++;
+    rows.forEach(function(a){
+      [sapTypeLabel(a.type), a.ref, a.qty, Object.keys(a.from).map(function(d){ return d+' : '+a.from[d]; }).join(' · ')].forEach(function(v, i){
+        var c = ws1.getCell(r, i+1); c.value = v; c.border = border; c.alignment = {vertical:'top', wrapText:true, horizontal: i===2 ? 'center' : undefined};
+      });
+      r++;
+    });
+    if(!rows.length){ ws1.getCell(r, 1).value = 'Aucun composant (réf. absentes de la nomenclature)'; ws1.getCell(r, 1).font = {italic:true, color:{argb:'FFB23B2E'}}; r++; }
+    r += 2;
+  }
+  defOrder.forEach(function(dk){
+    var nbLots = lots.filter(function(l){ return (String(l.defaut||'Sans défaut renseigné').trim() || 'Sans défaut renseigné')===dk; }).length;
+    writeTable('Défaut : '+dk, defPieces[dk]+' pièce(s) MCU rattachée(s) · '+nbLots+' lot(s)', sortAgg(aggDef[dk]), defFill);
+  });
+  if(defOrder.length>1) writeTable('TOTAL tous défauts', totPieces+' pièce(s) MCU rattachée(s)', aggRows, {type:'pattern', pattern:'solid', fgColor:{argb:'FFE3F1F1'}});
+  ws1.getCell(r, 1).value = 'Pièces MCU rattachées'; ws1.getCell(r, 3).value = totPieces; ws1.getRow(r).font = {bold:true}; r++;
+  if(unknown.length){ ws1.getCell(r,1).value = 'Pièces non rattachées'; ws1.getCell(r,3).value = totUnknown; ws1.getCell(r,4).value = 'Réf. absentes de la nomenclature : voir l\'onglet « Réf. non trouvées »'; ws1.getRow(r).font = {bold:true, color:{argb:'FFB23B2E'}}; }
   // 2. Détail
   var types = SAP_COMP_TYPES.filter(function(t){ return detail.some(function(d){ return d.comps.some(function(c){ return c[0]===t[0]; }); }); });
   sheet('Détail par réf.', [['Défaut',28],['Ligne',8],['Réf. saisie',14],['REF JALY',14],['Désignation',16],['État',12],['Qté',7]].concat(types.map(function(t){ return [t[1],22]; })),
