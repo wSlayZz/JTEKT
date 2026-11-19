@@ -14520,10 +14520,7 @@ function tabAllowed(tabKey){
   if(currentUser.roleId===ADMIN_ROLE_ID) return true;
   var role = DATA.roles.find(function(r){ return r.id===currentUser.roleId; });
   if(!role) return false;
-  // Analyses Pareto : accessibles dès que le rôle voit au moins un module qui les alimente
-  if(tabKey==='pareto' && ['chokko','proprete','prison','actions'].some(function(k){ return role.tabs.indexOf(k)>=0; })) return true;
-  // Réunion QOS : ouverte dès que le rôle voit le suivi CHOKKO
-  if(tabKey==='qos' && role.tabs.indexOf('chokko')>=0) return true;
+  // Uniquement les cases cochées du profil (Paramètres > profils) : aucun onglet n'est ouvert automatiquement
   return role.tabs.indexOf(tabKey)>=0;
 }
 // Rôle « responsable » : accès à la Vue site (suivi des tâches de tous les secteurs).
