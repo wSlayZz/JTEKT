@@ -12499,7 +12499,20 @@ async function handleParamClick(e){
   return true;
 }
 
+// Garde-fou : un champ qui perd le focus pendant qu'on remplace la page peut relancer un affichage
+// au milieu du premier (erreur « The node to be removed is no longer a child of this node »).
+// Dans ce cas, le second affichage est simplement repoussé juste après.
+var renderBusy = false, renderAgain = false;
 function render(){
+  if(renderBusy){ renderAgain = true; return; }
+  renderBusy = true;
+  try{ renderNow(); }
+  finally{
+    renderBusy = false;
+    if(renderAgain){ renderAgain = false; setTimeout(render, 0); }
+  }
+}
+function renderNow(){
   applyAppConfig();
   applySecteurConfig();
   if(currentTab==='ateq'){ currentTab = 'chokko'; chokkoView = 'defauts'; }
@@ -17029,21 +17042,26 @@ app.addEventListener('input', function(e){
 // Les dates pose/retrait des particules ne redessinent le tableau qu'à la sortie du champ
 // (évite de perdre le focus en pleine saisie : certains navigateurs déclenchent 'change'
 // après chaque segment jour/mois/année du sélecteur de date, pas seulement à la fin).
-app.addEventListener('focusout', async function(e){
+app.addEventListener('focusout', function(e){
   var el = e.target.closest && (e.target.closest('[data-action="edit-date-pose"]') || e.target.closest('[data-action="edit-date-retrait"]'));
   if(!el) return;
-  var isPose = el.dataset.action==='edit-date-pose';
-  var p = DATA.particules.find(function(x){ return x.id===el.dataset.id; });
-  if(p){
-    var v = el.value || null, old = isPose ? p.datePose : p.dateRetrait;
-    if(v && dateInputIncomplete(el)){ toast('Date incomplète ou invalide : non enregistrée.'); }
-    else if(v!==(old||null)){
-      if(isPose) p.datePose = v; else p.dateRetrait = v;
-      await save('particules');
-      logChange('Propreté', isPose ? 'Date de pose modifiée' : 'Date de retrait modifiée', p.ligne+' '+p.poste+' → '+(v? fmtDate(v) : 'effacée'));
+  // Valeurs lues tout de suite, traitement après : le focus peut être perdu pendant un remplacement de la page
+  var isPose = el.dataset.action==='edit-date-pose', id = el.dataset.id, v = el.value || null, bad = v && dateInputIncomplete(el);
+  setTimeout(async function(){
+    var p = DATA.particules.find(function(x){ return x.id===id; });
+    var changed = false;
+    if(p){
+      var old = isPose ? p.datePose : p.dateRetrait;
+      if(bad){ toast('Date incomplète ou invalide : non enregistrée.'); changed = true; }
+      else if(v!==(old||null)){
+        if(isPose) p.datePose = v; else p.dateRetrait = v;
+        changed = true;
+        await save('particules');
+        logChange('Propreté', isPose ? 'Date de pose modifiée' : 'Date de retrait modifiée', p.ligne+' '+p.poste+' → '+(v? fmtDate(v) : 'effacée'));
+      }
     }
-  }
-  render();
+    if(changed || document.body.contains(el)) render();
+  }, 0);
 });
 
 // ===== Réordonnancement du dashboard : flèches ↑↓ (voir handler widget-move) =====
