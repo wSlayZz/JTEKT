@@ -16624,7 +16624,15 @@ app.addEventListener('click', async function(e){
   }
 });
 
+// Saisie d'une date au clavier : le navigateur envoie un « change » à chaque chiffre de l'année (0002, 0020, 0202…).
+// On ignore ces valeurs incomplètes pour ne pas les enregistrer (elles revenaient ensuite dans le champ).
+function dateInputIncomplete(el){
+  if(!el || el.tagName!=='INPUT' || el.type!=='date' || !el.value) return false;
+  var y = Number(String(el.value).slice(0,4));
+  return !(y>=1990 && y<=2100);
+}
 app.addEventListener('change', async function(e){
+  if(dateInputIncomplete(e.target)) return;
   if(e.target && /^pareto-(src|ligne|period|month)$/.test(e.target.id)){
     var pk = e.target.id.slice(7);
     if(pk==='month' && !e.target.value) return;
@@ -16797,18 +16805,7 @@ app.addEventListener('change', async function(e){
   }
   var chokkoNoteInput = e.target.closest('.chokko-note');
   if(chokkoNoteInput){ await handleChokkoNoteChange(chokkoNoteInput.dataset.ligne, chokkoNoteInput.dataset.poste, Number(chokkoNoteInput.dataset.annee), Number(chokkoNoteInput.dataset.mois), chokkoNoteInput.value); return; }
-  var poseInput = e.target.closest('[data-action="edit-date-pose"]');
-  if(poseInput){
-    var pp = DATA.particules.find(function(x){ return x.id===poseInput.dataset.id; });
-    if(pp){ pp.datePose = poseInput.value || null; await save('particules'); logChange('Propreté', 'Date de pose modifiée', pp.ligne+' '+pp.poste+' → '+fmtDate(pp.datePose)); }
-    return;
-  }
-  var retraitInput = e.target.closest('[data-action="edit-date-retrait"]');
-  if(retraitInput){
-    var pr = DATA.particules.find(function(x){ return x.id===retraitInput.dataset.id; });
-    if(pr){ pr.dateRetrait = retraitInput.value || null; await save('particules'); logChange('Propreté', 'Date de retrait modifiée', pr.ligne+' '+pr.poste+' → '+(pr.dateRetrait?fmtDate(pr.dateRetrait):'-')); }
-    return;
-  }
+  if(e.target.closest('[data-action="edit-date-pose"]') || e.target.closest('[data-action="edit-date-retrait"]')) return;   // enregistré à la sortie du champ (voir focusout)
   if(e.target.id==='cd-ligne'){ refreshContamDirectFields(); return; }
   if(e.target.id==='cd-ref'){ refreshContamCriteriaOnly(); return; }
   if(e.target.id==='cd-noprod'){ toggleContamNoProd(e.target.checked); return; }
@@ -17032,10 +17029,21 @@ app.addEventListener('input', function(e){
 // Les dates pose/retrait des particules ne redessinent le tableau qu'à la sortie du champ
 // (évite de perdre le focus en pleine saisie : certains navigateurs déclenchent 'change'
 // après chaque segment jour/mois/année du sélecteur de date, pas seulement à la fin).
-app.addEventListener('focusout', function(e){
-  if(e.target.closest && (e.target.closest('[data-action="edit-date-pose"]') || e.target.closest('[data-action="edit-date-retrait"]'))){
-    render();
+app.addEventListener('focusout', async function(e){
+  var el = e.target.closest && (e.target.closest('[data-action="edit-date-pose"]') || e.target.closest('[data-action="edit-date-retrait"]'));
+  if(!el) return;
+  var isPose = el.dataset.action==='edit-date-pose';
+  var p = DATA.particules.find(function(x){ return x.id===el.dataset.id; });
+  if(p){
+    var v = el.value || null, old = isPose ? p.datePose : p.dateRetrait;
+    if(v && dateInputIncomplete(el)){ toast('Date incomplète ou invalide : non enregistrée.'); }
+    else if(v!==(old||null)){
+      if(isPose) p.datePose = v; else p.dateRetrait = v;
+      await save('particules');
+      logChange('Propreté', isPose ? 'Date de pose modifiée' : 'Date de retrait modifiée', p.ligne+' '+p.poste+' → '+(v? fmtDate(v) : 'effacée'));
+    }
   }
+  render();
 });
 
 // ===== Réordonnancement du dashboard : flèches ↑↓ (voir handler widget-move) =====
