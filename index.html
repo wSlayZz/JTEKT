@@ -109,7 +109,7 @@ table{width:100%; border-collapse:collapse; font-size:13px;}
 th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.03em; color:var(--text-faint); font-weight:600; padding:7px 10px; border-bottom:1px solid var(--border);}
 td{padding:7px 10px; border-bottom:1px solid var(--border); vertical-align:middle; line-height:1.35;}
 td.num{font-family:var(--mono);}
-tr:hover td{background:#FBFAF8;}
+/* survol des lignes : voile sombre (voir plus bas), sans effacer les couleurs des cellules */
 .table-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);}
 .section{margin-bottom:28px;}
 .section h2{font-size:16px; font-weight:600; margin-bottom:12px;}
@@ -1380,6 +1380,11 @@ tr.releve-cur-week td:first-child{font-weight:700;}
 @media screen{
   .chokko-grid.chokko-grid tbody tr:hover > td,
   .chokko-grid.chokko-grid tbody tr:hover > td.chk-sticky{box-shadow:inset 0 0 0 999px rgba(23,54,138,.16);}
+  /* Tous les autres tableaux (rebuts, résultats d'audits, contamination, métrologie…) : même surbrillance que le CHOKKO.
+     Voile par-dessus le fond, donc les cellules colorées (OK / NC, seuils) restent lisibles. */
+  table tbody tr:hover > td{box-shadow:inset 0 0 0 999px rgba(23,54,138,.13);}
+  table tbody tr:hover > td input:not([type="checkbox"]):not([type="radio"]),
+  table tbody tr:hover > td select{background-color:transparent;}
 }
 .year-nav{display:inline-flex; align-items:center; gap:6px; text-transform:none; letter-spacing:0;}
 .year-nav b{font-family:var(--mono); font-size:13px; color:var(--text); min-width:38px; text-align:center;}
