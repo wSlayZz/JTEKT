@@ -1382,9 +1382,8 @@ tr.releve-cur-week td:first-child{font-weight:700;}
   .chokko-grid.chokko-grid tbody tr:hover > td.chk-sticky{box-shadow:inset 0 0 0 999px rgba(23,54,138,.16);}
   /* Tous les autres tableaux (rebuts, résultats d'audits, contamination, métrologie…) : même surbrillance que le CHOKKO.
      Voile par-dessus le fond, donc les cellules colorées (OK / NC, seuils) restent lisibles. */
-  table tbody tr:hover > td{box-shadow:inset 0 0 0 999px rgba(23,54,138,.13);}
-  table tbody tr:hover > td input:not([type="checkbox"]):not([type="radio"]),
-  table tbody tr:hover > td select{background-color:transparent;}
+  /* Pas sur les lignes de saisie / formulaires (champs, ligne fusionnée) : elles restent normales */
+  table:not(.chokko-grid) tbody tr:not(:has(input:not([type="checkbox"]):not([type="radio"]), select, textarea, td[colspan])):hover > td{box-shadow:inset 0 0 0 999px rgba(23,54,138,.13);}
 }
 .year-nav{display:inline-flex; align-items:center; gap:6px; text-transform:none; letter-spacing:0;}
 .year-nav b{font-family:var(--mono); font-size:13px; color:var(--text); min-width:38px; text-align:center;}
