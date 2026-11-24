@@ -486,6 +486,15 @@ tr.releve-recap-sel td:first-child{font-weight:700; box-shadow:inset 4px 0 0 #1F
   #perf-print .pf-row-ok .pf-ic{color:#2E7D4F;} #perf-print .pf-row-late{background:#FBE3E0;} #perf-print .pf-row-late .pf-ic, #perf-print .pf-row-late .pf-res{color:#B23B2E;}
   #perf-print .pf-row-todo .pf-ic, #perf-print .pf-row-todo .pf-res{color:#8A6100;}
   #perf-print .pf-ok{color:#2E7D4F;} #perf-print .pf-warn{color:#B8730A;} #perf-print .pf-danger{color:#B23B2E;}
+  #perf-print .pf-bar-wrap{display:flex; align-items:center; gap:8px; padding:4px 8px 6px; background:#EEF1F6;}
+  #perf-print .pf-bar-wrap span{font-size:9px; color:#555; white-space:nowrap;}
+  #perf-print .pf-bar{flex:1; height:7px; background:#DDE2EA; border-radius:4px; overflow:hidden;}
+  #perf-print .pf-bar i{display:block; height:100%; border-radius:4px;}
+  #perf-print .pf-bar-big{height:10px;}
+  #perf-print .pf-global{display:flex; align-items:center; gap:10px; margin:0 0 12px;}
+  #perf-print .pf-global span{font-size:10.5px; font-weight:700; white-space:nowrap;}
+  #perf-print .pf-bg-ok{background:#2E7D4F;} #perf-print .pf-bg-warn{background:#B8730A;} #perf-print .pf-bg-danger{background:#B23B2E;}
+  #perf-print .pf-row-stop .pf-ic, #perf-print .pf-row-stop .pf-res{color:#6E6A60;} #perf-print .pf-row-stop{background:#F2F2F0;}
   #perf-print .pf-legend{margin-top:8px; font-size:8.5px; color:#555;}
   body.print-def-report #def-print{display:block !important; font-family:Arial, Helvetica, sans-serif; color:#111;}
   #def-print .dp-head{display:flex; align-items:center; justify-content:space-between; padding-bottom:8px; margin-bottom:12px; border-bottom:2px solid #1F3864;}
@@ -1433,6 +1442,11 @@ body.fmds-mode .chokko-grid tbody tr:hover > td{box-shadow:none !important;}
 .fmds-btn.on{background:#45A0A2; border-color:#45A0A2;}
 .fmds-btn:hover, .fmds-line:hover{background:rgba(255,255,255,.15);}
 @media print{ .fmds-head{display:none !important;} }
+
+/* Audits de perf : ligne à l'arrêt */
+.pf-arret{display:flex; align-items:center; gap:8px; margin-top:10px; font-size:13px; cursor:pointer;}
+.card:has(#pf-arret:checked) .pf-result{display:none !important;}
+td.pf-cell-arret{background:#ECEBE7; color:#6E6A60; font-weight:600; text-align:center; cursor:pointer;}
 </style>
 </head>
 <body>
@@ -5955,6 +5969,7 @@ RENDERERS.perf = function(){
     html += '<tr><td>'+mLabel+'</td>';
     lines.forEach(function(l){
       var r = rs.find(function(x){ return x.ligne===l && x.mois===mIdx; });
+      if(r && r.arret){ html += '<td class="pf-cell-arret" data-action="perf-delete-cell" data-id="'+r.id+'" title="Ligne à l\'arrêt - cliquer pour retirer">Arrêt</td>'; return; }
       if(!r || r.resultatPct===null || r.resultatPct===undefined){ html += '<td class="c-empty">-</td>'; return; }
       html += '<td class="score-cell '+scoreCellClass(r.resultatPct)+'" data-action="perf-delete-cell" data-id="'+r.id+'" title="Cliquer pour supprimer">'+r.resultatPct+'%</td>';
     });
@@ -5971,16 +5986,17 @@ function perfForm(){
   var head = '<label class="field">Ligne<select id="pf-ligne">'+lines.map(function(l){return '<option value="'+esc(l)+'">'+esc(l)+'</option>';}).join('')+'</select></label>'+
     '<label class="field">Mois<select id="pf-mois">'+MONTHS_FR.map(function(m,i){return '<option value="'+i+'"'+(i===today.getMonth()?' selected':'')+'>'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>';}).join('')+'</select></label>'+
     '<label class="field">Année<input type="number" id="pf-annee" value="'+perfYear+'"></label>';
+  var arretBox = '<label class="pf-arret"><input type="checkbox" id="pf-arret"> <b>Ligne à l\'arrêt</b> - pas d\'audit sur la période : compte comme fait, sans résultat (ne baisse pas le score)</label>';
   if(!qs.length){
     return '<div class="card" style="max-width:460px; margin-bottom:16px;">'+
       '<div class="eyebrow" style="margin-bottom:10px;">Audit de perf - '+esc(currentSecteur)+'</div>'+
-      '<div class="entryform cols2">'+head+'<label class="field">Résultat (%)<input type="number" id="pf-pct" min="0" max="100" step="1"></label></div>'+
+      '<div class="entryform cols2">'+head+'<label class="field pf-result">Résultat (%)<input type="number" id="pf-pct" min="0" max="100" step="1"></label></div>'+arretBox+
       '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="cancel-perf">Annuler</button><button class="btn primary" data-action="save-perf">Enregistrer</button></div></div>';
   }
   return '<div class="card" style="max-width:760px; margin-bottom:16px;">'+
     '<div class="eyebrow" style="margin-bottom:10px;">Audit de perf - '+esc(currentSecteur)+' · '+qs.length+' question'+(qs.length>1?'s':'')+'</div>'+
-    '<div class="entryform cols3">'+head+'</div>'+
-    '<div class="table-wrap" style="margin-top:12px;"><table class="pf-q-table"><thead><tr><th style="width:36px;">N°</th><th>Question</th><th style="width:150px;">Réponse</th></tr></thead><tbody>'+
+    '<div class="entryform cols3">'+head+'</div>'+arretBox+
+    '<div class="table-wrap pf-result" style="margin-top:12px;"><table class="pf-q-table"><thead><tr><th style="width:36px;">N°</th><th>Question</th><th style="width:150px;">Réponse</th></tr></thead><tbody>'+
     qs.map(function(q, i){
       return '<tr><td>'+(i+1)+'</td><td>'+esc(q.texte)+'</td><td><select class="pf-q" data-i="'+i+'"><option value="">-</option><option value="ok">Conforme</option><option value="nok">Non conforme</option><option value="na">Sans objet</option></select></td></tr>';
     }).join('')+'</tbody></table></div>'+
@@ -5989,6 +6005,16 @@ function perfForm(){
 }
 async function handleSavePerf(){
   var reponses = null, pct;
+  var arretEl = document.getElementById('pf-arret');
+  if(arretEl && arretEl.checked){
+    var lA = document.getElementById('pf-ligne').value, mA = Number(document.getElementById('pf-mois').value), yA = Number(document.getElementById('pf-annee').value);
+    var exA = bySecteur(DATA.perf).find(function(r){ return r.ligne===lA && r.mois===mA && r.annee===yA; });
+    if(exA){ exA.arret = true; exA.resultatPct = null; delete exA.reponses; }
+    else DATA.perf.push({id:uid('perf'), secteur:currentSecteur, ligne:lA, mois:mA, annee:yA, resultatPct:null, arret:true});
+    await save('perf');
+    logChange('Audits perf', 'Ligne à l\'arrêt', currentSecteur+' · '+lA+' - '+MONTHS_FR[mA]+' '+yA);
+    perfFormOpen = false; render(); return;
+  }
   var qSel = document.querySelectorAll('.pf-q');
   if(qSel.length){
     var qs = perfQuestions(), ok = 0, nok = 0, vide = 0;
@@ -6007,6 +6033,7 @@ async function handleSavePerf(){
   var existing = bySecteur(DATA.perf).find(function(r){ return r.ligne===ligne && r.mois===mois && r.annee===annee; });
   if(existing){
     existing.resultatPct = parseFloat(pct);
+    delete existing.arret;
     if(reponses) existing.reponses = reponses;
   } else {
     var rec = {id:uid('perf'), secteur:currentSecteur, ligne:ligne, mois:mois, annee:annee, resultatPct:parseFloat(pct)};
@@ -6021,7 +6048,7 @@ async function handleSavePerf(){
 async function handleDeletePerfCell(id){
   var r = DATA.perf.find(function(x){ return x.id===id; });
   if(!r) return;
-  if(!await uiConfirm('Supprimer le résultat '+r.ligne+' - '+MONTHS_FR[r.mois]+' ('+r.resultatPct+'%) ?')) return;
+  if(!await uiConfirm(r.arret ? 'Retirer « à l\'arrêt » pour '+r.ligne+' - '+MONTHS_FR[r.mois]+' ?' : 'Supprimer le résultat '+r.ligne+' - '+MONTHS_FR[r.mois]+' ('+r.resultatPct+'%) ?')) return;
   DATA.perf = DATA.perf.filter(function(x){ return x.id!==id; });
   await save('perf');
   render();
@@ -12262,7 +12289,8 @@ var HELP = [
       ['Comment est calculé le score d\'un audit ?', 'Critères OK / critères audités, tronqué (jamais arrondi au-dessus).']]},
   {id:'perf', tab:'perf', titre:'Audits de perf', quoi:'Le résultat des audits de performance par ligne, mois par mois, et l\'avancement des audits de tous vos secteurs.',
     etapes:['« + Saisir un audit de perf » : ligne, mois, puis le résultat en % ou les réponses aux questions si votre secteur en a.', 'Le tableau annuel colore chaque résultat selon les seuils.', '« Imprimer » dans l\'avancement : la liste A4 de ce qui manque, pour le responsable qualité.'],
-    faq:[['Comment ajouter des questions à l\'audit ?', '« Configurer le secteur » > Audits de perf. Chaque question est notée Conforme / Non conforme / Sans objet ; le résultat se calcule seul.'],
+    faq:[['Une ligne est à l\'arrêt ce mois-ci ?', '« + Saisir un audit de perf », choisissez la ligne et le mois, puis cochez « Ligne à l\'arrêt ». Elle compte comme faite dans l\'avancement, sans résultat : elle ne baisse pas le score. « Arrêt » s\'affiche dans le tableau annuel (cliquer dessus pour le retirer).'],
+      ['Comment ajouter des questions à l\'audit ?', '« Configurer le secteur » > Audits de perf. Chaque question est notée Conforme / Non conforme / Sans objet ; le résultat se calcule seul.'],
       ['Nos audits sont trimestriels.', 'Réglez la fréquence dans « Configurer le secteur » > Audits de perf : l\'avancement et les alertes suivent.'],
       ['Comment supprimer un résultat ?', 'Cliquez sur la case du tableau annuel.']]},
   {id:'metro', tab:'metro', titre:'Métrologie', quoi:'La liste des instruments de mesure avec leur date de validité.',
@@ -12703,7 +12731,8 @@ function renderSecteurDashboard(){
   html += '<div class="section card" style="margin-bottom:18px;"><div class="eyebrow" style="margin-bottom:10px;">Audits de perf - '+MONTHS_FR[curM].charAt(0).toUpperCase()+MONTHS_FR[curM].slice(1)+' '+curY+'</div>';
   html += '<div class="linebadges">'+lines.map(function(l){
     var r = perfMonth.find(function(x){ return x.ligne===l; });
-    var b = r ? badge(scoreLevel(r.resultatPct), r.resultatPct+'%') : badge('neutral','Non audité');
+    var eA = perfEntryFor(currentSecteur, l, curY, curM);
+    var b = r ? badge(scoreLevel(r.resultatPct), r.resultatPct+'%') : (eA && eA.arret ? badge('neutral','À l\'arrêt') : badge('neutral','Non audité'));
     return '<div class="linebadge"><b>'+esc(l)+'</b> '+b+'</div>';
   }).join('')+'</div></div>';
 
@@ -12786,7 +12815,7 @@ function renderPerfAuditProgress(){
       var entry = perfEntryFor(s.id, l, y, m);
       totalLignes++;
       if(entry) doneLignes++;
-      return {ligne:l, done: !!entry, pct: entry? entry.resultatPct : null};
+      return {ligne:l, done: !!entry, arret: !!(entry && entry.arret), pct: entry && !entry.arret ? entry.resultatPct : null};
     });
     var doneCount = lignes.filter(function(l){return l.done;}).length;
     var pct = lignes.length? Math.floor(doneCount/lignes.length*100) : 0;
@@ -12818,7 +12847,8 @@ function perfQuestions(sid){ var s = getSecteur(sid||currentSecteur) || {}; retu
 // Audit réalisé sur la période (le mois, ou le trimestre… selon la fréquence du secteur)
 function perfEntryFor(sid, ligne, y, m){
   var ms = perfPeriodMonths(sid, m);
-  return DATA.perf.find(function(p){ return (p.secteur||'MCU')===sid && p.ligne===ligne && p.annee===y && ms.indexOf(p.mois)>=0 && p.resultatPct!==null && p.resultatPct!==undefined; }) || null;
+  // Un audit réalisé, ou la ligne déclarée « à l'arrêt » sur la période (compte comme fait, sans résultat : n'entre dans aucune moyenne)
+  return DATA.perf.find(function(p){ return (p.secteur||'MCU')===sid && p.ligne===ligne && p.annee===y && ms.indexOf(p.mois)>=0 && (p.arret || (p.resultatPct!==null && p.resultatPct!==undefined)); }) || null;
 }
 async function printPerfProgress(){
   var y = perfProgressYear, m = perfProgressMonth;
@@ -12828,39 +12858,38 @@ async function printPerfProgress(){
   var today = todayStr(), moisNom = MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1);
   var mk = y+'-'+String(m+1).padStart(2,'0');
   var isPast = mk < today.slice(0,7);
-  var tot = 0, done = 0, late = 0, todo = 0, missing = [];
+  var tot = 0, audited = 0, stopped = 0, late = 0, todo = 0;
+  function lvlOf(p){ return p===100 ? 'ok' : p===0 ? 'danger' : 'warn'; }
+  // Un bloc par secteur : nom, barre de progression, puis chaque ligne « fait (résultat) », « à l'arrêt » ou « à faire »
   var blocks = secteursList.map(function(s){
     var lignes = s.lignes||[], sDone = 0;
     var rows = lignes.map(function(l){
       tot++;
       var e = perfEntryFor(s.id, l, y, m);
-      var plan = DATA.planning.filter(function(p){ return (p.secteur||'MCU')===s.id && p.ligne===l && p.type==='perf' && p.echeance && p.echeance.slice(0,7)===mk; })[0] || null;
-      var info = plan ? 'échéance '+fmtDate(plan.echeance).slice(0,5)+(plan.responsable? ' · '+esc(plan.responsable) : '') : '';
-      if(e){ done++; sDone++; return '<div class="pf-row pf-row-ok"><span class="pf-ic">✓</span><b>'+esc(l)+'</b><span class="pf-res pf-'+scoreLevel(e.resultatPct)+'">'+pct1(e.resultatPct)+' %</span></div>'; }
-      var isLate = isPast || (plan && plan.echeance<today);
-      if(isLate) late++; else todo++;
-      missing.push({s:s.nom, l:l, late:isLate, info:info});
-      return '<div class="pf-row '+(isLate?'pf-row-late':'pf-row-todo')+'"><span class="pf-ic">'+(isLate?'✗':'○')+'</span><b>'+esc(l)+'</b><span class="pf-res">'+(isLate?'En retard':'À faire')+'</span>'+(info? '<span class="pf-info">'+info+'</span>' : '')+'</div>';
+      if(e && e.arret){ stopped++; sDone++; return '<div class="pf-row pf-row-stop"><span class="pf-ic">‖</span><b>'+esc(l)+'</b><span class="pf-res">Arrêt</span></div>'; }
+      if(e){ audited++; sDone++; return '<div class="pf-row pf-row-ok"><span class="pf-ic">✓</span><b>'+esc(l)+'</b><span class="pf-res pf-'+scoreLevel(e.resultatPct)+'">'+pct1(e.resultatPct)+' %</span></div>'; }
+      if(isPast) late++; else todo++;
+      return '<div class="pf-row pf-row-todo"><span class="pf-ic">○</span><b>'+esc(l)+'</b><span class="pf-res">À faire</span></div>';
     }).join('');
     var sp = lignes.length? Math.floor(sDone/lignes.length*100) : 0;
-    return '<div class="pf-block"><div class="pf-bh"><b>'+esc(s.nom)+'</b><span class="pf-'+(sp===100?'ok':sp===0?'danger':'warn')+'">'+sDone+'/'+lignes.length+' · '+sp+' %</span></div>'+rows+'</div>';
+    return '<div class="pf-block"><div class="pf-bh"><b>'+esc(s.nom)+'</b><span class="pf-'+lvlOf(sp)+'">'+sp+' %</span></div>'+
+      '<div class="pf-bar-wrap"><div class="pf-bar"><i class="pf-bg-'+lvlOf(sp)+'" style="width:'+sp+'%;"></i></div><span>'+sDone+'/'+lignes.length+' ligne'+(lignes.length>1?'s':'')+'</span></div>'+rows+'</div>';
   }).join('');
+  var done = audited + stopped;
   var gp = tot? Math.floor(done/tot*100) : 0;
   var logoEl = document.querySelector('.sidebar-logo-full');
   var h = '<div class="pf-head">'+(logoEl && logoEl.src ? '<img src="'+logoEl.src+'" alt="Acurion">' : '<span></span>')+
       '<div><b>Avancement des audits de perf</b><span>'+esc(moisNom)+' '+y+' · édité le '+fmtDate(today)+(currentUser? ' par '+esc(currentUser.displayName) : '')+'</span></div></div>'+
     '<div class="pf-kpis">'+
-      '<div><span class="pf-'+(gp===100?'ok':gp===0?'danger':'warn')+'">'+gp+' %</span><i>avancement</i></div>'+
-      '<div><span class="pf-ok">'+done+'</span><i>ligne(s) auditée(s)</i></div>'+
+      '<div><span class="pf-'+lvlOf(gp)+'">'+gp+' %</span><i>avancement</i></div>'+
+      '<div><span class="pf-ok">'+audited+'</span><i>ligne(s) auditée(s)'+(stopped? ' · + '+stopped+' à l\'arrêt' : '')+'</i></div>'+
       '<div><span class="pf-danger">'+late+'</span><i>en retard</i></div>'+
       '<div><span class="pf-warn">'+todo+'</span><i>à faire</i></div>'+
       '<div><span>'+tot+'</span><i>lignes au total</i></div>'+
     '</div>'+
-    (missing.length ? '<div class="pf-missing"><div class="pf-mh">Reste à auditer ('+missing.length+')</div>'+
-        missing.map(function(x){ return '<span class="pf-chip '+(x.late?'pf-chip-late':'pf-chip-todo')+'"><b>'+esc(x.s)+' · '+esc(x.l)+'</b>'+(x.info? ' <i>'+x.info+'</i>' : '')+'</span>'; }).join('')+'</div>'
-      : '<div class="pf-alldone">✓ Toutes les lignes sont auditées pour '+esc(moisNom)+' '+y+'.</div>')+
+    '<div class="pf-global"><div class="pf-bar pf-bar-big"><i class="pf-bg-'+lvlOf(gp)+'" style="width:'+gp+'%;"></i></div><span>'+done+' / '+tot+' lignes faites</span></div>'+
     '<div class="pf-grid">'+blocks+'</div>'+
-    '<p class="pf-legend">✓ fait (résultat du mois) · ✗ en retard (mois écoulé ou échéance du planning dépassée) · ○ à faire (pas encore dû).</p>';
+    '<p class="pf-legend">✓ fait (résultat du mois) · ‖ ligne à l\'arrêt (compte comme fait, sans résultat) · ○ à faire.</p>';
   var old = document.getElementById('perf-print'); if(old) old.remove();
   var sheet = document.createElement('div'); sheet.id = 'perf-print'; sheet.innerHTML = h;
   document.body.appendChild(sheet);
