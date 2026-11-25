@@ -461,6 +461,36 @@ tr.releve-recap-sel td:first-child{font-weight:700; box-shadow:inset 4px 0 0 #1F
 @media print{
   body.print-monthly-report > *:not(#monthly-report){display:none !important;}
   body.print-def-report > *:not(#def-print){display:none !important;}
+  body.print-perf-audit > *:not(#pa-print){display:none !important;}
+  body.print-perf-audit #pa-print{display:block !important; font-family:Arial, Helvetica, sans-serif; color:#111; font-size:10px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  #pa-print table{width:100%; border-collapse:collapse; margin-bottom:5px; table-layout:fixed;}
+  #pa-print th{text-transform:none !important; letter-spacing:0 !important; color:#111;}
+  #pa-print th, #pa-print td{border:1px solid #333; padding:2px 5px; vertical-align:middle; text-align:left; font-size:10.5px; line-height:1.3; padding-top:3px; padding-bottom:3px;}
+  #pa-print .pa-ph{display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #17368A; padding-bottom:5px; margin-bottom:6px;}
+  #pa-print .pa-ph img{height:24px;}
+  #pa-print .pa-title{font-size:17px; font-weight:700; color:#17368A; letter-spacing:.03em;}
+  #pa-print .pa-ref{font-size:9px; color:#555;}
+  #pa-print .pa-hd th{background:#EEF2FA; width:14%; font-weight:700;}
+  #pa-print .pa-big{font-size:14px; font-weight:700;}
+  #pa-print .pa-score{width:20%; text-align:center !important; font-size:22px; font-weight:700; color:#17368A;}
+  #pa-print .pa-score span{display:block; font-size:9px; font-weight:400; color:#555;}
+  #pa-print .pa-score.pa-ok{color:#2E7D4F;} #pa-print .pa-score.pa-warn{color:#B26A00;} #pa-print .pa-score.pa-danger{color:#B23B2E;}
+  #pa-print .pa-gr thead th{background:#17368A; color:#fff !important; text-align:center; font-size:8px;}
+  #pa-print .pa-gr thead th.pa-sec{text-align:left; font-size:10px;}
+  #pa-print .pa-gr thead th.pa-poste{background:#45A0A2; text-align:left; font-size:10px;}
+  #pa-print .pa-n{width:4%; text-align:center !important; font-weight:700;}
+  #pa-print .pa-t{line-height:1.3;}
+  #pa-print .pa-m{text-align:center !important; font-weight:700;}
+  #pa-print .pa-m.is-nc{background:#F8D6D2; color:#7A1F17;} #pa-print .pa-m.is-c{background:#E3F1E8; color:#2E7D4F;} #pa-print .pa-m.is-na{background:#ECEBE7;}
+  #pa-print .pa-ec thead th{background:#EEF2FA; font-size:9px;}
+  #pa-print .pa-leg span{white-space:nowrap; margin-left:6px;}
+  #pa-print .pa-ec td{height:22px; font-size:10px;}
+  #pa-print .pa-sy{font-weight:400 !important;}
+  #pa-print .pa-arret{border:1px solid #333; padding:12px; text-align:center; font-size:12px; font-weight:700; margin-bottom:6px;}
+  #pa-print .pa-foot{display:flex; gap:10px; justify-content:space-between; font-size:9px; margin-top:4px;}
+  #pa-print .pa-amdec{border:1px solid #333; padding:5px 7px; flex:1;}
+  #pa-print .pa-leg{color:#444; flex:1; text-align:right;}
+  #pa-print .pa-ed{font-size:8.5px; color:#777; margin-top:6px; text-align:right;}
   body.print-perf-progress > *:not(#perf-print){display:none !important;}
   body.print-perf-progress #perf-print{display:block !important; font-family:Arial, Helvetica, sans-serif; color:#111; font-size:10px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
   #perf-print .pf-head{display:flex; align-items:center; justify-content:space-between; padding-bottom:6px; margin-bottom:10px; border-bottom:2px solid #1F3864;}
@@ -969,7 +999,7 @@ body.cz-admin .cz-mini{display:inline-block; margin-left:5px; font-size:11px; co
 .chokko-grid .chk-act-btn.has{background:var(--accent-bg, #E6EFEE); border-color:var(--accent);}
 .chk-actions-table{width:100%; border-collapse:collapse; font-size:12.5px;}
 .chk-actions-table th, .chk-actions-table td{border-bottom:1px solid var(--border); padding:6px 8px; vertical-align:top; text-align:left;}
-#perf-print{display:none;}
+#perf-print{display:none;} #pa-print{display:none;}
 @media print{
   body.print-chokko-synth header.top{display:none !important;}
   body.print-chokko-synth #chokko-print-head{display:flex !important; align-items:center; justify-content:space-between; gap:20px; padding-bottom:8px; margin-bottom:10px; border-bottom:2px solid #1F3864;}
@@ -1494,6 +1524,7 @@ td.pa-cell-on{outline:2px solid #17368A; outline-offset:-2px;}
 .pi-audit{border-top:1px solid var(--border); padding:8px 0 6px;}
 .pi-audit.is-off{opacity:.45;}
 .pi-ah{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.pi-year{padding:2px 4px; font-size:13px; font-weight:700;} .pi-year.is-warn{border-color:var(--warn); background:#FCEBCF;}
 .pi-pct{font-family:var(--mono); font-weight:700; font-size:15px;}
 .pi-tag{font-size:10.5px; border-radius:8px; padding:1px 7px; background:#EEF2FA; color:#17368A; white-space:nowrap;}
 .pi-tag.warn{background:#FCEBCF; color:#6B4A00;}
@@ -6262,6 +6293,13 @@ function perfScoreFromGrid(grille){
   return den>0 ? Math.floor(c/den*10000)/100 : null;
 }
 var PERF_SYMB_STATUT = {'⊕':'non_prise_en_compte','◔':'planifiee','◑':'realisee','◕':'verifiee','●':'perennisee','⊗':'abandonnee'};
+function perfToDate(v){
+  if(v instanceof Date && !isNaN(v)) return new Date(v.getTime() + 12*3600*1000);   // évite le décalage de fuseau (minuit → veille)
+  if(typeof v==='number' && v>30000 && v<80000){ var d = new Date(Math.round((v-25569)*86400000)); return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12); }
+  var m = String(v||'').trim().match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/);
+  if(m){ var y = Number(m[3]); if(y<100) y += 2000; var dd = new Date(y, Number(m[2])-1, Number(m[1]), 12); if(dd.getMonth()===Number(m[2])-1) return dd; }
+  return null;
+}
 function perfParseDelai(v, annee){
   if(v instanceof Date && !isNaN(v)) return v.getFullYear()+'-'+String(v.getMonth()+1).padStart(2,'0')+'-'+String(v.getDate()).padStart(2,'0');
   var s = String(v||'').trim(); if(!s) return null;
@@ -6408,10 +6446,16 @@ function perfParseWorkbook(wb, fileName){
     if(!marked) return;   // mois non audité
     // Date et auditeur (cases G2 / G3, parfois inversées)
     var g2 = perfCell(ws,'G2'), g3 = perfCell(ws,'G3'), date = null, auditeur = '';
-    [g2, g3].forEach(function(v){ if(v instanceof Date && !isNaN(v) && !date) date = v; else if(v && !(v instanceof Date) && !auditeur) auditeur = String(v).trim(); });
+    [g2, g3].forEach(function(v){ var dv = perfToDate(v); if(dv && !date) date = dv; else if(v && !dv && !auditeur) auditeur = String(v).trim(); });
     var dStr = date ? date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0') : null;
-    var annee = date ? date.getFullYear() : null;
-    if(date && date.getMonth()===0 && mi===11) annee--;   // audit de décembre réalisé début janvier
+    // Année de l'onglet = celle qui place le mois de l'onglet au plus près de la date de l'audit
+    // (ex. onglet Décembre daté du 05/01/2026 → décembre 2025 ; onglet Janvier daté du 29/12/2025 → janvier 2026)
+    var annee = null, ecartMois = 0;
+    if(date){
+      var dAbs = date.getFullYear()*12 + date.getMonth(), best = null;
+      [date.getFullYear()-1, date.getFullYear(), date.getFullYear()+1].forEach(function(yy){ var d = Math.abs(yy*12+mi - dAbs); if(best===null || d<best){ best = d; annee = yy; } });
+      ecartMois = best;
+    }
     var lineTxt = perfCell(ws,'D2');
     var poste = String(perfCell(ws,'B17')||'').replace(/^\s*POSTE\s+AUDITE\s*:?/i,'').replace(/[….]+/g,' ').trim();
     var ecarts = [];
@@ -6431,13 +6475,23 @@ function perfParseWorkbook(wb, fileName){
     var excel = perfCell(ws,'F4');
     var excelPct = (typeof excel==='number') ? Math.floor(excel*10000)/100 : null;
     var unanswered = grille.filter(function(g){ return !g.rep; }).length;
-    audits.push({sheet:sn, mois:mi, annee:annee, date:dStr, auditeur:auditeur, participants:String(perfCell(ws,'D3')||'').trim(), poste:poste,
+    audits.push({sheet:sn, pos:wb.SheetNames.indexOf(sn), ecartMois:ecartMois, mois:mi, annee:annee, date:dStr, auditeur:auditeur, participants:String(perfCell(ws,'D3')||'').trim(), poste:poste,
       lineTxt: lineTxt ? String(lineTxt).trim() : '', grille:grille, resultatPct:score, excelPct:excelPct, unanswered:unanswered, ecarts:ecarts, include:true});
   });
-  // Année manquante : celle des autres audits du fichier
-  var years = audits.map(function(a){ return a.annee; }).filter(Boolean);
-  var yDef = years.length ? years.sort()[Math.floor(years.length/2)] : Number(todayStr().slice(0,4));
-  audits.forEach(function(a){ if(!a.annee){ a.annee = yDef; warn.push(a.sheet+' : pas de date, année '+yDef+' retenue'); } });
+  // Onglet sans date : on déduit l'année de l'onglet daté le plus proche dans le classeur (les onglets se suivent mois après mois)
+  var dated = audits.filter(function(a){ return a.annee; });
+  audits.forEach(function(a){
+    if(a.annee) { if(a.ecartMois>=2) a.alerte = 'date du '+fmtDate(a.date)+' éloignée du mois de l\'onglet : vérifiez l\'année'; return; }
+    if(!dated.length){ a.annee = Number(todayStr().slice(0,4)); a.alerte = 'pas de date dans l\'onglet : année '+a.annee+' par défaut, à vérifier'; return; }
+    var ref = dated.slice().sort(function(x,y){ return Math.abs(x.pos-a.pos)-Math.abs(y.pos-a.pos); })[0];
+    // position relative dans le classeur → nombre de mois d'écart attendu
+    var refAbs = ref.annee*12+ref.mois, best = null;
+    [ref.annee-1, ref.annee, ref.annee+1].forEach(function(yy){
+      var abs = yy*12+a.mois, d = Math.abs((abs-refAbs) - (a.pos-ref.pos));
+      if(best===null || d<best){ best = d; a.annee = yy; }
+    });
+    a.alerte = 'pas de date dans l\'onglet : année '+a.annee+' déduite des onglets voisins, à vérifier';
+  });
   // Ligne : case D2 des onglets, sinon Bilan G2, sinon le nom du fichier
   var cand = audits.map(function(a){ return a.lineTxt; }).concat([bilanLine, fileName]);
   var found = null, foundFrom = '';
@@ -6479,10 +6533,12 @@ function perfImportHtml(){
       var ex = f.ligne ? perfImportExisting(f, a) : null;
       var diff = a.excelPct!==null && a.resultatPct!==null && Math.abs(a.excelPct-a.resultatPct)>0.01;
       h += '<div class="pi-audit'+(a.include?'':' is-off')+'"><div class="pi-ah">'+
-        '<label><input type="checkbox" data-pi="inc" data-f="'+fi+'" data-a="'+ai+'"'+(a.include?' checked':'')+'> <b>'+esc(MONTHS_FR[a.mois].charAt(0).toUpperCase()+MONTHS_FR[a.mois].slice(1))+' '+a.annee+'</b></label>'+
+        '<label><input type="checkbox" data-pi="inc" data-f="'+fi+'" data-a="'+ai+'"'+(a.include?' checked':'')+'> <b>'+esc(MONTHS_FR[a.mois].charAt(0).toUpperCase()+MONTHS_FR[a.mois].slice(1))+'</b></label>'+
+        '<select class="pi-year'+(a.alerte?' is-warn':'')+'" data-pi="year" data-f="'+fi+'" data-a="'+ai+'" title="Année de l\'audit">'+[a.annee-1, a.annee, a.annee+1].map(function(yy){ return '<option value="'+yy+'"'+(yy===a.annee?' selected':'')+'>'+yy+'</option>'; }).join('')+'</select>'+
         '<span class="pi-pct" style="color:var(--'+(a.resultatPct===null?'text-faint':scoreLevel(a.resultatPct))+');">'+(a.resultatPct===null?'-':pct1(a.resultatPct)+' %')+'</span>'+
         (diff ? '<span class="pi-tag warn" title="La formule du fichier compte mal les N/A">Excel : '+pct2(a.excelPct)+' % (recalculé)</span>' : '')+
         (a.unanswered ? '<span class="pi-tag warn">'+a.unanswered+' point(s) sans réponse</span>' : '')+
+        (a.alerte ? '<span class="pi-tag warn">⚠ '+esc(a.alerte)+'</span>' : '')+
         '<span class="tiny">'+(a.date? fmtDate(a.date) : 'sans date')+(a.auditeur? ' · '+esc(a.auditeur) : '')+(a.poste? ' · '+esc(a.poste) : '')+'</span>'+
         (ex ? '<span class="pi-tag">remplace l\'audit déjà enregistré</span>' : '')+
       '</div>';
@@ -6517,9 +6573,21 @@ function perfImportRender(){
 }
 async function perfImportApply(){
   var P = perfImport; if(!P) return;
+  var dup = [];
+  P.files.forEach(function(f){ var seen = {}; f.audits.forEach(function(a){ if(!a.include) return; var k = a.annee+'-'+a.mois; if(seen[k]) dup.push(f.name+' : '+MONTHS_FR[a.mois]+' '+a.annee); seen[k] = 1; }); });
+  if(dup.length){ uiAlert('Deux audits tombent sur le même mois : '+dup.join(', ')+'. Corrigez l\'année de l\'un des deux.'); return; }
   var bad = P.files.filter(function(f){ return !f.ligne && f.audits.some(function(a){ return a.include; }); });
   if(bad.length){ uiAlert('Choisissez la ligne pour : '+bad.map(function(f){ return f.name; }).join(', ')); return; }
-  var nRec = 0, nAct = 0;
+  var nRec = 0, nAct = 0, nOld = 0;
+  P.files.forEach(function(f){
+    // Réimport du même fichier : on retire d'abord les audits importés de ce fichier (corrige une année mal attribuée lors d'un import précédent)
+    var keep = f.audits.filter(function(a){ return a.include; }).map(function(a){ return a.annee+'-'+a.mois; });
+    DATA.perf = DATA.perf.filter(function(r){
+      var same = r.source==='import' && r.fichier===f.name && (r.secteur||'MCU')===f.secteur && r.ligne===f.ligne && keep.indexOf(r.annee+'-'+r.mois)<0;
+      if(same){ nOld++; (r.ecarts||[]).forEach(function(oe){ if(oe.actionId) DATA.actions = DATA.actions.filter(function(x){ return !(x.id===oe.actionId && x.importe); }); }); }
+      return !same;
+    });
+  });
   P.files.forEach(function(f){
     f.audits.forEach(function(a){
       if(!a.include) return;
@@ -6530,7 +6598,7 @@ async function perfImportApply(){
       rec.date = a.date; rec.auditeur = a.auditeur; rec.participants = a.participants; rec.poste = a.poste; rec.source = 'import'; rec.fichier = f.name;
       rec.grille = a.grille; rec.resultatPct = a.resultatPct;
       rec.ecarts = a.ecarts.map(function(e){
-        var ec = {id:e.id, item:e.item, constat:e.constat, cause:e.reconduit ? '' : (e.cause||''), action:e.action, resp:e.resp, delai:e.delai, reconduit:e.reconduit};
+        var ec = {id:e.id, item:e.item, constat:e.constat, cause:e.reconduit ? '' : (e.cause||''), action:e.action, resp:e.resp, delai:e.delai, delaiTxt:e.delaiTxt||'', statutSymb:e.statutSymb||'', reconduit:e.reconduit};
         if(P.creerActions && !e.reconduit && (e.constat || e.action)){
           ec.actionId = perfCreateAction(rec, e, {statut: PERF_SYMB_STATUT[e.statutSymb] || 'planifiee'});
           var ac = DATA.actions.find(function(x){ return x.id===ec.actionId; }); if(ac) ac.importe = true;
@@ -6543,10 +6611,12 @@ async function perfImportApply(){
     });
   });
   await save('perf');
-  if(nAct) await save('actions');
+  if(nAct || nOld) await save('actions');
   logChange('Audits perf', 'Import Excel', nRec+' audit(s) · '+P.files.map(function(f){ return f.name; }).join(', '));
   perfImport = null; perfImportRender();
-  toast('Import terminé : '+nRec+' audit(s)'+(nAct? ', '+nAct+' action(s) créée(s)' : '')+'.');
+  var parAn = {}; P.files.forEach(function(f){ f.audits.forEach(function(a){ if(a.include) parAn[a.annee] = (parAn[a.annee]||0)+1; }); });
+  var ans = Object.keys(parAn).sort();
+  toast('Import terminé : '+nRec+' audit(s)'+(ans.length>1 ? ' ('+ans.map(function(y){ return parAn[y]+' en '+y; }).join(', ')+' - changez d\'année avec ◀ ▶)' : '')+(nAct? ', '+nAct+' action(s) créée(s)' : '')+(nOld? ', '+nOld+' ancien(s) audit(s) de ce(s) fichier(s) retiré(s) (mois/année corrigés)' : '')+'.');
   render();
 }
 
@@ -6598,7 +6668,7 @@ function perfDetailHtml(r){
           (e.reconduit ? '<span class="tiny">reconduit</span>' : '<select class="pa-cause" data-action-cause="1" data-pid="'+r.id+'" data-eid="'+e.id+'" data-prev="'+esc(e.cause||'')+'">'+perfCauseOptions(e.cause||'')+'</select>')+'</td></tr>';
       }).join('')+'</tbody></table>';
   } else if(!r.arret) h += '<p class="tiny" style="margin-top:8px;">Aucun écart détaillé pour cet audit.</p>';
-  h += '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="pa-detail-close">Fermer</button><button class="btn danger-outline" data-action="perf-delete-cell" data-id="'+r.id+'">Supprimer cet audit</button></div>';
+  h += '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="pa-detail-close">Fermer</button><button class="btn primary" data-action="pa-print" data-id="'+r.id+'">🖨 Imprimer l\'audit</button><button class="btn danger-outline" data-action="perf-delete-cell" data-id="'+r.id+'">Supprimer cet audit</button></div>';
   return h+'</div>';
 }
 function perfQualifyHtml(){
@@ -6631,6 +6701,7 @@ async function perfAuditHandleClick(e){
   if(a==='pa-save'){ await perfSaveDraft(); return true; }
   if(a==='pa-import'){ var fi = document.getElementById('pa-import-file'); if(fi){ fi.value = ''; fi.click(); } return true; }
   if(a==='pa-scope'){ perfParetoScope = b.dataset.v; render(); return true; }
+  if(a==='pa-print'){ await printPerfAudit(b.dataset.id); return true; }
   if(a==='pa-detail-close'){ perfDetailId = null; render(); return true; }
   if(a==='pa-open'){ perfDetailId = b.dataset.id; render(); var dd = document.querySelector('.pa-detail'); if(dd && dd.scrollIntoView) dd.scrollIntoView({behavior:'smooth', block:'center'}); return true; }
   if(a==='pa-sugg'){ await perfSetCause(b.dataset.pid, b.dataset.eid, b.dataset.c); await save('perf'); render(); return true; }
@@ -6660,6 +6731,7 @@ document.addEventListener('change', async function(e){
     var P = perfImport, f = P.files[Number(t.dataset.f)];
     if(t.dataset.pi==='line'){ var v = t.value.split('|'); f.secteur = v[0]||''; f.ligne = v[1]||''; f.lineFrom = 'choix manuel'; }
     else if(t.dataset.pi==='inc'){ f.audits[Number(t.dataset.a)].include = t.checked; }
+    else if(t.dataset.pi==='year'){ var au = f.audits[Number(t.dataset.a)]; au.annee = Number(t.value); au.alerte = ''; f.audits.sort(function(x,y){ return (x.annee*12+x.mois)-(y.annee*12+y.mois); }); }
     else if(t.dataset.pi==='actions'){ P.creerActions = t.checked; }
     else if(t.dataset.pi==='cause'){
       var ec = f.audits[Number(t.dataset.a)].ecarts[Number(t.dataset.e)];
@@ -13469,6 +13541,90 @@ function perfPrintParetoHtml(ids, y, m){
   return '<div class="pf-pareto"><div class="pf-ph">Pareto des non-conformités · '+per+' · '+p.audits+' audit(s) détaillé(s)</div>'+
     '<div class="pf-pgrid"><div><div class="pf-pt">Par point de la grille</div>'+perfParetoBarsHtml(p.items)+'</div>'+
     '<div><div class="pf-pt">Par cause des écarts</div>'+perfParetoBarsHtml(p.causes, p.aQualifier ? {label:'À qualifier', n:p.aQualifier} : null)+'</div></div></div>';
+}
+
+// Impression d'un audit au format de la fiche JALY_PI_QU_184
+var PERF_GRID_FULL = {
+  1:'Affichage dernier incident client sur tableau de ligne<br>La flèche bleue est à jour',
+  2:'Suivi et signature des derniers flash qualité retour client',
+  3:'Les classeurs Kakotora qualité sont renseignés et à jour :<br>(10 Commandements, Définitions sigles spéciaux, Liste 0 Km, Signatures)',
+  4:'Le suivi chokko/scraps est à jour<br>Les analyses et plan d\'actions sont à jour',
+  5:'Le 5W du dernier incident S/R traversant est affiché<br>Le 5W du coût de rebut &gt; objectif sur 10 jours est affiché<br>Le 5W de la tête de pareto des scraps est affiché',
+  6:'Les produits soumis à date de péremption (colle / encre de tension de surface / graisse / pâte thermique / silicone / etc…) ne périment pas avant la fin du mois suivant.',
+  7:'Suivi dérive moyens de vissages électriques - DELTA',
+  8:'Les cartes jishu hozen sont suivies dans les délais',
+  9:'Le plan de surveillance est à jour, disponible et appliqué. Il correspond au type engagé.',
+  10:'L\'Hatsumono est renseigné et en correspondance avec le plan de surveillance.',
+  11:'Les paramètres machine correspondent au plan de surveillance',
+  12:'Vérification conformité Capabilité et mise à jour - Vérification des enregistrements Sésame<br>Le plan de surveillance est en correspondance avec le tableau de suivi des capabilités',
+  13:'Le mode opératoire est affiché au poste et conforme au plan de surveillance',
+  14:'Etalonnage Métrologie - Suivi du poste OK',
+  15:'Identification des pièces Test : Poka yoke/pièce type (bleues) et Etalon/étalon d\'échelle (Jaune)',
+  16:'Présence de sigles sur le poste (sécurité, critique, pollution)'
+};
+var PERF_STATUT_SYMB = {non_prise_en_compte:'⊕', planifiee:'◔', realisee:'◑', verifiee:'◕', perennisee:'●', abandonnee:'⊗'};
+function perfSymbSvg(sy){
+  var c = '#17368A', R = 6, cx = 7, cy = 7;
+  function arc(fr){ if(fr>=1) return '<circle cx="7" cy="7" r="6" fill="'+c+'"/>'; var a = fr*2*Math.PI, x = cx+R*Math.sin(a), y = cy-R*Math.cos(a); return '<path d="M7 7 L7 1 A6 6 0 '+(fr>0.5?1:0)+' 1 '+x.toFixed(2)+' '+y.toFixed(2)+' Z" fill="'+c+'"/>'; }
+  var inner = sy==='◔' ? arc(.25) : sy==='◑' ? arc(.5) : sy==='◕' ? arc(.75) : sy==='●' ? arc(1)
+    : sy==='⊕' ? '<path d="M7 1V13M1 7H13" stroke="'+c+'" stroke-width="1.2"/>' : sy==='⊗' ? '<path d="M2.8 2.8L11.2 11.2M11.2 2.8L2.8 11.2" stroke="'+c+'" stroke-width="1.2"/>' : '';
+  return '<svg width="13" height="13" viewBox="0 0 14 14" style="vertical-align:middle"><circle cx="7" cy="7" r="6" fill="#fff" stroke="'+c+'" stroke-width="1.2"/>'+inner+'</svg>';
+}
+function perfEcartSymb(e){
+  if(e.actionId){ var a = DATA.actions.find(function(x){ return x.id===e.actionId; }); if(a && PERF_STATUT_SYMB[a.statut]) return PERF_STATUT_SYMB[a.statut]; }
+  return e.statutSymb || (e.constat||e.action ? '◔' : '⊕');
+}
+async function printPerfAudit(id){
+  var r = DATA.perf.find(function(x){ return x.id===id; }); if(!r) return;
+  var moisNom = MONTHS_FR[r.mois].charAt(0).toUpperCase()+MONTHS_FR[r.mois].slice(1);
+  var rep = {}; (r.grille||[]).forEach(function(g){ rep[g.n] = g.rep; });
+  var hasGrid = (r.grille||[]).length>0;
+  var sc = r.arret ? null : r.resultatPct;
+  var lvl = sc===null||sc===undefined ? '' : scoreLevel(sc);
+  function rows(sec){
+    return PERF_GRID.filter(function(g){ return g.sec===sec; }).map(function(g){
+      var v = rep[g.n]||'';
+      return '<tr><td class="pa-n">'+g.n+'</td><td class="pa-t">'+PERF_GRID_FULL[g.n]+'</td>'+
+        '<td class="pa-m'+(v==='NC'?' is-nc':'')+'">'+(v==='NC'?'X':'')+'</td><td class="pa-m'+(v==='C'?' is-c':'')+'">'+(v==='C'?'X':'')+'</td><td class="pa-m'+(v==='NA'?' is-na':'')+'">'+(v==='NA'?'X':'')+'</td></tr>';
+    }).join('');
+  }
+  var ecs = r.ecarts||[];
+  var nRec = ecs.filter(function(e){ return e.reconduit; }).length;
+  var ecRows = ecs.map(function(e){
+    return '<tr><td class="pa-m">'+(e.reconduit?'X':'')+'</td><td class="pa-m">'+(e.item||'')+'</td><td>'+esc(e.constat||'')+'</td><td>'+esc(e.action||'')+'</td><td>'+esc(e.resp||'')+'</td>'+
+      '<td class="pa-m">'+(e.delai ? fmtDate(e.delai) : esc(e.delaiTxt||''))+'</td><td class="pa-m pa-sy">'+perfSymbSvg(perfEcartSymb(e))+'</td></tr>';
+  }).join('');
+  for(var k=ecs.length; k<Math.max(5, ecs.length); k++) ecRows += '<tr class="pa-empty"><td></td><td></td><td></td><td></td><td></td><td></td><td class="pa-m pa-sy"></td></tr>';
+  var logoEl = document.querySelector('.sidebar-logo-full');
+  var h = '<div class="pa-ph">'+(logoEl && logoEl.src ? '<img src="'+logoEl.src+'" alt="Acurion">' : '<span></span>')+'<div class="pa-title">AUDIT DE PERFORMANCE</div><div class="pa-ref">JALY_PI_QU_184</div></div>'+
+    '<table class="pa-hd"><tbody>'+
+      '<tr><th>Ligne</th><td class="pa-big">'+esc(r.ligne)+'</td><th>Date :</th><td>'+(r.date? fmtDate(r.date) : esc(moisNom+' '+r.annee))+'</td><td rowspan="3" class="pa-score pa-'+lvl+'">'+(r.arret ? 'Ligne à l\'arrêt' : (sc===null||sc===undefined ? '-' : pct1(sc)+' %'))+'<span>'+esc(moisNom)+' '+r.annee+'</span></td></tr>'+
+      '<tr><th>Participants</th><td>'+esc(r.participants||'')+'</td><th>Auditeur :</th><td>'+esc(r.auditeur||'')+'</td></tr>'+
+      '<tr><th colspan="3">Nbre actions pas clôturées du mois précédent :</th><td>'+nRec+'</td></tr>'+
+    '</tbody></table>';
+  if(r.arret){
+    h += '<div class="pa-arret">Ligne à l\'arrêt sur la période : pas d\'audit réalisé.</div>';
+  } else {
+    if(!hasGrid) h += '<div class="pa-arret">Résultat saisi sans le détail de la grille.</div>';
+    h += '<table class="pa-gr">'+'<colgroup><col style="width:4%"><col><col style="width:9%"><col style="width:9%"><col style="width:7%"></colgroup>'+'<thead><tr><th colspan="2" class="pa-sec">GÉNÉRALE</th><th>NON-<br>CONFORME</th><th>CONFORME</th><th>N/A</th></tr></thead><tbody>'+rows('gen')+'</tbody></table>'+
+      '<table class="pa-gr">'+'<colgroup><col style="width:4%"><col><col style="width:9%"><col style="width:9%"><col style="width:7%"></colgroup>'+'<thead><tr><th colspan="5" class="pa-sec">STANDARDS QUALITÉ POUR LA CONFORMITÉ DU PRODUIT</th></tr>'+
+      '<tr><th colspan="2" class="pa-poste">POSTE AUDITÉ : '+esc(r.poste||'')+'</th><th>NON-<br>CONFORME</th><th>CONFORME</th><th>N/A</th></tr></thead><tbody>'+rows('std')+'</tbody></table>'+
+      '<table class="pa-ec"><thead><tr><th style="width:4%">R</th><th style="width:5%">Item</th><th style="width:30%">Cause de l\'écart</th><th style="width:30%">Action corrective</th><th style="width:12%">Resp</th><th style="width:10%">Délai</th><th style="width:9%">Statut</th></tr></thead><tbody>'+ecRows+'</tbody></table>';
+  }
+  h += '<div class="pa-foot"><div class="pa-amdec">Une mise à jour de l\'AMDEC process est-elle nécessaire ?  ☐ Oui  ☐ Non<br><i>si oui, le demandeur doit renseigner le document JEU_PI_PE_010 et l\'envoyer au Responsable Qualité DP</i></div>'+
+    '<div class="pa-leg">'+[['⊕','non prise en compte'],['◔','planifiée'],['◑','réalisée'],['◕','vérifiée'],['●','pérennisée'],['⊗','abandonnée']].map(function(x){ return '<span>'+perfSymbSvg(x[0])+' '+x[1]+'</span>'; }).join(' ')+'<br>R = action reconduite du mois précédent · Résultat = conformes / (16 − N/A)</div></div>'+
+    '<div class="pa-ed">Édité le '+fmtDate(todayStr())+(currentUser? ' par '+esc(currentUser.displayName) : '')+'</div>';
+  var old = document.getElementById('pa-print'); if(old) old.remove();
+  var sheet = document.createElement('div'); sheet.id = 'pa-print'; sheet.innerHTML = h;
+  document.body.appendChild(sheet);
+  document.body.classList.add('print-perf-audit');
+  await waitImages(sheet);
+  var fin = false;
+  var cleanup = function(){ if(fin) return; fin = true; window.removeEventListener('afterprint', cleanup); document.body.classList.remove('print-perf-audit'); var sh = document.getElementById('pa-print'); if(sh) sh.remove(); };
+  window.addEventListener('afterprint', cleanup);
+  onPrintDone(cleanup);
+  logChange('Audits de perf', 'Impression audit', r.ligne+' - '+moisNom+' '+r.annee);
+  setTimeout(function(){ printWithPageSize('A4 portrait'); }, 60);
 }
 async function printPerfProgress(){
   var y = perfProgressYear, m = perfProgressMonth;
