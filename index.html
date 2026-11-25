@@ -1446,9 +1446,26 @@ body.fmds-mode #view .section > .chk-gridmode, body.fmds-mode #view .section > p
 body.fmds-mode #view .section > .print-only{display:none !important;}
 body.fmds-mode #view .section{display:flex; flex-wrap:wrap; gap:14px; align-items:flex-start;}
 body.fmds-mode #view .section > .table-wrap{flex:1 1 100%; order:1; overflow:visible;}
-body.fmds-mode #view .section > .card:not(.chk-actions-card){flex:1 1 56%; order:2; margin:0 !important;}
-body.fmds-mode #view .section > .chk-actions-card{flex:1 1 38%; order:3; margin:0 !important;}
-body.fmds-mode #view .section .chart-box{height:270px !important;}
+body.fmds-mode #view .section > .card:not(.chk-actions-card):not(.fmds-scrap){flex:1 1 52%; order:2; margin:0 !important;}
+body.fmds-mode #view .section > .fmds-scrap{flex:1 1 40%; order:3; margin:0 !important;}
+body.fmds-mode #view .section > .chk-actions-card{flex:1 1 100%; order:4; margin:0 !important;}
+body.fmds-mode .chk-actions-table{table-layout:auto; width:100%;}
+body.fmds-mode .chk-actions-table .chk-col-btn{display:none !important;}
+body.fmds-mode .chk-actions-table.no-plan .chk-col-plan{display:none !important;}
+body.fmds-mode .chk-actions-table th:first-child{width:24% !important;}
+body.fmds-mode .chk-actions-table th:nth-child(2){width:90px !important;}
+body.fmds-mode .chk-actions-table td{padding:5px 8px !important; vertical-align:top;}
+.fmds-scrap{display:none;} body.fmds-mode .fmds-scrap{display:block;}
+.fmds-scrap-kpis{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:8px 0 10px;}
+.fmds-scrap-kpis div{border:1px solid var(--border); border-radius:8px; padding:6px 10px; display:flex; flex-direction:column;}
+.fmds-scrap-kpis span{font-size:12px; color:var(--text-muted);} .fmds-scrap-kpis b{font-family:var(--mono); font-size:20px;} .fmds-scrap-kpis i{font-style:normal; font-size:11.5px;}
+.fmds-up{color:var(--danger); font-weight:700;} .fmds-down{color:#2E7D4F; font-weight:700;}
+.fmds-scrap-bars{width:100%; border-collapse:collapse; font-size:14px;}
+.fmds-scrap-bars td{padding:3px 4px; border:none !important;}
+.fmds-scrap-bars td.l{width:44%;} .fmds-scrap-bars td.b{width:30%;} .fmds-scrap-bars td.b i{display:block; height:14px; border-radius:3px; background:#45A0A2;}
+.fmds-scrap-bars tr.a td.b i{background:#17368A;} .fmds-scrap-bars tr.a td.l{font-weight:700;}
+.fmds-scrap-bars td.v{font-family:var(--mono); font-weight:700; text-align:right; color:var(--danger); white-space:nowrap;} .fmds-scrap-bars td.p{font-family:var(--mono); text-align:right; color:var(--text-faint); width:60px;}
+body.fmds-mode #view .section .chart-box{height:230px !important;}
 body.fmds-mode .chokko-grid{font-size:14px !important;}
 body.fmds-mode .chokko-grid input.chk-cell{font-size:14px !important; font-weight:600;}
 body.fmds-mode .chokko-grid td, body.fmds-mode .chokko-grid th{padding-top:1px !important; padding-bottom:1px !important; height:22px; line-height:1.15;}
@@ -10440,6 +10457,7 @@ function chokkoSaisieView(){
     '<div class="chart-box" style="height:420px;"><canvas id="chart-chokko-postes"></canvas></div>'+
     (chokkoColorsPanelOpen? chokkoColorsPanel(ligne) : '')+
   '</div>';
+  if(fmdsOn) html += fmdsScrapHtml(ligne);
   html += chokkoActionsTableHtml(ligne, postes, days);
   // Pareto général du mois : total des défauts de la ligne, tout en bas de l'onglet
   html += '<div class="card chokko-noprint" style="margin-top:18px;" id="chokko-pareto-card">'+
@@ -10473,6 +10491,27 @@ function renderChokkoParetoMonth(){
   if(typeof Chart==='undefined') return;
   try{ chartChokkoPareto = new Chart(document.getElementById('chart-chokko-pareto'), paretoChartConfig(res, {unit:'pièces'}, false)); }catch(err){ console.error('pareto chokko', err); }
 }
+// Mode FMDS : coût des SCRAP (rebuts) de la ligne pour le mois affiché
+function fmdsScrapHtml(l){
+  var y = chokkoYear, m = chokkoMonth;
+  var moisNom = MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1);
+  var res = rebutParetoResFor(l, y, [m]);
+  var prevY = m===0 ? y-1 : y, prevM = m===0 ? 11 : m-1;
+  var prevTot = rebutMonthTotal(l, prevY, prevM);
+  var cumul = 0; for(var i=0;i<=m;i++) cumul += rebutMonthTotal(l, y, i);
+  var trend = (res.total && prevTot) ? (res.total>prevTot ? '<span class="fmds-up">▲ '+fmtEur(res.total-prevTot)+'</span>' : res.total<prevTot ? '<span class="fmds-down">▼ '+fmtEur(prevTot-res.total)+'</span>' : '=') : '';
+  var h = '<div class="card fmds-scrap"><div class="eyebrow">SCRAP · coût rebut - '+esc(l)+' - '+esc(moisNom)+' '+y+'</div>'+
+    '<div class="fmds-scrap-kpis"><div><span>Ce mois</span><b class="rebut-red">'+(res.total? fmtEur(res.total) : '0,00 €')+'</b>'+(trend? '<i>'+trend+' vs '+esc(MONTHS_FR[prevM])+'</i>' : '')+'</div>'+
+      '<div><span>'+esc(MONTHS_FR[prevM].charAt(0).toUpperCase()+MONTHS_FR[prevM].slice(1))+'</span><b>'+(prevTot? fmtEur(prevTot) : '-')+'</b></div>'+
+      '<div><span>Cumul '+y+'</span><b>'+(cumul? fmtEur(cumul) : '-')+'</b></div></div>';
+  if(!res.total) return h+'<p class="tiny" style="margin:6px 0 0;">Aucun coût rebut saisi pour ce mois.</p></div>';
+  var top = res.rows.slice(0,6), mx = top[0].value;
+  h += '<table class="fmds-scrap-bars"><tbody>'+top.map(function(r){
+    return '<tr'+(r.cls==='A'?' class="a"':'')+'><td class="l">'+esc(r.label)+'</td><td class="b"><i style="width:'+Math.max(2, r.value/mx*100)+'%;"></i></td><td class="v">'+fmtEur(Math.floor(r.value*100)/100)+'</td><td class="p">'+(Math.floor(r.pct*10)/10).toLocaleString('fr-FR')+' %</td></tr>';
+  }).join('')+'</tbody></table>'+
+  (res.rows.length>top.length ? '<p class="tiny" style="margin:4px 0 0;">+ '+(res.rows.length-top.length)+' autre(s) code(s)</p>' : '');
+  return h+'</div>';
+}
 // Tableau des actions CHOKKO du mois (remplace l'ancienne colonne ACTIONS de la grille)
 function chokkoActionsTableHtml(ligne, postes, days){
   var y = chokkoYear, m = chokkoMonth;
@@ -10491,13 +10530,14 @@ function chokkoActionsTableHtml(ligne, postes, days){
       '</select><button class="btn small primary" data-action="chokko-act-add">+ Ajouter une action</button></div>'+
     '</div>';
   if(!rows.length) return h+'<p class="tiny" style="color:var(--text-faint); margin:0;">Aucune action ce mois-ci. Cliquez sur le bouton <b>+</b> devant un poste dans le tableau, ou choisissez un poste ci-dessus.</p></div>';
-  h += '<div class="table-wrap"><table class="chk-actions-table"><thead><tr><th style="width:230px;">Poste</th><th style="width:80px; text-align:center;">Défauts du mois</th><th>Actions menées</th><th style="width:260px;">Plan d\'actions</th><th style="width:190px;"></th></tr></thead><tbody>'+
+  var anyPlan = rows.some(function(r){ return r.linked.length; });
+  h += '<div class="table-wrap"><table class="chk-actions-table'+(anyPlan?'':' no-plan')+'"><thead><tr><th style="width:230px;">Poste</th><th style="width:80px; text-align:center;">Défauts du mois</th><th>Actions menées</th><th class="chk-col-plan" style="width:260px;">Plan d\'actions</th><th class="chk-col-btn" style="width:190px;"></th></tr></thead><tbody>'+
     rows.map(function(r){
       return '<tr><td><b>'+esc(r.p[0])+'</b> - '+esc(r.p[1])+'</td><td style="text-align:center; font-family:var(--mono);">'+r.nb+'</td>'+
         '<td style="white-space:pre-wrap;">'+(r.txt? esc(r.txt) : '<span class="tiny" style="color:var(--text-faint);">-</span>')+'</td>'+
-        '<td>'+(r.linked.length? r.linked.slice(0,3).map(function(a){ var cat = actionPanelCategory(a), meta = actionMeta(a);
+        '<td class="chk-col-plan">'+(r.linked.length? r.linked.slice(0,3).map(function(a){ var cat = actionPanelCategory(a), meta = actionMeta(a);
             return '<div class="ad-linked-row" data-action="action-open" data-id="'+a.id+'">'+(cat==='late'?badge('danger','En retard'):badge(meta.level, meta.label))+'<span>'+esc((a.description||'').slice(0,60))+'</span></div>'; }).join('') : '<span class="tiny" style="color:var(--text-faint);">-</span>')+'</td>'+
-        '<td style="white-space:nowrap;"><button class="btn small" data-action="chokko-note-open" data-ligne="'+esc(ligne)+'" data-poste="'+esc(r.p[0])+'" data-annee="'+y+'" data-mois="'+m+'">Modifier</button>'+
+        '<td class="chk-col-btn" style="white-space:nowrap;"><button class="btn small" data-action="chokko-note-open" data-ligne="'+esc(ligne)+'" data-poste="'+esc(r.p[0])+'" data-annee="'+y+'" data-mois="'+m+'">Modifier</button>'+
         (r.txt? ' <button class="btn small danger-outline" data-action="chokko-note-delete" data-ligne="'+esc(ligne)+'" data-poste="'+esc(r.p[0])+'" data-annee="'+y+'" data-mois="'+m+'" title="Supprimer les actions menées de ce poste pour ce mois">Supprimer</button>' : '')+'</td></tr>';
     }).join('')+'</tbody></table></div></div>';
   return h;
