@@ -1513,7 +1513,7 @@ td.pf-cell-arret{background:#ECEBE7; color:#6E6A60; font-weight:600; text-align:
 .pa-rep{display:flex; gap:4px;}
 .pa-btn{border:1px solid var(--border-strong); background:#fff; border-radius:6px; padding:5px 10px; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; color:var(--text);}
 .pa-btn.pa-c.on{background:#2E7D4F; border-color:#2E7D4F; color:#fff;} .pa-btn.pa-nc.on{background:#B23B2E; border-color:#B23B2E; color:#fff;} .pa-btn.pa-na.on{background:#6E6A60; border-color:#6E6A60; color:#fff;}
-.pa-ecart{grid-column:1 / -1; display:grid; grid-template-columns:2fr 1.2fr 2fr 1fr 1fr; gap:6px 10px; align-items:end; padding-top:6px; border-top:1px dashed #E8B9B3;}
+.pa-ecart{grid-column:1 / -1; display:grid; grid-template-columns:2fr 2fr 1fr 1fr; gap:6px 10px; align-items:end; padding-top:6px; border-top:1px dashed #E8B9B3;}
 .pa-ecart .field{margin:0;} .pa-creer{grid-column:1 / -1; font-size:12px; display:flex; gap:6px; align-items:center;}
 .pa-item > .pa-ecart:only-child{grid-column:1 / -1;}
 @media (max-width:900px){ .pa-ecart{grid-template-columns:1fr 1fr;} .pa-item{grid-template-columns:1fr;} }
@@ -6052,8 +6052,8 @@ RENDERERS.perf = function(){
 
   var html = '<div class="section">';
   html += '<div class="toolbar"><div class="left"><label class="field" style="flex-direction:row; align-items:center; gap:8px;">Année<select id="perf-year">'+years.map(function(y){return '<option value="'+y+'"'+(y===perfYear?' selected':'')+'>'+y+'</option>';}).join('')+'</select></label></div>'+
-    '<button class="btn" data-action="pa-import" title="Importer un ou plusieurs fichiers d\'audit Excel (JALY_PI_QU_184) : ligne, résultat et écarts détectés automatiquement">⬆ Importer des audits Excel</button><input type="file" id="pa-import-file" accept=".xlsm,.xlsx,.xls" multiple style="display:none;">'+
-    '<button class="btn primary" data-action="new-perf">+ Saisir un audit de perf</button></div>';
+    '<div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn" data-action="pa-import" title="Importer un ou plusieurs fichiers d\'audit Excel (JALY_PI_QU_184) : ligne, résultat et écarts détectés automatiquement">⬆ Importer des audits Excel</button><input type="file" id="pa-import-file" accept=".xlsm,.xlsx,.xls" multiple style="display:none;">'+
+    '<button class="btn primary" data-action="new-perf">+ Saisir un audit de perf</button></div></div>';
 
   if(perfFormOpen) html += perfQuestions().length ? perfForm() : perfAuditFormHtml();
 
@@ -6065,18 +6065,24 @@ RENDERERS.perf = function(){
   '</div>';
   var detR = perfDetailId ? DATA.perf.find(function(x){ return x.id===perfDetailId; }) : null;
   if(detR) html += perfDetailHtml(detR); else perfDetailId = null;
-  html += perfQualifyHtml();
   var multiP = userSecteurs().length>1;
   var scopeIds = (multiP && perfParetoScope==='tous') ? userSecteurs() : [currentSecteur];
-  var pm = perfParetoPeriode(), pdata = perfParetoData(scopeIds, perfYear, pm.max, pm.min);
-  var perLbl = pm.label+' '+perfYear;
-  html += '<div class="pp-head"><div class="eyebrow">Pareto des non-conformités - '+esc(perLbl)+'</div><div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">'+
-    '<select id="pa-periode" title="Période du Pareto"><option value="all"'+(perfParetoMois==='all'?' selected':'')+'>Toute l\'année</option>'+
-      '<optgroup label="Un mois">'+MONTHS_FR.map(function(m,i){ return '<option value="m'+i+'"'+(perfParetoMois==='m'+i?' selected':'')+'>'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>'; }).join('')+'</optgroup>'+
-      '<optgroup label="Cumul depuis janvier">'+MONTHS_FR.slice(1).map(function(m,i){ return '<option value="c'+(i+1)+'"'+(perfParetoMois==='c'+(i+1)?' selected':'')+'>Janvier → '+m+'</option>'; }).join('')+'</optgroup></select>'+
+  var scopeLines = [];
+  scopeIds.forEach(function(sid){ var sx = getSecteur(sid); ((sx && sx.lignes) || []).forEach(function(l){ if(scopeLines.indexOf(l)<0) scopeLines.push(l); }); });
+  if(perfParetoLigne && scopeLines.indexOf(perfParetoLigne)<0) perfParetoLigne = '';
+  if(perfParetoMois===null) perfParetoMois = perfParetoDefaultMonth(scopeIds, perfYear);
+  var pYear = perfParetoData(scopeIds, perfYear, null, null, perfParetoLigne);
+  var pMonth = perfParetoData(scopeIds, perfYear, perfParetoMois, perfParetoMois, perfParetoLigne);
+  var scopeLbl = perfParetoLigne ? esc(perfParetoLigne) : (scopeIds.length>1 ? scopeIds.length+' secteurs' : esc((getSecteur(currentSecteur)||{}).nom||currentSecteur));
+  var moisLbl = MONTHS_FR[perfParetoMois].charAt(0).toUpperCase()+MONTHS_FR[perfParetoMois].slice(1);
+  html += '<div class="pp-head"><div class="eyebrow">Pareto des NC par point de la grille</div><div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">'+
+    '<label class="field" style="flex-direction:row; align-items:center; gap:6px; margin:0;">Ligne<select id="pa-pligne"><option value="">Toutes les lignes</option>'+scopeLines.map(function(l){ return '<option value="'+esc(l)+'"'+(l===perfParetoLigne?' selected':'')+'>'+esc(l)+'</option>'; }).join('')+'</select></label>'+
+    '<label class="field" style="flex-direction:row; align-items:center; gap:6px; margin:0;">Mois<select id="pa-pmois">'+MONTHS_FR.map(function(m,i){ return '<option value="'+i+'"'+(i===perfParetoMois?' selected':'')+'>'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>'; }).join('')+'</select></label>'+
     (multiP ? '<div class="seg"><button class="btn small'+(perfParetoScope!=='tous'?' primary':'')+'" data-action="pa-scope" data-v="secteur">Ce secteur</button><button class="btn small'+(perfParetoScope==='tous'?' primary':'')+'" data-action="pa-scope" data-v="tous">Tous mes secteurs</button></div>' : '')+'</div></div>';
-  html += pdata.audits ? perfParetoCardsHtml(pdata, (scopeIds.length>1 ? scopeIds.length+' secteurs' : esc((getSecteur(currentSecteur)||{}).nom||currentSecteur))+' · '+esc(perLbl))
-    : '<div class="card" style="margin-bottom:18px;"><p class="tiny">Aucun audit détaillé (grille et écarts) sur la période : '+esc(perLbl)+'.</p></div>';
+  html += '<div class="grid grid-2 pp-wrap">'+
+    perfParetoCardHtml('Année '+perfYear, scopeLbl, pYear)+
+    perfParetoCardHtml(moisLbl+' '+perfYear, scopeLbl, pMonth)+
+  '</div>';
 
   // Alertes 2 derniers mois
   var curM = Number(todayStr().split('-')[1])-1;
@@ -6112,7 +6118,7 @@ RENDERERS.perf = function(){
       var r = rs.find(function(x){ return x.ligne===l && x.mois===mIdx; });
       if(r && r.arret){ html += '<td class="pf-cell-arret" data-action="pa-open" data-id="'+r.id+'" title="Ligne à l\'arrêt - cliquer pour le détail">Arrêt</td>'; return; }
       if(!r || r.resultatPct===null || r.resultatPct===undefined){ html += '<td class="c-empty">-</td>'; return; }
-      var nEc = (r.ecarts||[]).filter(function(x){ return !x.reconduit; }).length, nQ = (r.ecarts||[]).filter(function(x){ return !x.reconduit && !x.cause; }).length;
+      var nEc = (r.ecarts||[]).filter(function(x){ return !x.reconduit; }).length, nQ = 0;
       html += '<td class="score-cell '+scoreCellClass(r.resultatPct)+(perfDetailId===r.id?' pa-cell-on':'')+'" data-action="pa-open" data-id="'+r.id+'" title="Cliquer pour voir le détail">'+pct1(r.resultatPct)+' %'+'<span class="pa-cell-ec'+(nQ?' q':'')+'"'+(nQ? ' title="'+nQ+' écart(s) à qualifier"' : '')+'>'+(nEc? nEc+' écart'+(nEc>1?'s':'')+(nQ? ' ⚠' : '') : '&nbsp;')+'</span></td>';
     });
     html += '</tr>';
@@ -6250,66 +6256,6 @@ function perfItemShort(n){
     9:'Plan de surveillance',10:'Hatsumono',11:'Paramètres machine',12:'Capabilité',13:'Mode opératoire',14:'Métrologie',15:'Pièces test / poka-yoke',16:'Sigles au poste'};
   return S[n] || ('Point '+n);
 }
-// Causes racines : liste de base + causes ajoutées par les utilisateurs (DATA.perfCauses)
-var PERF_CAUSES_DEFAULT = [
-  {id:'rigueur', label:'Rigueur / application du standard'}, {id:'doc', label:'Système documentaire'},
-  {id:'formation', label:'Formation / compétence'}, {id:'orga', label:'Organisation / charge'},
-  {id:'moyen', label:'Moyen / équipement'}, {id:'metro', label:'Métrologie / étalonnage'},
-  {id:'fournisseur', label:'Fournisseur / externe'}, {id:'autre', label:'Autre'}
-];
-function perfCauses(){ return PERF_CAUSES_DEFAULT.concat((DATA.perfCauses||[]).filter(function(c){ return c && c.id && c.label; })); }
-function perfCauseLabel(id){ var c = perfCauses().filter(function(x){ return x.id===id; })[0]; return c ? c.label : (id ? id : 'À qualifier'); }
-async function perfAddCause(label){
-  label = String(label||'').trim(); if(!label) return null;
-  var ex = perfCauses().filter(function(c){ return c.label.toLowerCase()===label.toLowerCase(); })[0];
-  if(ex) return ex.id;
-  var c = {id:uid('cause'), label:label, creePar: currentUser ? currentUser.displayName : '', date: todayStr()};
-  DATA.perfCauses = (DATA.perfCauses||[]).concat([c]);
-  await save('perfCauses');
-  logChange('Audits perf', 'Nouvelle cause d\'écart', label);
-  return c.id;
-}
-// Suggestion de cause d'après le constat (simple aide : la personne valide toujours)
-function perfSuggestCause(text, item){
-  var t = String(text||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
-  if(/etalonn|metro|validit|validation|calibr/.test(t) || item===14) return 'metro';
-  if(/form(e|ation)\b|formee?s?\b|habilit|pas forme/.test(t)) return 'formation';
-  if(/\bps\b|plan de surveillance|mode op|gamme|en[- ]?tete|logo|\bdoc|unite de mesure|n° .*pas bon|n°.*n'est pas bon|mettre le n/.test(t)) return 'doc';
-  if(/master|poka|\bpy\b|etiquette|boitier|machine|cage|emplacement|equipement|outil/.test(t)) return 'moyen';
-  if(/effectif|charge de travail|manque de temps|\babsente?s?\b|personnel|interim/.test(t)) return 'orga';
-  if(/non sign|pas sign|absence|absent|pas a jour|non a jour|non renseign|pas fait|non fait|manque|retard|plus de suivi|pas actif|pas de passage|non realise/.test(t)) return 'rigueur';
-  return '';
-}
-function perfCauseOptions(value){
-  return '<option value="">À qualifier</option>'+perfCauses().map(function(c){ return '<option value="'+esc(c.id)+'"'+(c.id===value?' selected':'')+'>'+esc(c.label)+'</option>'; }).join('')+
-    '<option value="__new__">➕ Nouvelle cause…</option>';
-}
-// Petite fenêtre de saisie (nouvelle cause)
-function perfPromptText(title, placeholder){
-  return new Promise(function(resolve){
-    var ov = document.createElement('div'); ov.className = 'modal-overlay pa-prompt';
-    ov.innerHTML = '<div class="modal-box" style="max-width:440px;"><h3 style="margin:0 0 10px;">'+esc(title)+'</h3>'+
-      '<input type="text" id="pa-prompt-in" placeholder="'+esc(placeholder||'')+'" style="width:100%;">'+
-      '<p class="tiny" style="margin:6px 0 0;">Elle sera ajoutée à la liste et proposée pour les prochains écarts (tous secteurs).</p>'+
-      '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-pa="no">Annuler</button><button class="btn primary" data-pa="ok">Ajouter</button></div></div>';
-    document.body.appendChild(ov);
-    var inp = ov.querySelector('#pa-prompt-in'); setTimeout(function(){ inp.focus(); }, 30);
-    function done(v){ ov.remove(); resolve(v); }
-    ov.addEventListener('click', function(e){ var b = e.target.closest('[data-pa]'); if(!b) return; e.stopPropagation(); done(b.dataset.pa==='ok' ? inp.value.trim() : null); });
-    inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); done(inp.value.trim()); } if(e.key==='Escape') done(null); });
-  });
-}
-// Sélection « ➕ Nouvelle cause… » dans n'importe quelle liste de causes
-async function perfHandleCauseSelect(sel){
-  if(sel.value!=='__new__') return sel.value;
-  var label = await perfPromptText('Nouvelle cause d\'écart', 'Ex. Changement de série non anticipé');
-  if(!label){ sel.value = sel.dataset.prev || ''; return null; }
-  var id = await perfAddCause(label);
-  // la liste a changé : on met à jour toutes les listes de causes affichées
-  document.querySelectorAll('select.pa-cause').forEach(function(s){ var v = s===sel ? id : s.value; s.innerHTML = perfCauseOptions(v); });
-  return id;
-}
-
 // ---------- Ligne : retrouver le secteur à partir du nom écrit dans le fichier ----------
 function perfNormLine(s){ return String(s||'').toUpperCase().replace(/\.[A-Z0-9]+$/,'').replace(/[\s._-]/g,'').replace(/([A-Z]+)0+(\d)/g,'$1$2'); }
 function perfAllLines(){
@@ -6410,7 +6356,6 @@ function perfEcartFieldsHtml(kind, key, e){
   var p = ' data-pe="'+kind+'" data-k="'+key+'"';
   return '<div class="pa-ecart">'+
     '<label class="field pa-w2">Écart constaté<input type="text" data-f="constat"'+p+' value="'+esc(e.constat)+'" placeholder="Ce qui a été constaté"></label>'+
-    '<label class="field">Cause<select class="pa-cause" data-f="cause"'+p+' data-prev="'+esc(e.cause)+'">'+perfCauseOptions(e.cause)+'</select></label>'+
     '<label class="field pa-w2">Action corrective<input type="text" data-f="action"'+p+' value="'+esc(e.action)+'"></label>'+
     '<label class="field">Responsable<input type="text" data-f="resp"'+p+' value="'+esc(e.resp)+'"></label>'+
     '<label class="field">Délai<input type="date" data-f="delai"'+p+' value="'+esc(e.delai)+'"></label>'+
@@ -6547,7 +6492,7 @@ function perfParseWorkbook(wb, fileName){
       var cst = String(constat||'').replace(/\s+/g,' ').trim();
       ecarts.push({id:uid('ec'), item:item, constat:cst, action:String(act||'').replace(/\s+/g,' ').trim(), resp:String(resp||'').replace(/\s+/g,' ').trim(),
         delai:delai, delaiTxt: delai ? '' : String(del||'').trim(), statutSymb:String(st||'').trim(), reconduit:reconduit,
-        cause: reconduit ? '' : perfSuggestCause(cst+' '+(act||''), item), suggere:true});
+        cause:''});
     }
     var score = perfScoreFromGrid(grille);
     var excel = perfCell(ws,'F4');
@@ -6598,7 +6543,7 @@ function perfImportHtml(){
   var nA = 0, nE = 0, nQ = 0, nAct = 0;
   P.files.forEach(function(f){ f.audits.forEach(function(a){ if(!a.include) return; nA++; a.ecarts.forEach(function(e){ if(e.reconduit) return; nE++; if(!e.cause) nQ++; if(e.constat || e.action) nAct++; }); }); });
   var h = '<div class="modal-box pi-box"><div class="refs-head"><div><h3 style="margin:0;">Import des audits de perf</h3>'+
-    '<p class="tiny" style="margin:4px 0 0;">Vérifiez la ligne, puis la cause de chaque écart (une suggestion est proposée : corrigez-la si besoin, ou « ➕ Nouvelle cause… » si elle n\'est pas dans la liste).</p></div>'+
+    '<p class="tiny" style="margin:4px 0 0;">Vérifiez la ligne et l\'année de chaque audit, décochez ceux à ne pas importer, puis cliquez sur Importer.</p></div>'+
     '<button class="btn small" data-action="pi-close">✕</button></div><div class="pi-body">';
   P.files.forEach(function(f, fi){
     h += '<div class="pi-file"><div class="pi-fh"><b>📄 '+esc(f.name)+'</b>'+
@@ -6623,11 +6568,10 @@ function perfImportHtml(){
       var ncs = a.grille.filter(function(g){ return g.rep==='NC'; }).map(function(g){ return g.n; });
       h += '<div class="tiny" style="margin:2px 0 4px 24px;">NC : '+(ncs.length ? ncs.map(function(n){ return n+' '+esc(perfItemShort(n)); }).join(' · ') : 'aucune')+'</div>';
       if(a.ecarts.length){
-        h += '<table class="pi-ec"><thead><tr><th>Point</th><th>Écart constaté</th><th>Action</th><th>Cause</th></tr></thead><tbody>';
+        h += '<table class="pi-ec"><thead><tr><th style="width:70px;">Point</th><th>Écart constaté</th><th>Action</th><th style="width:150px;"></th></tr></thead><tbody>';
         a.ecarts.forEach(function(e, ei){
           h += '<tr class="'+(e.reconduit?'is-rec':'')+'"><td>'+(e.item? e.item : '<span class="pi-tag">hors grille</span>')+'</td><td>'+esc(e.constat||'-')+'</td><td class="tiny">'+esc(e.action||'')+'</td><td>'+
-            (e.reconduit ? '<span class="tiny">reconduit du mois précédent - non recompté</span>'
-              : '<select class="pa-cause" data-pi="cause" data-f="'+fi+'" data-a="'+ai+'" data-e="'+ei+'" data-prev="'+esc(e.cause)+'">'+perfCauseOptions(e.cause)+'</select>'+(e.cause && e.suggere ? ' <span class="pi-sugg">suggestion</span>' : ''))+'</td></tr>';
+            (e.reconduit ? '<span class="tiny">reconduit du mois précédent</span>' : '')+'</td></tr>';
         });
         h += '</tbody></table>';
       }
@@ -6637,7 +6581,7 @@ function perfImportHtml(){
   });
   h += '</div><div class="pi-foot">'+
     '<label><input type="checkbox" data-pi="actions"'+(P.creerActions?' checked':'')+'> Créer aussi les '+nAct+' action(s) dans le Plan d\'actions (statut repris du fichier)</label>'+
-    '<span class="tiny">'+nA+' audit(s) · '+nE+' écart(s) nouveaux'+(nQ? ' dont <b>'+nQ+' à qualifier</b> (modifiables ensuite)' : '')+'</span>'+
+    '<span class="tiny">'+nA+' audit(s) · '+nE+' écart(s) nouveaux'+'</span>'+
     '<div style="display:flex; gap:8px;"><button class="btn" data-action="pi-close">Annuler</button><button class="btn primary" data-action="pi-apply"'+(nA?'':' disabled')+'>Importer</button></div></div></div>';
   return h;
 }
@@ -6699,25 +6643,36 @@ async function perfImportApply(){
 }
 
 // ---------- Pareto des NC (par point et par cause) ----------
-var perfParetoMois = 'all';
+var perfParetoMois = null, perfParetoLigne = '';
+// Mois par défaut : le mois en cours, sinon le dernier mois de l'année qui a un audit détaillé
+function perfParetoDefaultMonth(ids, y){
+  var t = todayStr(), cy = Number(t.slice(0,4)), cm = Number(t.slice(5,7))-1;
+  var ms = DATA.perf.filter(function(r){ return ids.indexOf(r.secteur||'MCU')>=0 && r.annee===y && r.grille && r.grille.length; }).map(function(r){ return r.mois; });
+  if(y===cy && ms.indexOf(cm)>=0) return cm;
+  if(ms.length) return Math.max.apply(null, ms);
+  return y===cy ? cm : 11;
+}
+function perfParetoCardHtml(titre, scope, p){
+  return '<div class="card pp-card"><div class="eyebrow">'+esc(titre)+'</div><div class="tiny" style="margin:2px 0 8px;">'+scope+' · '+p.audits+' audit(s) détaillé(s) · '+p.items.reduce(function(s2,r){ return s2+r.n; },0)+' NC · cumul %</div>'+
+    (p.audits ? perfParetoBarsHtml(p.items) : '<p class="tiny">Aucun audit détaillé (grille) sur la période.</p>')+'</div>';
+}
+var perfParetoYearSeen = null;
 function perfParetoPeriode(){
   var v = perfParetoMois;
   if(v && v.charAt(0)==='m'){ var m = Number(v.slice(1)); return {min:m, max:m, label:MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1)}; }
   if(v && v.charAt(0)==='c'){ var c = Number(v.slice(1)); return {min:0, max:c, label:'Janvier → '+MONTHS_FR[c]}; }
   return {min:null, max:null, label:'Année'};
 }
-function perfParetoData(secteurIds, y, mMax, mMin){
-  var byItem = {}, byCause = {}, aQualifier = 0, audits = 0;
+function perfParetoData(secteurIds, y, mMax, mMin, ligne){
+  var byItem = {}, audits = 0;
   DATA.perf.forEach(function(r){
-    if(secteurIds.indexOf(r.secteur||'MCU')<0 || r.annee!==y || (mMax!==undefined && mMax!==null && r.mois>mMax) || (mMin!==undefined && mMin!==null && r.mois<mMin) || r.arret) return;
+    if(secteurIds.indexOf(r.secteur||'MCU')<0 || r.annee!==y || (mMax!==undefined && mMax!==null && r.mois>mMax) || (mMin!==undefined && mMin!==null && r.mois<mMin) || (ligne && r.ligne!==ligne) || r.arret) return;
     if(!r.grille || !r.grille.length) return;
     audits++;
     r.grille.forEach(function(g){ if(g.rep==='NC') byItem[g.n] = (byItem[g.n]||0)+1; });
-    (r.ecarts||[]).forEach(function(e){ if(e.reconduit) return; if(!e.cause){ aQualifier++; return; } byCause[e.cause] = (byCause[e.cause]||0)+1; });
   });
   var items = Object.keys(byItem).map(function(k){ return {key:k, label:k+' · '+perfItemShort(Number(k)), n:byItem[k]}; }).sort(function(a,b){ return b.n-a.n; });
-  var causes = Object.keys(byCause).map(function(k){ return {key:k, label:perfCauseLabel(k), n:byCause[k]}; }).sort(function(a,b){ return b.n-a.n; });
-  return {items:items, causes:causes, aQualifier:aQualifier, audits:audits};
+  return {items:items, audits:audits};
 }
 function perfParetoBarsHtml(rows, extraRow){
   var tot = rows.reduce(function(s,r){ return s+r.n; }, 0); if(!tot && !extraRow) return '<p class="tiny">Aucune donnée.</p>';
@@ -6730,13 +6685,6 @@ function perfParetoBarsHtml(rows, extraRow){
   if(extraRow) h += '<tr class="pp-x"><td class="pp-l">'+esc(extraRow.label)+'</td><td class="pp-b"><i style="width:'+Math.max(2, extraRow.n/Math.max(mx,extraRow.n)*100)+'%;"></i></td><td class="pp-n">'+extraRow.n+'</td><td class="pp-c"></td></tr>';
   return h+'</tbody></table>';
 }
-function perfParetoCardsHtml(p, title){
-  return '<div class="grid grid-2 pp-wrap">'+
-    '<div class="card pp-card"><div class="eyebrow">Pareto des NC par point de la grille</div><div class="tiny" style="margin:2px 0 8px;">'+title+' · '+p.audits+' audit(s) détaillé(s) · cumul %</div>'+perfParetoBarsHtml(p.items)+'</div>'+
-    '<div class="card pp-card"><div class="eyebrow">Pareto des causes des écarts</div><div class="tiny" style="margin:2px 0 8px;">'+title+' · écarts nouveaux (hors reconduits)</div>'+
-      perfParetoBarsHtml(p.causes, p.aQualifier ? {label:'À qualifier', n:p.aQualifier} : null)+'</div>'+
-  '</div>';
-}
 var perfParetoScope = 'secteur';   // 'secteur' | 'tous'
 var perfDetailId = null;
 function perfDetailHtml(r){
@@ -6747,34 +6695,15 @@ function perfDetailHtml(r){
     h += '<div class="pa-chips">'+r.grille.map(function(g){ return '<span class="pa-chip pa-chip-'+(g.rep||'x').toLowerCase()+'" title="'+esc(perfItemShort(g.n))+'">'+g.n+' '+(g.rep==='C'?'✓':g.rep==='NC'?'✗':g.rep==='NA'?'N/A':'?')+'</span>'; }).join('')+'</div>';
   }
   if(r.ecarts && r.ecarts.length){
-    h += '<table class="pi-ec" style="margin-top:8px;"><thead><tr><th>Point</th><th>Écart constaté</th><th>Action</th><th>Cause</th></tr></thead><tbody>'+
+    h += '<table class="pi-ec" style="margin-top:8px;"><thead><tr><th style="width:70px;">Point</th><th>Écart constaté</th><th>Action</th><th style="width:110px;"></th></tr></thead><tbody>'+
       r.ecarts.map(function(e){
         return '<tr class="'+(e.reconduit?'is-rec':'')+'"><td>'+(e.item||'<span class="pi-tag">hors grille</span>')+'</td><td>'+esc(e.constat||'-')+'</td><td class="tiny">'+esc(e.action||'')+(e.resp? ' · '+esc(e.resp) : '')+'</td><td>'+
-          (e.reconduit ? '<span class="tiny">reconduit</span>' : '<select class="pa-cause" data-action-cause="1" data-pid="'+r.id+'" data-eid="'+e.id+'" data-prev="'+esc(e.cause||'')+'">'+perfCauseOptions(e.cause||'')+'</select>')+'</td></tr>';
+          (e.reconduit ? '<span class="tiny">reconduit</span>' : '')+'</td></tr>';
       }).join('')+'</tbody></table>';
   } else if(!r.arret && r.grille && r.grille.length) h += '<p class="tiny" style="margin-top:8px;">Aucun écart pour cet audit.</p>';
   if(!r.arret && !(r.grille && r.grille.length)) h += '<p class="tiny" style="margin-top:8px; color:var(--warn); font-weight:600;">Résultat saisi à la main, sans la grille ni les écarts : réimportez le fichier Excel de la ligne pour avoir le détail (l\'import remplace ce résultat).</p>';
   h += '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="pa-detail-close">Fermer</button><button class="btn primary" data-action="pa-print" data-id="'+r.id+'">🖨 Imprimer l\'audit</button><button class="btn danger-outline" data-action="perf-delete-cell" data-id="'+r.id+'">Supprimer cet audit</button></div>';
   return h+'</div>';
-}
-function perfQualifyHtml(){
-  var list = [];
-  bySecteur(DATA.perf).forEach(function(r){ if(r.annee!==perfYear) return; (r.ecarts||[]).forEach(function(e){ if(!e.reconduit && !e.cause) list.push({r:r, e:e}); }); });
-  if(!list.length) return '';
-  list.sort(function(a,b){ return (a.r.mois-b.r.mois) || String(a.r.ligne).localeCompare(b.r.ligne); });
-  return '<div class="card pa-qualify"><div class="pa-form-head"><div class="eyebrow" style="color:var(--warn);">Écarts à qualifier ('+list.length+')</div>'+
-    '<div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;"><span class="tiny">Pour la sélection :</span><select class="pa-cause" id="pa-bulk-cause" data-prev="">'+perfCauseOptions('')+'</select><button class="btn small" data-action="pa-bulk-apply">Appliquer</button></div></div>'+
-    '<div class="table-wrap"><table class="pi-ec"><thead><tr><th><input type="checkbox" id="pa-bulk-all"></th><th>Ligne</th><th>Mois</th><th>Point</th><th>Écart constaté</th><th>Cause</th></tr></thead><tbody>'+
-    list.map(function(x){
-      var sug = perfSuggestCause(x.e.constat+' '+(x.e.action||''), x.e.item);
-      return '<tr><td><input type="checkbox" class="pa-bulk" data-pid="'+x.r.id+'" data-eid="'+x.e.id+'"></td><td>'+esc(x.r.ligne)+'</td><td>'+esc(MONTHS_FR[x.r.mois].slice(0,4))+'.</td><td>'+(x.e.item||'-')+'</td><td>'+esc(x.e.constat||'-')+'</td><td>'+
-        '<select class="pa-cause" data-action-cause="1" data-pid="'+x.r.id+'" data-eid="'+x.e.id+'" data-prev="">'+perfCauseOptions('')+'</select>'+(sug? ' <button class="btn small pi-sugg-btn" data-action="pa-sugg" data-pid="'+x.r.id+'" data-eid="'+x.e.id+'" data-c="'+sug+'" title="Appliquer la suggestion">→ '+esc(perfCauseLabel(sug))+'</button>' : '')+'</td></tr>';
-    }).join('')+'</tbody></table></div></div>';
-}
-async function perfSetCause(pid, eid, cause){
-  var r = DATA.perf.find(function(x){ return x.id===pid; }); if(!r) return;
-  var e = (r.ecarts||[]).find(function(x){ return x.id===eid; }); if(!e) return;
-  e.cause = cause || ''; delete e.suggere;
 }
 // Clics et saisies propres aux audits de perf
 async function perfAuditHandleClick(e){
@@ -6790,15 +6719,6 @@ async function perfAuditHandleClick(e){
   if(a==='pa-print'){ await printPerfAudit(b.dataset.id); return true; }
   if(a==='pa-detail-close'){ perfDetailId = null; render(); return true; }
   if(a==='pa-open'){ perfDetailId = b.dataset.id; render(); var dd = document.querySelector('.pa-detail'); if(dd && dd.scrollIntoView) dd.scrollIntoView({behavior:'smooth', block:'center'}); return true; }
-  if(a==='pa-sugg'){ await perfSetCause(b.dataset.pid, b.dataset.eid, b.dataset.c); await save('perf'); render(); return true; }
-  if(a==='pa-bulk-apply'){
-    var c = document.getElementById('pa-bulk-cause').value;
-    var sel = Array.prototype.filter.call(document.querySelectorAll('.pa-bulk'), function(x){ return x.checked; });
-    if(!c || c==='__new__'){ toast('Choisissez d\'abord une cause.', 'error'); return true; }
-    if(!sel.length){ toast('Cochez les écarts à qualifier.', 'error'); return true; }
-    for(var i=0;i<sel.length;i++) await perfSetCause(sel[i].dataset.pid, sel[i].dataset.eid, c);
-    await save('perf'); toast(sel.length+' écart(s) qualifié(s).'); render(); return true;
-  }
   if(a==='pi-close'){ perfImport = null; perfImportRender(); return true; }
   if(a==='pi-apply'){ await perfImportApply(); return true; }
   return false;
@@ -6810,9 +6730,8 @@ document.addEventListener('click', function(e){
 document.addEventListener('change', async function(e){
   var t = e.target; if(!t || !t.closest) return;
   if(t.id==='pa-import-file' && t.files && t.files.length){ await perfReadFiles(Array.prototype.slice.call(t.files)); return; }
-  if(t.id==='pa-periode'){ perfParetoMois = t.value; render(); return; }
-  if(t.id==='pa-bulk-all'){ document.querySelectorAll('.pa-bulk').forEach(function(x){ x.checked = t.checked; }); return; }
-  if(t.id==='pa-bulk-cause'){ if(t.value==='__new__') await perfHandleCauseSelect(t); t.dataset.prev = t.value; return; }
+  if(t.id==='pa-pmois'){ perfParetoMois = Number(t.value); render(); return; }
+  if(t.id==='pa-pligne'){ perfParetoLigne = t.value; render(); return; }
   // Import : ligne, audits retenus, causes, création des actions
   if(t.dataset.pi && perfImport){
     var P = perfImport, f = P.files[Number(t.dataset.f)];
@@ -6820,19 +6739,7 @@ document.addEventListener('change', async function(e){
     else if(t.dataset.pi==='inc'){ f.audits[Number(t.dataset.a)].include = t.checked; }
     else if(t.dataset.pi==='year'){ var au = f.audits[Number(t.dataset.a)]; au.annee = Number(t.value); au.alerte = ''; f.audits.sort(function(x,y){ return (x.annee*12+x.mois)-(y.annee*12+y.mois); }); }
     else if(t.dataset.pi==='actions'){ P.creerActions = t.checked; }
-    else if(t.dataset.pi==='cause'){
-      var ec = f.audits[Number(t.dataset.a)].ecarts[Number(t.dataset.e)];
-      var id = t.value==='__new__' ? await perfHandleCauseSelect(t) : t.value;
-      if(id===null) return;
-      ec.cause = id; ec.suggere = false;
-    }
     perfImportRender(); return;
-  }
-  // Fiche d'audit / écarts à qualifier : cause d'un écart enregistré
-  if(t.dataset.actionCause){
-    var cid = t.value==='__new__' ? await perfHandleCauseSelect(t) : t.value;
-    if(cid===null) return;
-    await perfSetCause(t.dataset.pid, t.dataset.eid, cid); await save('perf'); toast('Cause enregistrée.'); render(); return;
   }
   // Formulaire d'audit (brouillon)
   if(perfDraft && (t.dataset.pd || t.dataset.pe)){
@@ -6842,7 +6749,6 @@ document.addEventListener('change', async function(e){
       return;
     }
     var ecd = perfDraftEcart(t); if(!ecd) return;
-    if(t.dataset.f==='cause'){ var cc = t.value==='__new__' ? await perfHandleCauseSelect(t) : t.value; if(cc===null) return; ecd.cause = cc; t.dataset.prev = cc; return; }
     ecd[t.dataset.f] = t.type==='checkbox' ? t.checked : t.value;
   }
 });
@@ -13645,12 +13551,11 @@ function perfEntryFor(sid, ligne, y, m){
 }
 // Pareto des NC dans l'impression de l'avancement : cumul de janvier au mois imprimé, sur les secteurs imprimés
 function perfPrintParetoHtml(ids, y, m){
-  var p = perfParetoData(ids, y, m);
-  var per = 'janvier → '+MONTHS_FR[m]+' '+y;
-  if(!p.audits) return '<div class="pf-pareto"><div class="pf-ph">Pareto des non-conformités ('+per+')</div><p class="pf-legend">Aucun audit détaillé (grille et écarts) sur la période.</p></div>';
-  return '<div class="pf-pareto"><div class="pf-ph">Pareto des non-conformités · '+per+' · '+p.audits+' audit(s) détaillé(s)</div>'+
-    '<div class="pf-pgrid"><div><div class="pf-pt">Par point de la grille</div>'+perfParetoBarsHtml(p.items)+'</div>'+
-    '<div><div class="pf-pt">Par cause des écarts</div>'+perfParetoBarsHtml(p.causes, p.aQualifier ? {label:'À qualifier', n:p.aQualifier} : null)+'</div></div></div>';
+  var pa = perfParetoData(ids, y, null, null), pm = perfParetoData(ids, y, m, m);
+  var moisLbl = MONTHS_FR[m].charAt(0).toUpperCase()+MONTHS_FR[m].slice(1)+' '+y;
+  function col(t, p){ return '<div><div class="pf-pt">'+t+' · '+p.audits+' audit(s) · '+p.items.reduce(function(s2,r){ return s2+r.n; },0)+' NC</div>'+(p.audits ? perfParetoBarsHtml(p.items) : '<p class="pf-legend">Aucun audit détaillé sur la période.</p>')+'</div>'; }
+  return '<div class="pf-pareto"><div class="pf-ph">Pareto des NC par point de la grille</div>'+
+    '<div class="pf-pgrid">'+col('Année '+y, pa)+col(moisLbl, pm)+'</div></div>';
 }
 
 // Impression d'un audit au format de la fiche JALY_PI_QU_184
@@ -17780,7 +17685,7 @@ app.addEventListener('change', async function(e){
   if(e.target.id==='cc-ligne'){ contamCollecteState.ligne = e.target.value; contamCollecteState.ref = refsForLigne(e.target.value)[0]; render(); return; }
   if(e.target.id==='cc-ref'){ contamCollecteState.ref = e.target.value; render(); return; }
   if(e.target.id==='secteur-select'){ currentSecteur = e.target.value; renderNav(); render(); return; }
-  if(e.target.id==='perf-year'){ perfYear = Number(e.target.value); render(); return; }
+  if(e.target.id==='perf-year'){ perfYear = Number(e.target.value); perfParetoMois = null; render(); return; }
   if(e.target.id==='resultats-form-mois'){
     var mIdx2 = monthIndex(e.target.value);
     var wSel = document.getElementById('resultats-form-semaine');
