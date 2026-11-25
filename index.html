@@ -1518,8 +1518,15 @@ td.pf-cell-arret{background:#ECEBE7; color:#6E6A60; font-weight:600; text-align:
 .pa-item > .pa-ecart:only-child{grid-column:1 / -1;}
 @media (max-width:900px){ .pa-ecart{grid-template-columns:1fr 1fr;} .pa-item{grid-template-columns:1fr;} }
 .pa-cell-ec{display:block; font-size:10px; font-weight:400; opacity:.85;} .pa-cell-ec.q{color:#8A4B00; font-weight:700;}
-td.pa-cell-on{outline:2px solid #17368A; outline-offset:-2px;}
+td.pa-cell-on{outline:3px solid #D9A400; outline-offset:-3px;}
 .pa-detail, .pa-qualify{margin-bottom:18px; border-left:4px solid #17368A;}
+.card.pa-detail{background:#FFF6D6; border:1px solid #E8C766; border-left:6px solid #D9A400; box-shadow:0 2px 10px rgba(217,164,0,.18);}
+.card.pa-detail .pi-ec th{background:#FBE7A6;} .card.pa-detail .pi-ec td{border-top-color:#EED795;}
+.pp-synth{margin-bottom:18px;}
+.pp-synth-h{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;}
+.pp-synth-h h3{margin:0; font-size:17px; color:#17368A;}
+.pp-synth .pp-wrap{margin-bottom:0;}
+.pp-synth .pp-card{box-shadow:none; border:1px solid var(--border);}
 .pa-qualify{border-left-color:var(--warn);}
 .pa-chips{display:flex; flex-wrap:wrap; gap:4px;}
 .pa-chip{font-size:11px; padding:2px 7px; border-radius:10px; font-family:var(--mono);}
@@ -3688,7 +3695,7 @@ function proprResultats(){
 
   var rs = DATA.resultats.filter(function(r){ return resAnnee(r)===resultsYear; });
   var scored = rs.filter(function(r){ return r.resultatPct!==null && r.resultatPct!==undefined; });
-  var moy = scored.length ? Math.round(scored.reduce(function(s,r){return s+r.resultatPct;},0)/scored.length) : null;
+  var moy = scored.length ? Math.floor(scored.reduce(function(s,r){return s+r.resultatPct;},0)/scored.length) : null;
   var danger = scored.filter(function(r){ return r.resultatPct<SCORE_DANGER; }).length;
   var attn = scored.filter(function(r){ return r.resultatPct>=SCORE_DANGER && r.resultatPct<SCORE_ATTENTION; }).length;
   html += '<div class="grid grid-4" style="margin-bottom:18px;">'+
@@ -6075,6 +6082,7 @@ RENDERERS.perf = function(){
   var pMonth = perfParetoData(scopeIds, perfYear, perfParetoMois, perfParetoMois, perfParetoLigne);
   var scopeLbl = perfParetoLigne ? esc(perfParetoLigne) : (scopeIds.length>1 ? scopeIds.length+' secteurs' : esc((getSecteur(currentSecteur)||{}).nom||currentSecteur));
   var moisLbl = MONTHS_FR[perfParetoMois].charAt(0).toUpperCase()+MONTHS_FR[perfParetoMois].slice(1);
+  html += '<div class="card pp-synth"><div class="pp-synth-h"><h3>Synthèse du secteur</h3><button class="btn" data-action="perf-progress-print" data-y="'+perfYear+'" data-m="'+perfParetoMois+'" title="Imprimer l\'avancement des audits et les Pareto (A4 portrait) pour le mois choisi">🖨️ Imprimer le suivi des audits</button></div>';
   html += '<div class="pp-head"><div class="eyebrow">Pareto des NC par point de la grille</div><div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">'+
     '<label class="field" style="flex-direction:row; align-items:center; gap:6px; margin:0;">Ligne<select id="pa-pligne"><option value="">Toutes les lignes</option>'+scopeLines.map(function(l){ return '<option value="'+esc(l)+'"'+(l===perfParetoLigne?' selected':'')+'>'+esc(l)+'</option>'; }).join('')+'</select></label>'+
     '<label class="field" style="flex-direction:row; align-items:center; gap:6px; margin:0;">Mois<select id="pa-pmois">'+MONTHS_FR.map(function(m,i){ return '<option value="'+i+'"'+(i===perfParetoMois?' selected':'')+'>'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>'; }).join('')+'</select></label>'+
@@ -6082,7 +6090,7 @@ RENDERERS.perf = function(){
   html += '<div class="grid grid-2 pp-wrap">'+
     perfParetoCardHtml('Année '+perfYear, scopeLbl, pYear)+
     perfParetoCardHtml(moisLbl+' '+perfYear, scopeLbl, pMonth)+
-  '</div>';
+  '</div></div>';
 
   // Alertes 2 derniers mois
   var curM = Number(todayStr().split('-')[1])-1;
@@ -13641,8 +13649,8 @@ async function printPerfAudit(id){
   logChange('Audits de perf', 'Impression audit', r.ligne+' - '+moisNom+' '+r.annee);
   setTimeout(function(){ printWithPageSize('A4 portrait'); }, 60);
 }
-async function printPerfProgress(){
-  var y = perfProgressYear, m = perfProgressMonth;
+async function printPerfProgress(yArg, mArg){
+  var y = (yArg!==null && yArg!==undefined) ? yArg : perfProgressYear, m = (mArg!==null && mArg!==undefined) ? mArg : perfProgressMonth;
   var mesSecteurs = userSecteurs();
   var secteursList = ((DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT).filter(function(s){ return ((s.tabs||[]).indexOf('perf')>=0 || s.id==='MCU') && mesSecteurs.indexOf(s.id)>=0; });
   if(!secteursList.length){ toast('Aucun secteur à imprimer.', 'error'); return; }
@@ -16950,7 +16958,7 @@ app.addEventListener('click', async function(e){
 
   if(e.target.closest('[data-action="logout"]')){ handleLogout(); return; }
   if(e.target.closest('[data-action="chokko-def-print"]')){ printChokkoDefReport(); return; }
-  if(e.target.closest('[data-action="perf-progress-print"]')){ printPerfProgress(); return; }
+  if(e.target.closest('[data-action="perf-progress-print"]')){ var pb = e.target.closest('[data-action="perf-progress-print"]'); printPerfProgress(pb.dataset.y ? Number(pb.dataset.y) : null, pb.dataset.m ? Number(pb.dataset.m) : null); return; }
   var dashChk = e.target.closest('[data-action="dash-goto-chokko"]');
   if(dashChk){ currentTab = 'chokko'; chokkoView = 'saisie'; chokkoLigne = dashChk.dataset.ligne; renderNav(); render(); return; }
   var toggleRoleSub = e.target.closest('[data-action="toggle-role-sub"]');
