@@ -123,7 +123,7 @@ button.btn:hover{background:#F2F0EA;}
 button.btn.primary{background:var(--accent); border-color:var(--accent); color:#fff;}
 button.btn.primary:hover{background:var(--accent-dark);}
 button.btn.danger-outline{color:var(--danger); border-color:var(--danger-border);}
-button.btn.small{padding:4px 9px; font-size:12px;}
+button.btn.small{padding:5px 10px; font-size:13px;}
 select, input, textarea{font-family:var(--sans); font-size:13px; padding:7px 9px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); background:#fff; color:var(--text);}
 input[type=file]{padding:4px;}
 label.field{display:flex; flex-direction:column; gap:4px; font-size:12.5px; color:var(--text-muted); font-weight:500;}
@@ -1620,6 +1620,21 @@ tr.fp-open > td:first-child{box-shadow:inset 5px 0 0 #D9A400 !important;}
 tr.row-editing > td{background:#FFF6D6 !important;}
 tr.row-editing > td:first-child{box-shadow:inset 5px 0 0 #D9A400;}
 @media (max-width:600px){ .edit-modal-grid{grid-template-columns:1fr;} }
+
+/* CHOKKO : barre d'actions harmonisée */
+.chk-bar{display:flex; justify-content:space-between; align-items:center; gap:10px 16px; flex-wrap:wrap; margin-bottom:10px;}
+.chk-bar-l, .chk-bar-r{display:flex; align-items:center; gap:6px; flex-wrap:wrap; position:relative;}
+.chk-views{margin-bottom:12px;}
+.chk-unlock-note{font-size:12.5px; font-weight:600; color:#8A4B00; background:#FCEBCF; border-radius:12px; padding:3px 10px; margin-left:6px;}
+details.tb-more{position:relative;}
+details.tb-more > summary{list-style:none; cursor:pointer; font-family:var(--sans); border-radius:var(--radius-sm); font-size:13px; font-weight:500; padding:5px 10px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text); display:inline-block; user-select:none;}
+details.tb-more > summary:hover, details.tb-more[open] > summary{background:#F2F0EA;}
+details.tb-more > summary::-webkit-details-marker{display:none;}
+.tb-more-menu{position:absolute; right:0; top:calc(100% + 4px); z-index:60; background:#fff; border:1px solid var(--border-strong); border-radius:var(--radius-sm); box-shadow:0 6px 20px rgba(0,0,0,.12); padding:4px; min-width:230px; display:flex; flex-direction:column;}
+.tb-more-item{font:inherit; font-size:14px; text-align:left; background:none; border:none; border-radius:6px; padding:8px 10px; cursor:pointer; color:var(--text);}
+.tb-more-item:hover{background:#EEF2FA;}
+body.simple-mode details.tb-more{display:none !important;}
+.perm-note{max-width:900px; margin:0 0 10px;}
 </style>
 </head>
 <body>
@@ -1829,6 +1844,7 @@ var DATA = {metro:[], planning:[], ateq:[], actions:[], resultats:[], releves:[]
 var RENDERERS = {};
 var ALL_TABS = [['dashboard','Tableau de bord'],['proprete','Propreté'],['perf','Audits de perf'],['metro','Métrologie'],['chokko','Suivi CHOKKO'],['qos','Réunion QOS'],['actions',"Plan d'actions"],['pareto','Analyses Pareto'],['esd','Formations ESD'],['cicl','Formations CI/CL'],['formations','Formations SREM'],['prison','Prison qualité'],['bibliotheque','Bibliothèque'],['archives','Archives']];
 var ADMIN_ROLE_ID = 'admin';
+function ROLE_TABS(){ var st = sectorTabIds(); return ALL_TABS.filter(function(t){ return st.indexOf(t[0])<0; }); }
 
 // ============ LABELS PERSONNALISABLES ============
 // t(key, default) renvoie le libellé personnalisé s'il existe, sinon la valeur par défaut.
@@ -9893,28 +9909,32 @@ async function chokkoObjSave(){
 }
 RENDERERS.chokko = function(){
   if(chokkoLines().indexOf(chokkoLigne)<0) chokkoLigne = chokkoLines()[0];   // changement de secteur
-  var html = futureDataBannerHtml()+'<div class="section"><div class="subtabs"><span class="grp-label">Ligne</span>'+
-    chokkoLines().map(function(l){ return '<button data-action="chokko-ligne" data-ligne="'+esc(l)+'" class="'+(chokkoLigne===l?'active':'')+'">'+esc(l)+'</button>'; }).join('')+
-  '</div>';
-  html += '<div class="toolbar"><div class="left"><span class="grp-label">Vue</span>'+
+  var html = futureDataBannerHtml()+'<div class="section"><div class="chk-bar">'+
+    '<div class="chk-bar-l"><span class="grp-label">Ligne</span><div class="subtabs" style="margin:0;">'+
+      chokkoLines().map(function(l){ return '<button data-action="chokko-ligne" data-ligne="'+esc(l)+'" class="'+(chokkoLigne===l?'active':'')+'">'+esc(l)+'</button>'; }).join('')+
+    '</div></div>'+
+    '<div class="chk-bar-r">'+
+      '<button class="btn small primary" data-action="chokko-wizard-open" title="Saisir la production et les défauts du jour, pas à pas">✏️ Saisir les résultats</button>'+
+      '<button class="btn small" data-action="chokko-print" title="PDF de synthèse du mois : grille CHOKKO + coût rebut et Pareto">🖨️ Imprimer</button>'+
+      '<button class="btn small" data-action="fmds-enter" title="Plein écran pour la réunion (télé, vidéoprojecteur ou PC)">📺 Mode télé</button>'+
+      (chokkoPaintMode
+        ? '<button class="btn small primary" data-action="chokko-paint-stop" title="Terminer le coloriage">✅ Terminer le coloriage</button>'+
+          '<button class="btn small" data-action="chokko-paint-toggle" title="Changer de couleur">'+(chokkoPaintMode==='erase'? '🧽 Gomme' : '<span class="chokko-paint-swatch" style="background:'+chokkoPaintMode+';"></span> Couleur')+'</button>'
+        : '')+
+      '<details class="tb-more"><summary class="btn small" title="Autres fonctions">⋯ Plus</summary><div class="tb-more-menu">'+
+        '<button class="tb-more-item" data-action="add-postit" data-page="chokko">📝 Ajouter un post-it</button>'+
+        '<button class="tb-more-item" data-action="chokko-manage-postes-open">⚙️ Gérer les postes</button>'+
+        '<button class="tb-more-item" data-action="chokko-toggle-totals-lock">'+(chokkoTotalsLocked?'🔓 Déverrouiller les totaux':'🔒 Reverrouiller les totaux')+'</button>'+
+        (chokkoPaintMode ? '' : '<button class="tb-more-item" data-action="chokko-paint-toggle">🖌️ Colorier des cases</button>')+
+      '</div></details>'+
+      (chokkoPaintPickerOpen? chokkoPaintPickerPanel() : '')+
+    '</div></div>';
+  html += '<div class="toolbar chk-views"><div class="left"><span class="grp-label">Vue</span>'+
     '<button class="btn small'+(chokkoView==='saisie'?' primary':'')+'" data-action="chokko-view" data-view="saisie">Saisie</button>'+
     '<button class="btn small'+(chokkoView==='recap'?' primary':'')+'" data-action="chokko-view" data-view="recap">Récapitulatif annuel</button>'+
     '<button class="btn small'+(chokkoView==='defauts'?' primary':'')+'" data-action="chokko-view" data-view="defauts">📈 Suivi des défauts</button>'+
     '<button class="btn small'+(chokkoView==='rebuts'?' primary':'')+'" data-action="chokko-view" data-view="rebuts">♻ Coût rebut</button>'+
-    '</div>'+
-    '<div style="display:flex; gap:6px; align-items:center; position:relative;">'+
-    '<button class="btn primary" data-action="chokko-wizard-open" title="Saisir la production et les défauts du jour, pas à pas">✏️ Saisir les résultats</button>'+
-    '<button class="btn" data-action="chokko-print" title="PDF de synthèse du mois : grille CHOKKO + coût rebut et Pareto">🖨️ Imprimer</button>'+
-    '<button class="btn" data-action="fmds-enter" title="Plein écran pour la réunion (télé, vidéoprojecteur ou PC)">📺 Mode télé</button>'+
-    '<span class="tb-sep"></span>'+
-    '<button class="btn small" data-action="add-postit" data-page="chokko" title="Ajouter un post-it sur cet onglet">📝 Post-it</button>'+
-    '<button class="btn small" data-action="chokko-manage-postes-open" title="Ajouter, renommer ou retirer des postes">⚙️ Postes</button>'+
-    '<button class="btn small'+(chokkoTotalsLocked?'':' primary')+'" data-action="chokko-toggle-totals-lock" title="'+(chokkoTotalsLocked?'Totaux verrouillés - cliquer pour déverrouiller':'Totaux déverrouillés - cliquer pour reverrouiller')+'">'+(chokkoTotalsLocked?'🔒 Totaux':'🔓 Totaux')+'</button>'+
-    '<button class="btn small" data-action="chokko-paint-toggle" title="'+(chokkoPaintMode?'Mode coloriage actif - cliquez sur une case':'Colorier une case de la grille')+'">'+
-      (chokkoPaintMode==='erase'? '🧽 Effacer' : chokkoPaintMode? '<span class="chokko-paint-swatch" style="background:'+chokkoPaintMode+';"></span> Colorier' : '🖌️ Colorier')+
-    '</button>'+
-    (chokkoPaintMode? '<button class="btn small primary" data-action="chokko-paint-stop" title="Terminer le coloriage">✅ Terminer</button>' : '')+
-    (chokkoPaintPickerOpen? chokkoPaintPickerPanel() : '')+
+    (chokkoTotalsLocked ? '' : '<span class="chk-unlock-note">🔓 Totaux déverrouillés</span>')+
     '</div></div>';
   html += '<div id="chokko-postit-canvas" style="position:relative;">'+renderPostits('chokko')+'</div>';
   html += chokkoView==='saisie' ? chokkoSaisieView() : chokkoView==='defauts' ? chokkoDefautsView() : chokkoView==='rebuts' ? rebutsView() : chokkoRecapView();
@@ -12041,18 +12061,7 @@ async function wzCommit(){
     if(retirees.length && !await uiConfirm('Retirer '+retirees.join(', ')+' du secteur ?\n\nLes données déjà saisies sur '+(retirees.length>1?'ces lignes':'cette ligne')+' sont conservées mais ne s\'afficheront plus.', {okLabel:'Retirer', danger:true})) return false;
     var keep = (sec.tabs||[]).filter(function(t){ return !WZ_TABS.some(function(x){ return x[0]===t; }); });   // dashboard, bibliothèque…
     if(keep.indexOf('dashboard')<0) keep.unshift('dashboard');
-    var avant = secteurTabs();
-    var ajoutes = d.tabs.filter(function(t){ return avant.indexOf(t)<0; });
     sec.nom = String(d.nom||'').trim() || sec.id; sec.lignes = lignes; sec.tabs = keep.concat(d.tabs); sec.tabsManual = true;
-    // Onglet ajouté au secteur : on propose aussitôt de l'ouvrir aux profils concernés (sinon il reste invisible pour eux)
-    if(ajoutes.length){
-      var grant = await wzGrantDialog(ajoutes, d.tabs);
-      if(grant){
-        var nGrant = 0;
-        Object.keys(grant).forEach(function(rid){ var r = DATA.roles.find(function(x){ return x.id===rid; }); if(!r) return; r.tabs = r.tabs || []; grant[rid].forEach(function(t){ if(r.tabs.indexOf(t)<0){ r.tabs.push(t); nGrant++; } }); });
-        if(nGrant){ await save('roles'); logChange('Paramètres', 'Accès aux onglets', ajoutes.join(', ')+' ouverts à '+Object.keys(grant).filter(function(k){ return grant[k].length; }).length+' profil(s)'); }
-      }
-    }
     await save('secteurs');
     logChange('Assistant', 'Secteur '+sid, lignes.join(', ')+' · onglets : '+sec.tabs.join(', '));
     applyAppConfig(true);
@@ -12153,7 +12162,7 @@ async function wzGo(step){
 var WZ_TAB_STEP = {chokko:'chokko', proprete:'proprete', prison:'prison', esd:'formations', formations:'formations', cicl:'formations', perf:'perf', actions:'actplan'};
 var WZ_STEP_LABEL = {chokko:'Suivi CHOKKO', proprete:'Propreté', prison:'Prison qualité', formations:'Formations', perf:'Audits de perf', actplan:'Plan d\'actions'};
 var wzModalStep = null;
-function wzCanConfigure(){ return !!currentUser && tabAllowed('assistant'); }
+function wzCanConfigure(){ return !!currentUser; }   // comme « Configurer le secteur » : chacun règle ses secteurs
 function wzTabStep(tab){ var st = WZ_TAB_STEP[tab]; return (st && wzCanConfigure() && wzHas(tab)) ? st : null; }
 function wzModalOpen(step){ wzModalStep = step; wzStep = step; wzDraft = null; wzBomOpen = null; wzLigne = null; wzBuildDraft(); render(); }
 async function wzModalClose(save){
@@ -12190,35 +12199,6 @@ document.addEventListener('click', async function(e){
   }
 }, true);
 
-// Fenêtre « qui doit voir le nouvel onglet ? » : cases pré-cochées pour les profils qui ont déjà accès
-// aux onglets voisins (ex. ESD ou CI/CL pour Formations SREM) ou à la plupart des onglets du secteur.
-var WZ_TAB_SIBLINGS = {formations:['esd','cicl'], esd:['formations','cicl'], cicl:['esd','formations'], qos:['chokko'], perf:['proprete','chokko'], proprete:['perf','chokko']};
-function wzGrantDialog(tabs, secTabs){
-  var roles = DATA.roles.filter(function(r){ return r.id!==ADMIN_ROLE_ID && !/administrateur/i.test(r.name||''); });
-  if(!roles.length) return Promise.resolve(null);
-  function label(t){ var x = WZ_TABS.filter(function(w){ return w[0]===t; })[0]; return x ? x[1] : t; }
-  function pre(r, t){
-    var rt = r.tabs || [];
-    if((WZ_TAB_SIBLINGS[t]||[]).some(function(x){ return rt.indexOf(x)>=0; })) return true;
-    var others = secTabs.filter(function(x){ return x!==t && tabs.indexOf(x)<0; });
-    return others.length>0 && others.filter(function(x){ return rt.indexOf(x)>=0; }).length >= Math.ceil(others.length/2);
-  }
-  return new Promise(function(resolve){
-    var ov = document.createElement('div'); ov.className = 'modal-overlay';
-    ov.innerHTML = '<div class="modal-box" style="max-width:620px;"><h3 style="margin:0 0 6px;">Qui doit voir '+(tabs.length>1?'ces onglets':'cet onglet')+' ?</h3>'+
-      '<p class="tiny" style="margin:0 0 12px;">Un onglet ajouté au secteur n\'apparaît que pour les profils qui y ont accès. Cochez les profils concernés (modifiable ensuite dans Paramètres > profils).</p>'+
-      '<div class="table-wrap"><table class="wz-grant"><thead><tr><th>Profil</th>'+tabs.map(function(t){ return '<th style="text-align:center;">'+esc(label(t))+'</th>'; }).join('')+'</tr></thead><tbody>'+
-      roles.map(function(r){ return '<tr><td>'+esc(r.name||r.id)+'</td>'+tabs.map(function(t){ var has = (r.tabs||[]).indexOf(t)>=0; return '<td style="text-align:center;"><input type="checkbox" data-r="'+esc(r.id)+'" data-t="'+esc(t)+'"'+(has||pre(r,t)?' checked':'')+(has?' disabled title="Déjà autorisé"':'')+'></td>'; }).join('')+'</tr>'; }).join('')+
-      '</tbody></table></div><div class="actions-row" style="margin-top:14px;"><button class="btn" data-g="skip">Ne rien changer</button><button class="btn primary" data-g="ok">Donner l\'accès</button></div></div>';
-    document.body.appendChild(ov);
-    ov.addEventListener('click', function(e){
-      var b = e.target.closest('[data-g]'); if(!b) return; e.stopPropagation();
-      var out = null;
-      if(b.dataset.g==='ok'){ out = {}; ov.querySelectorAll('input[data-r]:checked:not(:disabled)').forEach(function(c){ (out[c.dataset.r] = out[c.dataset.r] || []).push(c.dataset.t); }); }
-      ov.remove(); resolve(out);
-    });
-  });
-}
 // ---------- Rendu des étapes ----------
 function wzInput(path, attrs){ var v = wzGet(path); return '<input type="text" data-wz="'+esc(path)+'" value="'+esc(v==null?'':v)+'"'+(attrs||'')+'>'; }
 function wzStepHead(title, intro){ return '<h2 class="wz-title">'+esc(title)+'</h2>'+(intro? '<p class="wz-intro">'+intro+'</p>' : ''); }
@@ -13108,7 +13088,11 @@ document.addEventListener('fullscreenchange', function(){ if(!document.fullscree
 var FP_SEL = ['.pa-detail', '.pa-form', '.site-detail', '.card:has(> form.entryform)', '.card:has(> .entryform)', 'form.entryform',
   'tbody tr:has(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea)', '[data-fp]'].join(',');
 var fpClickTs = 0, fpPrevKeys = null, fpPrevTab = null, fpActive = {};
-document.addEventListener('click', function(){ fpClickTs = Date.now(); }, true);
+document.addEventListener('click', function(e){
+  fpClickTs = Date.now();
+  // menu « ⋯ Plus » : se ferme dès qu'on clique ailleurs ou sur un de ses choix
+  document.querySelectorAll('details.tb-more[open]').forEach(function(d){ if(!d.contains(e.target) || e.target.closest('.tb-more-item')) d.removeAttribute('open'); });
+}, true);
 function fpKey(el){
   if(el.dataset.fp) return 'fp:'+el.dataset.fp;
   if(el.id) return '#'+el.id;
@@ -15538,9 +15522,13 @@ function bootstrapAdmin(){
 function getSession(){ try{ return JSON.parse(localStorage.getItem('mcu_session_v1')||'null'); }catch(e){ return null; } }
 function setSession(accountId){ try{ localStorage.setItem('mcu_session_v1', JSON.stringify({accountId:accountId})); }catch(e){} }
 function clearSession(){ try{ localStorage.removeItem('mcu_session_v1'); }catch(e){} }
+// Onglets métier : visibles par tous les comptes du secteur dès qu'ils sont cochés dans « Configurer le secteur ».
+// Les profils (Paramètres) ne règlent plus que les onglets transverses (tableau de bord, QOS, Pareto, bibliothèque) et les droits Propreté.
+function sectorTabIds(){ return (typeof WZ_TABS!=='undefined' ? WZ_TABS : []).map(function(x){ return x[0]; }); }
 function tabAllowed(tabKey){
   if(!currentUser) return false;
   if(currentUser.roleId===ADMIN_ROLE_ID) return true;
+  if(sectorTabIds().indexOf(tabKey)>=0) return userSecteurs().length>0;
   var role = DATA.roles.find(function(r){ return r.id===currentUser.roleId; });
   if(!role) return false;
   // Uniquement les cases cochées du profil (Paramètres > profils) : aucun onglet n'est ouvert automatiquement
@@ -16035,17 +16023,18 @@ RENDERERS.comptes = function(){
   if(roleFormState) html += roleForm();
 
   // Tableau élargi avec sous-permissions propreté
+  html += '<p class="tiny perm-note">Les onglets métier (CHOKKO, Propreté, Audits de perf, Métrologie, Plan d\'actions, Prison, Formations, Archives) ne se règlent plus ici : ils sont visibles par tous les comptes du secteur dès qu\'ils sont cochés dans « Configurer le secteur ». Le profil règle les onglets transverses ci-dessous et les droits dans Propreté.</p>';
   html += '<div class="table-wrap" style="overflow-x:auto;"><table class="perm-table"><thead>';
   html += '<tr><th rowspan="2" style="min-width:130px;">Profil</th>';
-  html += ALL_TABS.filter(function(t){return t[0]!=='proprete';}).map(function(t){return '<th rowspan="2">'+esc(t[1])+'</th>';}).join('');
+  html += ROLE_TABS().map(function(t){return '<th rowspan="2">'+esc(t[1])+'</th>';}).join('');
   html += '<th rowspan="2" title="Accès à la Vue site : suivi des tâches et des retards de tous les secteurs">Responsable<br><span style="font-weight:400; font-size:10px;">(Vue site)</span></th>';
-  html += '<th colspan="'+(PROPRETE_SUBS.length+1)+'" style="text-align:center; border-bottom:2px solid var(--ok);">Propreté</th>';
+  html += '<th colspan="'+PROPRETE_SUBS.length+'" style="text-align:center; border-bottom:2px solid var(--ok);">Propreté</th>';
   html += '<th rowspan="2"></th></tr>';
-  html += '<tr><th style="font-size:10px; color:var(--ok); font-weight:700;">Onglet actif</th>'+PROPRETE_SUBS.map(function(s){return '<th style="font-size:10px; color:var(--ok);">'+esc(s[1])+'</th>';}).join('')+'</tr>';
+  html += '<tr>'+PROPRETE_SUBS.map(function(s){return '<th style="font-size:10px; color:var(--ok);">'+esc(s[1])+'</th>';}).join('')+'</tr>';
   html += '</thead><tbody>';
   html += DATA.roles.map(function(r){
     if(r.id===ADMIN_ROLE_ID){
-      var totalCols = ALL_TABS.filter(function(t){return t[0]!=='proprete';}).length + PROPRETE_SUBS.length + 2;
+      var totalCols = ROLE_TABS().length + PROPRETE_SUBS.length + 1;
       return '<tr><td>'+esc(r.name)+' <span class="role-protected">(accès complet)</span></td>'+
         Array(totalCols).fill('<td style="text-align:center;">✓</td>').join('')+'<td></td></tr>';
     }
@@ -16061,7 +16050,7 @@ RENDERERS.comptes = function(){
         '<button class="btn small" data-action="rename-role" data-id="'+r.id+'" title="Renommer">✎</button>'
       )+'</td>';
     // Onglets (hors propreté)
-    row += ALL_TABS.filter(function(t){return t[0]!=='proprete';}).map(function(t){
+    row += ROLE_TABS().map(function(t){
       var checked = r.tabs.indexOf(t[0])>=0;
       return '<td style="text-align:center;"><input type="checkbox" data-action="toggle-role-tab" data-role="'+r.id+'" data-tabkey="'+t[0]+'" '+(checked?'checked':'')+'></td>';
     }).join('');
@@ -16069,8 +16058,6 @@ RENDERERS.comptes = function(){
     var vsVal = r.canVueSite!==undefined ? !!r.canVueSite : DATA.accounts.some(function(a){ return a.roleId===r.id && a.allSecteurs; });
     row += '<td style="text-align:center; background:#EEF2FA;"><input type="checkbox" data-action="toggle-role-sub" data-role="'+r.id+'" data-sub="canVueSite" '+(vsVal?'checked':'')+'></td>';
     // Case principale : activer l'onglet Propreté
-    var proprActive = r.tabs.indexOf('proprete')>=0;
-    row += '<td style="text-align:center; background:var(--ok-bg);"><input type="checkbox" data-action="toggle-role-tab" data-role="'+r.id+'" data-tabkey="proprete" '+(proprActive?'checked':'')+'></td>';
     // Sous-permissions propreté
     row += PROPRETE_SUBS.map(function(s){
       // canViewResultats : true par défaut si non défini
