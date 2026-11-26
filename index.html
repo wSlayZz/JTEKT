@@ -1607,6 +1607,19 @@ tr.fp-open > td:first-child{box-shadow:inset 5px 0 0 #D9A400 !important;}
 @keyframes fpFlash{0%{filter:brightness(.93);} 100%{filter:none;}}
 .fp-flash{animation:fpFlash 1.2s ease-out 1;}
 @media print{ .fp-open{background:none !important; box-shadow:none !important;} tr.fp-open > td{background:none !important;} }
+
+/* Fenêtre de modification d'une ligne */
+.edit-modal-box{max-width:560px; width:100%; border-top:5px solid #D9A400;}
+.edit-modal-h{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:14px;}
+.edit-modal-h h3{margin:0 0 4px; font-size:18px; color:#17368A;}
+.edit-modal-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px 14px;}
+.edit-modal-grid .edm-full{grid-column:1 / -1;}
+.edit-modal-grid .field input, .edit-modal-grid .field select{width:100%; box-sizing:border-box; font-size:15px; padding:8px 10px;}
+.edm-ro{margin-top:6px; font-family:var(--mono); font-weight:600;}
+.edit-modal-foot{display:flex; gap:8px; justify-content:flex-end; margin-top:18px; padding-top:12px; border-top:1px solid var(--border);}
+tr.row-editing > td{background:#FFF6D6 !important;}
+tr.row-editing > td:first-child{box-shadow:inset 5px 0 0 #D9A400;}
+@media (max-width:600px){ .edit-modal-grid{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
@@ -5558,7 +5571,6 @@ RENDERERS.esd = function(){
     html += '<tr><td colspan="5">'+emptyState('Aucune personne trouvée.')+'</td></tr>';
   } else {
     html += filtered.map(function(p){
-      if(esdEditId===p.id) return esdEditRow(p);
       var s = esdStatus(p);
       var ech = esdEcheance(p);
       var dl = ech ? daysLabel(ech) : null;
@@ -5588,18 +5600,17 @@ function esdForm(){
     '</div>'+
     '<div class="actions-row" style="margin-top:12px;"><button class="btn" data-action="cancel-esd">Annuler</button><button class="btn primary" data-action="save-esd">Enregistrer</button></div></div>';
 }
-function esdEditRow(p){
+function esdEditModalHtml(){
+  var p = esdEditId ? DATA.esd.find(function(x){ return x.id===esdEditId; }) : null;
+  if(!p) return '';
   var ech = esdEcheance(p);
-  return '<tr style="background:var(--accent-bg);">'+
-    '<td><input type="text" id="esd-edit-nom" value="'+esc(p.nom)+'" style="width:200px;"></td>'+
-    '<td><input type="date" id="esd-edit-date" value="'+esc(p.dateFormation||'')+'" style="width:150px;"></td>'+
-    '<td class="tiny">'+(ech?fmtDate(ech):'-')+' (calculé auto)</td>'+
-    '<td></td>'+
-    '<td style="display:flex; gap:5px;">'+
-      '<button class="btn small primary" data-action="esd-save-edit" data-id="'+p.id+'">Valider</button>'+
-      '<button class="btn small" data-action="esd-cancel-edit">Annuler</button>'+
-      '<button class="btn small danger-outline row-del" data-action="esd-delete" data-id="'+p.id+'" title="Supprimer définitivement">Supprimer</button>'+
-    '</td></tr>';
+  return editModalHtml('Renouveler / modifier la formation ESD', esc(p.nom),
+    edmField('Nom complet', '<input type="text" id="esd-edit-nom" value="'+esc(p.nom)+'">', true)+
+    edmField('Date de la dernière formation', '<input type="date" id="esd-edit-date" value="'+esc(p.dateFormation||'')+'">')+
+    '<div class="field">Échéance<div class="edm-ro">'+(ech?fmtDate(ech):'-')+' <span class="tiny">(calculée à partir de la date)</span></div></div>',
+    '<button class="btn danger-outline" data-action="esd-delete" data-id="'+p.id+'" style="margin-right:auto;">Supprimer</button>'+
+    '<button class="btn" data-action="esd-cancel-edit">Annuler</button><button class="btn primary" data-action="esd-save-edit" data-id="'+p.id+'">Enregistrer</button>',
+    'esd-cancel-edit');
 }
 async function handleSaveEsd(){
   var nom = document.getElementById('ef-nom').value.trim();
@@ -9094,12 +9105,6 @@ RENDERERS.formations = function(){
     html += '<tr><td colspan="5">'+emptyState('Aucune personne.')+'</td></tr>';
   } else {
     html += filtered.map(function(p){
-      if(formationEditId===p.id){
-        return '<tr style="background:var(--accent-bg);"><td><input type="text" id="formation-edit-nom" value="'+esc(p.nom)+'" style="width:200px;"></td>'+
-          '<td><input type="date" id="formation-edit-date" value="'+esc(p.dateFormation||'')+'" style="width:150px;"></td>'+
-          '<td class="tiny">auto</td><td></td>'+
-          '<td style="display:flex; gap:5px;"><button class="btn small primary" data-action="formation-save-edit" data-id="'+p.id+'">Valider</button><button class="btn small" data-action="formation-cancel-edit">Annuler</button><button class="btn small danger-outline row-del" data-action="formation-delete" data-id="'+p.id+'" title="Supprimer définitivement">Supprimer</button></td></tr>';
-      }
       var s = fStatus(p);
       var ech = formationEcheance(p);
       var dl = ech ? daysLabel(ech) : null;
@@ -9113,6 +9118,18 @@ RENDERERS.formations = function(){
   html += '</tbody></table></div></div>';
   return html;
 };
+function formationEditModalHtml(){
+  var p = formationEditId ? DATA.formations.find(function(x){ return x.id===formationEditId; }) : null;
+  if(!p) return '';
+  var ech = formationEcheance(p);
+  return editModalHtml('Renouveler / modifier la formation SREM', esc(p.nom),
+    edmField('Nom complet', '<input type="text" id="formation-edit-nom" value="'+esc(p.nom)+'">', true)+
+    edmField('Date de la dernière formation', '<input type="date" id="formation-edit-date" value="'+esc(p.dateFormation||'')+'">')+
+    '<div class="field">Échéance<div class="edm-ro">'+(ech?fmtDate(ech):'-')+' <span class="tiny">(calculée à partir de la date)</span></div></div>',
+    '<button class="btn danger-outline" data-action="formation-delete" data-id="'+p.id+'" style="margin-right:auto;">Supprimer</button>'+
+    '<button class="btn" data-action="formation-cancel-edit">Annuler</button><button class="btn primary" data-action="formation-save-edit" data-id="'+p.id+'">Enregistrer</button>',
+    'formation-cancel-edit');
+}
 async function handleSaveFormation(){
   var nom = document.getElementById('ff-nom').value.trim();
   if(!nom){ toast('Merci de saisir un nom.', 'error'); return; }
@@ -12024,7 +12041,18 @@ async function wzCommit(){
     if(retirees.length && !await uiConfirm('Retirer '+retirees.join(', ')+' du secteur ?\n\nLes données déjà saisies sur '+(retirees.length>1?'ces lignes':'cette ligne')+' sont conservées mais ne s\'afficheront plus.', {okLabel:'Retirer', danger:true})) return false;
     var keep = (sec.tabs||[]).filter(function(t){ return !WZ_TABS.some(function(x){ return x[0]===t; }); });   // dashboard, bibliothèque…
     if(keep.indexOf('dashboard')<0) keep.unshift('dashboard');
+    var avant = secteurTabs();
+    var ajoutes = d.tabs.filter(function(t){ return avant.indexOf(t)<0; });
     sec.nom = String(d.nom||'').trim() || sec.id; sec.lignes = lignes; sec.tabs = keep.concat(d.tabs); sec.tabsManual = true;
+    // Onglet ajouté au secteur : on propose aussitôt de l'ouvrir aux profils concernés (sinon il reste invisible pour eux)
+    if(ajoutes.length){
+      var grant = await wzGrantDialog(ajoutes, d.tabs);
+      if(grant){
+        var nGrant = 0;
+        Object.keys(grant).forEach(function(rid){ var r = DATA.roles.find(function(x){ return x.id===rid; }); if(!r) return; r.tabs = r.tabs || []; grant[rid].forEach(function(t){ if(r.tabs.indexOf(t)<0){ r.tabs.push(t); nGrant++; } }); });
+        if(nGrant){ await save('roles'); logChange('Paramètres', 'Accès aux onglets', ajoutes.join(', ')+' ouverts à '+Object.keys(grant).filter(function(k){ return grant[k].length; }).length+' profil(s)'); }
+      }
+    }
     await save('secteurs');
     logChange('Assistant', 'Secteur '+sid, lignes.join(', ')+' · onglets : '+sec.tabs.join(', '));
     applyAppConfig(true);
@@ -12161,6 +12189,36 @@ document.addEventListener('click', async function(e){
     await wzModalClose(false);
   }
 }, true);
+
+// Fenêtre « qui doit voir le nouvel onglet ? » : cases pré-cochées pour les profils qui ont déjà accès
+// aux onglets voisins (ex. ESD ou CI/CL pour Formations SREM) ou à la plupart des onglets du secteur.
+var WZ_TAB_SIBLINGS = {formations:['esd','cicl'], esd:['formations','cicl'], cicl:['esd','formations'], qos:['chokko'], perf:['proprete','chokko'], proprete:['perf','chokko']};
+function wzGrantDialog(tabs, secTabs){
+  var roles = DATA.roles.filter(function(r){ return r.id!==ADMIN_ROLE_ID && !/administrateur/i.test(r.name||''); });
+  if(!roles.length) return Promise.resolve(null);
+  function label(t){ var x = WZ_TABS.filter(function(w){ return w[0]===t; })[0]; return x ? x[1] : t; }
+  function pre(r, t){
+    var rt = r.tabs || [];
+    if((WZ_TAB_SIBLINGS[t]||[]).some(function(x){ return rt.indexOf(x)>=0; })) return true;
+    var others = secTabs.filter(function(x){ return x!==t && tabs.indexOf(x)<0; });
+    return others.length>0 && others.filter(function(x){ return rt.indexOf(x)>=0; }).length >= Math.ceil(others.length/2);
+  }
+  return new Promise(function(resolve){
+    var ov = document.createElement('div'); ov.className = 'modal-overlay';
+    ov.innerHTML = '<div class="modal-box" style="max-width:620px;"><h3 style="margin:0 0 6px;">Qui doit voir '+(tabs.length>1?'ces onglets':'cet onglet')+' ?</h3>'+
+      '<p class="tiny" style="margin:0 0 12px;">Un onglet ajouté au secteur n\'apparaît que pour les profils qui y ont accès. Cochez les profils concernés (modifiable ensuite dans Paramètres > profils).</p>'+
+      '<div class="table-wrap"><table class="wz-grant"><thead><tr><th>Profil</th>'+tabs.map(function(t){ return '<th style="text-align:center;">'+esc(label(t))+'</th>'; }).join('')+'</tr></thead><tbody>'+
+      roles.map(function(r){ return '<tr><td>'+esc(r.name||r.id)+'</td>'+tabs.map(function(t){ var has = (r.tabs||[]).indexOf(t)>=0; return '<td style="text-align:center;"><input type="checkbox" data-r="'+esc(r.id)+'" data-t="'+esc(t)+'"'+(has||pre(r,t)?' checked':'')+(has?' disabled title="Déjà autorisé"':'')+'></td>'; }).join('')+'</tr>'; }).join('')+
+      '</tbody></table></div><div class="actions-row" style="margin-top:14px;"><button class="btn" data-g="skip">Ne rien changer</button><button class="btn primary" data-g="ok">Donner l\'accès</button></div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function(e){
+      var b = e.target.closest('[data-g]'); if(!b) return; e.stopPropagation();
+      var out = null;
+      if(b.dataset.g==='ok'){ out = {}; ov.querySelectorAll('input[data-r]:checked:not(:disabled)').forEach(function(c){ (out[c.dataset.r] = out[c.dataset.r] || []).push(c.dataset.t); }); }
+      ov.remove(); resolve(out);
+    });
+  });
+}
 // ---------- Rendu des étapes ----------
 function wzInput(path, attrs){ var v = wzGet(path); return '<input type="text" data-wz="'+esc(path)+'" value="'+esc(v==null?'':v)+'"'+(attrs||'')+'>'; }
 function wzStepHead(title, intro){ return '<h2 class="wz-title">'+esc(title)+'</h2>'+(intro? '<p class="wz-intro">'+intro+'</p>' : ''); }
@@ -13357,7 +13415,7 @@ function renderNow(){
   applySimpleMode();
   if(renderLastTab!==null && renderLastTab!==currentTab && actionDetailId){ actionDetailId = null; }   // la fiche action ne suit pas dans un autre onglet
   renderLastTab = currentTab;
-  view.innerHTML = navSubtabsHtml() + premiersPasHtml() + (fmdsOn && currentTab==='chokko' ? fmdsHeaderHtml() : '') + fn() + wzModalHtml() + (actionDetailId ? actionDetailModalHtml() : '') + (czModal ? czModalHtml() : '');
+  view.innerHTML = navSubtabsHtml() + premiersPasHtml() + (fmdsOn && currentTab==='chokko' ? fmdsHeaderHtml() : '') + fn() + wzModalHtml() + edmCurrentHtml() + (actionDetailId ? actionDetailModalHtml() : '') + (czModal ? czModalHtml() : '');
   try{ hydrateBlobThumbs(); }catch(e){}
   try{ czApplyTexts(view); }catch(e){ console.error('textes', e); }
   try{ ppHighlightMain(); }catch(e){}
@@ -14616,25 +14674,54 @@ RENDERERS.metro = function(){
   html += '</tbody></table></div></div>';
   return html;
 };
+
+// Fenêtre de modification d'une ligne (métrologie, formations…) : toutes les infos, modifiables, au même endroit.
+// Les champs gardent leurs identifiants d'origine : les boutons Valider / Annuler / Supprimer fonctionnent comme avant.
+function edmCurrentHtml(){
+  if(currentTab==='metro' && metroEditingId) return metroEditModalHtml();
+  if(currentTab==='esd' && esdEditId) return esdEditModalHtml();
+  if(currentTab==='formations' && formationEditId) return formationEditModalHtml();
+  return '';
+}
+function editModalHtml(title, sub, fields, actions, cancelAction){
+  return '<div class="modal-overlay edit-modal" data-cancel="'+esc(cancelAction)+'"><div class="modal-box edit-modal-box" role="dialog" aria-modal="true">'+
+    '<div class="edit-modal-h"><div><h3>'+esc(title)+'</h3>'+(sub? '<div class="tiny">'+sub+'</div>' : '')+'</div><button class="btn small" data-action="'+esc(cancelAction)+'" title="Fermer sans enregistrer">✕</button></div>'+
+    '<div class="edit-modal-grid">'+fields+'</div>'+
+    '<div class="edit-modal-foot">'+actions+'</div></div></div>';
+}
+function edmField(label, input, full){ return '<label class="field'+(full?' edm-full':'')+'">'+label+input+'</label>'; }
+document.addEventListener('mousedown', function(e){
+  var ov = e.target && e.target.classList && e.target.classList.contains('edit-modal') ? e.target : null;
+  if(!ov) return;
+  var b = ov.querySelector('[data-action="'+ov.dataset.cancel+'"]'); if(b) b.click();
+});
+document.addEventListener('keydown', function(e){
+  if(e.key!=='Escape') return;
+  var ov = document.querySelector('.edit-modal'); if(!ov) return;
+  var b = ov.querySelector('[data-action="'+ov.dataset.cancel+'"]'); if(b) b.click();
+});
 var metroEditingId = null;
 function metroRow(e){
   var s = metroStatus(e);
-  if(e.id===metroEditingId){
-    return '<tr data-row-ligne="'+e.ligne+'" style="background:#FBFAF7;">'+
-      '<td>'+badge(s.level,s.label)+'</td>'+
-      '<td><select id="metro-edit-ligne" style="width:80px;">'+secteurLines().map(function(l){return '<option value="'+l+'"'+(l===e.ligne?' selected':'')+'>'+l+'</option>';}).join('')+'</select></td>'+
-      '<td><input type="text" id="metro-edit-num" value="'+esc(e.numMoyen)+'" style="width:90px;"></td>'+
-      '<td><input type="text" id="metro-edit-desig" value="'+esc(e.designation)+'" style="width:160px;"></td>'+
-      '<td><input type="text" id="metro-edit-lieu" value="'+esc(val(e.lieu,''))+'" style="width:100px;"></td>'+
-      '<td><input type="date" id="metro-edit-date" value="'+esc(e.echeance||'')+'" style="width:140px;"></td>'+
-      '<td>'+(e.certificat? blobThumb(e.certificat, 'Certificat') : '-')+'</td>'+
-      '<td class="edit-actions"><button class="btn small primary" data-action="save-echeance" data-id="'+e.id+'">Valider</button> '+
-      '<button class="btn small" data-action="cancel-echeance">Annuler</button> <button class="btn small danger-outline row-del" data-action="delete" data-module="metro" data-id="'+e.id+'" title="Supprimer définitivement">Supprimer</button></td></tr>';
-  }
-  return '<tr data-row-ligne="'+e.ligne+'">'+
+  return '<tr data-row-ligne="'+e.ligne+'"'+(e.id===metroEditingId?' class="row-editing"':'')+'>'+
     '<td>'+badge(s.level,s.label)+'</td><td>'+esc(e.ligne)+'</td><td class="num">'+esc(e.numMoyen)+'</td><td>'+esc(e.designation)+'</td><td>'+esc(val(e.lieu,''))+'</td>'+
     '<td class="num">'+fmtDate(e.echeance)+'</td><td>'+(e.certificat? blobThumb(e.certificat, 'Certificat') : '-')+'</td>'+
     '<td><button class="btn small" data-action="edit-echeance" data-id="'+e.id+'">Modifier</button></td></tr>';
+}
+function metroEditModalHtml(){
+  var e = metroEditingId ? DATA.metro.find(function(x){ return x.id===metroEditingId; }) : null;
+  if(!e) return '';
+  var st = metroStatus(e);
+  return editModalHtml('Modifier l\'instrument', badge(st.level, st.label)+' '+esc(e.designation||e.numMoyen||''),
+    edmField('Ligne', '<select id="metro-edit-ligne">'+secteurLines().map(function(l){return '<option value="'+l+'"'+(l===e.ligne?' selected':'')+'>'+l+'</option>';}).join('')+'</select>')+
+    edmField('N° de moyen', '<input type="text" id="metro-edit-num" value="'+esc(e.numMoyen)+'">')+
+    edmField('Désignation', '<input type="text" id="metro-edit-desig" value="'+esc(e.designation)+'">', true)+
+    edmField('Lieu', '<input type="text" id="metro-edit-lieu" value="'+esc(val(e.lieu,''))+'">')+
+    edmField('Échéance (prochain étalonnage)', '<input type="date" id="metro-edit-date" value="'+esc(e.echeance||'')+'">')+
+    '<div class="field edm-full">Pièce jointe<div class="tiny" style="margin-top:4px;">'+(e.certificat? blobThumb(e.certificat, 'Certificat') : 'Aucune')+'</div></div>',
+    '<button class="btn danger-outline" data-action="delete" data-module="metro" data-id="'+e.id+'" style="margin-right:auto;">Supprimer</button>'+
+    '<button class="btn" data-action="cancel-echeance">Annuler</button><button class="btn primary" data-action="save-echeance" data-id="'+e.id+'">Enregistrer</button>',
+    'cancel-echeance');
 }
 
 // ---------- ATEQ ----------
@@ -15847,7 +15934,7 @@ function isFieldDirty(el){
 }
 function isUserMidEdit(){
   if(document.fullscreenElement) return true;   // présentation plein écran en cours (réunion) : ne pas reconstruire la page
-  if(auditWizard || metroEditingId || planningEditingId || contamDirectFormOpen || contamCollecteFormOpen || contamAnalyseEditId || accountFormState || roleFormState || ateqActionFormOpen || particuleCampagneFormOpen || particuleDTEditId || particuleResultatEditId) return true;
+  if(auditWizard || metroEditingId || esdEditId || formationEditId || planningEditingId || contamDirectFormOpen || contamCollecteFormOpen || contamAnalyseEditId || accountFormState || roleFormState || ateqActionFormOpen || particuleCampagneFormOpen || particuleDTEditId || particuleResultatEditId) return true;
   var openForms = document.querySelectorAll('form[id^="form-"]');
   for(var i=0;i<openForms.length;i++){ if(openForms[i].style.display!=='none') return true; }
   // Une fenêtre de saisie est ouverte (gestion des postes, post-it, assistant, récurrence...)
