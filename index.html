@@ -1598,6 +1598,15 @@ body.simple-mode .tab-cfg-btn{display:none !important;}
 .wz-modal-iss{background:#FCEBCF; color:#6B4A00; border-radius:6px; padding:6px 10px; font-size:13px; margin:0 0 10px;}
 .wz-modal-foot{display:flex; justify-content:flex-end; align-items:center; gap:8px; border-top:1px solid var(--border); padding-top:10px; margin-top:8px;}
 .wz-modal-foot .wz-dirty{margin-right:auto;}
+
+/* Ce qui vient de s'ouvrir : fond jaune tant que c'est ouvert, et un léger flash à l'ouverture */
+.fp-open:not(tr), form.entryform.fp-open{background:#FFF6D6 !important; border-color:#E8C766 !important; box-shadow:inset 6px 0 0 #D9A400, 0 2px 10px rgba(217,164,0,.18) !important;}
+tr.fp-open > td{background:#FFF6D6 !important; box-shadow:none !important;}
+tr.fp-open > td:first-child{box-shadow:inset 5px 0 0 #D9A400 !important;}
+.fp-open .card, .fp-open .pi-ec th{background:transparent;}
+@keyframes fpFlash{0%{filter:brightness(.93);} 100%{filter:none;}}
+.fp-flash{animation:fpFlash 1.2s ease-out 1;}
+@media print{ .fp-open{background:none !important; box-shadow:none !important;} tr.fp-open > td{background:none !important;} }
 </style>
 </head>
 <body>
@@ -13034,6 +13043,62 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape' && fmdsOn)
 document.addEventListener('fullscreenchange', function(){ if(!document.fullscreenElement && fmdsFullscreen && fmdsOn){ fmdsFullscreen = false; fmdsExit(); } });
 
 
+
+// ==================== MISE EN ÉVIDENCE DE CE QUI S'OUVRE ====================
+// Quand un clic ouvre quelque chose dans l'onglet (formulaire, ligne en modification, fiche détaillée),
+// la page défile jusqu'à l'élément et il reste sur fond jaune tant qu'il est ouvert (même principe que la fiche d'un audit de perf).
+var FP_SEL = ['.pa-detail', '.pa-form', '.site-detail', '.card:has(> form.entryform)', '.card:has(> .entryform)', 'form.entryform',
+  'tbody tr:has(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea)', '[data-fp]'].join(',');
+var fpClickTs = 0, fpPrevKeys = null, fpPrevTab = null, fpActive = {};
+document.addEventListener('click', function(){ fpClickTs = Date.now(); }, true);
+function fpKey(el){
+  if(el.dataset.fp) return 'fp:'+el.dataset.fp;
+  if(el.id) return '#'+el.id;
+  var idd = el.querySelector('[id]'); if(idd && idd.id) return el.tagName+'>#'+idd.id;
+  var did = el.querySelector('[data-id]'); if(did) return el.tagName+'>'+(did.dataset.action||'')+':'+did.dataset.id;
+  return el.tagName+'.'+String(el.className||'').replace(/\s*fp-open\s*/,' ').trim()+':'+String(el.innerText||'').trim().slice(0,40);
+}
+function fpCandidates(){
+  var v = document.getElementById('view'); if(!v) return [];
+  var out = [], seen = new Set();
+  v.querySelectorAll(FP_SEL).forEach(function(el){
+    if(el.closest('.modal-overlay, .chokko-grid, .pp-box, .fmds-head') || !el.offsetParent) return;
+    if(out.some(function(o){ return o.contains(el) && o!==el; })) return;   // déjà couvert par un parent
+    out = out.filter(function(o){ return !el.contains(o); }).concat([el]);
+  });
+  return out;
+}
+function fpAfterRender(){
+  if(fmdsOn) return;
+  var els = fpCandidates(), keys = {};
+  els.forEach(function(el){ keys[fpKey(el)] = el; });
+  var userAction = Date.now()-fpClickTs < 1500;
+  if(fpPrevTab===currentTab && fpPrevKeys && userAction){
+    var fresh = Object.keys(keys).filter(function(k){ return !fpPrevKeys[k]; });
+    if(fresh.length>2) fresh = [];   // beaucoup de nouveautés d'un coup = changement de vue (mois, filtre…), pas une ouverture
+    fresh.forEach(function(k){ fpActive[k] = 1; });
+    if(fresh.length){
+      var el = keys[fresh[0]];
+      el.classList.add('fp-flash');
+      var r = el.getBoundingClientRect(), vh = window.innerHeight;
+      if(r.top < 70 || r.bottom > vh-20){
+        try{ el.scrollIntoView({behavior:'smooth', block: r.height > vh*0.7 ? 'start' : 'center'}); }catch(e){ el.scrollIntoView(); }
+      }
+    }
+  }
+  if(fpPrevTab!==currentTab) fpActive = {};
+  Object.keys(fpActive).forEach(function(k){ if(keys[k]) keys[k].classList.add('fp-open'); else delete fpActive[k]; });
+  fpPrevKeys = keys; fpPrevTab = currentTab;
+}
+// Formulaires « + Ajouter… » qui s'ouvrent sans réafficher la page
+function fpShowNow(el){
+  if(!el) return;
+  var box = el.closest('.card') || el;
+  box.classList.add('fp-open', 'fp-flash');
+  var r = box.getBoundingClientRect();
+  if(r.top < 70 || r.bottom > window.innerHeight-20){ try{ box.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){} }
+}
+
 // ==================== PRISE EN MAIN : encart « Premiers pas » et mode simple ====================
 // Encart en haut de chaque onglet (3-4 étapes tirées de l'aide). Masqué par l'utilisateur onglet par onglet,
 // réaffichable avec le bouton « 🧭 Premiers pas » à côté du titre.
@@ -13296,6 +13361,7 @@ function renderNow(){
   try{ hydrateBlobThumbs(); }catch(e){}
   try{ czApplyTexts(view); }catch(e){ console.error('textes', e); }
   try{ ppHighlightMain(); }catch(e){}
+  try{ fpAfterRender(); }catch(e){ console.error('mise en évidence', e); }
   restoreScrollPositions(scrollSnap);
   if(focusInfo){
     var el = document.getElementById(focusInfo.id);
@@ -14735,7 +14801,7 @@ function renderAteqActionPlan(){
         '<td>'+(dl? '<span class="delay-pill delay-'+(dl.d<0?'late':dl.d<=3?'soon':'ok')+'">'+dl.text+'</span>' : '-')+'</td>'+
         '<td>'+esc(val(a.responsable,'-'))+'</td>'+
         '<td><button class="btn small danger-outline" data-action="delete" data-module="actions" data-id="'+a.id+'">Suppr.</button></td></tr>'+
-        (isOpen? '<tr><td colspan="7">'+ateqActionDetail(a)+'</td></tr>' : '');
+        (isOpen? '<tr data-fp="ateq-'+a.id+'"><td colspan="7">'+ateqActionDetail(a)+'</td></tr>' : '');
     }).join('');
     html += '</tbody></table></div>';
   }
@@ -16516,13 +16582,13 @@ app.addEventListener('click', async function(e){
   var toggleBtn = e.target.closest('[data-toggle-form]');
   if(toggleBtn){
     var f = document.getElementById('form-'+toggleBtn.dataset.toggleForm);
-    if(f) f.style.display = (f.style.display==='none'?'grid':'none');
+    if(f){ f.style.display = (f.style.display==='none'?'grid':'none'); if(f.style.display!=='none'){ fpShowNow(f); var fi = f.querySelector('input:not([type=hidden]), select, textarea'); if(fi) try{ fi.focus({preventScroll:true}); }catch(x){} } else { var bx = f.closest('.card') || f; bx.classList.remove('fp-open'); } }
     return;
   }
   var cancelBtn = e.target.closest('[data-cancel-form]');
   if(cancelBtn){
     var f2 = document.getElementById('form-'+cancelBtn.dataset.cancelForm);
-    if(f2){ f2.reset(); f2.style.display='none'; }
+    if(f2){ f2.reset(); f2.style.display='none'; var bx2 = f2.closest('.card') || f2; bx2.classList.remove('fp-open'); }
     return;
   }
   var delBtn = e.target.closest('[data-action="delete"]');
