@@ -926,26 +926,7 @@ div.entryform.cols3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
   #qos-print .table-wrap{overflow:visible; border:none;}
   #qos-print .tiny{font-size:8.5px;}
 }
-/* ---- Aide « ? » ---- */
-.help-btn{position:fixed; right:20px; bottom:20px; z-index:1500; width:46px; height:46px; border-radius:50%; border:none; background:var(--accent); color:#fff; font:700 21px/1 var(--sans); cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.2);}
-.help-btn:hover, .help-btn.on{background:var(--accent-dark);}
-.help-panel{position:fixed; top:0; right:0; bottom:0; width:400px; max-width:100vw; z-index:1490; background:#fff; border-left:1px solid var(--border); box-shadow:-8px 0 30px rgba(0,0,0,.12); display:flex; flex-direction:column; padding:16px 16px 80px; box-sizing:border-box;}
-.help-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:16px;}
-#help-search{width:100%; box-sizing:border-box; margin-bottom:10px;}
-.help-body{overflow-y:auto; flex:1; padding-right:4px;}
-.help-cur{font-weight:700; font-size:14px; margin:4px 0;}
-.help-entry{border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:8px; background:#FCFBF8;}
-.help-entry summary{cursor:pointer; padding:10px 12px; font-weight:600; font-size:13.5px;}
-.help-entry[open] summary{border-bottom:1px solid var(--border);}
-.help-entry > p, .help-entry > ol, .help-entry > .help-h, .help-entry > .help-faq{margin-left:12px; margin-right:12px;}
-.help-entry p{font-size:13px; line-height:1.45; color:var(--text-muted);}
-.help-entry ol{padding-left:18px; font-size:13px; line-height:1.45;}
-.help-entry ol li{margin-bottom:4px;}
-.help-h{font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint); margin:10px 0 6px;}
-.help-faq{font-size:13px; margin-bottom:8px; line-height:1.4;}
-.help-faq b{display:block; margin-bottom:2px;}
-.help-faq:last-child{padding-bottom:10px;}
-@media print{ .help-btn, .help-panel{display:none !important;} }
+
 /* ---- Impressions : en-tête commun, listes compactes ---- */
 #list-print-head{display:none;}
 @media print{
@@ -973,7 +954,6 @@ div.entryform.cols3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
   #qos-print .qos-line-empty{padding:4px 8px !important;}
   #qos-print .eyebrow{font-size:9px;}
 }
-@media (max-width:760px){ .help-panel{width:100vw;} }
 .cz-pin, .cz-pin-row{display:none;}
 body.cz-admin .cz-pin{display:inline-flex; align-items:center; gap:4px; font:600 11px/1.2 inherit; font-family:inherit; padding:3px 8px; margin:0 0 0 8px; border:1.5px dashed #D9A35B; background:#FFF6E8; color:#6B4A1E; border-radius:999px; cursor:pointer; vertical-align:middle; text-transform:none; letter-spacing:0;}
 body.cz-admin .cz-pin:hover{background:#FCEBD2;}
@@ -1439,7 +1419,7 @@ tr.releve-cur-week td:first-child{font-weight:700;}
 
 /* ===== Mode affichage FMDS (plein écran, lecture seule, lisible à distance) ===== */
 body.fmds-mode{background:#fff;}
-body.fmds-mode .sidebar, body.fmds-mode header.top, body.fmds-mode #help-btn, body.fmds-mode #help-panel, body.fmds-mode .nav-subtabs{display:none !important;}
+body.fmds-mode .sidebar, body.fmds-mode header.top, body.fmds-mode .nav-subtabs{display:none !important;}
 body.fmds-mode .app-content{margin-left:0 !important; width:100% !important; max-width:none !important;}
 body.fmds-mode #view{padding:8px 16px !important; max-width:none !important;}
 body.fmds-mode .app-content{padding:0 !important;}
@@ -1608,6 +1588,16 @@ body.simple-mode [data-action="propr-grid-open"], body.simple-mode [data-action=
 body.simple-mode [data-action="prison-import-sheet"], body.simple-mode [data-action="home-set"], body.simple-mode [data-action="wz-start"],
 body.simple-mode [data-action="weekly-digest"], body.simple-mode [data-action="rebut-edit-codes"], body.simple-mode #sidebar-settings-btn,
 body.simple-mode .sidebar-group[data-group="admin"], body.simple-mode .tb-sep{display:none !important;}
+
+.tab-cfg-btn{font:inherit; font-size:12.5px; font-weight:600; border:1px solid var(--border-strong); color:#17368A; background:#fff; border-radius:14px; padding:3px 11px; cursor:pointer;}
+.tab-cfg-btn:hover{background:#EEF2FA;}
+body.simple-mode .tab-cfg-btn{display:none !important;}
+.wz-modal-box{max-width:980px; width:100%; max-height:92vh; display:flex; flex-direction:column; overflow:hidden;}
+.wz-modal-body{overflow:auto; flex:1; padding-right:4px;}
+.wz-modal-body .wz-title{display:none;}
+.wz-modal-iss{background:#FCEBCF; color:#6B4A00; border-radius:6px; padding:6px 10px; font-size:13px; margin:0 0 10px;}
+.wz-modal-foot{display:flex; justify-content:flex-end; align-items:center; gap:8px; border-top:1px solid var(--border); padding-top:10px; margin-top:8px;}
+.wz-modal-foot .wz-dirty{margin-right:auto;}
 </style>
 </head>
 <body>
@@ -1630,7 +1620,6 @@ body.simple-mode .sidebar-group[data-group="admin"], body.simple-mode .tb-sep{di
         <button id="mobile-menu-btn" title="Menu">&#9776;</button>
         <div>
           <h1 id="page-title">Suivi qualité</h1>
-          <div class="page-intro" id="page-intro"></div>
           <div class="sub" id="todaylabel"></div>
         </div>
       </div>
@@ -3718,8 +3707,7 @@ function proprResultats(){
   var years = yearsWithData(resultsYear, DATA.resultats.map(resAnnee));
   if(resultsMonthView===undefined) resultsMonthView = Number(todayStr().split('-')[1])-1;
   var html = '<div class="toolbar"><div class="left"><label class="field" style="flex-direction:row; align-items:center; gap:8px;">Année<select id="results-year">'+years.map(function(y){return '<option value="'+y+'"'+(y===resultsYear?' selected':'')+'>'+y+'</option>';}).join('')+'</select></label></div>'+
-    '<div style="display:flex; gap:8px;"><button class="btn" data-action="export" data-module="proprete">Générer l\'export labo</button><button class="btn primary" data-toggle-form="resultats">+ Ajouter un résultat</button></div></div>';
-  html += '<div id="proprete-export"></div>';
+    '<div style="display:flex; gap:8px;"><button class="btn primary" data-toggle-form="resultats">+ Ajouter un résultat</button></div></div>';
   var curMonthForForm = Number(todayStr().split('-')[1])-1;
   var weeksForForm = weeksOfMonth(resultsYear, curMonthForForm);
   html += '<form class="entryform cols2" id="form-resultats" style="display:none">'+
@@ -6119,7 +6107,7 @@ RENDERERS.perf = function(){
   var pMonth = perfParetoData(scopeIds, perfYear, perfParetoMois, perfParetoMois, perfParetoLigne);
   var scopeLbl = perfParetoLigne ? esc(perfParetoLigne) : (scopeIds.length>1 ? scopeIds.length+' secteurs' : esc((getSecteur(currentSecteur)||{}).nom||currentSecteur));
   var moisLbl = MONTHS_FR[perfParetoMois].charAt(0).toUpperCase()+MONTHS_FR[perfParetoMois].slice(1);
-  html += '<div class="card pp-synth"><div class="pp-synth-h"><h3>Synthèse du secteur</h3><button class="btn" data-action="perf-progress-print" data-y="'+perfYear+'" data-m="'+perfParetoMois+'" title="Imprimer l\'avancement des audits et les Pareto (A4 portrait) pour le mois choisi">🖨️ Imprimer le suivi des audits</button></div>';
+  html += '<div class="card pp-synth"><div class="pp-synth-h"><h3>Synthèse du secteur</h3>'+(canVueSite() ? '<button class="btn" data-action="perf-progress-print" data-y="'+perfYear+'" data-m="'+perfParetoMois+'" title="Imprimer l\'avancement des audits et les Pareto (A4 portrait) pour le mois choisi">🖨️ Imprimer le suivi des audits</button>' : '')+'</div>';
   html += '<div class="pp-head"><div class="eyebrow">Pareto des NC par point de la grille</div><div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">'+
     '<label class="field" style="flex-direction:row; align-items:center; gap:6px; margin:0;">Ligne<select id="pa-pligne"><option value="">Toutes les lignes</option>'+scopeLines.map(function(l){ return '<option value="'+esc(l)+'"'+(l===perfParetoLigne?' selected':'')+'>'+esc(l)+'</option>'; }).join('')+'</select></label>'+
     '<label class="field" style="flex-direction:row; align-items:center; gap:6px; margin:0;">Mois<select id="pa-pmois">'+MONTHS_FR.map(function(m,i){ return '<option value="'+i+'"'+(i===perfParetoMois?' selected':'')+'>'+m.charAt(0).toUpperCase()+m.slice(1)+'</option>'; }).join('')+'</select></label>'+
@@ -11406,8 +11394,9 @@ function updateHeaderSubtitle(){
   if(h1){
     var hp = helpForTab(currentTab);
     var nm = currentTab==='travail' ? t('tab_travail','Mon travail') : currentTab==='site' ? t('tab_site','Vue site') : currentTab==='assistant' ? t('tab_assistant','Configurer le secteur') : currentTab==='parametres' ? 'Paramètres' : navSubLabel(currentTab);
-    h1.innerHTML = esc(currentUser ? nm : 'Suivi qualité') + (currentUser && hp && ppIsHidden(currentTab) ? ' <button class="pp-reopen" data-action="pp-show" title="Réafficher l\'encart Premiers pas de cet onglet">🧭 Premiers pas</button>' : '');
-    if(intro) intro.textContent = (currentUser && hp) ? hp.quoi : '';
+    var wzs = currentUser && !fmdsOn ? wzTabStep(currentTab) : null;
+    h1.innerHTML = esc(currentUser ? nm : 'Suivi qualité') + (currentUser && hp && ppIsHidden(currentTab) ? ' <button class="pp-reopen" data-action="pp-show" title="Réafficher l\'encart Premiers pas de cet onglet">🧭 Premiers pas</button>' : '') +
+      (wzs ? ' <button class="tab-cfg-btn" data-action="wz-tabcfg" title="Réglages de cet onglet pour le secteur (objectifs, postes, références, durées…)">⚙ Réglages</button>' : '');
   }
 }
 function helpForTab(tab){ return (typeof HELP!=='undefined' ? HELP : []).filter(function(h){ return h.tab===tab; })[0] || null; }
@@ -11959,12 +11948,6 @@ function wzSecteurObj(){ return getSecteur(currentSecteur) || {id:currentSecteur
 function wzHas(tab){ return secteurTabs().indexOf(tab)>=0; }
 function wzSteps(){
   var st = [{id:'secteur', label:'Secteur et onglets'}];
-  if(wzHas('chokko')) st.push({id:'chokko', label:'Suivi CHOKKO'});
-  if(wzHas('proprete')) st.push({id:'proprete', label:'Propreté'});
-  if(wzHas('prison')) st.push({id:'prison', label:'Prison qualité'});
-  if(wzHas('esd') || wzHas('formations') || wzHas('cicl')) st.push({id:'formations', label:'Formations'});
-  if(wzHas('perf')) st.push({id:'perf', label:'Audits de perf'});
-  if(wzHas('actions')) st.push({id:'actplan', label:'Plan d\'actions'});
   st.push({id:'tableau', label:'Tableau de bord'});
   if(isAdminUser()) st.push({id:'communs', label:'Réglages communs'});
   st.push({id:'recap', label:'Récapitulatif'});
@@ -11993,7 +11976,7 @@ function wzInfo(id){
   if(id==='proprete'){ var pl = proprLines(); return pl.filter(function(l){ return (DATA.checklist[checklistKeyForLigne(l)]||[]).length; }).length+' / '+pl.length+' lignes avec une grille'; }
   if(id==='prison'){ var n = sapBomList(currentSecteur).length; return n+' référence'+(n>1?'s':'')+' décrite'+(n>1?'s':''); }
   if(id==='formations'){ var d = formDurees(); return 'Validité '+formDureeTxt(d.srem)+(currentSecteur==='MCU'? ' (SREM), '+formDureeTxt(d.esd)+' (ESD), '+formDureeTxt(d.cicl)+' (CI/CL)' : '')+' · alerte '+d.alerte+' j avant'; }
-  if(id==='perf'){ var q = perfQuestions().length; return (PERF_FREQS.filter(function(f){ return f[0]===perfFreq(); })[0]||[0,''])[1]+' · '+(q? q+' question'+(q>1?'s':'') : 'résultat saisi directement en %'); }
+  if(id==='perf') return (PERF_FREQS.filter(function(f){ return f[0]===perfFreq(); })[0]||[0,''])[1]+' · grille standard 16 points';
   if(id==='actplan') return 'Vérification à '+(Number(sec.verifJours)||30)+' j'+((sec.planTypesExtra||[]).length? ' · '+sec.planTypesExtra.length+' type(s) d\'échéance propres' : '');
   if(id==='tableau'){ var h = (sec.dashHidden||[]).length, a = (sec.alertHidden||[]).length; return (h? h+' carte(s) masquée(s)' : 'toutes les cartes')+' · '+(a? a+' type(s) d\'alerte coupé(s)' : 'toutes les alertes'); }
   return '';
@@ -12094,9 +12077,8 @@ async function wzCommit(){
   }
   else if(wzStep==='perf'){
     sec.perfFreq = Number(d.freq)||1;
-    sec.perfQuestions = d.questions.map(function(q){ return {texte:String(q.texte||'').trim()}; }).filter(function(q){ return q.texte; });
     await save('secteurs');
-    logChange('Assistant', 'Audits de perf '+sid, (PERF_FREQS.filter(function(f){ return f[0]===sec.perfFreq; })[0]||[0,''])[1]+' · '+sec.perfQuestions.length+' question(s)');
+    logChange('Réglages', 'Audits de perf '+sid, (PERF_FREQS.filter(function(f){ return f[0]===sec.perfFreq; })[0]||[0,''])[1]);
   }
   else if(wzStep==='actplan'){
     var vj = wzNum(d.verif), aj = String(d.alerte||'').trim()==='' ? null : wzNum(d.alerte);
@@ -12129,6 +12111,47 @@ async function wzGo(step){
   renderNav(); render();
   var v = document.getElementById('view'); if(v) v.scrollIntoView({block:'start'});
 }
+
+// ---------- Réglages d'onglet : les étapes de l'ancien assistant, ouvertes depuis l'onglet concerné ----------
+var WZ_TAB_STEP = {chokko:'chokko', proprete:'proprete', prison:'prison', esd:'formations', formations:'formations', cicl:'formations', perf:'perf', actions:'actplan'};
+var WZ_STEP_LABEL = {chokko:'Suivi CHOKKO', proprete:'Propreté', prison:'Prison qualité', formations:'Formations', perf:'Audits de perf', actplan:'Plan d\'actions'};
+var wzModalStep = null;
+function wzCanConfigure(){ return !!currentUser && tabAllowed('assistant'); }
+function wzTabStep(tab){ var st = WZ_TAB_STEP[tab]; return (st && wzCanConfigure() && wzHas(tab)) ? st : null; }
+function wzModalOpen(step){ wzModalStep = step; wzStep = step; wzDraft = null; wzBomOpen = null; wzLigne = null; wzBuildDraft(); render(); }
+async function wzModalClose(save){
+  if(save){ if(!await wzCommit()) return; }
+  wzModalStep = null; wzDraft = null; wzDirty = false; wzStep = 'secteur'; renderNav(); render();
+}
+function wzModalHtml(){
+  if(!wzModalStep) return '';
+  if(currentTab==='assistant' || WZ_TAB_STEP[currentTab]!==wzModalStep){ wzModalStep = null; return ''; }
+  wzStep = wzModalStep; wzEnsureDraft();
+  var fn = {chokko:wzChokkoHtml, proprete:wzPropreteHtml, prison:wzPrisonHtml, formations:wzFormationsHtml, perf:wzPerfHtml, actplan:wzActplanHtml}[wzModalStep];
+  var editable = wzModalStep!=='proprete';
+  var iss = wzIssues(wzModalStep);
+  return '<div class="modal-overlay wz-modal"><div class="modal-box wz-modal-box"><div class="refs-head"><h3 style="margin:0;">⚙ Réglages · '+esc(WZ_STEP_LABEL[wzModalStep])+' <span class="tiny" style="font-weight:400;">secteur '+esc((getSecteur(currentSecteur)||{}).nom||currentSecteur)+'</span></h3>'+
+    '<button class="btn small" data-action="wz-modal-cancel">✕</button></div>'+
+    (iss.length ? '<div class="wz-modal-iss"><b>À compléter :</b> '+iss.slice(0,4).map(esc).join(' · ')+(iss.length>4? ' …' : '')+'</div>' : '')+
+    '<div class="wz-modal-body wz">'+fn()+'</div>'+
+    '<div class="wz-modal-foot">'+(editable ? '<span class="wz-dirty tiny" id="wz-dirty"'+(wzDirty?'':' hidden')+'>Modifications non enregistrées</span><button class="btn" data-action="wz-modal-cancel">Annuler</button><button class="btn primary" data-action="wz-modal-save">Enregistrer</button>'
+      : '<button class="btn primary" data-action="wz-modal-cancel">Fermer</button>')+'</div></div></div>';
+}
+document.addEventListener('click', async function(e){
+  var b = e.target.closest && e.target.closest('[data-action="wz-tabcfg"],[data-action="wz-modal-save"],[data-action="wz-modal-cancel"]');
+  if(!b) return;
+  e.stopPropagation();
+  var a = b.dataset.action;
+  if(a==='wz-tabcfg'){
+    if(b.dataset.tab && b.dataset.tab!==currentTab){ currentTab = b.dataset.tab; renderNav(); }
+    var st = WZ_TAB_STEP[currentTab]; if(st) wzModalOpen(st);
+  }
+  else if(a==='wz-modal-save'){ if(!wzDirty){ await wzModalClose(false); return; } await wzModalClose(true); }
+  else if(a==='wz-modal-cancel'){
+    if(wzDirty && !await uiConfirm('Fermer sans enregistrer les modifications ?', {okLabel:'Fermer sans enregistrer'})) return;
+    await wzModalClose(false);
+  }
+}, true);
 // ---------- Rendu des étapes ----------
 function wzInput(path, attrs){ var v = wzGet(path); return '<input type="text" data-wz="'+esc(path)+'" value="'+esc(v==null?'':v)+'"'+(attrs||'')+'>'; }
 function wzStepHead(title, intro){ return '<h2 class="wz-title">'+esc(title)+'</h2>'+(intro? '<p class="wz-intro">'+intro+'</p>' : ''); }
@@ -12251,19 +12274,11 @@ function wzFormationsHtml(){
 }
 function wzPerfHtml(){
   var d = wzDraft;
-  var h = wzStepHead('Audits de perf', 'À quelle fréquence chaque ligne est auditée, et les questions de l\'audit. Sans question, le résultat est saisi directement en %.');
+  var h = wzStepHead('Audits de perf', 'À quelle fréquence chaque ligne est auditée. La grille d\'audit est la grille standard à 16 points (JALY_PI_QU_184), commune à tous les secteurs.');
   h += wzBlock('Fréquence', '<div class="wz-checks">'+PERF_FREQS.map(function(f){
       var on = String(f[0])===String(d.freq);
       return '<label class="wz-check'+(on?' on':'')+'"><input type="radio" name="wz-freq" data-wz="freq" value="'+f[0]+'"'+(on?' checked':'')+'><span><b>'+esc(f[1])+'</b><span class="tiny">'+(f[0]===1? 'un audit par ligne et par mois' : 'un audit par ligne sur '+f[0]+' mois')+'</span></span></label>';
     }).join('')+'</div><p class="tiny" style="margin-top:6px;">L\'avancement des audits et les alertes du tableau de bord suivent cette fréquence.</p>');
-  h += wzBlock('Questions de l\'audit ('+d.questions.length+')', (d.questions.length? '<div class="wz-list">'+d.questions.map(function(q, i){
-      return '<div class="wz-row"><span class="wz-n">'+(i+1)+'</span>'+wzInput('questions.'+i+'.texte', ' style="flex:1; min-width:200px;" placeholder="Ex. : Les standards de travail sont affichés et à jour"')+
-        '<button class="btn small" data-action="wz-move" data-path="questions" data-i="'+i+'" data-dir="-1" '+(i===0?'disabled':'')+'>▲</button>'+
-        '<button class="btn small" data-action="wz-move" data-path="questions" data-i="'+i+'" data-dir="1" '+(i===d.questions.length-1?'disabled':'')+'>▼</button>'+
-        '<button class="btn small danger-outline" data-action="wz-del" data-path="questions" data-i="'+i+'">✕</button></div>';
-    }).join('')+'</div>' : '<p class="tiny" style="margin:0 0 8px;">Aucune question : le résultat de l\'audit est saisi directement en %.</p>')+
-    '<button class="btn small" data-action="wz-add" data-path="questions" data-tpl="{&quot;texte&quot;:&quot;&quot;}">+ Ajouter une question</button>'+
-    '<p class="tiny" style="margin-top:8px;">Avec des questions, chacune est notée Conforme, Non conforme ou Sans objet, et le résultat se calcule seul.</p>');
   return h;
 }
 function wzActplanHtml(){
@@ -12311,6 +12326,15 @@ function wzRecapHtml(){
       (iss.length? '<ul class="wz-issues">'+iss.slice(0,6).map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+(iss.length>6? '<li>… et '+(iss.length-6)+' autre(s)</li>' : '')+'</ul>' : '')+
       '</div><button class="btn small" data-action="wz-goto" data-step="'+s.id+'">Modifier</button></div>';
   }).join('')+'</div>';
+  var moved = [['chokko','chokko'],['proprete','proprete'],['prison','prison'],[wzHas('esd')?'esd':wzHas('formations')?'formations':'cicl','formations'],['perf','perf'],['actions','actplan']].filter(function(x){ return wzHas(x[0]); });
+  if(moved.length){
+    h += '<div class="eyebrow" style="margin:18px 0 6px;">Réglages des onglets</div><p class="tiny" style="margin:0 0 8px;">Ils se font maintenant directement dans chaque onglet, bouton « ⚙ Réglages » à côté du titre.</p><div class="wz-recap">'+moved.map(function(x){
+      var iss = wzIssues(x[1]); total += iss.length;
+      return '<div class="wz-recap-row '+(iss.length?'warn':'ok')+'"><span class="wz-recap-ic">'+(iss.length?'!':'✓')+'</span><div style="flex:1; min-width:0;"><b>'+esc(WZ_STEP_LABEL[x[1]])+'</b><div class="tiny">'+esc(wzInfo(x[1]))+'</div>'+
+        (iss.length? '<ul class="wz-issues">'+iss.slice(0,4).map(function(y){ return '<li>'+esc(y)+'</li>'; }).join('')+(iss.length>4? '<li>… et '+(iss.length-4)+' autre(s)</li>' : '')+'</ul>' : '')+
+        '</div><button class="btn small" data-action="wz-tabcfg" data-tab="'+x[0]+'">Ouvrir les réglages</button></div>';
+    }).join('')+'</div>';
+  }
   h += '<div class="actions-row" style="margin-top:14px; justify-content:flex-start; align-items:center; gap:12px; flex-wrap:wrap;"><button class="btn primary" data-action="wz-finish">'+(sec.setupDone? 'Valider à nouveau' : 'Valider la configuration')+'</button>'+
     (total? '<span class="tiny" style="color:var(--text-faint);">'+total+' point(s) à compléter : vous pouvez valider quand même et y revenir plus tard.</span>' : '')+'</div>';
   return h;
@@ -12324,7 +12348,7 @@ RENDERERS.assistant = function(){
   var allSecs = (DATA.secteurs && DATA.secteurs.length) ? DATA.secteurs : SECTEURS_DEFAULT;
   var pos = steps.map(function(s){ return s.id; }).indexOf(wzStep);
   var h = '<div class="wz">';
-  h += '<div class="wz-top"><div><div class="eyebrow">Configurer le secteur</div><div class="tiny">Tout ce qui se règle pour un secteur, étape par étape. Rien n\'est enregistré tant que vous ne cliquez pas sur « Enregistrer » ou « Suivant ».</div></div>'+
+  h += '<div class="wz-top"><div><div class="eyebrow">Configurer le secteur</div><div class="tiny">Le nom du secteur, ses lignes, ses onglets et son tableau de bord. Les réglages propres à un onglet se font dans l\'onglet lui-même, bouton « ⚙ Réglages » à côté du titre.</div></div>'+
     (us.length>1? '<label class="field" style="min-width:180px;">Secteur<select id="wz-secteur">'+us.map(function(id){ var sc = allSecs.find(function(x){ return x.id===id; }) || {nom:id}; return '<option value="'+esc(id)+'"'+(id===currentSecteur?' selected':'')+'>'+esc(sc.nom||id)+(sc.setupDone?'':' (à configurer)')+'</option>'; }).join('')+'</select></label>' : '<b>'+esc(wzSecteurObj().nom||currentSecteur)+'</b>')+'</div>';
   h += '<div class="wz-body"><nav class="wz-steps">'+steps.map(function(s, i){
     var iss = (s.id==='recap'||s.id==='communs') ? [] : wzIssues(s.id);
@@ -12412,7 +12436,7 @@ var SECTEUR_DASH_CARDS = [['w_score','Score de conformité'],['w_indicateurs','I
 function wzDashboardBanner(){
   var sec = getSecteur(currentSecteur);
   if(!sec || sec.setupDone || !currentUser) return '';
-  return '<div class="wz-banner"><div><b>Le secteur '+esc(sec.nom||sec.id)+' n\'est pas encore configuré.</b><div class="tiny">L\'assistant passe en revue, étape par étape, tout ce qui se règle : lignes, onglets, postes CHOKKO, grilles, références de la prison, formations, audits…</div></div><button class="btn primary" data-action="wz-start">Configurer le secteur</button></div>';
+  return '<div class="wz-banner"><div><b>Le secteur '+esc(sec.nom||sec.id)+' n\'est pas encore configuré.</b><div class="tiny">« Configurer le secteur » : nom, lignes, onglets et tableau de bord. Les réglages propres à chaque onglet (postes CHOKKO, grilles, références…) se font ensuite dans l\'onglet, bouton « ⚙ Réglages ».</div></div><button class="btn primary" data-action="wz-start">Configurer le secteur</button></div>';
 }
 
 // ==================== RÉUNION QOS (point qualité mensuel avec les techniciens) ====================
@@ -13030,7 +13054,7 @@ function premiersPasHtml(){
     '<div class="pp-title">Premiers pas · '+esc(hp.titre)+'</div>'+
     '<ol class="pp-steps">'+steps.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ol>'+
     (first ? '<div class="pp-first">Vous découvrez l\'outil ? Le <b>mode simple</b> cache les réglages avancés pour ne garder que l\'essentiel. '+(simpleMode() ? '<b>Il est activé.</b>' : '<button class="btn small" data-action="simple-toggle">Activer le mode simple</button>')+'</div>' : '')+
-    '</div><div class="pp-btns"><button class="btn small primary" data-action="pp-hide">✓ J\'ai compris</button><button class="btn small" data-action="pp-help">Aide complète</button></div></div>';
+    '</div><div class="pp-btns"><button class="btn small primary" data-action="pp-hide">✓ J\'ai compris</button></div></div>';
 }
 function ppHighlightMain(){
   if(!currentUser || ppIsHidden(currentTab) || !helpForTab(currentTab)) return;
@@ -13047,157 +13071,56 @@ async function simpleToggle(){
   toast(simpleMode() ? 'Mode simple activé : les réglages avancés sont masqués.' : 'Mode complet : toutes les fonctions sont visibles.');
 }
 document.addEventListener('click', async function(e){
-  var b = e.target.closest && e.target.closest('[data-action="pp-hide"],[data-action="pp-show"],[data-action="pp-help"],[data-action="simple-toggle"]');
+  var b = e.target.closest && e.target.closest('[data-action="pp-hide"],[data-action="pp-show"],[data-action="simple-toggle"]');
   if(!b) return;
   e.stopPropagation();
   var a = b.dataset.action;
   if(a==='pp-hide'){ await ppSetHidden(currentTab, true); toast('Encart masqué. Pour le revoir : bouton « 🧭 Premiers pas » à côté du titre.'); }
   else if(a==='pp-show'){ await ppSetHidden(currentTab, false); window.scrollTo(0,0); }
-  else if(a==='pp-help'){ helpOpen = true; helpQuery = ''; helpRender(); }
   else if(a==='simple-toggle'){ await simpleToggle(); }
 }, true);
 
-// ==================== AIDE « ? » ====================
+// ==================== ÉTAPES DES ENCARTS « PREMIERS PAS » (par onglet) ====================
 // Un bouton rond en bas à droite ouvre l'aide de l'onglet affiché : à quoi il sert, comment s'en servir,
 // questions fréquentes. Une recherche parcourt toute l'aide.
 var HELP = [
   {id:'debut', titre:'Premiers pas', quoi:'L\'outil rassemble le suivi qualité de votre secteur : production et défauts (CHOKKO), audits, actions, formations, prison qualité, métrologie. Chaque technicien voit ses secteurs ; l\'administrateur voit tout.',
-    etapes:['Choisissez votre secteur en haut du menu (si vous en avez plusieurs).', 'Ouvrez « Configurer le secteur » dans Réglages pour régler lignes, onglets, postes, objectifs, références…', 'Saisissez au fil de l\'eau dans chaque onglet : le tableau de bord se remplit tout seul.'],
-    faq:[['Qu\'est-ce que le mode simple ?', 'Un interrupteur en haut à droite, à côté de votre nom. Il masque les réglages avancés (post-it, personnalisation, couleurs, gestion des postes, imports, Réglages du menu) pour ne garder que l\'essentiel. Chacun l\'active ou non pour son compte.'],
-      ['Comment revoir l\'encart « Premiers pas » d\'un onglet ?', 'Bouton « 🧭 Premiers pas » à côté du titre de l\'onglet. Il apparaît quand vous avez masqué l\'encart avec « J\'ai compris ».'],
-      ['Comment supprimer une ligne (instrument, formation, action) ?', 'Cliquez d\'abord sur « Modifier » (ou « Ouvrir » pour une action) : le bouton Supprimer est là, pour éviter les suppressions par erreur. Une confirmation est toujours demandée.'],
-      ['Mes saisies sont-elles enregistrées ?', 'Oui, dès que vous validez une saisie. Les données sont partagées : un collègue connecté voit vos modifications en quelques secondes.'],
-      ['Deux personnes modifient en même temps, que se passe-t-il ?', 'Les modifications des deux personnes sont fusionnées. Si vous modifiez exactement la même valeur, c\'est la dernière saisie qui est gardée.'],
-      ['Je ne vois pas un onglet dont j\'ai besoin.', 'Il n\'est pas activé pour votre secteur (« Configurer le secteur », étape 1) ou votre profil n\'y a pas accès (à demander à l\'administrateur).']]},
+    etapes:['Choisissez votre secteur en haut du menu (si vous en avez plusieurs).', 'Ouvrez « Configurer le secteur » dans Réglages pour régler lignes, onglets, postes, objectifs, références…', 'Saisissez au fil de l\'eau dans chaque onglet : le tableau de bord se remplit tout seul.']},
   {id:'travail', tab:'travail', titre:'Mon travail', quoi:'Ce que vous avez à faire : tout ce qui est en retard ou à traiter dans les prochains jours, sur tous vos secteurs. C\'est la page d\'accueil des techniciens.',
-    etapes:['« À moi » regroupe les points dont vous êtes le responsable, et les points sans responsable de vos secteurs (ils reviennent au qualiticien du secteur).', 'Les points sont rangés par module, les retards d\'abord. Cliquez sur un point pour l\'ouvrir (action, chantier) ou sur « Ouvrir → » pour aller dans l\'onglet.', 'Plusieurs secteurs : les puces en haut filtrent sur un secteur.', 'Plus bas : les points suivis par d\'autres personnes (comptes multi-secteurs : rangés par secteur).', 'Mon travail, Tableau de bord et Vue site sont trois onglets de l\'entrée « Accueil » du menu. « ☆ Ouvrir sur cet onglet » choisit celui qui s\'ouvre à la connexion.'],
-    faq:[['Pourquoi un point sans responsable est « à moi » ?', 'Il y a un qualiticien par secteur : ce qui n\'est pas assigné (saisie CHOKKO, formations, métrologie…) revient à celui qui est en charge du secteur.'],
-      ['Comment un point devient-il « à moi » ?', 'Quand vous êtes le responsable de l\'action, le pilote du chantier ou le responsable de l\'audit planifié (même nom que votre compte).'],
-      ['Où sont passées les priorités du tableau de bord ?', 'Ici. Le tableau de bord ne montre plus que les résultats du secteur ; un bandeau en haut renvoie vers Mon travail.']]},
+    etapes:['« À moi » regroupe les points dont vous êtes le responsable, et les points sans responsable de vos secteurs (ils reviennent au qualiticien du secteur).', 'Les points sont rangés par module, les retards d\'abord. Cliquez sur un point pour l\'ouvrir (action, chantier) ou sur « Ouvrir → » pour aller dans l\'onglet.', 'Plusieurs secteurs : les puces en haut filtrent sur un secteur.', 'Plus bas : les points suivis par d\'autres personnes (comptes multi-secteurs : rangés par secteur).', 'Mon travail, Tableau de bord et Vue site sont trois onglets de l\'entrée « Accueil » du menu. « ☆ Ouvrir sur cet onglet » choisit celui qui s\'ouvre à la connexion.']},
   {id:'dashboard', tab:'dashboard', titre:'Tableau de bord', quoi:'Les résultats d\'un secteur : score de conformité, CHOKKO, Pareto, formations, propreté, perf. Ce qu\'il y a à faire est dans « Mon travail », la comparaison des secteurs dans « Vue site ». Rien n\'est à saisir ici.',
-    etapes:['Lisez le score de conformité et son détail par module.', 'Le bandeau « Mon travail » indique vos points en retard dans ce secteur et y mène en un clic.', 'Cliquez sur une carte pour ouvrir l\'onglet concerné.', '« Rapport mensuel » prépare la synthèse du mois à imprimer.', '« Personnaliser mon tableau de bord » réorganise vos cartes (MCU).'],
-    faq:[['Pourquoi ne vois-je plus de retards ici ?', 'Le tableau de bord montre les résultats (taux, tendances). La liste de ce qui est en retard est dans « Mon travail » ; la pastille rouge du menu en donne le nombre.'],
-      ['Comment est calculé le score ?', 'C\'est la moyenne des modules comptés (propreté, métrologie, CHOKKO, actions…). Le bouton de réglage du score indique les modules pris en compte.'],
-      ['Comment changer les seuils vert / orange / rouge ?', 'Dans « Configurer le secteur », étape « Tableau de bord » : seuils « attention » et « danger » du secteur.'],
-      ['Une carte ne m\'intéresse pas.', 'Masquez-la pour tout le secteur dans « Configurer le secteur » > « Tableau de bord ».']]},
+    etapes:['Lisez le score de conformité et son détail par module.', 'Le bandeau « Mon travail » indique vos points en retard dans ce secteur et y mène en un clic.', 'Cliquez sur une carte pour ouvrir l\'onglet concerné.', '« Rapport mensuel » prépare la synthèse du mois à imprimer.', '« Personnaliser mon tableau de bord » réorganise vos cartes (MCU).']},
   {id:'chokko', tab:'chokko', titre:'Suivi CHOKKO', quoi:'Le suivi quotidien de la production et des non-conformités par poste, par équipe et par ligne, avec le coût rebut et le suivi des défauts.',
-    etapes:['Choisissez la ligne et le mois.', '« Saisie », affichage « Par jour » : saisissez la production de chaque équipe et le nombre de défauts par poste. Le CHOKKO (% de pièces bonnes) se calcule seul.', 'Le bouton + à côté d\'un poste crée une action CHOKKO liée à ce poste.', 'Affichage « Par semaine » : synthèse hebdomadaire, mêmes couleurs que l\'affichage par jour.', '« Suivi des défauts » : trois graphiques de défauts au choix, sur la période voulue.', '« Coût rebut » : montants par code défaut, coût par pièce, Pareto. Bouton d\'impression A3.', '🖨️ Imprimer : CHOKKO journalier, hebdomadaire, puis coût rebut et actions.'],
-    faq:[['Afficher le CHOKKO en réunion FMDS sans imprimer ?', 'Bouton « 📺 Mode télé » : plein écran, lecture seule, gros caractères (grille du mois, graphique, actions). Il se met à jour tout seul. Boutons de ligne en haut, « Défilement » pour passer d\'une ligne à l\'autre toutes les 30 s, Échap ou « Quitter » pour sortir.'],
-      ['Pourquoi une case est orange ?', 'Le CHOKKO est sous l\'objectif de la ligne mais dans la marge. En rouge, il est sous la marge.'],
-      ['Comment ajouter ou renommer un poste ?', 'Bouton « ⚙️ Postes » (masqué en mode simple), ou « Configurer le secteur » > CHOKKO > Postes et défauts.'],
-      ['Comment changer l\'objectif ?', 'Le ✎ à côté de l\'objectif, ou « Configurer le secteur » > CHOKKO.'],
-      ['Mes équipes ne sont pas A, B, C ou D.', '« Configurer le secteur » > CHOKKO > « Équipes propres à ce secteur ».'],
-      ['Les chiffres sont-ils arrondis ?', 'Non, ils sont tronqués à deux décimales : 98,789 % s\'affiche 98,78 %.']]},
+    etapes:['Choisissez la ligne et le mois.', '« Saisie », affichage « Par jour » : saisissez la production de chaque équipe et le nombre de défauts par poste. Le CHOKKO (% de pièces bonnes) se calcule seul.', 'Le bouton + à côté d\'un poste crée une action CHOKKO liée à ce poste.', 'Affichage « Par semaine » : synthèse hebdomadaire, mêmes couleurs que l\'affichage par jour.', '« Suivi des défauts » : trois graphiques de défauts au choix, sur la période voulue.', '« Coût rebut » : montants par code défaut, coût par pièce, Pareto. Bouton d\'impression A3.', '🖨️ Imprimer : CHOKKO journalier, hebdomadaire, puis coût rebut et actions.']},
   {id:'proprete', tab:'proprete', titre:'Propreté', quoi:'Les audits propreté par ligne et leurs résultats, l\'entretien des équipements et, pour MCU, la contamination, les relevés particules et les relevés des bains.',
-    etapes:['Sous-onglet « Audit » : choisissez la ligne, cochez OK / NG pour chaque critère. Chaque NG crée une action.', '« Résultats » : score mensuel par ligne et évolution.', '« Grille » : créez ou modifiez les critères audités sur chaque ligne.', '« Entretien des équipements » : date du dernier entretien, prochaine échéance (bouton Modifier pour corriger une date).'],
-    faq:[['Une ligne n\'a pas de grille.', 'Créez-la dans le sous-onglet Grille ou dans « Configurer le secteur » > Propreté. Vous pouvez copier la grille d\'une autre ligne.'],
-      ['Comment est calculé le score d\'un audit ?', 'Critères OK / critères audités, tronqué (jamais arrondi au-dessus).']]},
+    etapes:['Sous-onglet « Audit » : choisissez la ligne, cochez OK / NG pour chaque critère. Chaque NG crée une action.', '« Résultats » : score mensuel par ligne et évolution.', '« Grille » : créez ou modifiez les critères audités sur chaque ligne.', '« Entretien des équipements » : date du dernier entretien, prochaine échéance (bouton Modifier pour corriger une date).']},
   {id:'perf', tab:'perf', titre:'Audits de perf', quoi:'Le résultat des audits de performance par ligne, mois par mois, et l\'avancement des audits de tous vos secteurs.',
-    etapes:['« + Saisir un audit de perf » : ligne, mois, puis le résultat en % ou les réponses aux questions si votre secteur en a.', 'Le tableau annuel colore chaque résultat selon les seuils.', '« Imprimer » dans l\'avancement : la liste A4 de ce qui manque, pour le responsable qualité.'],
-    faq:[['Une ligne est à l\'arrêt ce mois-ci ?', '« + Saisir un audit de perf », choisissez la ligne et le mois, puis cochez « Ligne à l\'arrêt ». Elle compte comme faite dans l\'avancement, sans résultat : elle ne baisse pas le score. « Arrêt » s\'affiche dans le tableau annuel (cliquer dessus pour le retirer).'],
-      ['Comment ajouter des questions à l\'audit ?', '« Configurer le secteur » > Audits de perf. Chaque question est notée Conforme / Non conforme / Sans objet ; le résultat se calcule seul.'],
-      ['Nos audits sont trimestriels.', 'Réglez la fréquence dans « Configurer le secteur » > Audits de perf : l\'avancement et les alertes suivent.'],
-      ['Comment supprimer un résultat ?', 'Cliquez sur la case du tableau annuel : la fiche de l\'audit s\'ouvre (fond jaune), avec le bouton « Supprimer cet audit ».']]},
+    etapes:['« + Saisir un audit de perf » : ligne, mois, puis le résultat en % ou les réponses aux questions si votre secteur en a.', 'Le tableau annuel colore chaque résultat selon les seuils.', '« Imprimer » dans l\'avancement : la liste A4 de ce qui manque, pour le responsable qualité.']},
   {id:'metro', tab:'metro', titre:'Métrologie', quoi:'La liste des instruments de mesure avec leur date de validité.',
-    etapes:['« + Ajouter un instrument » : désignation, ligne, lieu, n° de moyen, échéance, pièce jointe (PV).', 'Le statut passe en orange avant l\'échéance et en rouge une fois dépassée. La liste « Toutes les lignes » filtre par ligne.', 'Après un étalonnage : « Modifier » sur la ligne, nouvelle échéance, « Valider ». Le bouton Supprimer est dans ce même mode Modifier.', '« Envoyer un mail de rappel » prépare un mail avec les instruments à étalonner.'],
-    faq:[['Où modifier un instrument ?', 'Directement dans la liste de l\'onglet.']]},
+    etapes:['« + Ajouter un instrument » : désignation, ligne, lieu, n° de moyen, échéance, pièce jointe (PV).', 'Le statut passe en orange avant l\'échéance et en rouge une fois dépassée. La liste « Toutes les lignes » filtre par ligne.', 'Après un étalonnage : « Modifier » sur la ligne, nouvelle échéance, « Valider ». Le bouton Supprimer est dans ce même mode Modifier.']},
   {id:'site', tab:'site', titre:'Vue site', quoi:'Pour le responsable qualité : le « Mon travail » de chaque secteur, pour voir d\'un coup d\'œil ce qui est en retard, où et chez qui. Visible pour les profils cochés « Responsable (Vue site) » dans Paramètres > profils.',
-    etapes:['Le tableau donne, secteur par secteur : les points en retard, ceux à traiter bientôt, le plus ancien retard et la répartition par module.', '« Voir le détail » déplie le Mon travail du secteur : la liste par module, et le nombre de retards par personne.', 'Cliquez sur un point pour l\'ouvrir (action, chantier) ou sur « Ouvrir → » pour aller dans l\'onglet du secteur.', 'Le graphique montre de quel module viennent les retards de chaque secteur. L\'avancement des audits de perf est sur le tableau de bord.', '« Imprimer » sort le tableau et le graphique sur une feuille A4 paysage.'],
-    faq:[['Pourquoi « Sans responsable (qualiticien du secteur) » ?', 'Les points sans responsable désigné (saisie CHOKKO, formations, métrologie…) reviennent au qualiticien en charge du secteur, comme dans son Mon travail.'],
-      ['Où sont le score, le CHOKKO, le coût rebut ?', 'Ce sont des résultats : dans le tableau de bord (bandeau « Tous les secteurs » en haut, puis le détail du secteur) et dans la Réunion QOS.'],
-      ['Qui voit cette page ?', 'L\'administrateur et les profils cochés « Responsable (Vue site) ». Si la case n\'a jamais été réglée, les comptes qui voient tous les secteurs y ont accès.']]},
+    etapes:['Le tableau donne, secteur par secteur : les points en retard, ceux à traiter bientôt, le plus ancien retard et la répartition par module.', '« Voir le détail » déplie le Mon travail du secteur : la liste par module, et le nombre de retards par personne.', 'Cliquez sur un point pour l\'ouvrir (action, chantier) ou sur « Ouvrir → » pour aller dans l\'onglet du secteur.', 'Le graphique montre de quel module viennent les retards de chaque secteur. L\'avancement des audits de perf est sur le tableau de bord.', '« Imprimer » sort le tableau et le graphique sur une feuille A4 paysage.']},
   {id:'qos', tab:'qos', titre:'Réunion QOS', quoi:'Le point qualité mensuel avec les techniciens : les principaux défauts CHOKKO et coûts rebut de chaque secteur, et les actions qui y répondent.',
-    etapes:['Choisissez le mois (par défaut, le mois écoulé jusqu\'au 20, puis le mois en cours).', '« Vue d\'ensemble » : CHOKKO, pièces NC, 1er défaut, coût rebut et coût par pièce de chaque ligne, comparés au mois précédent.', 'Cliquez sur un secteur : le technicien présente ses lignes, top 3 défauts CHOKKO et top 3 coûts rebut.', '« + Action » à côté d\'un défaut crée une action liée, visible ensuite dans le plan d\'actions.', '« Mettre à jour » sur une action : responsable, échéance, statut, sans quitter la réunion.', '« Imprimer le support » : vue d\'ensemble puis une page par secteur (A4 paysage).'],
-    faq:[['D\'où viennent les chiffres ?', 'Des saisies du suivi CHOKKO (production, défauts par poste, coût par pièce) et du coût rebut du mois. Rien n\'est à ressaisir.'],
-      ['Quelles actions apparaissent ?', 'Les actions du secteur nées d\'un défaut CHOKKO, du coût rebut ou de la QOS, à réaliser ou réalisées en attente de vérification.'],
-      ['Que signifie « ↳ » sous un défaut ?', 'Ce sont les actions menées saisies dans le CHOKKO pour ce poste et ce mois.'],
-      ['Un secteur n\'apparaît pas.', 'La QOS reprend les secteurs qui suivent le CHOKKO et auxquels votre compte a accès.']]},
+    etapes:['Choisissez le mois (par défaut, le mois écoulé jusqu\'au 20, puis le mois en cours).', '« Vue d\'ensemble » : CHOKKO, pièces NC, 1er défaut, coût rebut et coût par pièce de chaque ligne, comparés au mois précédent.', 'Cliquez sur un secteur : le technicien présente ses lignes, top 3 défauts CHOKKO et top 3 coûts rebut.', '« + Action » à côté d\'un défaut crée une action liée, visible ensuite dans le plan d\'actions.', '« Mettre à jour » sur une action : responsable, échéance, statut, sans quitter la réunion.', '« Imprimer le support » : vue d\'ensemble puis une page par secteur (A4 paysage).']},
   {id:'actions', tab:'actions', titre:'Plan d\'actions', quoi:'Toutes les actions du secteur, de leur création à la vérification d\'efficacité.',
-    etapes:['Une action naît d\'un défaut CHOKKO, d\'un NG d\'audit, d\'une contamination… ou d\'une saisie directe.', 'Renseignez responsable, échéance, puis passez-la en « Réalisée ».', 'Une date de vérification d\'efficacité est alors proposée ; une fois vérifiée, l\'action est close.'],
-    faq:[['Quand une action est-elle en retard ?', 'Échéance dépassée sans réalisation, ou vérification d\'efficacité dépassée.'],
-      ['Changer le délai de vérification ?', '« Configurer le secteur » > Plan d\'actions.'],
-      ['Renommer les statuts ?', 'Administrateur : « Configurer le secteur » > Réglages communs.']]},
+    etapes:['Une action naît d\'un défaut CHOKKO, d\'un NG d\'audit, d\'une contamination… ou d\'une saisie directe.', 'Renseignez responsable, échéance, puis passez-la en « Réalisée ».', 'Une date de vérification d\'efficacité est alors proposée ; une fois vérifiée, l\'action est close.']},
   {id:'pareto', tab:'pareto', titre:'Analyses Pareto', quoi:'Les 20 % de causes qui font 80 % des problèmes : défauts CHOKKO, coût rebut, prison, actions, propreté.',
-    etapes:['Choisissez la source et la période.', 'Les barres foncées forment le groupe A (80 % du total), la courbe le cumul.'],
-    faq:[['Une source n\'apparaît pas.', 'L\'onglet correspondant n\'est pas activé pour votre secteur.']]},
+    etapes:['Choisissez la source et la période.', 'Les barres foncées forment le groupe A (80 % du total), la courbe le cumul.']},
   {id:'prison', tab:'prison', titre:'Prison qualité', quoi:'Les pièces bloquées du secteur : par défaut, référence et état, avec la zone de stockage, les sorties et les chantiers de remise en état.',
-    etapes:['« + Nouveau défaut » : le défaut, puis une ligne par référence avec les quantités par état (complet, sans capot…).', 'Chaque sortie (rebut, réintroduction…) est tracée.', 'PDF : synthèse au format de la feuille papier. Excel blocage SAP : composants à bloquer.', '🛠 + Chantier sur un défaut : la fiche de chantier, avec les besoins en ressources (opérateurs, durée, horaire, matériel).', 'La demande attend la validation du responsable qualité : « Imprimer pour la réunion de production » rassemble toutes les demandes en attente.', '« Valider les ressources » (opérateurs accordés, date), puis « Démarrer le chantier ».', '« Fin de chantier » : pièces contrôlées, conformes, non conformes, remarques ; les pièces peuvent sortir de la prison automatiquement.', 'Onglet Traçabilité : chaque étape datée et signée.'],
-    faq:[['L\'export SAP liste une pièce « inconnue ».', 'Sa référence n\'est pas décrite : ajoutez-la avec ses composants via « 📋 Références & composants » (à la main ou par import Excel).'],
-      ['Ajouter beaucoup de références d\'un coup ?', '« 📋 Références & composants » > « 📄 Modèle vierge » : une ligne par réf., une colonne par composant (Vis 1, Vis 2… si plusieurs). Puis « ⬆ Import Excel » : un aperçu montre les nouvelles réf., les modifiées et les erreurs, et vous choisissez Fusionner (rien n\'est supprimé) ou Remplacer toute la liste.'],
-      ['Récupérer la liste des références en Excel ?', '« 📋 Références & composants » > « ⬇ Export Excel ». Le fichier exporté peut être modifié puis réimporté tel quel.'],
-      ['Qui valide les ressources d\'un chantier ?', 'Le responsable qualité, après la réunion de production. Le nom et la date de validation sont enregistrés et imprimés sur la fiche.'],
-      ['Pourquoi le capot n\'est pas compté pour une pièce « sans capot » ?', 'Les composants absents par état se règlent dans « Configurer le secteur » > Prison qualité.']]},
+    etapes:['« + Nouveau défaut » : le défaut, puis une ligne par référence avec les quantités par état (complet, sans capot…).', 'Chaque sortie (rebut, réintroduction…) est tracée.', 'PDF : synthèse au format de la feuille papier. Excel blocage SAP : composants à bloquer.', '🛠 + Chantier sur un défaut : la fiche de chantier, avec les besoins en ressources (opérateurs, durée, horaire, matériel).', 'La demande attend la validation du responsable qualité : « Imprimer pour la réunion de production » rassemble toutes les demandes en attente.', '« Valider les ressources » (opérateurs accordés, date), puis « Démarrer le chantier ».', '« Fin de chantier » : pièces contrôlées, conformes, non conformes, remarques ; les pièces peuvent sortir de la prison automatiquement.', 'Onglet Traçabilité : chaque étape datée et signée.']},
   {id:'esd', tab:'esd', titre:'Formations ESD', quoi:'Qui est formé à l\'ESD et quand renouveler.',
-    etapes:['Ajoutez une personne et sa date de formation : l\'échéance se calcule.', 'Quatre compteurs : expirées, expire ce mois, à renouveler, à jour.', 'Renouveler = saisir la nouvelle date avec Modifier.'],
-    faq:[['Changer la durée de validité ?', '« Configurer le secteur » > Formations.']]},
+    etapes:['Ajoutez une personne et sa date de formation : l\'échéance se calcule.', 'Quatre compteurs : expirées, expire ce mois, à renouveler, à jour.', 'Renouveler = saisir la nouvelle date avec Modifier.']},
   {id:'cicl', tab:'cicl', titre:'Formations CI/CL', quoi:'Les habilitations par poste et par référence (MCU).',
-    etapes:['Récapitulatif par ligne, puis détail par référence et par poste.', 'Une formation groupée applique la même date à plusieurs postes.'],
-    faq:[['Ajouter une référence ou un poste ?', 'Administrateur : « Configurer le secteur » > Formations > Postes CI/CL.']]},
+    etapes:['Récapitulatif par ligne, puis détail par référence et par poste.', 'Une formation groupée applique la même date à plusieurs postes.']},
   {id:'formations', tab:'formations', titre:'Formations SREM', quoi:'Les formations SREM du secteur et leurs échéances.',
-    etapes:['Ajoutez une personne et sa date de formation.', 'Tri « en retard d\'abord », recherche, export PDF.'],
-    faq:[['Changer la durée de validité ?', '« Configurer le secteur » > Formations.']]},
-  {id:'bibliotheque', tab:'bibliotheque', titre:'Bibliothèque', quoi:'Les liens vers les documents utiles du secteur (procédures, modes opératoires…).', etapes:['Ajoutez un lien avec son titre ; il s\'ouvre d\'un clic.'], faq:[]},
+    etapes:['Ajoutez une personne et sa date de formation.', 'Tri « en retard d\'abord », recherche, export PDF.']},
+  {id:'bibliotheque', tab:'bibliotheque', titre:'Bibliothèque', quoi:'Les liens vers les documents utiles du secteur (procédures, modes opératoires…).', etapes:['Ajoutez un lien avec son titre ; il s\'ouvre d\'un clic.']},
   {id:'archives', tab:'archives', titre:'Archives', quoi:'Les exports datés, le rapport mensuel et l\'historique des modifications.',
-    etapes:['Exportez un module en CSV pour la traçabilité.', 'Retrouvez qui a modifié quoi dans l\'historique.'],
-    faq:[['Et les sauvegardes ?', 'Administrateur : Paramètres > Sauvegardes.']]},
+    etapes:['Exportez un module en CSV pour la traçabilité.', 'Retrouvez qui a modifié quoi dans l\'historique.']},
   {id:'assistant', tab:'assistant', titre:'Configurer le secteur', quoi:'Tout ce qui se règle pour un secteur, étape par étape, sans toucher au code.',
-    etapes:['Choisissez le secteur (si vous en avez plusieurs).', 'Parcourez les étapes : rien n\'est enregistré avant « Enregistrer » ou « Enregistrer et continuer ».', 'Les pastilles orange signalent ce qui reste à compléter.', 'Terminez par « Valider la configuration » dans le récapitulatif.'],
-    faq:[['Pourquoi certaines étapes n\'apparaissent pas ?', 'Elles suivent les onglets cochés à l\'étape 1.'],
-      ['Qu\'est-ce que « Réglages communs » ?', 'Les réglages valables pour tous les secteurs, réservés à l\'administrateur.']]},
-  {id:'parametres', tab:'parametres', titre:'Paramètres', quoi:'Réservé à l\'administrateur : comptes et profils, secteurs, sauvegardes et apparence.', etapes:['Comptes : créer un compte, choisir son profil et ses secteurs.', 'Sauvegardes : télécharger ou restaurer une sauvegarde.'], faq:[]}
+    etapes:['Choisissez le secteur (si vous en avez plusieurs).', 'Parcourez les étapes : rien n\'est enregistré avant « Enregistrer » ou « Enregistrer et continuer ».', 'Les pastilles orange signalent ce qui reste à compléter.', 'Terminez par « Valider la configuration » dans le récapitulatif.']},
+  {id:'parametres', tab:'parametres', titre:'Paramètres', quoi:'Réservé à l\'administrateur : comptes et profils, secteurs, sauvegardes et apparence.', etapes:['Comptes : créer un compte, choisir son profil et ses secteurs.', 'Sauvegardes : télécharger ou restaurer une sauvegarde.']}
 ];
-var helpOpen = false, helpQuery = '';
-function helpEntryForTab(tab){ return HELP.filter(function(h){ return h.tab===tab; })[0] || null; }
-function helpEntryHtml(h, open){
-  return '<details class="help-entry"'+(open?' open':'')+'><summary>'+esc(h.titre)+'</summary>'+
-    '<p>'+esc(h.quoi)+'</p>'+
-    (h.etapes && h.etapes.length? '<div class="help-h">Comment faire</div><ol>'+h.etapes.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ol>' : '')+
-    (h.faq && h.faq.length? '<div class="help-h">Questions fréquentes</div>'+h.faq.map(function(f){ return '<div class="help-faq"><b>'+esc(f[0])+'</b><div>'+esc(f[1])+'</div></div>'; }).join('') : '')+
-  '</details>';
-}
-function helpPanelHtml(){
-  var cur = helpEntryForTab(currentTab);
-  var q = helpQuery.trim().toLowerCase();
-  var h = '<div class="help-head"><b>Aide</b><button class="btn small" data-help="close" title="Fermer">✕</button></div>'+
-    '<input type="search" id="help-search" placeholder="Rechercher dans l\'aide (ex. objectif, équipe, SAP)" value="'+esc(helpQuery)+'">';
-  if(q){
-    var words = q.split(/\s+/).filter(Boolean);
-    var hits = HELP.filter(function(e){ var txt = (e.titre+' '+e.quoi+' '+(e.etapes||[]).join(' ')+' '+(e.faq||[]).map(function(f){ return f.join(' '); }).join(' ')).toLowerCase(); return words.every(function(w){ return txt.indexOf(w)>=0; }); });
-    h += '<div class="help-body">'+(hits.length? hits.map(function(e){ return helpEntryHtml(e, true); }).join('') : '<p class="tiny">Rien trouvé. Essayez un autre mot.</p>')+'</div>';
-  } else {
-    h += '<div class="help-body">';
-    if(cur) h += helpEntryHtml(cur, true);
-    h += '<div class="help-h" style="margin-top:14px;">Autres sujets</div>'+HELP.filter(function(e){ return e!==cur && (!e.tab || tabAllowedForHelp(e.tab)); }).map(function(e){ return helpEntryHtml(e, false); }).join('');
-    h += '</div>';
-  }
-  return h;
-}
-function tabAllowedForHelp(tab){
-  if(tab==='assistant') return true;
-  if(tab==='parametres') return isAdminUser();
-  return secteurTabs().indexOf(tab)>=0 || tab==='dashboard';
-}
-function helpRender(){
-  var btn = document.getElementById('help-btn');
-  if(!currentUser){ if(btn) btn.remove(); var p0 = document.getElementById('help-panel'); if(p0) p0.remove(); return; }
-  if(!btn){ btn = document.createElement('button'); btn.id = 'help-btn'; btn.className = 'help-btn'; btn.type = 'button'; btn.title = 'Aide sur cet onglet'; btn.textContent = '?'; btn.setAttribute('data-help','toggle'); document.body.appendChild(btn); }
-  var p = document.getElementById('help-panel');
-  if(!helpOpen){ if(p) p.remove(); btn.classList.remove('on'); return; }
-  btn.classList.add('on');
-  if(!p){ p = document.createElement('aside'); p.id = 'help-panel'; p.className = 'help-panel'; document.body.appendChild(p); }
-  p.innerHTML = helpPanelHtml();
-}
-document.addEventListener('click', function(e){
-  var b = e.target.closest && e.target.closest('[data-help]');
-  if(!b) return;
-  var a = b.getAttribute('data-help');
-  if(a==='toggle'){ helpOpen = !helpOpen; helpQuery = ''; helpRender(); if(helpOpen){ var s = document.getElementById('help-search'); if(s) s.focus(); } }
-  if(a==='close'){ helpOpen = false; helpRender(); }
-});
-document.addEventListener('input', function(e){
-  if(e.target && e.target.id==='help-search'){ helpQuery = e.target.value; var pos = e.target.selectionStart; helpRender(); var s = document.getElementById('help-search'); if(s){ s.focus(); try{ s.setSelectionRange(pos,pos); }catch(x){} } }
-});
-document.addEventListener('keydown', function(e){ if(e.key==='Escape' && helpOpen){ helpOpen = false; helpRender(); } });
 
 // ==================== PARAMÈTRES : COMPTES, SECTEURS, SAUVEGARDES, APPARENCE ====================
 var psetSub = 'comptes';
@@ -13369,10 +13292,9 @@ function renderNow(){
   applySimpleMode();
   if(renderLastTab!==null && renderLastTab!==currentTab && actionDetailId){ actionDetailId = null; }   // la fiche action ne suit pas dans un autre onglet
   renderLastTab = currentTab;
-  view.innerHTML = navSubtabsHtml() + premiersPasHtml() + (fmdsOn && currentTab==='chokko' ? fmdsHeaderHtml() : '') + fn() + (actionDetailId ? actionDetailModalHtml() : '') + (czModal ? czModalHtml() : '');
+  view.innerHTML = navSubtabsHtml() + premiersPasHtml() + (fmdsOn && currentTab==='chokko' ? fmdsHeaderHtml() : '') + fn() + wzModalHtml() + (actionDetailId ? actionDetailModalHtml() : '') + (czModal ? czModalHtml() : '');
   try{ hydrateBlobThumbs(); }catch(e){}
   try{ czApplyTexts(view); }catch(e){ console.error('textes', e); }
-  try{ helpRender(); }catch(e){ console.error('aide', e); }
   try{ ppHighlightMain(); }catch(e){}
   restoreScrollPositions(scrollSnap);
   if(focusInfo){
@@ -13613,7 +13535,7 @@ function renderPerfAuditProgress(){
   var html = '<div class="section card" style="margin-bottom:18px;">';
   html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">'+
     '<div class="eyebrow">Avancement des audits de perf</div>'+
-    '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;"><button class="btn small" data-action="perf-progress-print" title="Imprimer le détail de l\'avancement (A4 portrait)">🖨️ Imprimer</button>'+
+    '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">'+(canVueSite() ? '<button class="btn small" data-action="perf-progress-print" title="Imprimer le détail de l\'avancement (A4 portrait)">🖨️ Imprimer</button>' : '')+''+
     '<label class="tiny" style="display:flex; align-items:center; gap:6px;">Mois'+
       '<select id="perf-progress-mois">'+MONTHS_FR.map(function(mm,i){return '<option value="'+i+'"'+(i===m?' selected':'')+'>'+mm.charAt(0).toUpperCase()+mm.slice(1)+'</option>';}).join('')+'</select>'+
       '<input type="number" id="perf-progress-annee" value="'+y+'" style="width:75px;">'+
@@ -13653,7 +13575,8 @@ function perfPeriodLabel(sid, m){
   var ms = perfPeriodMonths(sid, m), cap = function(i){ var x = MONTHS_FR[i]; return x.charAt(0).toUpperCase()+x.slice(1); };
   return ms.length===1 ? cap(ms[0]) : cap(ms[0])+' – '+cap(ms[ms.length-1]);
 }
-function perfQuestions(sid){ var s = getSecteur(sid||currentSecteur) || {}; return Array.isArray(s.perfQuestions) ? s.perfQuestions.filter(function(q){ return q && String(q.texte||'').trim(); }) : []; }
+function perfQuestions(sid){ return []; }   // grille standard JALY_PI_QU_184 pour tous les secteurs
+function perfQuestionsAncien(sid){ var s = getSecteur(sid||currentSecteur) || {}; return Array.isArray(s.perfQuestions) ? s.perfQuestions.filter(function(q){ return q && String(q.texte||'').trim(); }) : []; }
 // Audit réalisé sur la période (le mois, ou le trimestre… selon la fréquence du secteur)
 function perfEntryFor(sid, ligne, y, m){
   var ms = perfPeriodMonths(sid, m);
@@ -14609,7 +14532,7 @@ RENDERERS.metro = function(){
   html += '<div class="toolbar"><div class="left">';
   if(metroFilterLigne && secteurLines().indexOf(metroFilterLigne)<0) metroFilterLigne = '';   // ligne d'un autre secteur
   html += '<select id="flt-metro-ligne"><option value="">Toutes les lignes</option>'+secteurLines().map(function(l){return '<option value="'+l+'"'+(l===metroFilterLigne?' selected':'')+'>'+l+'</option>';}).join('')+'</select>';
-  html += '</div><div style="display:flex; gap:8px;"><button class="btn" data-action="export" data-module="metro">Envoyer un mail de rappel</button><button class="btn primary" data-toggle-form="metro">+ Ajouter un instrument</button></div></div>';
+  html += '</div><div style="display:flex; gap:8px;"><button class="btn primary" data-toggle-form="metro">+ Ajouter un instrument</button></div></div>';
 
   html += '<form class="entryform" id="form-metro" style="display:none">'+
     field('select','ligne','Ligne', secteurLines().map(function(l){return [l,l];})) +
@@ -14621,7 +14544,6 @@ RENDERERS.metro = function(){
     '<div class="actions-row"><button type="button" class="btn" data-cancel-form="metro">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div>'+
   '</form>';
 
-  html += '<div id="metro-export"></div>';
 
   html += '<div class="table-wrap"><table><thead><tr><th>Statut</th><th>Ligne</th><th>N° moyen</th><th>Désignation</th><th>Lieu</th><th>Échéance</th><th>Pièce jointe</th><th></th></tr></thead><tbody id="metro-rows">';
   html += rows.map(metroRow).join('') || '<tr><td colspan="8">'+emptyState('Aucun instrument')+'</td></tr>';
@@ -15764,7 +15686,6 @@ function renderUserbox(){
 }
 function renderLoginOverlay(error){
   if(typeof refsUi!=='undefined' && refsUi.open){ refsUi.open = false; refsRender(); }
-  try{ if(!currentUser){ helpOpen = false; var hb = document.getElementById('help-btn'); if(hb) hb.remove(); var hp = document.getElementById('help-panel'); if(hp) hp.remove(); } }catch(e){}
   var el = document.getElementById('login-overlay');
   var logoSrc = '';
   var existingLogo = document.querySelector('.sidebar-logo-full');
@@ -16188,25 +16109,6 @@ async function handleSaveRoleRename(id){
 }
 
 // ---------- exports ----------
-function buildMetroExport(){
-  var items = DATA.metro.filter(function(e){ return metroStatus(e).level!=='ok'; })
-    .sort(function(a,b){ return (a.echeance||'').localeCompare(b.echeance||''); });
-  var txt = 'Suivi métrologie - secteur MCU\nPoints à traiter au '+fmtDate(todayStr())+' :\n\n';
-  if(!items.length) txt += 'Aucun instrument à signaler pour le moment.\n';
-  items.forEach(function(e){
-    var s = metroStatus(e);
-    txt += '- ['+s.label+'] '+e.ligne+' - '+e.designation+' (n° '+e.numMoyen+', '+esc0(e.lieu)+') - échéance '+fmtDate(e.echeance)+'\n';
-  });
-  return txt;
-}
-function buildProprExport(){
-  var rows = DATA.resultats.filter(function(r){ return r.resultatPct<90; })
-    .sort(function(a,b){ return (b.id||'').localeCompare(a.id||''); });
-  var txt = 'Suivi propreté - secteur MCU\nRésultats à surveiller au '+fmtDate(todayStr())+' :\n\n';
-  if(!rows.length) txt += 'Aucun résultat sous le seuil de 90% pour le moment.\n';
-  rows.forEach(function(r){ txt += '- '+r.ligne+' ('+r.mois+') : '+r.resultatPct+'%\n'; });
-  return txt;
-}
 function esc0(s){ return s? s : 'lieu non précisé'; }
 
 function buildWeeklyDigest(){
@@ -16405,23 +16307,6 @@ function renderScoreHistoryChart(){
     });
   }catch(err){ console.error('chart error', err); }
 }
-function showExport(module){
-  var text = module==='metro' ? buildMetroExport() : buildProprExport();
-  var target = document.getElementById(module==='metro' ? 'metro-export' : 'proprete-export');
-  if(!target) return;
-  var mailto = 'mailto:?subject='+encodeURIComponent((module==='metro'?'Rappel métrologie':'Suivi propreté')+' - secteur MCU')+'&body='+encodeURIComponent(text);
-  target.innerHTML = '<div class="exportbox"><textarea readonly id="export-ta-'+module+'">'+esc(text)+'</textarea>'+
-    '<div style="display:flex; gap:8px; margin-top:8px;">'+
-    '<button class="btn" id="copy-export-'+module+'">Copier le texte</button>'+
-    '<a class="btn" href="'+mailto+'" style="text-decoration:none; display:inline-flex; align-items:center;">Ouvrir un e-mail</a>'+
-    '</div></div>';
-  document.getElementById('copy-export-'+module).addEventListener('click', function(){
-    var ta = document.getElementById('export-ta-'+module);
-    ta.select();
-    try{ navigator.clipboard.writeText(ta.value); }catch(e){ document.execCommand('copy'); }
-  });
-}
-
 // ---------- grille d'audit (assistant) ----------
 function getWizardCritEntry(id){
   if(!auditWizard) return {result:'', remarque:'', action:'', photo:null, responsable:'', echeance:''};
@@ -17060,7 +16945,7 @@ app.addEventListener('click', async function(e){
 
   if(e.target.closest('[data-action="logout"]')){ handleLogout(); return; }
   if(e.target.closest('[data-action="chokko-def-print"]')){ printChokkoDefReport(); return; }
-  if(e.target.closest('[data-action="perf-progress-print"]')){ var pb = e.target.closest('[data-action="perf-progress-print"]'); printPerfProgress(pb.dataset.y ? Number(pb.dataset.y) : null, pb.dataset.m ? Number(pb.dataset.m) : null); return; }
+  if(e.target.closest('[data-action="perf-progress-print"]') && canVueSite()){ var pb = e.target.closest('[data-action="perf-progress-print"]'); printPerfProgress(pb.dataset.y ? Number(pb.dataset.y) : null, pb.dataset.m ? Number(pb.dataset.m) : null); return; }
   var dashChk = e.target.closest('[data-action="dash-goto-chokko"]');
   if(dashChk){ currentTab = 'chokko'; chokkoView = 'saisie'; chokkoLigne = dashChk.dataset.ligne; renderNav(); render(); return; }
   var toggleRoleSub = e.target.closest('[data-action="toggle-role-sub"]');
@@ -17530,8 +17415,6 @@ app.addEventListener('click', async function(e){
 
   if(e.target.closest('[data-action="weekly-digest"]')){ handleWeeklyDigest(); return; }
   if(e.target.closest('[data-action="print-dashboard"]')){ handlePrintDashboard(); return; }
-  var exportBtn = e.target.closest('[data-action="export"]');
-  if(exportBtn){ showExport(exportBtn.dataset.module); return; }
 
   var photoImg = e.target.closest('[data-action="view-photo"]');
   if(photoImg){ e.preventDefault(); openBlobViewer(photoImg.dataset.blob || null, photoImg.dataset.blob ? null : photoImg.src); return; }
